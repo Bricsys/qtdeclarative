@@ -698,9 +698,9 @@ void QQuickPixmapReader::processJobs()
 
         // Clean cancelled jobs
         if (!cancelled.isEmpty()) {
-#if QT_CONFIG(qml_network)
             for (int i = 0; i < cancelled.count(); ++i) {
                 QQuickPixmapReply *job = cancelled.at(i);
+#if QT_CONFIG(qml_network)
                 QNetworkReply *reply = networkJobs.key(job, 0);
                 if (reply) {
                     networkJobs.remove(reply);
@@ -709,6 +709,9 @@ void QQuickPixmapReader::processJobs()
                         reply->close();
                     }
                 } else {
+#else
+                {
+#endif
                     QQuickImageResponse *asyncResponse = asyncResponses.key(job);
                     if (asyncResponse) {
                         asyncResponses.remove(asyncResponse);
@@ -720,7 +723,6 @@ void QQuickPixmapReader::processJobs()
                 job->deleteLater();
             }
             cancelled.clear();
-#endif
         }
 
         if (!jobs.isEmpty()) {
