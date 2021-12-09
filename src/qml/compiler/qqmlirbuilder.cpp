@@ -1805,7 +1805,6 @@ void QmlUnitGenerator::generate(Document &output, const QV4::CompiledData::Depen
         nextOffset += signalTableSize;
 
         quint32_le *enumOffsetTable = reinterpret_cast<quint32_le*>(objectPtr + objectToWrite->offsetToEnums);
-        quint32 enumTableSize = 0;
         char *enumPtr = objectPtr + nextOffset;
         for (const Enum *e = o->firstEnum(); e; e = e->next) {
             *enumOffsetTable++ = enumPtr - objectPtr;
@@ -1820,7 +1819,6 @@ void QmlUnitGenerator::generate(Document &output, const QV4::CompiledData::Depen
                 *enumValueToWrite = *enumValue;
 
             int size = QV4::CompiledData::Enum::calculateSize(e->enumValues->count);
-            enumTableSize += size;
             enumPtr += size;
         }
 
