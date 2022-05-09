@@ -44,6 +44,7 @@ class Q_QUICK_EXPORT QQuickFontInfo : public QObject
     QML_ADDED_IN_VERSION(6, 9)
 public:
     explicit QQuickFontInfo(QObject *parent = nullptr);
+    ~QQuickFontInfo() override;
 
     QFont font() const;
     void setFont(QFont font);
