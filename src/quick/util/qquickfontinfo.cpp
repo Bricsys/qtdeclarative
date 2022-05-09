@@ -39,6 +39,12 @@ QQuickFontInfo::QQuickFontInfo(QObject *parent)
 {
 }
 
+/*
+    \internal
+*/
+QQuickFontInfo::~QQuickFontInfo()
+    = default;
+
 /*!
     \qmlproperty font QtQuick::FontInfo::font
 
