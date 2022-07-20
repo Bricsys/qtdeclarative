@@ -381,8 +381,16 @@ bool QQuickStateGroupPrivate::updateAutoState()
                 const auto potentialWhenBinding = QQmlPropertyPrivate::binding(whenProp);
                 // if there is a binding, the value in when might not be up-to-date at this point
                 // so we manually reevaluate the binding
-                if (auto abstractBinding = dynamic_cast<QQmlBinding *>(potentialWhenBinding))
-                    whenValue = abstractBinding->evaluate().toBool();
+                if (auto binding = dynamic_cast<QQmlBinding *>(potentialWhenBinding)) {
+                    if (binding->context() && binding->context()->isValid()) {
+                        QVariant evalResult = binding->evaluate();
+                        if (evalResult.userType() == qMetaTypeId<QJSValue>())
+                            whenValue = evalResult.value<QJSValue>().toBool();
+                        else
+                            whenValue = evalResult.toBool();
+                    }
+                }
+
                 if (whenValue) {
                     if (stateChangeDebug())
                         qWarning() << "Setting auto state due to expression";
