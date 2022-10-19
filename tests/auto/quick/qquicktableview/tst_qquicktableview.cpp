@@ -213,6 +213,7 @@ private slots:
     void testSelectableStartPosEndPosOutsideView();
     void testSelectableScrollTowardsPos();
     void resettingRolesRespected();
+    void deletedDelegate();
 };
 
 tst_QQuickTableView::tst_QQuickTableView()
@@ -3987,6 +3988,19 @@ void tst_QQuickTableView::resettingRolesRespected()
     QVERIFY(!tableView->property("success").toBool());
     model.useCustomRoleNames(true);
     QTRY_VERIFY(tableView->property("success").toBool());
+}
+
+void tst_QQuickTableView::deletedDelegate()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, testFileUrl("deletedDelegate.qml"));
+    std::unique_ptr<QObject> root(component.create());
+    QVERIFY(root);
+    auto tv = root->findChild<QQuickTableView *>("tableview");
+    QVERIFY(tv);
+    // we need one event loop iteration for the deferred delete to trigger
+    // thus the QTRY_VERIFY
+    QTRY_COMPARE(tv->delegate(), nullptr);
 }
 
 QTEST_MAIN(tst_QQuickTableView)
