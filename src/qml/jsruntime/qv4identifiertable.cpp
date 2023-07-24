@@ -132,16 +132,23 @@ void IdentifierTable::addEntry(Heap::StringOrSymbol *str)
 
 
 
-Heap::String *IdentifierTable::insertString(const QString &s)
+Heap::String *IdentifierTable::insertString(
+        const QString &s, IdentifierTable::KeyConversionBehavior conversionBehavior)
 {
     uint subtype;
-    uint hash = String::createHashValue(s.constData(), s.length(), &subtype);
+
+    uint hash = String::createHashValue(s.constData(), s.size(), &subtype);
     if (subtype == Heap::String::StringType_ArrayIndex) {
-        Heap::String *str = engine->newString(s);
-        str->stringHash = hash;
-        str->subtype = subtype;
-        return str;
+        if (Q_UNLIKELY(conversionBehavior == ForceConversionToId)) {
+            hash = String::createHashValueDisallowingArrayIndex(s.constData(), s.size(), &subtype);
+        } else {
+            Heap::String *str = engine->newString(s);
+            str->stringHash = hash;
+            str->subtype = subtype;
+            return str;
+        }
     }
+
     uint idx = hash % alloc;
     while (Heap::StringOrSymbol *e = entriesByHash[idx]) {
         if (e->stringHash == hash && e->toQString() == s)
@@ -278,9 +285,10 @@ void IdentifierTable::sweep()
     size -= freed;
 }
 
-PropertyKey IdentifierTable::asPropertyKey(const QString &s)
+PropertyKey IdentifierTable::asPropertyKey(
+        const QString &s, IdentifierTable::KeyConversionBehavior conversionBehavior)
 {
-    return insertString(s)->identifier;
+    return insertString(s, conversionBehavior)->identifier;
 }
 
 PropertyKey IdentifierTable::asPropertyKey(const char *s, int len)
