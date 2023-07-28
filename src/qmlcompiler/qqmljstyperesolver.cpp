@@ -647,10 +647,7 @@ QQmlJSScope::ConstPtr QQmlJSTypeResolver::merge(const QQmlJSScope::ConstPtr &a,
         return intType();
     if (canConvert(boolType(), uintType()))
         return uintType();
-    if (canConvert(intType(), stringType()))
-        return stringType();
-    if (canConvert(uintType(), stringType()))
-        return stringType();
+
     if (isPrimitive(a) && isPrimitive(b))
         return jsPrimitiveType();
 
