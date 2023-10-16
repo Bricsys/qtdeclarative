@@ -109,10 +109,14 @@ bool Parameter::initType(QV4::CompiledData::ParameterType *paramType, const QV4:
     const QString typeName = stringGenerator->stringForIndex(typeNameIndex);
     auto builtinType = stringToBuiltinType(typeName);
     if (builtinType == QV4::CompiledData::BuiltinType::InvalidBuiltin) {
-        if (typeName.isEmpty() || !typeName.at(0).isUpper()) {
+        if (typeName.isEmpty() || typeName == QLatin1String("void")) {
+            paramType->set(true, quint32(builtinType));
+            return false;
+        } else if (!typeName.at(0).isUpper()) {
             paramType->set(false, 0);
             return false;
         }
+
         Q_ASSERT(quint32(typeNameIndex) < (1u << 31));
         paramType->set(false, typeNameIndex);
     } else {
