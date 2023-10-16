@@ -64,8 +64,9 @@ bool Parameter::initType(
 {
     auto builtinType = stringToBuiltinType(typeName);
     if (builtinType == QV4::CompiledData::BuiltinType::InvalidBuiltin) {
-        if (typeName.isEmpty()) {
-            paramType->set(listFlag, 0);
+        if (typeName.isEmpty() || typeName == QLatin1String("void")) {
+            paramType->set(
+                    listFlag | QV4::CompiledData::ParameterType::Builtin, quint32(builtinType));
             return false;
         }
         Q_ASSERT(quint32(typeNameIndex) < (1u << 31));
