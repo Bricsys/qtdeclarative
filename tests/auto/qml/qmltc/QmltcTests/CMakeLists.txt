@@ -108,6 +108,7 @@ set(qml_sources
     inlineComponentsFromDifferentFiles.qml
     singletons.qml
     mySignals.qml
+    myCheckBox.qml
 
     # support types:
     DefaultPropertySingleChild.qml
@@ -134,6 +135,7 @@ set(common_libraries
     Qt::Core
     Qt::QmlPrivate
     Qt::QuickPrivate
+    Qt::QuickTemplates2Private
     Qt::TestPrivate
     Qt::Gui # QColor, QMatrix4x4, ...
 )
