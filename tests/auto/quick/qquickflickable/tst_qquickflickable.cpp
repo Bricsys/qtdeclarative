@@ -224,6 +224,7 @@ private slots:
     void setContentPositionWhileDragging();
     void coalescedMove();
     void onlyOneMove();
+    void touchCancel();
 
 private:
     void flickWithTouch(QQuickWindow *window, const QPoint &from, const QPoint &to);
@@ -3234,6 +3235,34 @@ void tst_qquickflickable::onlyOneMove()
     QCOMPARE(flickStartedSpy.size(), 1);
     QCOMPARE(movementEndedSpy.size(), 1);
     QCOMPARE(flickEndedSpy.size(), 1);
+}
+
+void tst_qquickflickable::touchCancel()
+{
+    QQuickView window;
+    QVERIFY(QQuickTest::showView(window, testFileUrl("flickable03.qml")));
+    QQuickViewTestUtils::centerOnScreen(&window);
+    QVERIFY(window.isVisible());
+
+    QQuickFlickable *flickable = qobject_cast<QQuickFlickable*>(window.rootObject());
+    QVERIFY(flickable != nullptr);
+
+    QSignalSpy movementStartedSpy(flickable, SIGNAL(movementStarted()));
+    QSignalSpy movementEndedSpy(flickable, SIGNAL(movementEnded()));
+
+    int touchPosY = 10;
+    QTest::touchEvent(&window, touchDevice).press(0, {10, touchPosY}).commit();
+    QQuickTouchUtils::flush(&window);
+
+    for (int i = 0; i < 3; ++i) {
+        touchPosY += qApp->styleHints()->startDragDistance();
+        QTest::touchEvent(&window, touchDevice).move(0, {10, touchPosY}).commit();
+        QQuickTouchUtils::flush(&window);
+    }
+
+    QTRY_COMPARE(movementStartedSpy.size(), 1);
+    QWindowSystemInterface::handleTouchCancelEvent(nullptr, touchDevice);
+    QTRY_COMPARE(movementEndedSpy.size(), 1);
 }
 
 QTEST_MAIN(tst_qquickflickable)
