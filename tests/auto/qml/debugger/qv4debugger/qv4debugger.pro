@@ -16,4 +16,7 @@ HEADERS += \
 INCLUDEPATH += \
     $$PWD/../../../../../src/plugins/qmltooling/qmldbg_debugger
 
+include (../../../shared/util.pri)
+TESTDATA = data/*
+
 QT += core-private gui-private qml-private network testlib
