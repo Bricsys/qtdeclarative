@@ -74,6 +74,7 @@ private slots:
     void shifts();
     void valueTypeProperty();
     void propertyOfParent();
+    void readEnumFromInstance();
     void accessModelMethodFromOutSide();
     void functionArguments();
     void bindingExpression();
@@ -1144,6 +1145,26 @@ void tst_QmlCppCodegen::propertyOfParent()
         expected = !expected;
         object->setProperty("foo", expected);
     }
+}
+
+void tst_QmlCppCodegen::readEnumFromInstance()
+{
+    QQmlEngine engine;
+    const QString url = u"qrc:/qt/qml/TestTypes/readEnumFromInstance.qml"_s;
+    QQmlComponent component(&engine, QUrl(url));
+    QVERIFY2(component.isReady(), component.errorString().toUtf8());
+    QTest::ignoreMessage(
+            QtWarningMsg, qPrintable(url + ":7:5: Unable to assign [undefined] to int"_L1));
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(!object.isNull());
+    QCOMPARE(object->property("priority"), QVariant::fromValue<int>(0));
+    QCOMPARE(object->property("prop2"), QVariant::fromValue<int>(1));
+    QCOMPARE(object->property("priorityIsVeryHigh"), QVariant::fromValue<bool>(false));
+    QTest::ignoreMessage(
+            QtWarningMsg, qPrintable(url + ":13: Error: Cannot assign [undefined] to int"_L1));
+    int result = 0;
+    QMetaObject::invokeMethod(object.data(), "cyclePriority", Q_RETURN_ARG(int, result));
+    QCOMPARE(result, 0);
 }
 
 void tst_QmlCppCodegen::accessModelMethodFromOutSide()
