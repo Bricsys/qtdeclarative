@@ -1,5 +1,5 @@
 # Copyright (C) 2022 The Qt Company Ltd.
-# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-License-Identifier: LicenseRef-Qt-Commercial
 
 # The function collects qml root paths and sets the QT_QML_ROOT_PATH property to the ${target}
 # based on the provided qml source files.
