@@ -178,7 +178,7 @@ public:
     QDateTime readPropertyAsDateTime(int id) const;
     QRectF readPropertyAsRectF(int id) const;
     QObject *readPropertyAsQObject(int id) const;
-    QVector<QQmlGuard<QObject> > *readPropertyAsList(int id) const;
+    void initPropertyAsList(int id) const;
 
     void writeProperty(int id, int v);
     void writeProperty(int id, bool v);
