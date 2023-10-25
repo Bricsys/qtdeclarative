@@ -226,10 +226,10 @@ QQuickGraphicsDevicePrivate::QQuickGraphicsDevicePrivate()
 {
 }
 
-QQuickGraphicsDevicePrivate::QQuickGraphicsDevicePrivate(const QQuickGraphicsDevicePrivate *other)
+QQuickGraphicsDevicePrivate::QQuickGraphicsDevicePrivate(const QQuickGraphicsDevicePrivate &other)
     : ref(1),
-      type(other->type),
-      u(other->u)
+      type(other.type),
+      u(other.u)
 {
 }
 
