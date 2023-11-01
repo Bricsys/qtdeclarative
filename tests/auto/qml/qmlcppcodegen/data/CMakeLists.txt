@@ -52,6 +52,8 @@ set(qml_files
     ProgressBar/TimelineAnimation.qml
     RootWithoutId.qml
     SelectionRectangle.qml
+    ShadowedObjectName.qml
+    ShadowedObjectNameDerived.qml
     Test.qml
     TestCase.qml
     WindowDerived.qml
@@ -178,6 +180,7 @@ set(qml_files
     script.js
     script.mjs
     sequenceToIterable.qml
+    shadowedAsCasts.qml
     shared/Slider.qml
     shifts.qml
     signal.qml
