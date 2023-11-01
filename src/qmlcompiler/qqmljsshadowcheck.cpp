@@ -110,8 +110,7 @@ void QQmlJSShadowCheck::checkShadowing(
             return; // Only properties and methods can be shadowed
         }
 
-        setError(u"Member %1 of %2 can be shadowed"_s
-                         .arg(memberName, m_state.accumulatorIn().descriptiveName()));
+        setError(u"Member %1 of %2 can be shadowed"_s.arg(memberName, baseType.descriptiveName()));
         return;
     }
     default:
