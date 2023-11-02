@@ -477,6 +477,7 @@ public:
     void columnsRemovedCallback(const QModelIndex &parent, int begin, int end);
     void layoutChangedCallback(const QList<QPersistentModelIndex> &parents, QAbstractItemModel::LayoutChangeHint hint);
     void modelResetCallback();
+    bool compareModel(const QVariant& model1, const QVariant& model2) const;
 
     void scheduleRebuildIfFastFlick();
     void setLocalViewportX(qreal contentX);

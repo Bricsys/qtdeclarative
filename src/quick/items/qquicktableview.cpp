@@ -3233,9 +3233,6 @@ QVariant QQuickTableViewPrivate::modelImpl() const
 
 void QQuickTableViewPrivate::setModelImpl(const QVariant &newModel)
 {
-    if (newModel == assignedModel)
-        return;
-
     assignedModel = newModel;
     scheduleRebuildTable(QQuickTableViewPrivate::RebuildOption::All);
     emit q_func()->modelChanged();
@@ -3243,7 +3240,7 @@ void QQuickTableViewPrivate::setModelImpl(const QVariant &newModel)
 
 void QQuickTableViewPrivate::syncModel()
 {
-    if (modelVariant == assignedModel)
+    if (compareModel(modelVariant, assignedModel))
         return;
 
     if (model) {
@@ -3499,6 +3496,13 @@ void QQuickTableViewPrivate::modelResetCallback()
     scheduleRebuildTable(RebuildOption::All);
 }
 
+bool QQuickTableViewPrivate::compareModel(const QVariant& model1, const QVariant& model2) const
+{
+    return (model1 == model2 ||
+            (model1.userType() == qMetaTypeId<QJSValue>() && model2.userType() == qMetaTypeId<QJSValue>() &&
+                                 model1.value<QJSValue>().strictlyEquals(model2.value<QJSValue>())));
+}
+
 void QQuickTableViewPrivate::scheduleRebuildIfFastFlick()
 {
     Q_Q(QQuickTableView);
@@ -3728,6 +3732,9 @@ QVariant QQuickTableView::model() const
 
 void QQuickTableView::setModel(const QVariant &newModel)
 {
+    if (d_func()->compareModel(newModel, d_func()->assignedModel))
+        return;
+
     return d_func()->setModelImpl(newModel);
 }
 
