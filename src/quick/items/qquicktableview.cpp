@@ -4241,9 +4241,6 @@ QVariant QQuickTableViewPrivate::modelImpl() const
 
 void QQuickTableViewPrivate::setModelImpl(const QVariant &newModel)
 {
-    if (newModel == assignedModel)
-        return;
-
     assignedModel = newModel;
     scheduleRebuildTable(QQuickTableViewPrivate::RebuildOption::All);
     emit q_func()->modelChanged();
@@ -4251,7 +4248,7 @@ void QQuickTableViewPrivate::setModelImpl(const QVariant &newModel)
 
 void QQuickTableViewPrivate::syncModel()
 {
-    if (modelVariant == assignedModel)
+    if (compareModel(modelVariant, assignedModel))
         return;
 
     if (model) {
@@ -4525,6 +4522,13 @@ void QQuickTableViewPrivate::modelResetCallback()
     Q_Q(QQuickTableView);
     q->closeEditor();
     scheduleRebuildTable(RebuildOption::All);
+}
+
+bool QQuickTableViewPrivate::compareModel(const QVariant& model1, const QVariant& model2) const
+{
+    return (model1 == model2 ||
+            (model1.userType() == qMetaTypeId<QJSValue>() && model2.userType() == qMetaTypeId<QJSValue>() &&
+                                 model1.value<QJSValue>().strictlyEquals(model2.value<QJSValue>())));
 }
 
 void QQuickTableViewPrivate::positionViewAtRow(int row, Qt::Alignment alignment, qreal offset, const QRectF subRect)
@@ -5390,6 +5394,8 @@ QVariant QQuickTableView::model() const
 void QQuickTableView::setModel(const QVariant &newModel)
 {
     Q_D(QQuickTableView);
+    if (d->compareModel(newModel, d->assignedModel))
+        return;
 
     closeEditor();
     d->setModelImpl(newModel);
