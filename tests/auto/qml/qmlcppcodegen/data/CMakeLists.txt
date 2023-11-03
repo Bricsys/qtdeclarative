@@ -77,10 +77,11 @@ set(qml_files
     childobject.qml
     colorAsVariant.qml
     colorString.qml
-    consoleObject.qml
+    comparisonTypes.qml
     componentReturnType.qml
     compositeTypeMethod.qml
     compositesingleton.qml
+    consoleObject.qml
     construct.qml
     contextParam.qml
     conversionDecrement.qml
