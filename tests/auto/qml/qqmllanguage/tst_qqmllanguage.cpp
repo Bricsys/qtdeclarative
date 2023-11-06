@@ -6720,9 +6720,8 @@ void tst_qqmllanguage::deepAliasOnICOrReadonly()
     QScopedPointer<QObject> o(c.create());
     QVERIFY(!o.isNull());
 
-    // We are mostly testing that it doesn't crash here. The actual bug is fixed separately.
-
     QCOMPARE(o->property("borderColor").toString(), QLatin1String("black"));
+    QCOMPARE(o->property("borderObjectName").toString(), QLatin1String("theLeaf"));
 
     const QVariant var = o->property("borderVarvar");
     QCOMPARE(var.metaType(), QMetaType::fromType<QString>());
