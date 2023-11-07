@@ -122,7 +122,7 @@ private slots:
     void isColumnLoadedAndIsRowLoaded();
     void checkForceLayoutFunction();
     void checkForceLayoutEndUpDoingALayout();
-    void checkForceLayoutDuringModelChange();
+    void checkForceLayoutInbetweenAddingRowsToModel();
     void checkForceLayoutWhenAllItemsAreHidden();
     void checkContentWidthAndHeight();
     void checkContentWidthAndHeightForSmallTables();
@@ -682,10 +682,11 @@ void tst_QQuickTableView::checkForceLayoutEndUpDoingALayout()
     QCOMPARE(tableView->contentHeight(), (9 * (newDelegateSize + rowSpacing)) - rowSpacing);
 }
 
-void tst_QQuickTableView::checkForceLayoutDuringModelChange()
+void tst_QQuickTableView::checkForceLayoutInbetweenAddingRowsToModel()
 {
-    // Check that TableView doesn't assert if we call
-    // forceLayout() in the middle of a model change.
+    // Check that TableView doesn't assert if we call forceLayout() while waiting
+    // for a callback from the model that the row count has changed. Also make sure
+    // that we don't move the contentItem while doing so.
     LOAD_TABLEVIEW("plaintableview.qml");
 
     const int initialRowCount = 10;
@@ -700,9 +701,13 @@ void tst_QQuickTableView::checkForceLayoutDuringModelChange()
 
     WAIT_UNTIL_POLISHED;
 
+    const int contentY = 10;
+    tableView->setContentY(contentY);
     QCOMPARE(tableView->rows(), initialRowCount);
+    QCOMPARE(tableView->contentY(), contentY);
     model.addRow(0);
     QCOMPARE(tableView->rows(), initialRowCount + 1);
+    QCOMPARE(tableView->contentY(), contentY);
 }
 
 void tst_QQuickTableView::checkForceLayoutWhenAllItemsAreHidden()
