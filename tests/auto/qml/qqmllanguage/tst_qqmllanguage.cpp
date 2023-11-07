@@ -391,6 +391,7 @@ private slots:
     void callMethodOfAttachedDerived();
 
     void typeAnnotationCycle();
+    void deepAliasOnICOrReadonly();
 
 private:
     QQmlEngine engine;
@@ -6709,6 +6710,29 @@ void tst_qqmllanguage::typeAnnotationCycle()
 
     QQmlComponent c(&engine, url);
     QVERIFY(!c.isReady());
+}
+
+void tst_qqmllanguage::deepAliasOnICOrReadonly()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl("deepAliasOnICUser.qml"));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+
+    // We are mostly testing that it doesn't crash here. The actual bug is fixed separately.
+
+    QCOMPARE(o->property("borderColor").toString(), QLatin1String("black"));
+
+    const QVariant var = o->property("borderVarvar");
+    QCOMPARE(var.metaType(), QMetaType::fromType<QString>());
+    QCOMPARE(var.toString(), QLatin1String("mauve"));
+
+    QQmlComponent c2(&engine, testFileUrl("deepAliasOnReadonly.qml"));
+    QVERIFY(c2.isError());
+    QVERIFY(c2.errorString().contains(
+            QLatin1String(
+                    "Invalid property assignment: \"readonlyRectX\" is a read-only property")));
 }
 
 QTEST_MAIN(tst_qqmllanguage)
