@@ -86,6 +86,7 @@ private slots:
     void parentProperty();
     void registerElimination();
     void asCast();
+    void asCast2();
     void noQQmlData();
     void scopeObjectDestruction();
     void colorAsVariant();
@@ -1456,6 +1457,24 @@ void tst_QmlCppCodegen::asCast()
     QCOMPARE(qvariant_cast<QObject *>(root->property("dummyAsItem")), dummy);
     QCOMPARE(qvariant_cast<QObject *>(root->property("dummyAsRectangle")), nullptr);
     QCOMPARE(qvariant_cast<QObject *>(root->property("dummyAsDummy")), dummy);
+}
+
+void tst_QmlCppCodegen::asCast2()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, QUrl(u"qrc:/qt/qml/TestTypes/asCast2.qml"_s));
+    QVERIFY2(component.isReady(), component.errorString().toUtf8());
+    QScopedPointer<QObject> root(component.create());
+    QVERIFY(!root.isNull());
+
+    QCOMPARE(qvariant_cast<QObject *>(root->property("nullAsObject")), nullptr);
+    QCOMPARE(qvariant_cast<QObject *>(root->property("nullAsItem")), nullptr);
+    QCOMPARE(qvariant_cast<QObject *>(root->property("nullAsRectangle")), nullptr);
+    QCOMPARE(qvariant_cast<QObject *>(root->property("nullAsDummy")), nullptr);
+    QCOMPARE(qvariant_cast<QObject *>(root->property("undefinedAsObject")), nullptr);
+    QCOMPARE(qvariant_cast<QObject *>(root->property("undefinedAsItem")), nullptr);
+    QCOMPARE(qvariant_cast<QObject *>(root->property("undefinedAsRectangle")), nullptr);
+    QCOMPARE(qvariant_cast<QObject *>(root->property("undefinedAsDummy")), nullptr);
 }
 
 void tst_QmlCppCodegen::noQQmlData()

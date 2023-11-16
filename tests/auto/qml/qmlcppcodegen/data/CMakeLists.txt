@@ -67,6 +67,7 @@ set(qml_files
     argumentConversion.qml
     array.qml
     asCast.qml
+    asCast2.qml
     attachedBaseEnum.qml
     badSequence.qml
     basicBlocksWithBackJump.qml
