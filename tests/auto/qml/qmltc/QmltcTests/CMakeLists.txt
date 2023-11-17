@@ -109,6 +109,7 @@ set(qml_sources
     singletons.qml
     mySignals.qml
     myCheckBox.qml
+    signalConnections.qml
 
     # support types:
     DefaultPropertySingleChild.qml
