@@ -47,6 +47,7 @@ private slots:
     void methods();
     void math();
     void shadowedAsCasts();
+    void storeMetaEnum();
     void unknownParameter();
     void array();
     void equalsUndefined();
@@ -3148,6 +3149,20 @@ void tst_QmlCppCodegen::storeElementSideEffects()
     QVERIFY(prop.isArray());
     QCOMPARE(prop.property(0).toInt(), 10);
 };
+
+void tst_QmlCppCodegen::storeMetaEnum()
+{
+    QQmlEngine engine;
+
+    QQmlComponent c(&engine, QUrl(u"qrc:/qt/qml/TestTypes/StoreMetaEnum.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(o);
+
+    QCOMPARE(o->property("bar").toInt(), 0);
+    QCOMPARE(o->property("baz").toInt(), 1);
+}
 
 void tst_QmlCppCodegen::ambiguousSignals()
 {
