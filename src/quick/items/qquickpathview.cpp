@@ -1846,7 +1846,8 @@ bool QQuickPathView::childMouseEventFilter(QQuickItem *i, QEvent *e)
 
             const bool filtered = stealThisEvent || grabberDisabled;
             if (filtered)
-                pe->setAccepted(false);
+                pe->setAccepted(stealThisEvent && grabber == this && grabber->isEnabled());
+
             return filtered;
         } else if (d->timer.isValid()) {
             d->timer.invalidate();
