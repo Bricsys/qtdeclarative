@@ -179,6 +179,7 @@ set(qml_files
     registerelimination.qml
     registerPropagation.qml
     revisions.qml
+    scopeIdLookup.qml
     scopeVsObject.qml
     script.js
     script.mjs
