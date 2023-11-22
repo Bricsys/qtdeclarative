@@ -1,5 +1,5 @@
 # Copyright (C) 2022 The Qt Company Ltd.
-# SPDX-License-Identifier: LicenseRef-Qt-Commercial
+# SPDX-License-Identifier: BSD-3-Clause
 
 file(GLOB_RECURSE __aux_qml_glob_files
     RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"

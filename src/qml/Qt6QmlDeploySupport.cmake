@@ -1,5 +1,5 @@
 # Copyright (C) 2022 The Qt Company Ltd.
-# SPDX-License-Identifier: LicenseRef-Qt-Commercial
+# SPDX-License-Identifier: BSD-3-Clause
 
 # NOTE: This code should only ever be executed in script mode. It expects to be
 #       used either as part of an install(CODE) call or called by a script
