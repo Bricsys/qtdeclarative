@@ -179,6 +179,7 @@ set(qml_files
     readEnumFromInstance.qml
     registerelimination.qml
     registerPropagation.qml
+    renameAdjust.qml
     revisions.qml
     scopeIdLookup.qml
     scopeVsObject.qml

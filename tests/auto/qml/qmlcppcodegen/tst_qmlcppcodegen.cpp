@@ -111,6 +111,7 @@ private slots:
     void unknownAttached();
     void variantlist();
     void popContextAfterRet();
+    void renameAdjust();
     void revisions();
     void scopeIdLookup();
     void invisibleBase();
@@ -1939,6 +1940,19 @@ void tst_QmlCppCodegen::popContextAfterRet()
     QCOMPARE(o->objectName(), u"backgroundBlur"_s);
     o->setProperty("stackViewDepth", 1);
     QCOMPARE(o->objectName(), u"backgroundImage"_s);
+}
+
+void tst_QmlCppCodegen::renameAdjust()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, QUrl(u"qrc:/qt/qml/TestTypes/renameAdjust.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+
+    QTest::ignoreMessage(QtDebugMsg, "success");
+    QTest::ignoreMessage(QtCriticalMsg, "failed 10 11");
+
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(o);
 }
 
 void tst_QmlCppCodegen::revisions()

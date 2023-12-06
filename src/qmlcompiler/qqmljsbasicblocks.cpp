@@ -426,6 +426,11 @@ void QQmlJSBasicBlocks::adjustTypes()
         if (it->trackedTypes.size() != 1)
             continue;
 
+        // Don't adjust renamed values. We only adjust the originals.
+        const int writeLocation = it.key();
+        if (writeLocation >= 0 && m_annotations[writeLocation].isRename)
+            continue;
+
         m_typeResolver->adjustTrackedType(it->trackedTypes[0], it->typeReaders.values());
     }
 
