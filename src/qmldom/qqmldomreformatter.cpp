@@ -302,24 +302,16 @@ protected:
             PatternProperty *assignment = AST::cast<PatternProperty *>(it->property);
             if (assignment) {
                 preVisit(assignment);
-                bool isStringLike = AST::cast<StringLiteralPropertyName *>(assignment->name)
-                        || cast<IdentifierPropertyName *>(assignment->name);
+                accept(assignment->name);
                 bool useInitializer = false;
                 const bool bindingIdentifierExist = !assignment->bindingIdentifier.isEmpty();
                 if (assignment->colonToken.length > 0) {
-                    if (isStringLike)
-                        out("\"");
-                    accept(assignment->name);
-                    if (isStringLike)
-                        out("\"");
                     out(": ");
                     useInitializer = true;
                     if (bindingIdentifierExist)
                         out(assignment->bindingIdentifier);
                     if (assignment->bindingTarget)
                         accept(assignment->bindingTarget);
-                } else {
-                    accept(assignment->name);
                 }
                 if (assignment->initializer) {
                     if (bindingIdentifierExist) {
@@ -374,12 +366,12 @@ protected:
 
     bool visit(IdentifierPropertyName *ast) override
     {
-        out(ast->id.toString());
+        out(ast->propertyNameToken);
         return true;
     }
     bool visit(StringLiteralPropertyName *ast) override
     {
-        out(ast->id.toString());
+        out(ast->propertyNameToken);
         return true;
     }
     bool visit(NumericLiteralPropertyName *ast) override
