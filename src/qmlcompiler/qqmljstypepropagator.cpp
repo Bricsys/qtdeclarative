@@ -943,9 +943,17 @@ void QQmlJSTypePropagator::generate_StoreProperty(int nameIndex, int base)
                                     getCurrentSourceLocation());
     }
 
-    m_state.setHasSideEffects(true);
+    if (!property.property().reset().isEmpty()
+            && m_typeResolver->canHoldUndefined(m_state.accumulatorIn())) {
+        // If the property is resettable we must not coerce the input to the property type
+        // as that might eliminate an undefined value. For example, undefined -> string
+        // becomes "undefined".
+        setError(u"Cannot assign potential undefined to %1"_s.arg(property.descriptiveName()));
+    }
+
     addReadAccumulator(property);
     addReadRegister(base, callBase);
+    m_state.setHasSideEffects(true);
 }
 
 void QQmlJSTypePropagator::generate_SetLookup(int index, int base)
