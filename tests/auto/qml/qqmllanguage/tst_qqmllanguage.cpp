@@ -6785,6 +6785,7 @@ void tst_qqmllanguage::bareInlineComponent()
     QVERIFY(tab1Found);
 }
 
+#if QT_CONFIG(qml_debug)
 struct DummyDebugger : public QV4::Debugging::Debugger
 {
     bool pauseAtNextOpportunity() const final { return false; }
@@ -6793,6 +6794,9 @@ struct DummyDebugger : public QV4::Debugging::Debugger
     void leavingFunction(const QV4::ReturnedValue &) final { }
     void aboutToThrow() final { }
 };
+#else
+using DummyDebugger = QV4::Debugging::Debugger; // it's already dummy
+#endif
 
 void tst_qqmllanguage::hangOnWarning()
 {
