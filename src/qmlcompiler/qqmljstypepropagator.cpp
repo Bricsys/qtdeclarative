@@ -943,11 +943,13 @@ void QQmlJSTypePropagator::generate_StoreProperty(int nameIndex, int base)
                                     getCurrentSourceLocation());
     }
 
-    if (!property.property().reset().isEmpty()
+    if (!m_typeResolver->canHoldUndefined(property)
             && m_typeResolver->canHoldUndefined(m_state.accumulatorIn())) {
-        // If the property is resettable we must not coerce the input to the property type
-        // as that might eliminate an undefined value. For example, undefined -> string
-        // becomes "undefined".
+        // If the input can be undefined but the property cannot hold it
+        // we must not coerce the input to the property type:
+        // * In the case of resettable properties this would suppress a reset
+        // * In the case of non-resettable properties it would suppress an exception.
+        // For example, undefined -> string becomes "undefined".
         setError(u"Cannot assign potential undefined to %1"_s.arg(property.descriptiveName()));
     }
 

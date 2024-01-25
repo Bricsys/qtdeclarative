@@ -117,6 +117,7 @@ set(qml_files
     extendedTypes.qml
     failures.qml
     fallbacklookups.qml
+    fallbackresettable.qml
     fileDialog.qml
     fromBoolValue.qml
     functionLookup.qml

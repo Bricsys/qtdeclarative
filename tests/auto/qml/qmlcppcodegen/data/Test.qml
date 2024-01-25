@@ -1,4 +1,4 @@
-pragma Strict
+
 import TestTypes 1.0
 
 CppBaseClass {
