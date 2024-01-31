@@ -2191,6 +2191,7 @@ void QQmlJSTypePropagator::generate_InitializeBlockDeadTemporalZone(int firstReg
 {
     Q_UNUSED(firstReg)
     Q_UNUSED(count)
+    m_state.setHasSideEffects(true);
     // Ignore. We reject uninitialized values anyway.
 }
 
@@ -2308,6 +2309,13 @@ void QQmlJSTypePropagator::endInstruction(QV4::Moth::Instr::Type instr)
             setError(u"Instruction is expected to populate the accumulator"_s);
             return;
         }
+    }
+
+    if (!(m_error->isValid() && m_error->isError())
+        && instr != QV4::Moth::Instr::Type::DeadTemporalZoneCheck) {
+        // An instruction needs to have side effects or write to another register otherwise it's a
+        // noop. DeadTemporalZoneCheck is not needed by the compiler and is ignored.
+        Q_ASSERT(m_state.hasSideEffects() || m_state.changedRegisterIndex() != -1);
     }
 
     if (m_state.changedRegisterIndex() != InvalidRegister) {
