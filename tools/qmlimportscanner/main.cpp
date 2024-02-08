@@ -45,6 +45,7 @@ using FileImportsWithoutDepsCache = QHash<QString, QVariantList>;
 namespace {
 
 QStringList g_qmlImportPaths;
+bool g_addImportVersion = false;
 
 inline QString typeLiteral()         { return QStringLiteral("type"); }
 inline QString versionLiteral()      { return QStringLiteral("version"); }
@@ -437,7 +438,8 @@ getImportDetails(const QVariant &inputImport,
             import.insert(preferLiteral(), prefer);
         }
     }
-    import.remove(versionLiteral());
+    if (!g_addImportVersion)
+        import.remove(versionLiteral());
 
     const ImportDetailsAndDeps result = {import, dependencies};
     cache.insert({inputImport, result});
@@ -942,6 +944,8 @@ int main(int argc, char *argv[])
             outputFile = args.at(i);
             ++i;
             continue;
+        } else if (arg == QLatin1String("-add-version")) {
+            g_addImportVersion = true;
         } else {
             std::cerr << qPrintable(appName) << ": Invalid argument: \""
                 << qPrintable(arg) << "\"\n";
