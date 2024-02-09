@@ -29,6 +29,7 @@ private slots:
     void initTestCase();
 
     void simpleBinding();
+    void cppMethodListReturnType();
     void cppValueTypeList();
     void anchorsFill();
     void signalHandler();
@@ -219,6 +220,17 @@ void tst_QmlCppCodegen::simpleBinding()
         QCOMPARE(base->cppProp.value(), 9);
         QCOMPARE(base->cppProp2.value(), 18);
     }
+}
+
+void tst_QmlCppCodegen::cppMethodListReturnType()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, QUrl(u"qrc:/qt/qml/TestTypes/CppMethodListReturnType.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+
+    QCOMPARE(o->property("list").toList()[2].toInt(), 2);
 }
 
 void tst_QmlCppCodegen::cppValueTypeList()

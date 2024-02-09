@@ -299,7 +299,9 @@ void QQmlJSTypeDescriptionReader::readSignalOrMethod(UiObjectDefinition *ast, bo
             } else if (name == QLatin1String("isJavaScriptFunction")) {
                 metaMethod.setIsJavaScriptFunction(true);
             } else if (name == QLatin1String("isList")) {
-                // TODO: Theoretically this can happen. QQmlJSMetaMethod should store it.
+                auto metaReturnType = metaMethod.returnValue();
+                metaReturnType.setIsList(true);
+                metaMethod.setReturnValue(metaReturnType);
             } else if (name == QLatin1String("isPointer")) {
                 // TODO: We don't need this information. We can probably drop all isPointer members
                 //       once we make sure that the type information is always complete. The
@@ -429,6 +431,7 @@ void QQmlJSTypeDescriptionReader::readParameter(UiObjectDefinition *ast, QQmlJSM
     QString type;
     bool isConstant = false;
     bool isPointer = false;
+    bool isList = false;
 
     for (UiObjectMemberList *it = ast->initializer->members; it; it = it->next) {
         UiObjectMember *member = it->member;
@@ -450,7 +453,7 @@ void QQmlJSTypeDescriptionReader::readParameter(UiObjectDefinition *ast, QQmlJSM
         } else if (id == QLatin1String("isReadonly")) {
             // ### unhandled
         } else if (id == QLatin1String("isList")) {
-            // ### unhandled
+            isList = readBoolBinding(script);
         } else {
             addWarning(script->firstSourceLocation(),
                        tr("Expected only name and type script bindings."));
@@ -460,6 +463,7 @@ void QQmlJSTypeDescriptionReader::readParameter(UiObjectDefinition *ast, QQmlJSM
     QQmlJSMetaParameter p(name, type);
     p.setTypeQualifier(isConstant ? QQmlJSMetaParameter::Const : QQmlJSMetaParameter::NonConst);
     p.setIsPointer(isPointer);
+    p.setIsList(isList);
     metaMethod->addParameter(std::move(p));
 }
 
