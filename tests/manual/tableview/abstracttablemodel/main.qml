@@ -179,6 +179,10 @@ ApplicationWindow {
                             "AnyKeyPressed",
                         ]
                     }
+                    Button {
+                        text: "Clear selection"
+                        onClicked: tableView.selectionModel.clearSelection()
+                    }
                 }
             }
 
