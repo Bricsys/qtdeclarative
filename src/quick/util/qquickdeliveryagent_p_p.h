@@ -195,6 +195,10 @@ public:
     static bool dragOverThreshold(qreal d, Qt::Axis axis, const QEventPoint &tp, int startDragThreshold = -1);
 
     static bool dragOverThreshold(QVector2D delta);
+
+    // context menu events
+    QVector<QQuickItem *> contextMenuTargets(QQuickItem *item, const QContextMenuEvent *contextMenuEvent) const;
+    void deliverContextMenuEvent(QContextMenuEvent *event);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QQuickDeliveryAgentPrivate::FocusOptions)

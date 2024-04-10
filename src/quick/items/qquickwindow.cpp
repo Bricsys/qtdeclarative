@@ -1549,6 +1549,12 @@ bool QQuickWindow::event(QEvent *event)
 
         d->deliveryAgentPrivate()->clearGrabbers(pe);
 
+        if (pe->type() == QEvent::MouseButtonPress || pe->type() == QEvent::MouseButtonRelease) {
+            // Ensure that we synthesize a context menu event as QWindow::event does, if necessary.
+            // We only send the context menu event if the pointer event wasn't accepted (ret == false).
+            d->maybeSynthesizeContextMenuEvent(static_cast<QMouseEvent *>(pe));
+        }
+
         if (ret)
             return true;
     } else if (event->isInputEvent()) {
@@ -1640,6 +1646,19 @@ bool QQuickWindow::event(QEvent *event)
         return true;
     else
         return QWindow::event(event);
+}
+
+void QQuickWindowPrivate::maybeSynthesizeContextMenuEvent(QMouseEvent *event)
+{
+    // See comment in QQuickWindow::event; we need to follow that pattern here,
+    // otherwise the context menu event will be sent before the press (since
+    // QQuickWindow::mousePressEvent returns early if windowEventDispatch is true).
+    // If we don't do this, the incorrect order will cause the the menu to
+    // immediately close when the press is delivered.
+    if (windowEventDispatch)
+        return;
+
+    QWindowPrivate::maybeSynthesizeContextMenuEvent(event);
 }
 
 void QQuickWindowPrivate::updateChildWindowStackingOrder(QQuickItem *item)

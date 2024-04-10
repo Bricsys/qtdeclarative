@@ -35,6 +35,7 @@ Q_STATIC_LOGGING_CATEGORY(lcPtrLoc, "qt.quick.pointer.localization")
 Q_STATIC_LOGGING_CATEGORY(lcWheelTarget, "qt.quick.wheel.target")
 Q_LOGGING_CATEGORY(lcHoverTrace, "qt.quick.hover.trace")
 Q_LOGGING_CATEGORY(lcFocus, "qt.quick.focus")
+Q_STATIC_LOGGING_CATEGORY(lcContextMenu, "qt.quick.contextmenu")
 
 extern Q_GUI_EXPORT bool qt_sendShortcutOverrideEvent(QObject *o, ulong timestamp, int k, Qt::KeyboardModifiers mods, const QString &text = QString(), bool autorep = false, ushort count = 1);
 
@@ -931,6 +932,11 @@ bool QQuickDeliveryAgent::event(QEvent *ev)
             QQuickWindowPrivate::get(d->rootItem->window())->updateCursor(tabletEvent->scenePosition(), d->rootItem);
 #endif
         }
+        break;
+#endif
+#ifndef QT_NO_CONTEXTMENU
+    case QEvent::ContextMenu:
+        d->deliverContextMenuEvent(static_cast<QContextMenuEvent *>(ev));
         break;
 #endif
     default:
@@ -2885,6 +2891,76 @@ bool QQuickDeliveryAgentPrivate::dragOverThreshold(QVector2D delta)
 {
     int threshold = qApp->styleHints()->startDragDistance();
     return qAbs(delta.x()) > threshold || qAbs(delta.y()) > threshold;
+}
+
+/*!
+    \internal
+
+    Returns all items that could potentially want context menu events.
+
+    An unfortunate copy of logic from \l pointerTargets(),
+    necessary because QContextMenuEvent is not a QPointerEvent.
+
+    TODO Qt 7: get rid of it somehow if possible
+*/
+QVector<QQuickItem *> QQuickDeliveryAgentPrivate::contextMenuTargets(QQuickItem *item, const QContextMenuEvent *contextMenuEvent) const
+{
+    QVector<QQuickItem *> targets;
+    auto itemPrivate = QQuickItemPrivate::get(item);
+    const QPointF itemPos = item->mapFromScene(contextMenuEvent->pos());
+    const bool relevant = item->contains(itemPos);
+    // if the item clips, we can potentially return early
+    if (itemPrivate->flags & QQuickItem::ItemClipsChildrenToShape) {
+        if (!item->clipRect().contains(itemPos))
+            return targets;
+    }
+
+    QList<QQuickItem *> children = itemPrivate->paintOrderChildItems();
+    if (relevant) {
+        auto it = std::lower_bound(children.begin(), children.end(), 0,
+                                   [](auto lhs, auto rhs) -> bool { return lhs->z() < rhs; });
+        children.insert(it, item);
+    }
+
+    for (int ii = children.size() - 1; ii >= 0; --ii) {
+        QQuickItem *child = children.at(ii);
+        auto childPrivate = QQuickItemPrivate::get(child);
+        if (!child->isVisible() || !child->isEnabled() || childPrivate->culled ||
+            (child != item && childPrivate->extra.isAllocated() && childPrivate->extra->subsceneDeliveryAgent))
+            continue;
+
+        if (child != item)
+            targets << contextMenuTargets(child, contextMenuEvent);
+        else
+            targets << child;
+    }
+
+    return targets;
+}
+
+/*!
+    \internal
+
+    Based on \l deliverPointerEvent().
+*/
+void QQuickDeliveryAgentPrivate::deliverContextMenuEvent(QContextMenuEvent *event)
+{
+    skipDelivery.clear();
+    QVector<QQuickItem *> targetItems = contextMenuTargets(rootItem, event);
+    qCDebug(lcContextMenu) << "delivering context menu event" << event << "to" << targetItems.size() << "target item(s)";
+    QVector<QPointer<QQuickItem>> safeTargetItems(targetItems.begin(), targetItems.end());
+    for (auto &item : safeTargetItems) {
+        qCDebug(lcContextMenu) << "- attempting to deliver to" << item;
+        if (item.isNull())
+            continue;
+        // failsafe: when items get into a subscene somehow, ensure that QQuickItemPrivate::deliveryAgent() can find it
+        if (isSubsceneAgent)
+            QQuickItemPrivate::get(item)->maybeHasSubsceneDeliveryAgent = true;
+
+        QCoreApplication::sendEvent(item, event);
+        if (event->isAccepted())
+            return;
+    }
 }
 
 #ifndef QT_NO_DEBUG_STREAM

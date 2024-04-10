@@ -9182,6 +9182,8 @@ bool QQuickItem::event(QEvent *ev)
         for (QQuickItem *item : std::as_const(d->childItems))
             QCoreApplication::sendEvent(item, ev);
         break;
+    case QEvent::ContextMenu:
+        // ### Qt 7: add virtual contextMenuEvent (and to QWindow?)
     default:
         return QObject::event(ev);
     }

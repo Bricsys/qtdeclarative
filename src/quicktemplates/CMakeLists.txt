@@ -27,6 +27,7 @@ qt_internal_add_qml_module(QuickTemplates2
         qquickcheckbox.cpp qquickcheckbox_p.h
         qquickcheckdelegate.cpp qquickcheckdelegate_p.h
         qquickcontentitem.cpp qquickcontentitem_p.h
+        qquickcontextmenu.cpp qquickcontextmenu_p.h
         qquickcontrol.cpp qquickcontrol_p.h
         qquickcontrol_p_p.h
         qquickdeferredexecute.cpp
