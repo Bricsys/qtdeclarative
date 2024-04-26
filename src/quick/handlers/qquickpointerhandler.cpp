@@ -498,6 +498,9 @@ QPointerEvent *QQuickPointerHandler::currentEvent()
 */
 bool QQuickPointerHandler::setExclusiveGrab(QPointerEvent *ev, const QEventPoint &point, bool grab)
 {
+    // If the handler loses its grab because its window is deactivated, there's no QPointerEvent.
+    if (!ev)
+        return true;
     if ((grab && ev->exclusiveGrabber(point) == this) || (!grab && ev->exclusiveGrabber(point) != this))
         return true;
     // TODO m_hadKeepMouseGrab m_hadKeepTouchGrab
