@@ -532,9 +532,6 @@ void QQuickRectangle::setRadius(qreal radius)
     If \l topLeftRadius is not set, \l radius will be used instead.
     If \l topLeftRadius is zero, the corner will be sharp.
 
-    \note This API is considered tech preview and may change or be removed in
-    future versions of Qt.
-
     \sa radius, topRightRadius, bottomLeftRadius, bottomRightRadius
 */
 qreal QQuickRectangle::topLeftRadius() const
@@ -584,9 +581,6 @@ void QQuickRectangle::resetTopLeftRadius()
 
     If \l topRightRadius is not set, \l radius will be used instead.
     If \l topRightRadius is zero, the corner will be sharp.
-
-    \note This API is considered tech preview and may change or be removed in
-    future versions of Qt.
 
     \sa radius, topLeftRadius, bottomLeftRadius, bottomRightRadius
 */
@@ -638,9 +632,6 @@ void QQuickRectangle::resetTopRightRadius()
     If \l bottomLeftRadius is not set, \l radius will be used instead.
     If \l bottomLeftRadius is zero, the corner will be sharp.
 
-    \note This API is considered tech preview and may change or be removed in
-    future versions of Qt.
-
     \sa radius, topLeftRadius, topRightRadius, bottomRightRadius
 */
 qreal QQuickRectangle::bottomLeftRadius() const
@@ -690,9 +681,6 @@ void QQuickRectangle::resetBottomLeftRadius()
 
     If \l bottomRightRadius is not set, \l radius will be used instead.
     If \l bottomRightRadius is zero, the corner will be sharp.
-
-    \note This API is considered tech preview and may change or be removed in
-    future versions of Qt.
 
     \sa radius, topLeftRadius, topRightRadius, bottomLeftRadius
 */
