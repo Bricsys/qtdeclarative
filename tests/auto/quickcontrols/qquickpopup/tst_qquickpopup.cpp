@@ -133,6 +133,8 @@ private slots:
     void noInfiniteRecursionOnParentWindowDestruction();
     void popupWindowDestructedBeforeQQuickPopup();
     void popupWindowWithPaddingFromSafeArea();
+    void popupWindowPositionerRespectingScreenBounds_data();
+    void popupWindowPositionerRespectingScreenBounds();
 
 private:
     QScopedPointer<QPointingDevice> touchScreen = QScopedPointer<QPointingDevice>(QTest::createTouchDevice());
@@ -2905,6 +2907,8 @@ void tst_QQuickPopup::popupWindowChangingParent()
 
     VERIFY_GLOBAL_POS(item3, popupWindow, initialPos);
     VERIFY_LOCAL_POS(popup, initialPos);
+
+    popup->close();
 }
 
 void tst_QQuickPopup::popupWindowChangingParentWindow()
@@ -3247,6 +3251,120 @@ void tst_QQuickPopup::popupWindowWithPaddingFromSafeArea()
     QCOMPARE(popupWindow->height(), dialogHeight);
     QCOMPARE(dialog->width(), dialogWidth);
     QCOMPARE(dialog->height(), dialogHeight);
+}
+
+void tst_QQuickPopup::popupWindowPositionerRespectingScreenBounds_data()
+{
+    QTest::addColumn<QQuickPopup::PopupType>("popupType");
+    QTest::newRow("Popup.Item") << QQuickPopup::Item;
+    if (popupWindowsSupported &&
+        QGuiApplicationPrivate::platformIntegration()->hasCapability(QPlatformIntegration::WindowActivation))
+        QTest::newRow("Popup.Window") << QQuickPopup::Window;
+}
+
+void tst_QQuickPopup::popupWindowPositionerRespectingScreenBounds()
+{
+    QFETCH(QQuickPopup::PopupType, popupType);
+
+    QQuickApplicationHelper helper(this, "simplepopup.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    window->show();
+    QVERIFY(QTest::qWaitForWindowExposed(window));
+
+    auto *popup = window->contentItem()->findChild<QQuickPopup *>();
+    QVERIFY(popup);
+    auto *popupPrivate = QQuickPopupPrivate::get(popup);
+    QVERIFY(popupPrivate);
+
+    popup->setPopupType(popupType);
+    popup->open();
+    QTRY_VERIFY(popup->isOpened());
+
+    class AbstractBoundsFinder {
+    public:
+        virtual QRectF operator()() const = 0;
+        virtual ~AbstractBoundsFinder() = default;
+    };
+
+    std::unique_ptr<AbstractBoundsFinder> abf;
+
+    if (popupPrivate->usePopupWindow()) {
+        popupPrivate->popupWindow->requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(popupPrivate->popupWindow));
+        QCOMPARE(popupPrivate->popupWindow, popup->contentItem()->window());
+        QVERIFY(QQuickTest::qWaitForPolish(popupPrivate->popupWindow));
+
+        class ScreenBoundsFinder : public AbstractBoundsFinder {
+        public:
+            explicit ScreenBoundsFinder(QScreen *screen)
+                : m_screen(screen) {}
+            QRectF operator()() const override {
+                return m_screen->availableGeometry().toRectF();
+            }
+        private:
+            QScreen *m_screen = nullptr;
+        };
+
+        QScreen *screen = QGuiApplication::primaryScreen();
+        QVERIFY(screen);
+
+        abf.reset(new ScreenBoundsFinder(screen));
+    } else {
+        popupPrivate->allowHorizontalFlip = true;
+        popupPrivate->allowVerticalFlip = true;
+        popupPrivate->allowHorizontalMove = true;
+        popupPrivate->allowVerticalMove = true;
+
+        class WindowBoundsFinder : public AbstractBoundsFinder {
+        public:
+            explicit WindowBoundsFinder(QWindow *win)
+                : m_window(win) {}
+            QRectF operator()() const override {
+                return QRectF (m_window->x(), m_window->y(), m_window->width(), m_window->height());
+            }
+        private:
+            QWindow *m_window = nullptr;
+        };
+
+        abf.reset(new WindowBoundsFinder(window));
+    }
+
+    const QPointF positionOutsideTopLeftBound = (*abf)().bottomRight() * -1;
+    const QPointF positionOutsideBottomRightBound = (*abf)().bottomRight() * 2;
+
+    QSignalSpy xSpy(popup, &QQuickPopup::xChanged);
+    QSignalSpy ySpy(popup, &QQuickPopup::yChanged);
+
+    popup->setX(positionOutsideTopLeftBound.x());
+    QTRY_COMPARE(xSpy.count(), 1);
+    QVERIFY(QQuickTest::qWaitForPolish(window));
+    QTRY_VERIFY2(qAbs(window->contentItem()->mapToGlobal(popup->x(), popup->y()).x() - (*abf)().left()) < 2,
+                 qPrintable(QStringLiteral("Expected popup's x position to be %1 but it's %2")
+                            .arg((*abf)().left()).arg(window->contentItem()->mapToGlobal(popup->x(), popup->y()).x())));
+
+    popup->setY(positionOutsideTopLeftBound.y());
+    QTRY_COMPARE(ySpy.count(), 1);
+    QVERIFY(QQuickTest::qWaitForPolish(window));
+    QTRY_VERIFY2(qAbs(window->contentItem()->mapToGlobal(popup->x(), popup->y()).y() - (*abf)().top()) < 2,
+                 qPrintable(QStringLiteral("Expected popup's y position to be %1 but it's %2")
+                            .arg((*abf)().top()).arg(window->contentItem()->mapToGlobal(popup->x(), popup->y()).y())));
+
+    popup->setX(positionOutsideBottomRightBound.x());
+    QTRY_COMPARE(xSpy.count(), 2);
+    QVERIFY(QQuickTest::qWaitForPolish(window));
+    QTRY_VERIFY2(qAbs(window->contentItem()->mapToGlobal(popup->x(), popup->y()).x() - ((*abf)().right() - popup->width())) < 2,
+                 qPrintable(QStringLiteral("Expected popup's x position to be %1 but it's %2")
+                            .arg((*abf)().right() - popup->width()).arg(window->contentItem()->mapToGlobal(popup->x(), popup->y()).x())));
+
+    popup->setY(positionOutsideBottomRightBound.y());
+    QTRY_COMPARE(ySpy.count(), 2);
+    QVERIFY(QQuickTest::qWaitForPolish(window));
+    QTRY_VERIFY2(qAbs(window->contentItem()->mapToGlobal(popup->x(), popup->y()).y() - ((*abf)().bottom() - popup->height())) < 2,
+                 qPrintable(QStringLiteral("Expected popup's y position to be %1 but it's %2")
+                            .arg((*abf)().bottom() - popup->height()).arg(window->contentItem()->mapToGlobal(popup->x(), popup->y()).y())));
+
+    popup->close();
 }
 
 QTEST_QUICKCONTROLS_MAIN(tst_QQuickPopup)
