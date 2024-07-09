@@ -41,6 +41,8 @@ public:
           , processPending(false), asynchronous(false), useCustomPath(false)
     {}
 
+    void appendPathElement(QQuickPathElement *pathElement);
+
     QPainterPath _path;
     QList<QQuickPathElement*> _pathElements;
     mutable QVector<QPointF> _pointCache;

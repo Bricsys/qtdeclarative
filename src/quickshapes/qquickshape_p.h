@@ -408,6 +408,8 @@ public:
     Q_REVISION(6, 7) void setVerticalAlignment(VAlignment newVerticalAlignment);
 
 protected:
+    QQuickShape(QQuickShapePrivate &dd, QQuickItem *parent);
+
     QSGNode *updatePaintNode(QSGNode *node, UpdatePaintNodeData *) override;
     void updatePolish() override;
     void itemChange(ItemChange change, const ItemChangeData &data) override;

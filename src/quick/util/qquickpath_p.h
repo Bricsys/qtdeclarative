@@ -27,6 +27,7 @@ QT_REQUIRE_CONFIG(quick_path);
 #include <private/qtquickglobal_p.h>
 
 #include <QtCore/QObject>
+#include <QtCore/QDebug>
 #include <QtCore/QHash>
 #include <QtGui/QPainterPath>
 #include <QtGui/QFont>
@@ -34,6 +35,9 @@ QT_REQUIRE_CONFIG(quick_path);
 QT_BEGIN_NAMESPACE
 
 class QQuickCurve;
+class QQuickCurvePrivate;
+class QQuickPathElementPrivate;
+
 struct QQuickPathData
 {
     int index;
@@ -50,6 +54,9 @@ public:
     QQuickPathElement(QObject *parent=nullptr) : QObject(parent) {}
 Q_SIGNALS:
     void changed();
+
+protected:
+    QQuickPathElement(QQuickPathElementPrivate &dd, QObject *parent = nullptr);
 };
 
 class Q_QUICK_EXPORT QQuickPathAttribute : public QQuickPathElement
@@ -117,6 +124,10 @@ Q_SIGNALS:
     void relativeYChanged();
 
 private:
+#ifndef QT_NO_DEBUG_STREAM
+    friend Q_QUICK_EXPORT QDebug operator<<(QDebug debug, const QQuickCurve *curve);
+#endif
+
     QQmlNullableValue<qreal> _x;
     QQmlNullableValue<qreal> _y;
     QQmlNullableValue<qreal> _relativeX;

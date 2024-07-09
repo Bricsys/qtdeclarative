@@ -116,6 +116,8 @@ public:
 
     void handleSceneChange();
 
+    void writeToDebugStream(QDebug &debug) const override;
+
     static QQuickShapePathPrivate *get(QQuickShapePath *p) { return p->d_func(); }
 
     int dirty;
@@ -123,13 +125,15 @@ public:
     QQuickShapePath::PathHints pathHints;
 };
 
-class QQuickShapePrivate : public QQuickItemPrivate
+class Q_QUICKSHAPES_EXPORT QQuickShapePrivate : public QQuickItemPrivate
 {
     Q_DECLARE_PUBLIC(QQuickShape)
 
 public:
     QQuickShapePrivate();
     ~QQuickShapePrivate();
+
+    void init();
 
     QQuickShape::RendererType selectRendererType();
     void createRenderer();

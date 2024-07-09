@@ -86,6 +86,7 @@ exampledirs += \
     ../../qmlmodels/doc/snippets \
     ../../quickcontrols/doc/snippets \
     snippets \
+    ../../quickshapes/designhelpers/doc/snippets \
     ../../../tests/auto/quick/doc \
     ../../../examples/platforms
 
