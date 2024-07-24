@@ -68,6 +68,8 @@ private slots:
     void passwordTest();
     void announceTest();
     void eventTest();
+    void relations_data();
+    void relations();
 };
 
 tst_QQuickAccessible::tst_QQuickAccessible()
@@ -873,6 +875,51 @@ void tst_QQuickAccessible::eventTest()
     QCOMPARE(QTestAccessibility::events().size(), 1);
     QAccessibleEvent ev(buttonItem, QAccessible::LocationChanged);
     QTestAccessibility::verifyEvent(&ev);
+}
+
+void tst_QQuickAccessible::relations_data()
+{
+    QTest::addColumn<QString>("item");
+    QTest::addColumn<QString>("other");
+    QTest::addColumn<QAccessible::Relation>("relation");
+
+    QTest::addRow("label labels textInput")
+        << "label" << "textInput"
+        << QAccessible::Relation(QAccessible::Label);
+    QTest::addRow("textInput labelled by label")
+        << "textInput" << "label"
+        << QAccessible::Relation(QAccessible::Labelled);
+}
+void tst_QQuickAccessible::relations()
+{
+    auto clearEvents = qScopeGuard([]{ QTestAccessibility::clearEvents(); });
+
+    QFETCH(const QString, item);
+    QFETCH(const QString, other);
+    QFETCH(const QAccessible::Relation, relation);
+
+    auto window = std::make_unique<QQuickView>();
+    window->setSource(testFileUrl("relations.qml"));
+    window->show();
+
+    QObject *itemObject = window->findChild<QQuickItem *>(item);
+    QVERIFY(itemObject);
+    QAccessibleInterface *itemIface = QAccessible::queryAccessibleInterface(itemObject);
+    QVERIFY(itemIface);
+    QObject *otherObject = window->findChild<QQuickItem *>(other);
+    QVERIFY(otherObject);
+    QAccessibleInterface *otherIface = QAccessible::queryAccessibleInterface(otherObject);
+    QVERIFY(otherIface);
+
+    const QList<std::pair<QAccessibleInterface *, QAccessible::Relation>> expected{
+        {otherIface, relation}
+    };
+
+    const auto itemRelations = itemIface->relations();
+    QCOMPARE(itemRelations, expected);
+
+    const auto otherRelations = otherIface->relations();
+    QVERIFY(!otherRelations.isEmpty());
 }
 
 QTEST_MAIN(tst_QQuickAccessible)

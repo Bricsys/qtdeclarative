@@ -462,6 +462,29 @@ QAccessible::State QAccessibleQuickItem::state() const
     return state;
 }
 
+QList<std::pair<QAccessibleInterface *, QAccessible::Relation>>
+QAccessibleQuickItem::relations(QAccessible::Relation match) const
+{
+    QList<std::pair<QAccessibleInterface *, QAccessible::Relation>> rels =
+            QAccessibleObject::relations(match);
+    if (QQuickAccessibleAttached *attached = QQuickAccessibleAttached::attachedProperties(item())) {
+        if (match & QAccessible::Labelled) {
+            if (auto *labelledBy = attached->labelledBy()) {
+                rels.append({QAccessible::queryAccessibleInterface(labelledBy),
+                             QAccessible::Labelled});
+            }
+        }
+
+        if (match & QAccessible::Label) {
+            if (auto *labelFor = attached->labelFor()) {
+                rels.append({QAccessible::queryAccessibleInterface(labelFor),
+                             QAccessible::Label});
+            }
+        }
+    }
+    return rels;
+}
+
 QAccessible::Role QAccessibleQuickItem::role() const
 {
     // Workaround for setAccessibleRole() not working for

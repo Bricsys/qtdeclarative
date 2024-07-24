@@ -243,6 +243,24 @@ QT_BEGIN_NAMESPACE
 
     By default this property is \c false.
 */
+/*! \qmlproperty Item QtQuick::Accessible::labelledBy
+    \brief This property holds the item that is used as a label for this item.
+
+    Setting this property automatically sets up the labelFor relation of the other object.
+
+    By default this property is \c undefined.
+
+    \since 6.10
+ */
+/*! \qmlproperty Item QtQuick::Accessible::labelFor
+    \brief This property holds the item that this item is a label for.
+
+    Setting this property automatically sets up the labelledBy relation of the other object.
+
+    By default this property is \c undefined.
+
+    \since 6.10
+ */
 
 /*!
     \qmlsignal QtQuick::Accessible::pressAction()
@@ -596,6 +614,16 @@ void QQuickAccessibleAttached::announce(const QString &message, QAccessible::Ann
     QAccessibleAnnouncementEvent event(parent(), message);
     event.setPoliteness(politeness);
     QAccessible::updateAccessibility(&event);
+}
+
+QQuickItem *QQuickAccessibleAttached::findRelation(QAccessible::Relation relation) const
+{
+    const auto it = std::find_if(m_relations.cbegin(), m_relations.cend(),
+                                 [relation](const auto &rel) {
+        return rel.second == relation;
+    });
+
+    return it != m_relations.cend() ? it->first : nullptr;
 }
 
 QT_END_NAMESPACE
