@@ -420,7 +420,7 @@ public:
     }
 
     struct ExtraData {
-        ExtraData();
+        Q_QUICK_EXPORT ExtraData();
 
         qreal z;
         qreal scale;
