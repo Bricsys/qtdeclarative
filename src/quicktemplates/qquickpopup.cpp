@@ -1121,15 +1121,21 @@ void QQuickPopupPrivate::adjustPopupItemParentAndWindow()
                 const qreal initialHeight = popupItem->height() + windowInsets().top() + windowInsets().bottom();
                 popupItem->setParentItem(popupWindow->contentItem());
                 popupWindow->resize(qCeil(initialWidth), qCeil(initialHeight));
-                popupWindow->setModality(modal ? Qt::ApplicationModal : Qt::NonModal);
+                if (popupWndModality != Qt::NonModal)
+                    popupWindow->setModality(popupWndModality);
+                else
+                    popupWindow->setModality(modal ? Qt::ApplicationModal : Qt::NonModal);
                 popupItem->resetTitle();
                 popupWindow->setTitle(title);
             }
             popupItem->setParentItem(popupWindow->contentItem());
             popupItem->forceActiveFocus(Qt::PopupFocusReason);
         }
-        if (popupWindow)
-            popupWindow->setVisible(visible);
+        if (popupWindow && popupWindow->transientParent()) {
+            auto *transientParentPriv = QQuickWindowPrivate::get(qobject_cast<QQuickWindow *>(popupWindow->transientParent()));
+            if (!transientParentPriv->inDestructor)
+                popupWindow->setVisible(visible);
+        }
     } else {
         if (visible) {
             popupItem->setParentItem(overlay);
@@ -1152,6 +1158,7 @@ void QQuickPopupPrivate::adjustPopupItemParentAndWindow()
                 if (!hasZ)
                     popupItem->setZ(qMax(topPopupItem->z(), popupItem->z()));
             }
+            q->setModal((popupWndModality != Qt::NonModal) || modal);
         }
 
         popupItem->setTitle(title);
@@ -3423,6 +3430,12 @@ bool QQuickPopup::setAccessibleProperty(const char *propertyName, const QVariant
 {
     Q_D(QQuickPopup);
     return d->popupItem->setAccessibleProperty(propertyName, value);
+}
+
+void QQuickPopup::setWindowModality(const Qt::WindowModality modality)
+{
+    Q_D(QQuickPopup);
+    d->popupWndModality = modality;
 }
 
 QQuickItem *QQuickPopup::safeAreaAttachmentItem()
