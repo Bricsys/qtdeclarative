@@ -84,6 +84,7 @@ private:
     void generateTransform(const QTransform &xf);
     void generatePathContainer(const StructureNodeInfo &info);
     void generateAnimateColor(const QString &targetName, const QString &propertyName, const NodeInfo::AnimateColor &animateColor, const QColor &resetColor);
+    void generateAnimateTransform(const QString &targetName, const NodeInfo &info);
 
     QStringView indent();
     enum StreamFlags { NoFlags = 0x0, SameLine = 0x1 };

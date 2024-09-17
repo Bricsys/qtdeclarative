@@ -80,28 +80,53 @@ QString QQuickQmlGenerator::commentString() const
 
 void QQuickQmlGenerator::generateNodeBase(const NodeInfo &info)
 {
-    m_indentLevel++;
     if (!info.nodeId.isEmpty())
         stream() << "objectName: \"" << info.nodeId << "\"";
-    if (!info.isDefaultTransform) {
-        auto sx = info.transform.m11();
-        auto sy = info.transform.m22();
-        auto x = info.transform.m31();
-        auto y = info.transform.m32();
-        if (info.transform.type() == QTransform::TxTranslate) {
-            stream() << "transform: Translate { " << "x: " << x << "; y: " << y << " }";
-        } else if (info.transform.type() == QTransform::TxScale && !x && !y) {
-            stream() << "transform: Scale { xScale: " << sx << "; yScale: " << sy << " }";
-        } else {
-            stream() << "transform: Matrix4x4 { matrix: ";
-            generateTransform(info.transform);
-            stream(SameLine) << " }";
-        }
-    }
-    if (!info.isDefaultOpacity) {
+
+    static int counter = 0;
+    const QString idString = QStringLiteral("_qt_node%1").arg(counter++);
+    stream() << "id: " << idString;
+
+    if (!info.isDefaultOpacity)
         stream() << "opacity: " << info.opacity;
+
+    if (!info.transformAnimation.animationTypes.isEmpty()) {
+        stream() << "transform: [";
+        m_indentLevel++;
+        for (int i = info.transformAnimation.animationTypes.size() - 1; i >= 0; --i) {
+            switch (info.transformAnimation.animationTypes.at(i)) {
+            case QTransform::TxTranslate:
+                stream() << "Translate { id: " << idString << "_transform_" << i << " }";
+                break;
+            case QTransform::TxScale:
+                stream() << "Scale { id: " << idString << "_transform_" << i << "}";
+                break;
+            case QTransform::TxRotate:
+                stream() << "Rotation { id: " << idString << "_transform_" << i << "; origin.x: " << idString << ".width / 2.0; origin.y: " << idString << ".height / 2.0 }";
+                break;
+            case QTransform::TxShear:
+                stream() << "Shear { id: " << idString << "_transform_" << i << " }";
+                break;
+            default:
+                Q_UNREACHABLE();
+            }
+
+            if (i > 0)
+                stream(SameLine) << ",";
+        }
+
+        if (!info.isDefaultTransform)
+            stream() << ", Matrix4x4 { id: " << idString << "_transform_base }";
+
+        m_indentLevel--;
+        stream() << "]";
+
+        generateAnimateTransform(idString, info);
+    } else if (!info.isDefaultTransform) {
+        stream() << "transform: Matrix4x4 { matrix: ";
+        generateTransform(info.transform);
+        stream(SameLine) << "}";
     }
-    m_indentLevel--;
 }
 
 bool QQuickQmlGenerator::generateDefsNode(const NodeInfo &info)
@@ -151,8 +176,8 @@ void QQuickQmlGenerator::generateImageNode(const ImageNodeInfo &info)
 
     stream() << "Image {";
 
-    generateNodeBase(info);
     m_indentLevel++;
+    generateNodeBase(info);
     stream() << "x: " << info.rect.x();
     stream() << "y: " << info.rect.y();
     stream() << "width: " << info.rect.width();
@@ -177,9 +202,9 @@ void QQuickQmlGenerator::generatePath(const PathNodeInfo &info, const QRectF &ov
         m_inShapeItem = true;
         stream() << shapeName() << " {";
 
+        m_indentLevel++;
         generateNodeBase(info);
 
-        m_indentLevel++;
         if (m_flags.testFlag(QQuickVectorImageGenerator::GeneratorFlag::CurveRenderer))
             stream() << "preferredRendererType: Shape.CurveRenderer";
         optimizePaths(info, overrideBoundingRect);
@@ -364,7 +389,9 @@ void QQuickQmlGenerator::generateNode(const NodeInfo &info)
     stream() << "// Missing Implementation for SVG Node: " << info.typeName;
     stream() << "// Adding an empty Item and skipping";
     stream() << "Item {";
+    m_indentLevel++;
     generateNodeBase(info);
+    m_indentLevel--;
     stream() << "}";
 }
 
@@ -375,8 +402,8 @@ void QQuickQmlGenerator::generateTextNode(const TextNodeInfo &info)
 
     static int counter = 0;
     stream() << "Item {";
-    generateNodeBase(info);
     m_indentLevel++;
+    generateNodeBase(info);
 
     if (!info.isTextArea)
         stream() << "Item { id: textAlignItem_" << counter << "; x: " << info.position.x() << "; y: " << info.position.y() << "}";
@@ -462,8 +489,8 @@ void QQuickQmlGenerator::generateUseNode(const UseNodeInfo &info)
 
     if (info.stage == StructureNodeStage::Start) {
         stream() << "Item {";
-        generateNodeBase(info);
         m_indentLevel++;
+        generateNodeBase(info);
         stream() << "x: " << info.startPos.x();
         stream() << "y: " << info.startPos.y();
     } else {
@@ -482,6 +509,146 @@ void QQuickQmlGenerator::generatePathContainer(const StructureNodeInfo &info)
     m_indentLevel--;
 
     m_inShapeItem = true;
+}
+
+void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, const NodeInfo &info)
+{
+    // Main animation which contains one animation for the finite part and optionally
+    // one animation for the infinite part
+    stream() << "SequentialAnimation {";
+    m_indentLevel++;
+    stream() << "running: true";
+
+    stream() << "SequentialAnimation {";
+    m_indentLevel++;
+
+    const auto &keyFrames = info.transformAnimation.keyFrames;
+    qreal previousTimeCode = 0.0;
+
+    bool inFinitePart = true;
+    for (auto it = keyFrames.constBegin(); it != keyFrames.constEnd(); ++it) {
+        const auto &keyFrame = it.value();
+        const qreal timeCode = it.key().toReal();
+        const qreal frameTime = timeCode - previousTimeCode;
+        previousTimeCode = timeCode;
+
+        if (keyFrame.indefiniteAnimation && inFinitePart) {
+            m_indentLevel--;
+            stream() << "}";
+            stream() << "SequentialAnimation {";
+            m_indentLevel++;
+            stream() << "loops: Animation.Infinite";
+
+            inFinitePart = false;
+        }
+
+        stream() << "ParallelAnimation {";
+        m_indentLevel++;
+
+        for (int i = 0; i < info.transformAnimation.animationTypes.size(); ++i) {
+            switch (info.transformAnimation.animationTypes.at(i)) {
+            case QTransform::TxTranslate:
+                stream() << "PropertyAnimation {";
+                m_indentLevel++;
+                stream() << "duration: " << frameTime;
+                stream() << "target: " << targetName << "_transform_" << i;
+                stream() << "property: \"x\"";
+                stream() << "to: " << keyFrame.values.at(i * 3);
+                m_indentLevel--;
+                stream() << "}";
+
+                stream() << "PropertyAnimation {";
+                m_indentLevel++;
+                stream() << "duration: " << frameTime;
+                stream() << "target: " << targetName << "_transform_" << i;
+                stream() << "property: \"y\"";
+                stream() << "to: " << keyFrame.values.at(i * 3 + 1);
+                m_indentLevel--;
+                stream() << "}";
+                break;
+            case QTransform::TxScale:
+                stream() << "PropertyAnimation {";
+                m_indentLevel++;
+                stream() << "duration: " << frameTime;
+                stream() << "target: " << targetName << "_transform_" << i;
+                stream() << "property: \"xScale\"";
+                stream() << "to: " << keyFrame.values.at(i * 3);
+                m_indentLevel--;
+                stream() << "}";
+
+                stream() << "PropertyAnimation {";
+                m_indentLevel++;
+                stream() << "duration: " << frameTime;
+                stream() << "target: " << targetName << "_transform_" << i;
+                stream() << "property: \"yScale\"";
+                stream() << "to: " << keyFrame.values.at(i * 3 + 1);
+                m_indentLevel--;
+                stream() << "}";
+                break;
+            case QTransform::TxRotate:
+                stream() << "PropertyAnimation {";
+                m_indentLevel++;
+                stream() << "duration: " << frameTime;
+                stream() << "target: " << targetName << "_transform_" << i;
+                stream() << "property: \"origin\"";
+                stream() << "to: Qt.vector3d(" << keyFrame.values.at(i * 3) << ", " << keyFrame.values.at(i * 3 + 1) << ", 0.0)";
+                m_indentLevel--;
+                stream() << "}";
+
+                stream() << "PropertyAnimation {";
+                m_indentLevel++;
+                stream() << "duration: " << frameTime;
+                stream() << "target: " << targetName << "_transform_" << i;
+                stream() << "property: \"angle\"";
+                stream() << "to: " << keyFrame.values.at(i * 3 + 2);
+                m_indentLevel--;
+                stream() << "}";
+                break;
+            case QTransform::TxShear:
+                stream() << "PropertyAnimation {";
+                m_indentLevel++;
+                stream() << "duration: " << frameTime;
+                stream() << "target: " << targetName << "_transform_" << i;
+                stream() << "property: \"xAngle\"";
+                stream() << "to: " << keyFrame.values.at(i * 3);
+                m_indentLevel--;
+                stream() << "}";
+
+                stream() << "PropertyAnimation {";
+                m_indentLevel++;
+                stream() << "duration: " << frameTime;
+                stream() << "target: " << targetName << "_transform_" << i;
+                stream() << "property: \"yAngle\"";
+                stream() << "to: " << keyFrame.values.at(i * 3 + 1);
+                m_indentLevel--;
+                stream() << "}";
+                break;
+            default:
+                Q_UNREACHABLE();
+            }
+        }
+
+        if (!info.isDefaultTransform) {
+            stream() << "PropertyAction {";
+            m_indentLevel++;
+            stream() << "target: " << targetName << "_transform_base";
+            stream() << "property: \"matrix\"";
+            stream() << "value: ";
+            generateTransform(keyFrame.baseMatrix);
+
+            m_indentLevel--;
+            stream() << "}";
+        }
+
+        m_indentLevel--;
+        stream() << "}";
+    }
+
+    m_indentLevel--;
+    stream() << "}";
+
+    m_indentLevel--;
+    stream() << "}";
 }
 
 void QQuickQmlGenerator::generateAnimateColor(const QString &targetName,
@@ -565,8 +732,8 @@ bool QQuickQmlGenerator::generateStructureNode(const StructureNodeInfo &info)
             m_indentLevel--;
         }
 
-        generateNodeBase(info);
         m_indentLevel++;
+        generateNodeBase(info);
     } else {
         m_indentLevel--;
         stream() << "}";
@@ -640,12 +807,12 @@ bool QQuickQmlGenerator::generateRootNode(const StructureNodeInfo &info)
             stream() << "]";
         }
 
-        generateNodeBase(info);
-
         if (!info.forceSeparatePaths && info.isPathContainer) {
             generatePathContainer(info);
             m_indentLevel++;
         }
+
+        generateNodeBase(info);
     } else {
         if (m_inShapeItem) {
             m_inShapeItem = false;

@@ -20,6 +20,7 @@
 #include <QPainterPath>
 #include <QMatrix4x4>
 #include <QQuickItem>
+#include <QtGui/private/qfixed_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -42,6 +43,21 @@ struct NodeInfo
         QList<QPair<qreal, QColor> > keyFrames;
     };
     QList<AnimateColor> animateColors;
+
+    struct TransformAnimation {
+        struct TransformKeyFrame {
+            TransformKeyFrame() = default;
+
+            QTransform baseMatrix;
+            QList<qreal> values; // animationTypes.size() * 3, content depends on each type
+            bool indefiniteAnimation = false;
+        };
+
+        QList<QTransform::TransformationType> animationTypes;
+        QMap<QFixed, TransformKeyFrame> keyFrames;
+    };
+
+    TransformAnimation transformAnimation;
 };
 
 struct ImageNodeInfo : NodeInfo

@@ -22,6 +22,8 @@
 
 QT_BEGIN_NAMESPACE
 
+class QQuickMatrix4x4;
+
 class Q_QUICKVECTORIMAGEGENERATOR_EXPORT QQuickItemGenerator : public QQuickGenerator
 {
 public:
@@ -44,6 +46,9 @@ private:
     void generateGradient(const QGradient *grad, QQuickShapePath *shapePath);
     void generatePathContainer(const StructureNodeInfo &info);
     void generateAnimateColor(QObject *target, const QString &propertyName, const NodeInfo::AnimateColor &animateColor, const QColor &resetColor);
+    void generateAnimateTransform(const QList<QQuickTransform *> &transforms,
+                                  QQuickMatrix4x4 *mainTransform,
+                                  const NodeInfo &info);
     QQuickItem *currentItem();
     void addCurrentItem(QQuickItem *item, const NodeInfo &info);
 
