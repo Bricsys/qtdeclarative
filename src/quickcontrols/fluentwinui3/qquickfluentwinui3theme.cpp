@@ -8,6 +8,7 @@
 #include <QtGui/qpa/qplatformtheme.h>
 #include <QtGui/qguiapplication.h>
 #include <QtGui/qstylehints.h>
+#include <QtGui/QAccessibilityHints>
 #include <QtGui/qcolor.h>
 #include <QtGui/qfontdatabase.h>
 #include <QtQuickTemplates2/private/qquicktheme_p.h>
@@ -155,24 +156,29 @@ void QQuickFluentWinUI3Theme::initialize(QQuickTheme *theme)
 {
     populateThemeFont(theme);
     QPalette systemPalette;
-    updatePalette(systemPalette);
 
-    if (auto platformTheme = QGuiApplicationPrivate::platformTheme()) {
-        const auto platformPalette = platformTheme->palette();
-        if (platformPalette)
-            // style palette takes precedence over platform's theme
-            systemPalette = systemPalette.resolve(*platformPalette);
-    }
-
-    {
+    auto highContrastTheme = QGuiApplication::styleHints()->accessibility()->contrastPreference() == Qt::ContrastPreference::HighContrast;
+    // HighContrast themes use system colors only
+    if (!highContrastTheme) {
+        updatePalette(systemPalette);
+        if (auto platformTheme = QGuiApplicationPrivate::platformTheme()) {
+            const auto platformPalette = platformTheme->palette();
+            if (platformPalette)
+                // style palette takes precedence over platform's theme
+                systemPalette = systemPalette.resolve(*platformPalette);
+        }
         const auto colorSchemeIndex = QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Light ? 0 : 1;
         if (!systemPalette.isBrushSet(QPalette::Active, QPalette::Accent))
             systemPalette.setColor(QPalette::Active, QPalette::Accent, WINUI3Colors[colorSchemeIndex][accentDefault]);
+        if (!systemPalette.isBrushSet(QPalette::Inactive, QPalette::Highlight))
+            systemPalette.setColor(QPalette::Active, QPalette::Highlight, systemPalette.accent().color());
 
-        systemPalette.setColor(QPalette::Active, QPalette::Highlight, systemPalette.accent().color());
-        systemPalette.setColor(QPalette::Inactive, QPalette::Accent, systemPalette.accent().color());
-        systemPalette.setColor(QPalette::Inactive, QPalette::Highlight, systemPalette.highlight().color());
+        systemPalette.setColor(QPalette::Disabled, QPalette::Accent, WINUI3Colors[colorSchemeIndex][accentDisabled]);
+        systemPalette.setColor(QPalette::Disabled, QPalette::Highlight, WINUI3Colors[colorSchemeIndex][accentDisabled]);
     }
+
+    systemPalette.setColor(QPalette::Inactive, QPalette::Accent, systemPalette.accent().color());
+    systemPalette.setColor(QPalette::Inactive, QPalette::Highlight, systemPalette.highlight().color());
 
     // Finally QGuiApp::palette() should take precedence over style palette
     systemPalette = QGuiApplication::palette().resolve(systemPalette);
