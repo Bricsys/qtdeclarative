@@ -21,6 +21,7 @@ import org.qtproject.qt.android.QtQmlStatusChangeListener;
 import org.qtproject.qt.android.QtQuickView;
 import org.qtproject.example.qtquickview.QmlModule.Main;
 import org.qtproject.example.qtquickview.QmlModule.Second;
+import org.qtproject.qt.android.QtQuickViewContent;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -176,26 +177,28 @@ public class MainActivity extends AppCompatActivity implements QtQmlStatusChange
 
     //! [onStatusChanged]
     @Override
-    public void onStatusChanged(QtQmlStatus qtQmlStatus) {
+    public void onStatusChanged(QtQmlStatus qtQmlStatus, QtQuickViewContent content) {
         Log.i(TAG, "Status of QtQuickView: " + qtQmlStatus);
 
         // Show current QML View status in a textview
         m_qmlStatus.setText(getString(R.string.qml_view_status, m_statusNames.get(qtQmlStatus)));
         updateColorDisplay();
 
-        // Connect signal listener to "onClicked" signal from main.qml
-        // addSignalListener returns int which can be used later to identify the listener
-        //! [qml signal listener]
-        if (qtQmlStatus == QtQmlStatus.READY && m_switch.isChecked()) {
-            m_qmlButtonSignalListenerId =
-                    m_firstQmlContent.connectOnClickedListener((String name, Void v) -> {
-                        Log.i(TAG, "QML button clicked");
-                        m_androidControlsLayout.setBackgroundColor(Color.parseColor(
-                                m_colors.getColor()
-                        ));
-                    });
+        if (content == m_firstQmlContent) {
+            // Connect signal listener to "onClicked" signal from main.qml
+            // addSignalListener returns int which can be used later to identify the listener
+            //! [qml signal listener]
+            if (qtQmlStatus == QtQmlStatus.READY && !m_switch.isChecked()) {
+                m_qmlButtonSignalListenerId = m_firstQmlContent.connectOnClickedListener(
+                        (String name, Void v) -> {
+                            Log.i(TAG, "QML button clicked");
+                            m_androidControlsLayout.setBackgroundColor(Color.parseColor(
+                                    m_colors.getColor()
+                            ));
+                        });
+            }
+            //! [qml signal listener]
         }
-        //! [qml signal listener]
     }
     //! [onStatusChanged]
     //! [gridRotate]
