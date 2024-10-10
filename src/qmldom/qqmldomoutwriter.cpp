@@ -260,6 +260,11 @@ OutWriter &OutWriter::writeRegion(FileLocationRegion region)
     case SuperKeywordRegion:
         codeForRegion = u"super"_s;
         break;
+    case DollarLeftBraceTokenRegion:
+        codeForRegion = u"${"_s;
+    case LeftBacktickTokenRegion:
+    case RightBacktickTokenRegion:
+        codeForRegion = u"`"_s;
     // not keywords:
     case ImportUriRegion:
     case IdNameRegion:

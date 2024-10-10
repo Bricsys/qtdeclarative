@@ -354,8 +354,12 @@ QList<ItemLocation> itemsFromTextLocation(const DomItem &file, int line, int cha
         // Exclude the position behind the source location in ScriptBinaryExpressions to avoid
         // returning `owner` in `owner.member` when completion is triggered on the \c{.}. This
         // tells the code for the completion if the completion was triggered on `owner` or on `.`.
+        // Same is true for templateliterals, where ScriptTemplateExpressionParts and
+        // ScriptTemplateStringParts stop overlapping when using ExcludePositionAfterLast.
         const ComparisonOption comparisonOption =
-                iLoc.domItem.internalKind() == QQmlJS::Dom::DomType::ScriptBinaryExpression
+                iLoc.domItem.internalKind() == DomType::ScriptBinaryExpression
+                        || iLoc.domItem.directParent().internalKind()
+                                == DomType::ScriptTemplateLiteral
                 ? ExcludePositionAfterLast
                 : Normal;
 
