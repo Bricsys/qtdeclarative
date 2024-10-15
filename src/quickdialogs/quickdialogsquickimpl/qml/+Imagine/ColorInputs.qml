@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls.Imagine
 import QtQuick.Controls.impl
 import QtQuick.Layouts
 import QtQuick.Dialogs.quickimpl as DialogsQuickImpl
@@ -12,9 +12,7 @@ DialogsQuickImpl.ColorInputsImpl {
     implicitWidth: implicitBackgroundWidth + leftInset + rightInset
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding)
-    spacing: 1
     padding: 1
-
     mode: colorSystemComboBox.currentIndex
 
     delegate: TextField {
@@ -29,8 +27,10 @@ DialogsQuickImpl.ColorInputsImpl {
             flat: true
             background.implicitWidth: 0
             implicitContentWidthPolicy: ComboBox.WidestTextWhenCompleted
+            implicitWidth: implicitContentWidth + leftPadding + rightPadding // Workaround QTBUG-106098
             currentIndex: DialogsQuickImpl.ColorInputsImpl.Hex
             model: [qsTr("Hex"), qsTr("RGB"), qsTr("HSV"), qsTr("HSL")]
         }
     }
+
 }

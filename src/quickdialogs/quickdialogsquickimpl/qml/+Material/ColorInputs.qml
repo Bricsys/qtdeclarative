@@ -1,9 +1,8 @@
-// Copyright (C) 2024 The Qt Company Ltd.
+// Copyright (C) 2023 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
 import QtQuick
-import QtQuick.Controls.Basic
-import QtQuick.Controls.impl
+import QtQuick.Controls.Material
 import QtQuick.Layouts
 import QtQuick.Dialogs.quickimpl as DialogsQuickImpl
 
@@ -12,13 +11,14 @@ DialogsQuickImpl.ColorInputsImpl {
     implicitWidth: implicitBackgroundWidth + leftInset + rightInset
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding)
-    spacing: 1
     padding: 1
-
     mode: colorSystemComboBox.currentIndex
 
     delegate: TextField {
         Layout.fillWidth: true
+        Material.containerStyle: Material.Filled
+        leftPadding: control.showAlpha && control.mode !== ColorInputs.Hex ? 1 : Material.textFieldHorizontalPadding / 2
+        rightPadding: control.showAlpha && control.mode !== ColorInputs.Hex ? 1 : Material.textFieldHorizontalPadding / 2
     }
 
     contentItem: RowLayout {

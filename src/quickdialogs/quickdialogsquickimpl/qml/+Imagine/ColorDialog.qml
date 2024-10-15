@@ -196,13 +196,11 @@ ColorDialogImpl {
 
         ColorInputs {
             id: inputs
-
             color: control.color
-
             Layout.fillWidth: true
-            Layout.leftMargin: 16
-            Layout.rightMargin: 16
-            Layout.bottomMargin: 16
+            Layout.leftMargin: 12
+            Layout.rightMargin: 12
+            Layout.bottomMargin: 12
         }
     }
 
