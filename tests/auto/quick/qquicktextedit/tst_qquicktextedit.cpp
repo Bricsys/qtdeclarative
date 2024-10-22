@@ -2188,12 +2188,12 @@ void tst_qquicktextedit::mouseSelection()
     if (QCursor::pos() != p2)
         QSKIP("Can't move mouse");
     if (clicks == 2)
-        QTest::mouseClick(&window, Qt::LeftButton, Qt::NoModifier, p1, moreThanDoubleClickInterval);
+        QTest::mouseClick(&window, Qt::LeftButton, Qt::NoModifier, p1);
     else if (clicks == 3)
-        QTest::mouseDClick(&window, Qt::LeftButton, Qt::NoModifier, p1, moreThanDoubleClickInterval);
-    QTest::mousePress(&window, Qt::LeftButton, Qt::NoModifier, p1);
+        QTest::mouseDClick(&window, Qt::LeftButton, Qt::NoModifier, p1);
+    QTest::mousePress(&window, Qt::LeftButton, Qt::NoModifier, p1, moreThanDoubleClickInterval);
     QTest::mouseMove(&window, p2);
-    QTest::mouseRelease(&window, Qt::LeftButton, Qt::NoModifier, p2);
+    QTest::mouseRelease(&window, Qt::LeftButton, Qt::NoModifier, p2, moreThanDoubleClickInterval);
     QTRY_COMPARE(textEditObject->selectedText(), selectedText);
 
     // Clicking and shift to clicking between the same points should select the same text.
@@ -2202,7 +2202,7 @@ void tst_qquicktextedit::mouseSelection()
         QTest::mouseDClick(&window, Qt::LeftButton, Qt::NoModifier, p1, 10);
     if (clicks != 2)
         QTest::mouseClick(&window, Qt::LeftButton, Qt::NoModifier, p1, 10);
-    QTest::mouseClick(&window, Qt::LeftButton, Qt::ShiftModifier, p2);
+    QTest::mouseClick(&window, Qt::LeftButton, Qt::ShiftModifier, p2, moreThanDoubleClickInterval);
     QTRY_COMPARE(textEditObject->selectedText(), selectedText);
 }
 
