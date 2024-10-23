@@ -4064,6 +4064,18 @@ if(NOT QT_NO_CREATE_VERSIONLESS_FUNCTIONS)
     endfunction()
 endif()
 
+function(_qt_internal_add_import_qml_plugins_finalizer target)
+    get_property(finalizer_added TARGET ${target} PROPERTY
+        _qt_qml_import_qml_plugins_finalizer_added)
+    if(NOT finalizer_added)
+        set_property(TARGET ${target} APPEND PROPERTY
+            INTERFACE_QT_EXECUTABLE_FINALIZERS
+            qt6_import_qml_plugins
+        )
+        set_property(TARGET ${target} PROPERTY _qt_qml_import_qml_plugins_finalizer_added TRUE)
+    endif()
+endfunction()
+
 function(_qt_internal_add_qml_deploy_info_finalizer target)
     get_property(finalizer_added TARGET ${target} PROPERTY _qt_qml_deploy_finalizer_added)
     if(NOT finalizer_added)
