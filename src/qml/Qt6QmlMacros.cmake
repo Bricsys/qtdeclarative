@@ -3963,6 +3963,19 @@ function(qt6_import_qml_plugins target)
     if(already_imported OR no_import_scan)
         return()
     endif()
+
+    # Return early for test-like executables only for shared qt builds,
+    # to to avoid very long re-configuration times (many tests running qmlimportscanner takes a
+    # long time).
+    get_target_property(is_test_executable "${target}" _qt_is_test_executable)
+    get_target_property(is_benchmark_test "${target}" _qt_is_benchmark_test)
+    if((is_test_executable OR is_benchmark_test)
+        AND BUILD_SHARED_LIBS
+        AND NOT QT_INTERNAL_FORCE_QML_IMPORT_SCAN_FOR_TESTS
+        )
+        return()
+    endif()
+
     set_target_properties(${target} PROPERTIES _QT_QML_PLUGINS_IMPORTED TRUE)
 
     _qt_internal_scan_qml_imports(${target} imports_file IMMEDIATELY)
@@ -4106,6 +4119,16 @@ function(_qt_internal_generate_deploy_qml_imports_script target)
     if(already_generated OR no_import_scan)
         return()
     endif()
+
+    # Return early for test-like executables, because deployment of auto tests doesn't make sense.
+    get_target_property(is_test_executable "${target}" _qt_is_test_executable)
+    get_target_property(is_benchmark_test "${target}" _qt_is_benchmark_test)
+    if((is_test_executable OR is_benchmark_test)
+        AND NOT QT_INTERNAL_FORCE_QML_DEPLOY_SCAN_FOR_TESTS
+        )
+        return()
+    endif()
+
     set_target_properties(${target} PROPERTIES _QT_QML_PLUGIN_SCAN_GENERATED TRUE)
 
     # Defer actually running qmlimportscanner until build time. This keeps the
