@@ -7226,6 +7226,7 @@ void QQuickTableViewSectionDragHandler::handleDrop(QQuickDragEvent *event)
         resetSectionOverlay();
         if (m_scrollTimer.isActive())
             m_scrollTimer.stop();
+        event->accept();
     }
 }
 
