@@ -4350,6 +4350,67 @@ private slots:
         QVERIFY(semanticAnalysis.m_mapper->isFile(u"/qt/qml/MyModule/qml/HelloWorld.qml"_s));
     }
 
+    void commentsFileLocations()
+    {
+        const QString testFile = baseDir + u"/Comments.qml"_s;
+        const DomItem fileLocations = rootQmlObjectFromFile(testFile, qmltypeDirs).fileObject().fileLocationsTree();
+        const DomItem commentsForItem = fileLocations
+                .field(Fields::subItems).key(u".components")
+                .field(Fields::subItems).key(u"[\"\"]")
+                .field(Fields::subItems).key(u"[0]")
+                .field(Fields::subItems).key(u".objects")
+                .field(Fields::subItems).key(u"[0]")
+                .field(Fields::subItems).key(u".children")
+                .field(Fields::subItems).key(u"[0]")
+                .field(Fields::subItems).key(u".comments")
+                .field(Fields::subItems).key(u".regionComments")
+                .field(Fields::subItems);
+
+        QVERIFY(commentsForItem);
+        {
+            // Hello World! comment
+            const FileLocations *preComment = commentsForItem
+                    .key(u"[\"IdentifierRegion\"]")
+                    .field(Fields::subItems)
+                    .key(u".preComments")
+                    .field(Fields::subItems)
+                    .key(u"[0]")
+                    .field(Fields::infoItem)
+                    .as<FileLocations>();
+            QVERIFY(preComment);
+            QCOMPARE(preComment->fullRegion.startLine, 4);
+            QCOMPARE(preComment->fullRegion.startColumn, 5);
+        }
+        {
+            // Goodbye World! comment
+            const FileLocations *postComment = commentsForItem
+                    .key(u"[\"MainRegion\"]")
+                    .field(Fields::subItems)
+                    .key(u".postComments")
+                    .field(Fields::subItems)
+                    .key(u"[0]")
+                    .field(Fields::infoItem)
+                    .as<FileLocations>();
+            QVERIFY(postComment);
+            QCOMPARE(postComment->fullRegion.startLine, 6);
+            QCOMPARE(postComment->fullRegion.startColumn, 5);
+        }
+        {
+            // multi line comment
+            const FileLocations *postComment = commentsForItem
+                    .key(u"[\"MainRegion\"]")
+                    .field(Fields::subItems)
+                    .key(u".postComments")
+                    .field(Fields::subItems)
+                    .key(u"[1]")
+                    .field(Fields::infoItem)
+                    .as<FileLocations>();
+            QVERIFY(postComment);
+            QCOMPARE(postComment->fullRegion.startLine, 7);
+            QCOMPARE(postComment->fullRegion.startColumn, 5);
+        }
+    }
+
 private:
     QString baseDir;
     QStringList qmltypeDirs;

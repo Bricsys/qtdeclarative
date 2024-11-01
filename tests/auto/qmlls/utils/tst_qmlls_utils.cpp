@@ -260,6 +260,14 @@ void tst_qmlls_utils::findItemFromLocation_data()
     QTest::addRow("rectangle-property")
             << file1Qml << 44 << 31 << firstResult << outOfOne
             << QQmlJS::Dom::DomType::ScriptIdentifierExpression << -1 << 29;
+
+    // check comment
+    QTest::addRow("pre-comment")
+            << file1Qml << 62 << 15 << firstResult << outOfOne
+            << QQmlJS::Dom::DomType::Comment << -1 << 5;
+    QTest::addRow("post-comment")
+            << file1Qml << 64 << 15 << firstResult << outOfOne
+            << QQmlJS::Dom::DomType::Comment << -1 << 5;
 }
 
 void tst_qmlls_utils::findItemFromLocation()
