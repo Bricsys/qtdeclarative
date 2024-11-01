@@ -4324,6 +4324,13 @@ void tst_qmlls_utils::completions_data()
     QTest::newRow("Qt.Point") << testFile("completions/QtPoint.qml") << 5 << 34
                               << ExpectedCompletions{ { u"y"_s, CompletionItemKind::Property } }
                               << QStringList{ u"f"_s, forStatementCompletion };
+
+    QTest::newRow("insideComment1")
+            << testFile("completions/Comments.qml") << 4 << 9 << ExpectedCompletions{}
+            << QStringList{ u"f"_s, forStatementCompletion };
+    QTest::newRow("insideComment2")
+            << testFile("completions/Comments.qml") << 6 << 9 << ExpectedCompletions{}
+            << QStringList{ u"x"_s, u"Item"_s, forStatementCompletion };
 }
 
 void tst_qmlls_utils::completions()
