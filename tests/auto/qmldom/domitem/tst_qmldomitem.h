@@ -902,6 +902,11 @@ private slots:
         DomItem a = rootQmlObject.path(".bindings[\"a\"][0].value.scriptElement.value");
         QCOMPARE(a.value().toDouble(), 42);
 
+        auto aLoc = FileLocations::treeOf(rootQmlObject.path(".bindings[\"a\"][0]"));
+        QVERIFY(aLoc);
+        QCOMPARE(aLoc->info().fullRegion.startLine, 7);
+        QCOMPARE(aLoc->info().fullRegion.startColumn, 19);
+
         DomItem b = rootQmlObject.path(".bindings[\"b\"][0].value.scriptElement.identifier");
         QCOMPARE(b.value().toString(), "a");
 

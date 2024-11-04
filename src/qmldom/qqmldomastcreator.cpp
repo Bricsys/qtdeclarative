@@ -578,7 +578,7 @@ bool QQmlDomAstCreator::visit(AST::UiPublicMember *el)
             Binding *bPtr;
             Path bPathFromOwner = current<QmlObject>().addBinding(Binding(p.name, script, bType),
                                                                   AddOption::KeepExisting, &bPtr);
-            FileLocations::Tree bLoc = createMap(DomType::Binding, bPathFromOwner, el);
+            FileLocations::Tree bLoc = createMap(DomType::Binding, bPathFromOwner, el->statement);
             FileLocations::addRegion(bLoc, ColonTokenRegion, el->colonToken);
             FileLocations::Tree valueLoc = FileLocations::ensure(bLoc, Path::Field(Fields::value),
                                                                  AttachedInfo::PathType::Relative);
