@@ -46,4 +46,39 @@ DialogsQuickImpl.SideBar {
         required property string folderName
         required icon
     }
+
+    separatorDelegate: Item {
+        width: control.width
+        height: 9
+        Rectangle {
+            id: separatorDelegate
+            color: Qt.lighter(Universal.darkShade, 1.06)
+            anchors.centerIn: parent
+            radius: 1
+            height: 1
+            width: parent.width - 10
+        }
+    }
+
+    addFavoriteDelegate: Button {
+        id: addFavoriteDelegateRoot
+        text: "Add Favorite"
+        flat: true
+        width: control.width
+        contentItem: IconLabel {
+            spacing: 5
+            leftPadding: 10
+            topPadding: 3
+            bottomPadding: 3
+            icon: addFavoriteDelegateRoot.icon
+            text: addFavoriteDelegateRoot.labelText
+            font: addFavoriteDelegateRoot.font
+            alignment: Qt.AlignLeft
+            opacity: addFavoriteDelegateRoot.dragHovering ? 0.2 : 1.0
+        }
+
+        required property string labelText
+        required property bool dragHovering
+        required icon
+    }
 }

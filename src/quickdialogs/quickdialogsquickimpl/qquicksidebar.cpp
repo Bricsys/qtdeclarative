@@ -4,38 +4,199 @@
 #include "qquicksidebar_p.h"
 #include "qquicksidebar_p_p.h"
 #include "qquickfiledialogimpl_p_p.h"
+#include <QtQml/qqmllist.h>
+#include <QtCore/qsettings.h>
+
+#include <QtQuickTemplates2/private/qquickaction_p.h>
 
 /*!
     \internal
 
- Private class for sidebar in a file/folder dialog.
+ Private class for the sidebar in a file dialog.
 
- Given a FileDialog, SideBar creates a ListView containing delegate buttons that navigate to
- standard paths. It is planned to add a favorites section that includes drag and drop
- functionality in the future.
-
+ Given a FileDialog, SideBar creates a ListView that appears on the left hand side of the
+ of the FileDialog's content item. The ListView has two halves. The first half contains
+ standard paths and the second half contains favorites. Favorites can be added by dragging
+ and dropping a directory from the main FileDialog ListView into the SideBar. Favorites are
+ removed by right clicking and selecting 'Remove' from the context menu.
 */
 
 using namespace Qt::Literals::StringLiterals;
 
-QList<QStandardPaths::StandardLocation> effectiveFolderPaths()
-{
-    constexpr QStandardPaths::StandardLocation defaultPaths[] = {
-        QStandardPaths::HomeLocation,     QStandardPaths::DesktopLocation,
-        QStandardPaths::DownloadLocation, QStandardPaths::DocumentsLocation,
-        QStandardPaths::MusicLocation,    QStandardPaths::PicturesLocation,
-        QStandardPaths::MoviesLocation,
-    };
+static QList<QStandardPaths::StandardLocation> s_defaultPaths = {
+   QStandardPaths::HomeLocation,     QStandardPaths::DesktopLocation,
+   QStandardPaths::DownloadLocation, QStandardPaths::DocumentsLocation,
+   QStandardPaths::MusicLocation,    QStandardPaths::PicturesLocation,
+   QStandardPaths::MoviesLocation,
+};
 
-    QList<QStandardPaths::StandardLocation> effectivePaths = { QStandardPaths::HomeLocation };
+QQuickSideBar::QQuickSideBar(QQuickItem *parent)
+    : QQuickContainer(*(new QQuickSideBarPrivate), parent)
+{
+    Q_D(QQuickSideBar);
+    d->folderPaths = s_defaultPaths;
+
+    QObject::connect(this, &QQuickContainer::currentIndexChanged, [d](){
+        d->currentButtonClickedUrl.clear();
+    });
+
+    //d->initContextMenu();
+
+    // read in the favorites
+#if QT_CONFIG(settings)
+    d->readSettings();
+#endif
+}
+
+QQuickSideBar::~QQuickSideBar()
+{
+    Q_D(QQuickSideBar);
+
+    //d->destroyContextMenu();
+
+#if QT_CONFIG(settings)
+    d->writeSettings();
+#endif
+}
+
+QQuickDialog *QQuickSideBar::dialog() const
+{
+    Q_D(const QQuickSideBar);
+    return d->dialog;
+}
+
+void QQuickSideBar::setDialog(QQuickDialog *dialog)
+{
+    Q_D(QQuickSideBar);
+    if (dialog == d->dialog)
+        return;
+
+    if (auto fileDialog = qobject_cast<QQuickFileDialogImpl *>(d->dialog))
+        QObjectPrivate::disconnect(fileDialog, &QQuickFileDialogImpl::currentFolderChanged, d,
+                                   &QQuickSideBarPrivate::folderChanged);
+
+    d->dialog = dialog;
+
+    if (auto fileDialog = qobject_cast<QQuickFileDialogImpl *>(d->dialog))
+        QObjectPrivate::connect(fileDialog, &QQuickFileDialogImpl::currentFolderChanged, d,
+                                &QQuickSideBarPrivate::folderChanged);
+
+    emit dialogChanged();
+}
+
+QList<QStandardPaths::StandardLocation> QQuickSideBar::folderPaths() const
+{
+    Q_D(const QQuickSideBar);
+    return d->folderPaths;
+}
+
+void QQuickSideBar::setFolderPaths(const QList<QStandardPaths::StandardLocation> &folderPaths)
+{
+    Q_D(QQuickSideBar);
+    if (folderPaths == d->folderPaths)
+        return;
+
+    const auto oldEffective = effectiveFolderPaths();
+
+    d->folderPaths = folderPaths;
+    emit folderPathsChanged();
+
+    if (oldEffective != effectiveFolderPaths())
+        emit effectiveFolderPathsChanged();
+
+    d->repopulate();
+}
+
+QList<QStandardPaths::StandardLocation> QQuickSideBar::effectiveFolderPaths() const
+{
+    QList<QStandardPaths::StandardLocation> effectivePaths;
 
     // The home location is never returned as empty
-    QString homeLocation = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
-    for (int i = 1; i < 7; ++i)
-        // if a standard path is not found, it will be resolved to home location
-        if (QStandardPaths::writableLocation(defaultPaths[i]) != homeLocation)
-            effectivePaths.append(defaultPaths[i]);
+    const QString homeLocation = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    bool homeFound = false;
+    for (auto &path : folderPaths()) {
+        if (!homeFound && path == QStandardPaths::HomeLocation) {
+            effectivePaths.append(path);
+            homeFound = true;
+        } else if (QStandardPaths::writableLocation(path) != homeLocation) {
+            // if a standard path is not found, it will be resolved to home location
+            effectivePaths.append(path);
+        }
+    }
+
     return effectivePaths;
+}
+
+QList<QUrl> QQuickSideBar::favoritePaths() const
+{
+    Q_D(const QQuickSideBar);
+    return d->favoritePaths;
+}
+
+void QQuickSideBar::setFavoritePaths(const QList<QUrl> &favoritePaths)
+{
+    Q_D(QQuickSideBar);
+    if (favoritePaths == d->favoritePaths)
+        return;
+
+    d->favoritePaths = favoritePaths;
+    emit favoritePathsChanged();
+
+#if QT_CONFIG(settings)
+    d->writeSettings();
+#endif
+    d->repopulate();
+}
+
+QQmlComponent *QQuickSideBar::buttonDelegate() const
+{
+    Q_D(const QQuickSideBar);
+    return d->buttonDelegate;
+}
+
+void QQuickSideBar::setButtonDelegate(QQmlComponent *delegate)
+{
+    Q_D(QQuickSideBar);
+    if (d->componentComplete || delegate == d->buttonDelegate)
+        return;
+
+    d->buttonDelegate = delegate;
+    emit buttonDelegateChanged();
+}
+
+QQmlComponent *QQuickSideBar::separatorDelegate() const
+{
+    Q_D(const QQuickSideBar);
+    return d->separatorDelegate;
+}
+
+void QQuickSideBar::setSeparatorDelegate(QQmlComponent *delegate)
+{
+    Q_D(QQuickSideBar);
+    if (d->componentComplete || delegate == d->separatorDelegate)
+        return;
+
+    d->separatorDelegate = delegate;
+    emit separatorDelegateChanged();
+}
+
+QQmlComponent *QQuickSideBar::addFavoriteDelegate() const
+{
+    Q_D(const QQuickSideBar);
+    return d->addFavoriteDelegate;
+}
+
+void QQuickSideBar::setAddFavoriteDelegate(QQmlComponent *delegate)
+{
+    Q_D(QQuickSideBar);
+    if (d->componentComplete || delegate == d->addFavoriteDelegate)
+        return;
+
+    d->addFavoriteDelegate = delegate;
+    emit addFavoriteDelegateChanged();
+
+    if (d->showAddFavoriteDelegate())
+        d->repopulate();
 }
 
 QQuickItem *QQuickSideBarPrivate::createDelegateItem(QQmlComponent *component,
@@ -68,18 +229,18 @@ void QQuickSideBarPrivate::repopulate()
 {
     Q_Q(QQuickSideBar);
 
-    if (repopulating || !buttonDelegate || !q->contentItem())
+    if (repopulating || !buttonDelegate || !separatorDelegate || !addFavoriteDelegate || !q->contentItem())
         return;
 
     QBoolBlocker repopulateGuard(repopulating);
 
-    auto createButtonDelegate = [this, q](int i, const QString &folderPath, const QQuickIcon& icon) {
+    auto createButtonDelegate = [this, q](int index, const QString &folderPath, const QQuickIcon& icon) {
         const QString displayName = displayNameFromFolderPath(folderPath);
         QVariantMap initialProperties = {
-            { "index"_L1, QVariant::fromValue(i) },
-            { "folderName"_L1, QVariant::fromValue(displayName) },
-            { "icon"_L1, QVariant::fromValue(icon) },
-        };
+                                          { "index"_L1, QVariant::fromValue(index) },
+                                          { "folderName"_L1, QVariant::fromValue(displayName) },
+                                          { "icon"_L1, QVariant::fromValue(icon) },
+                                        };
 
         if (QQuickItem *buttonItem = createDelegateItem(buttonDelegate, initialProperties)) {
             if (QQuickAbstractButton *button = qobject_cast<QQuickAbstractButton *>(buttonItem))
@@ -89,13 +250,38 @@ void QQuickSideBarPrivate::repopulate()
         }
     };
 
-    // clean up
+    // clean up previous state
     while (q->count() > 0)
         q->removeItem(q->itemAt(0));
 
     // repopulate
-    for (int i = 0; i < folderPaths.size(); ++i)
-        createButtonDelegate(i, QStandardPaths::displayName(folderPaths.at(i)), getFolderIcon(folderPaths.at(i)));
+    const auto folders = q->effectiveFolderPaths();
+    const auto favorites = q->favoritePaths();
+    showSeparator = !folders.isEmpty() && (!favorites.isEmpty() || showAddFavoriteDelegate());
+    int insertIndex = 0;
+
+    for (auto &folder : folders)
+        createButtonDelegate(insertIndex++, QStandardPaths::displayName(folder), folderIcon(folder));
+
+    if (showSeparator)
+        if (QQuickItem *separatorItem = createDelegateItem(separatorDelegate, {}))
+            insertItem(insertIndex++, separatorItem);
+
+    if (showAddFavoriteDelegate()) {
+        // the variant needs to be QString, not a QLatin1StringView
+        const QString labelText = QCoreApplication::translate("FileDialog", "Add Favorite");
+        QVariantMap initialProperties = {
+                                          { "icon"_L1, QVariant::fromValue(addFavoriteIcon()) },
+                                          { "labelText"_L1, QVariant::fromValue(labelText) },
+                                          { "dragHovering"_L1, QVariant::fromValue(addFavoriteDelegateHovered()) },
+                                        };
+        if (auto *addFavoriteDelegateItem = createDelegateItem(addFavoriteDelegate, initialProperties))
+            insertItem(insertIndex++, addFavoriteDelegateItem);
+    }
+
+    // calculate the starting index for the favorites
+    for (auto &favorite : favorites)
+        createButtonDelegate(insertIndex++, favorite.path(), folderIcon());
 
     q->setCurrentIndex(-1);
 }
@@ -107,94 +293,18 @@ void QQuickSideBarPrivate::buttonClicked()
         const int buttonIndex = contentModel->indexOf(button, nullptr);
         q->setCurrentIndex(buttonIndex);
 
-        currentButtonClickedUrl = QUrl::fromLocalFile(
-                    QStandardPaths::writableLocation(folderPaths.at(buttonIndex)));
+        currentButtonClickedUrl = QUrl();
+        // calculate the starting index for the favorites
+        const int offset = q->effectiveFolderPaths().size() + (showSeparator ? 1 : 0);
+        if (buttonIndex >= offset)
+            currentButtonClickedUrl = q->favoritePaths().at(buttonIndex - offset);
+        else
+            currentButtonClickedUrl = QUrl::fromLocalFile(
+                    QStandardPaths::writableLocation(q->effectiveFolderPaths().at(buttonIndex)));
 
         currentButtonClickedUrl.setScheme("file"_L1);
         setDialogFolder(currentButtonClickedUrl);
     }
-}
-
-QQuickSideBar::QQuickSideBar(QQuickItem *parent)
-    : QQuickContainer(*(new QQuickSideBarPrivate), parent)
-{
-    Q_D(QQuickSideBar);
-    d->folderPaths = effectiveFolderPaths();
-
-    QObject::connect(this, &QQuickContainer::currentIndexChanged, [d](){
-        d->currentButtonClickedUrl.clear();
-    });
-}
-
-QQuickSideBar::~QQuickSideBar()
-{
-    this->disconnect();
-}
-
-QQuickDialog *QQuickSideBar::dialog() const
-{
-    Q_D(const QQuickSideBar);
-    return d->dialog;
-}
-
-void QQuickSideBar::setDialog(QQuickDialog *dialog)
-{
-    Q_D(QQuickSideBar);
-    if (dialog == d->dialog)
-        return;
-
-    if (auto fileDialog = qobject_cast<QQuickFileDialogImpl *>(d->dialog)) {
-        QObjectPrivate::disconnect(fileDialog, &QQuickFileDialogImpl::currentFolderChanged, d,
-                                   &QQuickSideBarPrivate::folderChanged);
-    }
-
-    d->dialog = dialog;
-
-    if (auto fileDialog = qobject_cast<QQuickFileDialogImpl *>(d->dialog)) {
-        QObjectPrivate::connect(fileDialog, &QQuickFileDialogImpl::currentFolderChanged, d,
-                                &QQuickSideBarPrivate::folderChanged);
-    }
-
-    emit dialogChanged();
-}
-
-QList<QStandardPaths::StandardLocation> QQuickSideBar::folderPaths() const
-{
-    Q_D(const QQuickSideBar);
-    return d->folderPaths;
-}
-
-void QQuickSideBar::setFolderPaths(const QList<QStandardPaths::StandardLocation> &folderPaths)
-{
-    Q_D(QQuickSideBar);
-    if (folderPaths == d->folderPaths)
-        return;
-
-    d->folderPaths = folderPaths;
-    emit folderPathsChanged();
-
-    d->repopulate();
-}
-
-QQmlComponent *QQuickSideBar::buttonDelegate()
-{
-    Q_D(QQuickSideBar);
-    return d->buttonDelegate;
-}
-
-void QQuickSideBar::setButtonDelegate(QQmlComponent *delegate)
-{
-    Q_D(QQuickSideBar);
-    if (d->componentComplete) {
-        // Simplify the code by disallowing this.
-        return;
-    }
-
-    if (delegate == d->buttonDelegate)
-        return;
-
-    d->buttonDelegate = delegate;
-    emit buttonDelegateChanged();
 }
 
 void QQuickSideBarPrivate::folderChanged()
@@ -230,7 +340,16 @@ void QQuickSideBar::componentComplete()
     d->repopulate();
 }
 
-QQuickIcon QQuickSideBarPrivate::getFolderIcon(QStandardPaths::StandardLocation stdLocation) const
+QQuickIcon QQuickSideBarPrivate::folderIcon() const
+{
+    QQuickIcon icon;
+    icon.setSource(QUrl("../images/sidebar-folder.png"_L1));
+    icon.setWidth(16);
+    icon.setHeight(16);
+    return icon;
+}
+
+QQuickIcon QQuickSideBarPrivate::folderIcon(QStandardPaths::StandardLocation stdLocation) const
 {
     QQuickIcon icon;
     switch (stdLocation) {
@@ -262,4 +381,128 @@ QQuickIcon QQuickSideBarPrivate::getFolderIcon(QStandardPaths::StandardLocation 
     icon.setWidth(16);
     icon.setHeight(16);
     return icon;
+}
+
+#if QT_CONFIG(settings)
+void QQuickSideBarPrivate::writeSettings() const
+{
+    QSettings settings("QtProject"_L1, "qquickfiledialog"_L1);
+    settings.beginWriteArray("favorites");
+
+    for (int i = 0; i < favoritePaths.size(); ++i) {
+        settings.setArrayIndex(i);
+        settings.setValue("favorite", favoritePaths.at(i).toString());
+    }
+    settings.endArray();
+}
+
+void QQuickSideBarPrivate::readSettings()
+{
+    favoritePaths.clear();
+    QSettings settings("QtProject"_L1, "qquickfiledialog"_L1);
+    const int size = settings.beginReadArray("favorites");
+
+    QList<QUrl> newPaths;
+
+    for (int i = 0; i < size; ++i) {
+        settings.setArrayIndex(i);
+        const QUrl favorite = settings.value("favorite").toUrl();
+        const QFileInfo info(favorite.toString());
+
+        if (info.isDir())
+            // check it is not a duplicate
+            if (!newPaths.contains(favorite))
+                newPaths.append(favorite);
+    }
+    settings.endArray();
+
+    favoritePaths = newPaths;
+}
+#endif
+
+void QQuickSideBarPrivate::addFavorite(const QUrl &favorite)
+{
+    Q_Q(QQuickSideBar);
+    QList<QUrl> newPaths = q->favoritePaths();
+    const QFileInfo info(favorite.toString());
+
+    if (info.isDir()) {
+        // check it is not a duplicate
+        if (!newPaths.contains(favorite)) {
+            newPaths.prepend(favorite);
+            q->setFavoritePaths(newPaths);
+        }
+    }
+}
+
+void QQuickSideBarPrivate::removeFavorite(const QUrl &favorite)
+{
+    Q_Q(QQuickSideBar);
+    QList<QUrl> paths = q->favoritePaths();
+    paths.removeOne(favorite);
+
+    q->setFavoritePaths(paths);
+}
+
+bool QQuickSideBarPrivate::showAddFavoriteDelegate() const
+{
+    return addFavoriteDelegateVisible;
+}
+
+void QQuickSideBarPrivate::setShowAddFavoriteDelegate(bool show)
+{
+    if (show == addFavoriteDelegateVisible)
+        return;
+
+    addFavoriteDelegateVisible = show;
+    repopulate();
+}
+
+bool QQuickSideBarPrivate::addFavoriteDelegateHovered() const
+{
+    return addFavoriteHovered;
+}
+
+void QQuickSideBarPrivate::setAddFavoriteDelegateHovered(bool hovered)
+{
+    if (hovered == addFavoriteHovered)
+        return;
+
+    addFavoriteHovered = hovered;
+    repopulate();
+}
+
+QQuickIcon QQuickSideBarPrivate::addFavoriteIcon() const
+{
+    QQuickIcon icon;
+    icon.setSource(QUrl("../images/sidebar-plus.png"_L1));
+    icon.setWidth(16);
+    icon.setHeight(16);
+    return icon;
+}
+
+// void QQuickSideBarPrivate::initContextMenu()
+// {
+//     Q_Q(QQuickSideBar);
+//     contextMenu = new QQuickContextMenu(q);
+//     contextMenu->setMenu(new QQuickMenu(q));
+//     removeAction = new QQuickAction(contextMenu);
+//     removeAction->setText("Remove"_L1);
+
+//     QObjectPrivate::connect(removeAction, &QQuickAction::triggered, this,
+//                             &QQuickSideBarPrivate::handleRemoveAction);
+
+//     contextMenu->menu()->addAction(removeAction);
+// }
+
+// void QQuickSideBarPrivate::destroyContextMenu()
+// {
+//     if (removeAction)
+//         removeAction->disconnect();
+// }
+
+void QQuickSideBarPrivate::handleRemoveAction()
+{
+    if (!urlToBeRemoved.isEmpty())
+        removeFavorite(urlToBeRemoved);
 }

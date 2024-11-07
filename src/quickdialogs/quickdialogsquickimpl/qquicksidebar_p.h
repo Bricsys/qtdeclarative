@@ -30,7 +30,11 @@ class Q_QUICKDIALOGS2QUICKIMPL_EXPORT QQuickSideBar : public QQuickContainer
     Q_OBJECT
     Q_PROPERTY(QQuickDialog *dialog READ dialog WRITE setDialog NOTIFY dialogChanged)
     Q_PROPERTY(QList<QStandardPaths::StandardLocation> folderPaths READ folderPaths WRITE setFolderPaths NOTIFY folderPathsChanged)
+    Q_PROPERTY(QList<QStandardPaths::StandardLocation> effectiveFolderPaths READ effectiveFolderPaths NOTIFY effectiveFolderPathsChanged)
+    Q_PROPERTY(QList<QUrl> favoritePaths READ favoritePaths NOTIFY favoritePathsChanged)
     Q_PROPERTY(QQmlComponent *buttonDelegate READ buttonDelegate WRITE setButtonDelegate NOTIFY buttonDelegateChanged)
+    Q_PROPERTY(QQmlComponent *separatorDelegate READ separatorDelegate WRITE setSeparatorDelegate NOTIFY separatorDelegateChanged)
+    Q_PROPERTY(QQmlComponent *addFavoriteDelegate READ addFavoriteDelegate WRITE setAddFavoriteDelegate NOTIFY addFavoriteDelegateChanged)
     QML_NAMED_ELEMENT(SideBar)
     QML_ADDED_IN_VERSION(6, 9)
 
@@ -44,18 +48,35 @@ public:
     QList<QStandardPaths::StandardLocation> folderPaths() const;
     void setFolderPaths(const QList<QStandardPaths::StandardLocation>& folderPaths);
 
-    QQmlComponent *buttonDelegate();
+    QList<QStandardPaths::StandardLocation> effectiveFolderPaths() const;
+
+    QList<QUrl> favoritePaths() const;
+
+    QQmlComponent *buttonDelegate() const;
     void setButtonDelegate(QQmlComponent *delegate);
+
+    QQmlComponent *separatorDelegate() const;
+    void setSeparatorDelegate(QQmlComponent *delegate);
+
+    QQmlComponent *addFavoriteDelegate() const;
+    void setAddFavoriteDelegate(QQmlComponent *delegate);
+
 
 Q_SIGNALS:
     void dialogChanged();
     void folderPathsChanged();
+    void effectiveFolderPathsChanged();
+    void favoritePathsChanged();
     void buttonDelegateChanged();
+    void separatorDelegateChanged();
+    void addFavoriteDelegateChanged();
 
 protected:
     void componentComplete() override;
 
 private:
+    void setFavoritePaths(const QList<QUrl>& favoritePaths);
+
     Q_DISABLE_COPY(QQuickSideBar)
     Q_DECLARE_PRIVATE(QQuickSideBar)
 };

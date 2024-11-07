@@ -17,6 +17,8 @@
 
 #include <QtQuickTemplates2/private/qquickcontainer_p_p.h>
 #include <QtCore/qstandardpaths.h>
+#include <QtQuickTemplates2/private/qquickmenu_p.h>
+//#include <QtQuickTemplates2/private/qquickcontextmenu_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -30,22 +32,49 @@ public:
         return sidebar->d_func();
     }
 
+    QQuickItem *createDelegateItem(QQmlComponent *component, const QVariantMap &initialProperties);
     void repopulate();
     void buttonClicked();
-    QQuickItem *createDelegateItem(QQmlComponent *component, const QVariantMap &initialProperties);
 
     QUrl dialogFolder() const;
     void setDialogFolder(const QUrl &folder);
     QString displayNameFromFolderPath(const QString &filePath);
-    QQuickIcon getFolderIcon(QStandardPaths::StandardLocation stdLocation) const;
+    QQuickIcon folderIcon() const;
+    QQuickIcon folderIcon(QStandardPaths::StandardLocation stdLocation) const;
     void folderChanged();
+
+    void readSettings();
+    void writeSettings() const;
+
+    void addFavorite(const QUrl &favorite);
+    void removeFavorite(const QUrl &favorite);
+    bool showAddFavoriteDelegate() const;
+    void setShowAddFavoriteDelegate(bool show);
+    bool addFavoriteDelegateHovered() const;
+    void setAddFavoriteDelegateHovered(bool hovered);
+    QQuickIcon addFavoriteIcon() const;
+
+    // void initContextMenu();
+    // void destroyContextMenu();
+    void handleRemoveAction();
 
 private:
     QQuickDialog *dialog = nullptr;
     QQmlComponent *buttonDelegate = nullptr;
+    QQmlComponent *separatorDelegate = nullptr;
+    QQmlComponent *addFavoriteDelegate = nullptr;
+    //QQuickContextMenu *contextMenu = nullptr;
+    QQuickAction *removeAction = nullptr;
+    QUrl urlToBeRemoved;
     QList<QStandardPaths::StandardLocation> folderPaths;
+    QList<QUrl> favoritePaths;
     QUrl currentButtonClickedUrl;
+    bool folderPathsValid = false;
+    bool favoritePathsValid = false;
     bool repopulating = false;
+    bool addFavoriteDelegateVisible = false;
+    bool addFavoriteHovered = false;
+    bool showSeparator = false;
 };
 
 QT_END_NAMESPACE

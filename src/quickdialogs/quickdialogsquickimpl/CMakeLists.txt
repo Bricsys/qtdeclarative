@@ -141,10 +141,11 @@ if(QT_FEATURE_quickcontrols2_universal)
     add_dependencies(QuickDialogs2QuickImpl QuickControls2Universal)
 endif()
 
-qt_internal_extend_target(QuickDialogs2QuickImpl CONDITION QT_FEATURE_quick_listview
+qt_internal_extend_target(QuickDialogs2QuickImpl CONDITION QT_FEATURE_quick_listview AND QT_FEATURE_quick_draganddrop
     SOURCES
         qquickfiledialogdelegate.cpp
         qquickfiledialogdelegate_p.h
+        qquickfiledialogdelegate_p_p.h
         qquickfiledialogimpl.cpp
         qquickfiledialogimpl_p.h
         qquickfiledialogimpl_p_p.h
@@ -263,6 +264,10 @@ set(qtquickdialogs2quickimpl_resource_files
     "images/sidebar-music@2x.png"
     "images/sidebar-music@3x.png"
     "images/sidebar-music@4x.png"
+    "images/sidebar-plus.png"
+    "images/sidebar-plus@2x.png"
+    "images/sidebar-plus@3x.png"
+    "images/sidebar-plus@4x.png"
 )
 
 qt_internal_add_resource(QuickDialogs2QuickImpl "QuickDialogs2QuickImpl"
