@@ -2322,8 +2322,13 @@ void QQuickPathSvg::addToPath(QPainterPath &path, const QQuickPathData &)
     \brief Defines a rectangle with optionally rounded corners.
     \since QtQuick 6.8
 
-    PathRectangle provides an easy way to specify a rectangle, optionally with rounded corners. The
-    API corresponds to that of the \l Rectangle item.
+    PathRectangle provides an easy way to specify a rectangle, optionally with
+    rounded or beveled corners. The API corresponds to that of the \l Rectangle
+    item.
+
+    \image pathrectangle-bevel.png
+
+    \snippet qml/pathrectangle/pathrectangle-bevel.qml shape
 
     \sa Path, PathLine, PathQuad, PathCubic, PathArc, PathAngleArc, PathCurve, PathSvg
 */
@@ -2482,6 +2487,12 @@ void QQuickPathRectangle::setRadius(qreal newRadius)
     These properties are unset by default. Assign \c undefined to them to return them to the unset
     state.
 
+    In the following example, \l radius is set to \c 10, and \c topLeftRadius to \c 0:
+
+    \snippet qml/pathrectangle/pathrectangle.qml shape
+
+    \image pathrectangle.png
+
     \sa radius
 */
 
@@ -2528,6 +2539,113 @@ void QQuickPathRectangle::emitCornerRadiusChanged(Qt::Corner corner)
     emit changed();
 }
 
+/*!
+    \qmlproperty bool QtQuick::PathRectangle::bevel
+    \since 6.10
+
+    This property defines whether the corners of the rectangle are beveled.
+
+    Setting it to \c false results in either sharp or rounded corners,
+    depending on the values of the individual \l radius properties.
+
+    This property may be overridden by the individual bevel properties.
+
+    \snippet qml/pathrectangle/pathrectangle-bevel.qml shape
+
+    \image pathrectangle-bevel.png
+
+    \sa topLeftBevel, topRightBevel, bottomLeftBevel, bottomRightBevel
+*/
+
+bool QQuickPathRectangle::hasBevel() const
+{
+    return _extra.isAllocated() ? _extra->bevel : 0;
+}
+
+void QQuickPathRectangle::setBevel(bool bevel)
+{
+    if (_extra.value().bevel == bevel)
+        return;
+    _extra->bevel = bevel;
+    emit bevelChanged();
+    if (!_extra->cornerBevel[Qt::TopLeftCorner].has_value())
+        emit topLeftBevelChanged();
+    if (!_extra->cornerBevel[Qt::TopRightCorner].has_value())
+        emit topRightBevelChanged();
+    if (!_extra->cornerBevel[Qt::BottomLeftCorner].has_value())
+        emit bottomLeftBevelChanged();
+    if (!_extra->cornerBevel[Qt::BottomRightCorner].has_value())
+        emit bottomRightBevelChanged();
+    emit changed();
+}
+
+/*!
+    \qmlproperty bool QtQuick::PathRectangle::topLeftBevel
+    \qmlproperty bool QtQuick::PathRectangle::topRightBevel
+    \qmlproperty bool QtQuick::PathRectangle::bottomLeftBevel
+    \qmlproperty bool QtQuick::PathRectangle::bottomRightBevel
+
+    If set, these properties define the individual corner bevels. Setting them
+    to \c false results in either sharp or rounded corners, depending on the
+    values of the individual \l radius properties. Setting them to \c true
+    results in bevelled corners. When unset, the value of \l bevel is used
+    instead.
+
+    These properties are unset by default. Assign \c undefined to them to
+    return them to the unset state.
+
+    In the following example, \c bottomRightBevel is set to true:
+
+    \snippet qml/pathrectangle/pathrectangle.qml shape
+
+    \image pathrectangle.png
+
+    \sa bevel
+*/
+
+bool QQuickPathRectangle::cornerBevel(Qt::Corner corner) const
+{
+    if (_extra.isAllocated())
+        return !_extra->cornerBevel[corner].has_value() ? _extra->bevel : _extra->cornerBevel[corner].value();
+    else
+        return false;
+}
+
+void QQuickPathRectangle::setCornerBevel(Qt::Corner corner, bool newCornerBevel)
+{
+    if (_extra.value().cornerBevel[corner] == newCornerBevel)
+        return;
+    _extra->cornerBevel[corner] = newCornerBevel;
+    emitCornerBevelChanged(corner);
+}
+
+void QQuickPathRectangle::resetCornerBevel(Qt::Corner corner)
+{
+    if (!_extra.isAllocated() || !_extra->cornerBevel[corner].has_value())
+        return;
+    _extra->cornerBevel[corner].reset();
+    emitCornerBevelChanged(corner);
+}
+
+void QQuickPathRectangle::emitCornerBevelChanged(Qt::Corner corner)
+{
+    switch (corner) {
+    case Qt::TopLeftCorner:
+        emit topLeftBevelChanged();
+        break;
+    case Qt::TopRightCorner:
+        emit topRightBevelChanged();
+        break;
+    case Qt::BottomLeftCorner:
+        emit bottomLeftBevelChanged();
+        break;
+    case Qt::BottomRightCorner:
+        emit bottomRightBevelChanged();
+        break;
+    }
+    emit changed();
+}
+
 void QQuickPathRectangle::addToPath(QPainterPath &path, const QQuickPathData &data)
 {
     QRectF rect(positionForCurve(data, path.currentPosition()), QSizeF(_width, _height));
@@ -2554,22 +2672,50 @@ void QQuickPathRectangle::addToPath(QPainterPath &path, const QQuickPathData &da
         const qreal diamBR = effectiveDiameter(Qt::BottomRightCorner);
 
         path.moveTo(rect.left() + diamTL * 0.5, rect.top());
-        if (diamTR)
-            path.arcTo(QRectF(QPointF(rect.right() - diamTR, rect.top()), QSizeF(diamTR, diamTR)), 90, -90);
-        else
+        if (diamTR) {
+            if (!cornerBevel(Qt::TopRightCorner)) {
+                // Rounded corners.
+                path.arcTo(QRectF(QPointF(rect.right() - diamTR, rect.top()), QSizeF(diamTR, diamTR)), 90, -90);
+            } else {
+                // Beveled corners.
+                path.lineTo(QPointF(rect.right() - diamTR * 0.5, rect.top()));
+                path.lineTo(QPointF(rect.right(), rect.top() + diamTR * 0.5));
+            }
+        } else {
+            // Regular corners.
             path.lineTo(rect.topRight());
-        if (diamBR)
-            path.arcTo(QRectF(QPointF(rect.right() - diamBR, rect.bottom() - diamBR), QSizeF(diamBR, diamBR)), 0, -90);
-        else
+        }
+
+        if (diamBR) {
+            if (!cornerBevel(Qt::BottomRightCorner)) {
+                path.arcTo(QRectF(QPointF(rect.right() - diamBR, rect.bottom() - diamBR), QSizeF(diamBR, diamBR)), 0, -90);
+            } else {
+                path.lineTo(QPointF(rect.right(), rect.bottom() - diamBR * 0.5));
+                path.lineTo(QPointF(rect.right() - diamBR * 0.5, rect.bottom()));
+            }
+        } else {
             path.lineTo(rect.bottomRight());
-        if (diamBL)
-            path.arcTo(QRectF(QPointF(rect.left(), rect.bottom() - diamBL), QSizeF(diamBL, diamBL)), 270, -90);
-        else
+        }
+
+        if (diamBL) {
+            if (!cornerBevel(Qt::BottomLeftCorner)) {
+                path.arcTo(QRectF(QPointF(rect.left(), rect.bottom() - diamBL), QSizeF(diamBL, diamBL)), 270, -90);
+            } else {
+                path.lineTo(QPointF(rect.left() + diamBL * 0.5, rect.bottom()));
+                path.lineTo(QPointF(rect.left(), rect.bottom() - diamBL * 0.5));
+            }
+        } else {
             path.lineTo(rect.bottomLeft());
-        if (diamTL)
-            path.arcTo(QRectF(rect.topLeft(), QSizeF(diamTL, diamTL)), 180, -90);
-        else
+        }
+
+        if (diamTL) {
+            if (!cornerBevel(Qt::TopLeftCorner))
+                path.arcTo(QRectF(rect.topLeft(), QSizeF(diamTL, diamTL)), 180, -90);
+            else
+                path.lineTo(QPointF(rect.left(), rect.top() + diamTL * 0.5));
+        } else {
             path.lineTo(rect.topLeft());
+        }
         path.closeSubpath();
     }
 }

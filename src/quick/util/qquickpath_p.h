@@ -410,6 +410,11 @@ class Q_QUICK_EXPORT QQuickPathRectangle : public QQuickCurve
     Q_PROPERTY(qreal topRightRadius READ topRightRadius WRITE setTopRightRadius NOTIFY topRightRadiusChanged RESET resetTopRightRadius FINAL)
     Q_PROPERTY(qreal bottomLeftRadius READ bottomLeftRadius WRITE setBottomLeftRadius NOTIFY bottomLeftRadiusChanged RESET resetBottomLeftRadius FINAL)
     Q_PROPERTY(qreal bottomRightRadius READ bottomRightRadius WRITE setBottomRightRadius NOTIFY bottomRightRadiusChanged RESET resetBottomRightRadius FINAL)
+    Q_PROPERTY(bool bevel READ hasBevel WRITE setBevel NOTIFY bevelChanged FINAL REVISION(6, 10))
+    Q_PROPERTY(bool topLeftBevel READ hasTopLeftBevel WRITE setTopLeftBevel NOTIFY topLeftBevelChanged RESET resetTopLeftBevel FINAL REVISION(6, 10))
+    Q_PROPERTY(bool topRightBevel READ hasTopRightBevel WRITE setTopRightBevel NOTIFY topRightBevelChanged RESET resetTopRightBevel FINAL REVISION(6, 10))
+    Q_PROPERTY(bool bottomLeftBevel READ hasBottomLeftBevel WRITE setBottomLeftBevel NOTIFY bottomLeftBevelChanged RESET resetBottomLeftBevel FINAL REVISION(6, 10))
+    Q_PROPERTY(bool bottomRightBevel READ hasBottomRightBevel WRITE setBottomRightBevel NOTIFY bottomRightBevelChanged RESET resetBottomRightBevel FINAL REVISION(6, 10))
 
     QML_NAMED_ELEMENT(PathRectangle)
     QML_ADDED_IN_VERSION(6, 8)
@@ -448,6 +453,29 @@ public:
     void setCornerRadius(Qt::Corner corner, qreal newCornerRadius);
     void resetCornerRadius(Qt::Corner corner);
 
+    bool hasBevel() const;
+    void setBevel(bool bevel);
+
+    bool hasTopLeftBevel() const { return cornerBevel(Qt::TopLeftCorner); }
+    void setTopLeftBevel(bool bevel) { setCornerBevel(Qt::TopLeftCorner, bevel); }
+    void resetTopLeftBevel() { resetCornerBevel(Qt::TopLeftCorner); }
+
+    bool hasTopRightBevel() const { return cornerBevel(Qt::TopRightCorner); }
+    void setTopRightBevel(bool bevel) { setCornerBevel(Qt::TopRightCorner, bevel); }
+    void resetTopRightBevel() { resetCornerBevel(Qt::TopRightCorner); }
+
+    bool hasBottomLeftBevel() const { return cornerBevel(Qt::BottomLeftCorner); }
+    void setBottomLeftBevel(bool bevel) { setCornerBevel(Qt::BottomLeftCorner, bevel); }
+    void resetBottomLeftBevel() { resetCornerBevel(Qt::BottomLeftCorner); }
+
+    bool hasBottomRightBevel() const { return cornerBevel(Qt::BottomRightCorner); }
+    void setBottomRightBevel(bool bevel) { setCornerBevel(Qt::BottomRightCorner, bevel); }
+    void resetBottomRightBevel() { resetCornerBevel(Qt::BottomRightCorner); }
+
+    bool cornerBevel(Qt::Corner corner) const;
+    void setCornerBevel(Qt::Corner corner, bool newCornerBevel);
+    void resetCornerBevel(Qt::Corner corner);
+
     void addToPath(QPainterPath &path, const QQuickPathData &) override;
 
 Q_SIGNALS:
@@ -459,18 +487,29 @@ Q_SIGNALS:
     void topRightRadiusChanged();
     void bottomLeftRadiusChanged();
     void bottomRightRadiusChanged();
+    Q_REVISION(6, 10) void bevelChanged();
+    Q_REVISION(6, 10) void topLeftBevelChanged();
+    Q_REVISION(6, 10) void topRightBevelChanged();
+    Q_REVISION(6, 10) void bottomLeftBevelChanged();
+    Q_REVISION(6, 10) void bottomRightBevelChanged();
 
 private:
     void emitCornerRadiusChanged(Qt::Corner corner);
+    void emitCornerBevelChanged(Qt::Corner corner);
 
     qreal _width = 0;
     qreal _height = 0;
     qreal _strokeAdjustment = 0;
     struct ExtraData
     {
-        ExtraData() { std::fill_n(cornerRadii, 4, -1); }
+        ExtraData() {
+            std::fill_n(cornerRadii, 4, -1);
+            std::fill_n(cornerBevel, 4, std::optional<bool>());
+        }
         qreal radius = 0;
         qreal cornerRadii[4];
+        bool bevel = false;
+        std::optional<bool> cornerBevel[4];
     };
     QLazilyAllocated<ExtraData> _extra;
 };
