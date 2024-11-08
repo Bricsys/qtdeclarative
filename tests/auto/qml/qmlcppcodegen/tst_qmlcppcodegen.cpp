@@ -12,6 +12,7 @@
 #include <data/resettable.h>
 #include <data/weathermoduleurl.h>
 #include <data/withlength.h>
+#include <data/qmlusing.h>
 
 #include <QtQml/private/qqmlengine_p.h>
 #include <QtQml/private/qqmlpropertycachecreator_p.h>
@@ -200,6 +201,7 @@ private slots:
     void popContextAfterRet();
     void prefixedType();
     void propertyOfParent();
+    void qmlUsing();
     void reduceWithNullThis();
     void readEnumFromInstance();
     void readonlyListProperty();
@@ -4185,6 +4187,38 @@ void tst_QmlCppCodegen::propertyOfParent()
         expected = !expected;
         object->setProperty("foo", expected);
     }
+}
+
+void tst_QmlCppCodegen::qmlUsing()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, QUrl(u"qrc:/qt/qml/TestTypes/qmlUsing.qml"_s));
+    QVERIFY2(component.isReady(), component.errorString().toUtf8());
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(!object.isNull());
+
+    UsingUserObject *u = qobject_cast<UsingUserObject *>(object.data());
+    QVERIFY(u);
+
+    QCOMPARE(u->a(), 7);
+    QCOMPARE(u->val().a(), 24);
+    QCOMPARE(u->property("valA").toInt(), 24);
+    QCOMPARE(u->property("myA").toInt(), 7);
+    QCOMPARE(u->property("myA2").toInt(), 7);
+
+    QList<int> as;
+    QObject::connect(u, &UsingUserObject::aChanged, this, [&]() { as.append(u->a()); });
+
+    QMetaObject::invokeMethod(object.data(), "twiddle");
+
+    const QList<int> expected = { 57, 59 };
+    QCOMPARE(as, expected);
+
+    QCOMPARE(u->a(), 59);
+    QCOMPARE(u->val().a(), 55);
+    QCOMPARE(u->property("valA").toInt(), 55);
+    QCOMPARE(u->property("myA").toInt(), 59);
+    QCOMPARE(u->property("myA2").toInt(), 59);
 }
 
 void tst_QmlCppCodegen::reduceWithNullThis()
