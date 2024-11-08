@@ -2700,6 +2700,7 @@ bool QQuickFlickable::filterPointerEvent(QQuickItem *receiver, QPointerEvent *ev
     if (event->pointCount() > 1) {
         qCDebug(lcFilter) << objectName() << "ignoring multi-touch" << event << "for" << receiver;
         d->stealMouse = false;
+        return false;
     } else {
         qCDebug(lcFilter) << objectName() << "filtering" << event << "for" << receiver;
     }
