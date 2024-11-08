@@ -4201,24 +4201,39 @@ void tst_QmlCppCodegen::qmlUsing()
     QVERIFY(u);
 
     QCOMPARE(u->a(), 7);
+    QCOMPARE(u->getB(), 5);
     QCOMPARE(u->val().a(), 24);
+    QCOMPARE(u->val().getB(), 25);
     QCOMPARE(u->property("valA").toInt(), 24);
     QCOMPARE(u->property("myA").toInt(), 7);
+    QCOMPARE(u->property("myB").toInt(), 5);
     QCOMPARE(u->property("myA2").toInt(), 7);
+    QCOMPARE(u->property("myB2").toInt(), 5);
 
     QList<int> as;
-    QObject::connect(u, &UsingUserObject::aChanged, this, [&]() { as.append(u->a()); });
+    QList<int> bs;
+    QObject::connect(u, &UsingUserObject::aChanged, this, [&]() {
+        as.append(u->a());
+        bs.append(u->getB());
+    });
 
     QMetaObject::invokeMethod(object.data(), "twiddle");
 
-    const QList<int> expected = { 57, 59 };
-    QCOMPARE(as, expected);
+    const QList<int> expectedA = { 57, 59 };
+    QCOMPARE(as, expectedA);
+
+    const QList<int> expectedB = { 5, 58 };
+    QCOMPARE(bs, expectedB);
 
     QCOMPARE(u->a(), 59);
+    QCOMPARE(u->getB(), 60);
     QCOMPARE(u->val().a(), 55);
+    QCOMPARE(u->val().getB(), 25);
     QCOMPARE(u->property("valA").toInt(), 55);
     QCOMPARE(u->property("myA").toInt(), 59);
+    QCOMPARE(u->property("myB").toInt(), 5);  // Remains 5, due to lack of signaling
     QCOMPARE(u->property("myA2").toInt(), 59);
+    QCOMPARE(u->property("myB2").toInt(), 5); // Remains 5, due to lack of signaling
 }
 
 void tst_QmlCppCodegen::reduceWithNullThis()
