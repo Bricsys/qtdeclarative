@@ -2513,7 +2513,7 @@ void QQuickItemViewPrivate::updateTrackedItem()
     Q_Q(QQuickItemView);
     FxViewItem *item = currentItem;
     if (highlight)
-        item = highlight;
+        item = highlight.get();
     trackedItem = item;
 
     if (trackedItem)

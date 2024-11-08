@@ -59,7 +59,8 @@ void tst_qqmlinstantiator::createNone()
 {
     QQmlEngine engine;
     QQmlComponent component(&engine, testFileUrl("createNone.qml"));
-    QQmlInstantiator *instantiator = qobject_cast<QQmlInstantiator*>(component.create());
+    QScopedPointer<QObject> o(component.create());
+    QQmlInstantiator *instantiator = qobject_cast<QQmlInstantiator*>(o.data());
     QVERIFY(instantiator != nullptr);
     QCOMPARE(instantiator->isActive(), true);
     QCOMPARE(instantiator->count(), 0);
@@ -71,7 +72,8 @@ void tst_qqmlinstantiator::createSingle()
 {
     QQmlEngine engine;
     QQmlComponent component(&engine, testFileUrl("createSingle.qml"));
-    QQmlInstantiator *instantiator = qobject_cast<QQmlInstantiator*>(component.create());
+    QScopedPointer<QObject> o(component.create());
+    QQmlInstantiator *instantiator = qobject_cast<QQmlInstantiator*>(o.data());
     QVERIFY(instantiator != nullptr);
     QCOMPARE(instantiator->isActive(), true);
     QCOMPARE(instantiator->count(), 1);
@@ -88,7 +90,8 @@ void tst_qqmlinstantiator::createMultiple()
 {
     QQmlEngine engine;
     QQmlComponent component(&engine, testFileUrl("createMultiple.qml"));
-    QQmlInstantiator *instantiator = qobject_cast<QQmlInstantiator*>(component.create());
+    QScopedPointer<QObject> o(component.create());
+    QQmlInstantiator *instantiator = qobject_cast<QQmlInstantiator*>(o.data());
     QVERIFY(instantiator != nullptr);
     QCOMPARE(instantiator->isActive(), true);
     QCOMPARE(instantiator->count(), 10);
@@ -106,7 +109,8 @@ void tst_qqmlinstantiator::stringModel()
 {
     QQmlEngine engine;
     QQmlComponent component(&engine, testFileUrl("stringModel.qml"));
-    QQmlInstantiator *instantiator = qobject_cast<QQmlInstantiator*>(component.create());
+    QScopedPointer<QObject> o(component.create());
+    QQmlInstantiator *instantiator = qobject_cast<QQmlInstantiator*>(o.data());
     QVERIFY(instantiator != nullptr);
     QCOMPARE(instantiator->isActive(), true);
     QCOMPARE(instantiator->count(), 4);
@@ -123,7 +127,8 @@ void tst_qqmlinstantiator::activeProperty()
 {
     QQmlEngine engine;
     QQmlComponent component(&engine, testFileUrl("inactive.qml"));
-    QQmlInstantiator *instantiator = qobject_cast<QQmlInstantiator*>(component.create());
+    QScopedPointer<QObject> o(component.create());
+    QQmlInstantiator *instantiator = qobject_cast<QQmlInstantiator*>(o.data());
     QVERIFY(instantiator != nullptr);
     QSignalSpy activeSpy(instantiator, SIGNAL(activeChanged()));
     QSignalSpy countSpy(instantiator, SIGNAL(countChanged()));
@@ -178,7 +183,8 @@ void tst_qqmlinstantiator::intModelChange()
 {
     QQmlEngine engine;
     QQmlComponent component(&engine, testFileUrl("createMultiple.qml"));
-    QQmlInstantiator *instantiator = qobject_cast<QQmlInstantiator*>(component.create());
+    QScopedPointer<QObject> o(component.create());
+    QQmlInstantiator *instantiator = qobject_cast<QQmlInstantiator*>(o.data());
     QVERIFY(instantiator != nullptr);
     QSignalSpy activeSpy(instantiator, SIGNAL(activeChanged()));
     QSignalSpy countSpy(instantiator, SIGNAL(countChanged()));
@@ -214,7 +220,7 @@ void tst_qqmlinstantiator::createAndRemove()
     QScopedPointer<StringModel> model {new StringModel("model1")};
     qmlRegisterSingletonInstance("Test", 1, 0, "Model1", model.get());
     QQmlComponent component(&engine, testFileUrl("createAndRemove.qml"));
-    QObject *rootObject = component.create();
+    QScopedPointer<QObject> rootObject(component.create());
     QVERIFY(rootObject != nullptr);
 
     QQmlInstantiator *instantiator =

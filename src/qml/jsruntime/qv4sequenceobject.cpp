@@ -261,7 +261,33 @@ struct QQmlSequence : Object {
 template <typename Container>
 struct QQmlSequence : public QV4::Object
 {
-    V4_OBJECT2(QQmlSequence<Container>, QV4::Object)
+    // Unroll V4_OBJECT2(QQmlSequence<Container>, QV4::Object) here.
+    // Newer C++ versions don't tolerate the template argument in Q_DISABLE_COPY.
+private:
+    QQmlSequence() Q_DECL_EQ_DELETE;
+    Q_DISABLE_COPY(QQmlSequence)
+public:
+    Q_MANAGED_CHECK
+    typedef QV4::Heap::QQmlSequence<Container> Data;
+    typedef QV4::Object SuperClass;
+    static const QV4::VTable static_vtbl;
+    static inline const QV4::VTable *staticVTable() { return &static_vtbl; }
+    V4_MANAGED_SIZE_TEST
+
+    QV4::Heap::QQmlSequence<Container> *d_unchecked() const
+    {
+        return static_cast<QV4::Heap::QQmlSequence<Container> *>(m());
+    }
+
+    QV4::Heap::QQmlSequence<Container> *d() const
+    {
+        QV4::Heap::QQmlSequence<Container> *dptr = d_unchecked();
+        dptr->_checkIsInitialized();
+        return dptr;
+    }
+
+    Q_STATIC_ASSERT(std::is_trivial< QV4::Heap::QQmlSequence<Container>>::value);
+
     Q_MANAGED_TYPE(QmlSequence)
     V4_PROTOTYPE(sequencePrototype)
     V4_NEEDS_DESTROY

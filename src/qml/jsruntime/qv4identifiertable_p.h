@@ -75,11 +75,12 @@ struct Q_QML_PRIVATE_EXPORT IdentifierTable
     void addEntry(Heap::StringOrSymbol *str);
 
 public:
+    enum KeyConversionBehavior { Default, ForceConversionToId };
 
     IdentifierTable(ExecutionEngine *engine, int numBits = 8);
     ~IdentifierTable();
 
-    Heap::String *insertString(const QString &s);
+    Heap::String *insertString(const QString &s, KeyConversionBehavior conversionBehavior);
     Heap::Symbol *insertSymbol(const QString &s);
 
     PropertyKey asPropertyKey(const Heap::String *str) {
@@ -91,7 +92,7 @@ public:
         return asPropertyKey(str->d());
     }
 
-    PropertyKey asPropertyKey(const QString &s);
+    PropertyKey asPropertyKey(const QString &s, KeyConversionBehavior conversionBehavior = Default);
     PropertyKey asPropertyKey(const char *s, int len);
 
     PropertyKey asPropertyKeyImpl(const Heap::String *str);

@@ -231,6 +231,9 @@ void QQmlVMEMetaObjectEndpoint::tryConnect()
         const QV4::CompiledData::Alias *aliasData = &metaObject->compiledObject->aliasTable()[aliasId];
         if (!aliasData->isObjectAlias()) {
             QQmlContextData *ctxt = metaObject->ctxt;
+            if (!ctxt->engine)
+                return;
+
             QObject *target = ctxt->idValues[aliasData->targetObjectId()].data();
             if (!target)
                 return;
