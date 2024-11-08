@@ -7399,8 +7399,10 @@ void QQuickTableViewPrivate::initSectionDragHandler(Qt::Orientation orientation)
 
 void QQuickTableViewPrivate::destroySectionDragHandler()
 {
-    if (sectionDragHandler)
+    if (sectionDragHandler) {
         delete sectionDragHandler;
+        sectionDragHandler = nullptr;
+    }
 }
 
 void QQuickTableViewPrivate::initializeIndexMapping()
