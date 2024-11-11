@@ -262,9 +262,11 @@ OutWriter &OutWriter::writeRegion(FileLocationRegion region)
         break;
     case DollarLeftBraceTokenRegion:
         codeForRegion = u"${"_s;
+        break;
     case LeftBacktickTokenRegion:
     case RightBacktickTokenRegion:
         codeForRegion = u"`"_s;
+        break;
     // not keywords:
     case ImportUriRegion:
     case IdNameRegion:
