@@ -2390,7 +2390,7 @@ void tst_QQuickPopup::fadeDimmer_data()
     QTest::addColumn<bool>("modality");
 
     QTest::addRow("modal") << true;
-    QTest::addRow("modeless") << true;
+    QTest::addRow("modeless") << false;
 }
 
 void tst_QQuickPopup::fadeDimmer()
