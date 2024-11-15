@@ -2830,7 +2830,20 @@ set(timestamp_file \"${generated_copy_files_info_path_timestamp}\")
             "${generated_copy_files_info_path_timestamp}"
     )
 
-    set(dependent_target "${target}_tooling")
+    # The ${target}_tooling target might not always exist, e.g. if qmlcachegen is disabled and thus
+    # no files are added to generated_sources_other_scope, thus the tooling target creation is
+    # skipped. Or when doing an in-source build of qtdeclarative, in which case the source and
+    # build dir coincide, and no files will be copied.
+    # We can't detect that no files will be copied at this point, because we rely on evaluating the
+    # property with files during generation time, and files might be added in subsequent calls
+    # of qt_target_qml_sources, after the first call to this function, and a second invocation
+    # will just return, because copy_files_setup_done will be true.
+    # In such cases, make this target a dependency of the main target directly.
+    if(TARGET "${target}_tooling")
+        set(dependent_target "${target}_tooling")
+    else()
+        set(dependent_target "${target}")
+    endif()
     add_dependencies("${dependent_target}" "${copy_files_target}")
 
     _qt_internal_assign_to_internal_targets_folder("${copy_files_target}")
