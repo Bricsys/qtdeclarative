@@ -774,8 +774,14 @@ bool QQuickPopupPrivate::prepareEnterTransition()
 
         QQuickOverlay *overlay = QQuickOverlay::overlay(window);
         auto *overlayPrivate = QQuickOverlayPrivate::get(overlay);
-        if (overlayPrivate->lastActiveFocusItem.isNull())
+        if (overlayPrivate->lastActiveFocusItem.isNull()) {
             overlayPrivate->lastActiveFocusItem = window->activeFocusItem();
+            // If we're moving between popups this popup may already have the
+            // active focus, in which case we don't want to restore focus to
+            // ourselves again on exit. Use the content item as a fallback.
+            if (popupItem->isAncestorOf(overlayPrivate->lastActiveFocusItem))
+                overlayPrivate->lastActiveFocusItem = window->contentItem();
+        }
 
         if (focus)
             popupItem->setFocus(true, Qt::PopupFocusReason);
@@ -855,7 +861,9 @@ void QQuickPopupPrivate::finalizeExitTransition()
             auto *overlayPrivate = QQuickOverlayPrivate::get(overlay);
             if (!contentItem->scopedFocusItem()
                 && !overlayPrivate->lastActiveFocusItem.isNull()) {
-                overlayPrivate->lastActiveFocusItem->setFocus(true, Qt::OtherFocusReason);
+                // The last active focus item may have lost focus not just for
+                // itself but for its entire focus chain, so force active focus.
+                overlayPrivate->lastActiveFocusItem->forceActiveFocus(Qt::OtherFocusReason);
             } else {
                 contentItem->setFocus(true, Qt::PopupFocusReason);
             }

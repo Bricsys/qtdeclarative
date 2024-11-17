@@ -48,6 +48,7 @@ private slots:
     void independentMargins();
 
     void bindingLoop();
+    void bindingLoopApplicationWindow();
 
     void safeAreaReuse();
 
@@ -239,6 +240,27 @@ void tst_QQuickSafeArea::bindingLoop()
     windowSafeArea->setAdditionalMargins(QMarginsF(50, 0, 0, 0));
     QCOMPARE(warnings.size(), 1);
     QVERIFY(warnings.at(0).description().endsWith("Safe area binding loop detected"));
+}
+
+void tst_QQuickSafeArea::bindingLoopApplicationWindow()
+{
+    auto *window = qobject_cast<QQuickWindow*>(m_engine->rootObjects().first());
+    QVERIFY(window);
+    QVERIFY(QTest::qWaitForWindowExposed(window));
+
+    m_engine->setOutputWarningsToStandardError(false);
+
+    QList<QQmlError> warnings;
+    QObject::connect(m_engine.get(), &QQmlEngine::warnings, [&](auto w) { warnings = w; });
+    auto *windowSafeArea = qobject_cast<QQuickSafeArea*>(qmlAttachedPropertiesObject<QQuickSafeArea>(window));
+    QVERIFY(windowSafeArea);
+
+    // Control in footer should stabilize and not cause warning
+    windowSafeArea->setAdditionalMargins(QMarginsF(50, 0, 50, 0));
+    QSignalSpy widthChangedSpy(window, SIGNAL(itemWidthChanged()));
+    window->resize(window->width() - 10, window->height());
+    QTRY_COMPARE(widthChangedSpy.count(), 1);
+    QCOMPARE(warnings.size(), 0);
 }
 
 void tst_QQuickSafeArea::safeAreaReuse()
