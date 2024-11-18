@@ -166,6 +166,7 @@ public:
     void deliverUpdatedPoints(QPointerEvent *event);
     void deliverMatchingPointsToItem(QQuickItem *item, bool isGrabber, QPointerEvent *pointerEvent, bool handlersOnly = false);
 
+    QVector<QQuickItem *> eventTargets(QQuickItem *, const QEvent *event, QPointF scenePos,  std::function<std::optional<bool> (QQuickItem *, const QEvent *)> predicate) const;
     QVector<QQuickItem *> pointerTargets(QQuickItem *, const QPointerEvent *event, const QEventPoint &point,
                                          bool checkMouseButtons, bool checkAcceptsTouch) const;
     QVector<QQuickItem *> mergePointerTargets(const QVector<QQuickItem *> &list1, const QVector<QQuickItem *> &list2) const;
@@ -197,7 +198,7 @@ public:
     static bool dragOverThreshold(QVector2D delta);
 
     // context menu events
-    QVector<QQuickItem *> contextMenuTargets(QQuickItem *item, const QContextMenuEvent *contextMenuEvent) const;
+    QVector<QQuickItem *> contextMenuTargets(QQuickItem *item, const QContextMenuEvent *event) const;
     void deliverContextMenuEvent(QContextMenuEvent *event);
 };
 

@@ -2054,6 +2054,65 @@ void QQuickDeliveryAgentPrivate::deliverPointerEvent(QPointerEvent *event)
 
 /*! \internal
     Returns a list of all items that are spatially relevant to receive \a event
+    occurring at \a itemPos relative to \a item, starting with \a item and
+    recursively checking all the children.
+    \list
+        \li If QQuickItem::clip() is \c true \e and \a itemPos is outside of
+        QQuickItem::clipRect(), its children are also omitted. (We stop the
+        recursion, because any clipped-off portions of children under \a itemPos
+        are invisible.)
+        \li Ignore any item in a subscene that "belongs to" a different
+        DeliveryAgent. (In current practice, this only happens in 2D scenes in
+        Qt Quick 3D.)
+        \li Ignore any item for which the given \a predicate returns \c false;
+        include any item for which the predicate returns \c true.
+    \endlist
+*/
+// FIXME: should this be iterative instead of recursive?
+QVector<QQuickItem *> QQuickDeliveryAgentPrivate::eventTargets(QQuickItem *item, const QEvent *event, QPointF scenePos,
+                                                               std::function<std::optional<bool>(QQuickItem *item, const QEvent *event)> predicate) const
+{
+    QVector<QQuickItem *> targets;
+    auto itemPrivate = QQuickItemPrivate::get(item);
+    const auto itemPos = item->mapFromScene(scenePos);
+    bool relevant = item->contains(itemPos);
+    // if the item clips, we can potentially return early
+    if (itemPrivate->flags & QQuickItem::ItemClipsChildrenToShape) {
+        if (!item->clipRect().contains(itemPos))
+            return targets;
+    }
+    QList<QQuickItem *> children = itemPrivate->paintOrderChildItems();
+    if (predicate) {
+        const auto override = predicate(item, event);
+        if (override == true)
+            relevant = true;
+        else if (override == false)
+            relevant = false;
+    }
+    if (relevant) {
+        auto it = std::lower_bound(children.begin(), children.end(), 0,
+           [](auto lhs, auto rhs) -> bool { return lhs->z() < rhs; });
+        children.insert(it, item);
+    }
+
+    for (int ii = children.size() - 1; ii >= 0; --ii) {
+        QQuickItem *child = children.at(ii);
+        auto childPrivate = QQuickItemPrivate::get(child);
+        if (!child->isVisible() || !child->isEnabled() || childPrivate->culled ||
+                (child != item && childPrivate->extra.isAllocated() && childPrivate->extra->subsceneDeliveryAgent))
+            continue;
+
+        if (child == item)
+            targets << child;
+        else
+            targets << eventTargets(child, event, scenePos, predicate);
+    }
+
+    return targets;
+}
+
+/*! \internal
+    Returns a list of all items that are spatially relevant to receive \a event
     occurring at \a point, starting with \a item and recursively checking all
     the children.
     \list
@@ -2081,54 +2140,26 @@ void QQuickDeliveryAgentPrivate::deliverPointerEvent(QPointerEvent *event)
     "visited" when delivering any event for which QPointerEvent::isBeginEvent()
     is \c true.
 */
-// FIXME: should this be iterative instead of recursive?
 QVector<QQuickItem *> QQuickDeliveryAgentPrivate::pointerTargets(QQuickItem *item, const QPointerEvent *event, const QEventPoint &point,
-                                                          bool checkMouseButtons, bool checkAcceptsTouch) const
+                                                                 bool checkMouseButtons, bool checkAcceptsTouch) const
 {
-    Q_Q(const QQuickDeliveryAgent);
-    QVector<QQuickItem *> targets;
-    auto itemPrivate = QQuickItemPrivate::get(item);
-    QPointF itemPos = item->mapFromScene(point.scenePosition());
-    bool relevant = item->contains(itemPos);
-    qCDebug(lcPtrLoc) << q << "point" << point.id() << point.scenePosition() << "->" << itemPos << ": relevant?" << relevant << "to" << item << point;
-    // if the item clips, we can potentially return early
-    if (itemPrivate->flags & QQuickItem::ItemClipsChildrenToShape) {
-        if (!item->clipRect().contains(itemPos))
-            return targets;
-    }
-
-    if (itemPrivate->hasPointerHandlers()) {
-        if (!relevant)
+    auto predicate = [point, checkMouseButtons, checkAcceptsTouch](QQuickItem *item, const QEvent *ev) -> std::optional<bool> {
+        const QPointerEvent *event = static_cast<const QPointerEvent *>(ev);
+        auto itemPrivate = QQuickItemPrivate::get(item);
+        if (itemPrivate->hasPointerHandlers()) {
             if (itemPrivate->anyPointerHandlerWants(event, point))
-                relevant = true;
-    } else {
-        if (relevant && checkMouseButtons && item->acceptedMouseButtons() == Qt::NoButton)
-            relevant = false;
-        if (relevant && checkAcceptsTouch && !(item->acceptTouchEvents() || item->acceptedMouseButtons()))
-            relevant = false;
-    }
+                return true;
+        } else {
+            if (checkMouseButtons && item->acceptedMouseButtons() == Qt::NoButton)
+                return false;
+            if (checkAcceptsTouch && !(item->acceptTouchEvents() || item->acceptedMouseButtons()))
+                return false;
+        }
 
-    QList<QQuickItem *> children = itemPrivate->paintOrderChildItems();
-    if (relevant) {
-        auto it = std::lower_bound(children.begin(), children.end(), 0,
-           [](auto lhs, auto rhs) -> bool { return lhs->z() < rhs; });
-        children.insert(it, item);
-    }
+        return std::nullopt;
+    };
 
-    for (int ii = children.size() - 1; ii >= 0; --ii) {
-        QQuickItem *child = children.at(ii);
-        auto childPrivate = QQuickItemPrivate::get(child);
-        if (!child->isVisible() || !child->isEnabled() || childPrivate->culled ||
-                (child != item && childPrivate->extra.isAllocated() && childPrivate->extra->subsceneDeliveryAgent))
-            continue;
-
-        if (child != item)
-            targets << pointerTargets(child, event, point, checkMouseButtons, checkAcceptsTouch);
-        else
-            targets << child;
-    }
-
-    return targets;
+    return eventTargets(item, event, point.scenePosition(), predicate);
 }
 
 /*! \internal
@@ -2895,47 +2926,14 @@ bool QQuickDeliveryAgentPrivate::dragOverThreshold(QVector2D delta)
 
 /*!
     \internal
+    Returns all items that could potentially want \a event.
 
-    Returns all items that could potentially want context menu events.
-
-    An unfortunate copy of logic from \l pointerTargets(),
-    necessary because QContextMenuEvent is not a QPointerEvent.
-
-    TODO Qt 7: get rid of it somehow if possible
+    (Similar to \l pointerTargets(), necessary because QContextMenuEvent is not
+    a QPointerEvent.)
 */
-QVector<QQuickItem *> QQuickDeliveryAgentPrivate::contextMenuTargets(QQuickItem *item, const QContextMenuEvent *contextMenuEvent) const
+QVector<QQuickItem *> QQuickDeliveryAgentPrivate::contextMenuTargets(QQuickItem *item, const QContextMenuEvent *event) const
 {
-    QVector<QQuickItem *> targets;
-    auto itemPrivate = QQuickItemPrivate::get(item);
-    const QPointF itemPos = item->mapFromScene(contextMenuEvent->pos());
-    const bool relevant = item->contains(itemPos);
-    // if the item clips, we can potentially return early
-    if (itemPrivate->flags & QQuickItem::ItemClipsChildrenToShape) {
-        if (!item->clipRect().contains(itemPos))
-            return targets;
-    }
-
-    QList<QQuickItem *> children = itemPrivate->paintOrderChildItems();
-    if (relevant) {
-        auto it = std::lower_bound(children.begin(), children.end(), 0,
-                                   [](auto lhs, auto rhs) -> bool { return lhs->z() < rhs; });
-        children.insert(it, item);
-    }
-
-    for (int ii = children.size() - 1; ii >= 0; --ii) {
-        QQuickItem *child = children.at(ii);
-        auto childPrivate = QQuickItemPrivate::get(child);
-        if (!child->isVisible() || !child->isEnabled() || childPrivate->culled ||
-            (child != item && childPrivate->extra.isAllocated() && childPrivate->extra->subsceneDeliveryAgent))
-            continue;
-
-        if (child != item)
-            targets << contextMenuTargets(child, contextMenuEvent);
-        else
-            targets << child;
-    }
-
-    return targets;
+    return eventTargets(item, event, event->pos(), nullptr);
 }
 
 /*!
