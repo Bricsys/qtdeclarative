@@ -1208,6 +1208,11 @@ function(_qt_internal_write_deferred_qmlls_ini_file target)
         list(APPEND _import_paths "${import_path}")
     endforeach()
 
+    _qt_internal_get_main_qt_qml_import_paths(installation_paths)
+    list(APPEND _import_paths ${installation_paths})
+    # standalone builds will have the installation path twice in _import_paths
+    list(REMOVE_DUPLICATES _import_paths)
+
     if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
         # replace cmake list separator ';' with unix path separator ':'
         list(JOIN _qmlls_ini_build_folders ":" concatenated_build_dirs)
