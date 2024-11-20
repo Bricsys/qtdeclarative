@@ -2705,7 +2705,7 @@ void tst_qquicktextedit::cursorDelegate()
     QVERIFY(!textEditObject->isCursorVisible());
     //Test Delegate gets created
     textEditObject->setFocus(true);
-    QVERIFY(textEditObject->isCursorVisible());
+    QTRY_VERIFY(textEditObject->isCursorVisible());
     QQuickItem* delegateObject = textEditObject->findChild<QQuickItem*>("cursorInstance");
     QVERIFY(delegateObject);
     QCOMPARE(delegateObject->property("localProperty").toString(), QString("Hello"));
