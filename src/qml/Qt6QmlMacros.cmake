@@ -1244,18 +1244,21 @@ function(_populate_qmlls_ini_file target qmlls_ini_file concatenated_build_dirs 
     get_target_property(qtpaths ${QT_CMAKE_EXPORT_NAMESPACE}::qtpaths LOCATION)
     _qt_internal_get_tool_wrapper_script_path(tool_wrapper)
 
+    string(REPLACE "\"" "\\\"" concatenated_build_dirs "${concatenated_build_dirs}")
+    string(REPLACE "\"" "\\\"" import_paths "${import_paths}")
+
     add_custom_command(
         OUTPUT
             ${qmlls_ini_file}
         COMMAND ${CMAKE_COMMAND} -E echo "[General]" > ${qmlls_ini_file}
-        COMMAND ${CMAKE_COMMAND} -E echo "buildDir=${concatenated_build_dirs}" >> ${qmlls_ini_file}
+        COMMAND ${CMAKE_COMMAND} -E echo "buildDir=\"${concatenated_build_dirs}\"" >> ${qmlls_ini_file}
         COMMAND ${CMAKE_COMMAND} -E echo "no-cmake-calls=false" >> ${qmlls_ini_file}
         COMMAND ${CMAKE_COMMAND} -E echo_append "docDir=" >> ${qmlls_ini_file}
         COMMAND
             ${tool_wrapper}
             ${qtpaths}
             --query QT_INSTALL_DOCS >> ${qmlls_ini_file}
-        COMMAND ${CMAKE_COMMAND} -E echo "importPaths=${import_paths}" >> ${qmlls_ini_file}
+        COMMAND ${CMAKE_COMMAND} -E echo "importPaths=\"${import_paths}\"" >> ${qmlls_ini_file}
         COMMENT "Populating .qmlls.ini file"
         VERBATIM
     )
