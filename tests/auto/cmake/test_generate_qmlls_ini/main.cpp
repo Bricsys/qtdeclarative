@@ -35,10 +35,10 @@ void tst_generate_qmlls_ini::qmllsIniAreCorrect()
                       .toLatin1());
 
     const QString qmllsIniTemplate = uR"([General]
-buildDir=%1
+buildDir="%1"
 no-cmake-calls=false
 docDir=%2
-importPaths=%3
+importPaths="%3"
 )"_s;
 
     const QString &docPath = QLibraryInfo::path(QLibraryInfo::DocumentationPath);
@@ -113,6 +113,21 @@ importPaths=%3
                      qmllsIniTemplate.arg(build.absoluteFilePath(u"ModuleWithDependency"_s),
                                           docPath,
                                           build.absoluteFilePath(u"Dependency"_s)
+                                                  + QDir::listSeparator() + defaultImportPath));
+        }
+    }
+    {
+        QDir quotesInPath = source;
+        QVERIFY(quotesInPath.cd(u"quotesInPath"_s));
+        {
+            auto file = QFile(quotesInPath.absoluteFilePath(qmllsIniName));
+            QVERIFY(file.exists());
+            QVERIFY(file.open(QFile::ReadOnly | QFile::Text));
+            const auto fileContent = QString::fromUtf8(file.readAll());
+            QCOMPARE(fileContent,
+                     qmllsIniTemplate.arg(build.absolutePath(),
+                                          docPath,
+                                          uR"(\"hello\"\"world\")"_s
                                                   + QDir::listSeparator() + defaultImportPath));
         }
     }
