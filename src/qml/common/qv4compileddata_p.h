@@ -1117,6 +1117,7 @@ public:
     int enumCount() const { return nEnums; }
     int signalCount() const { return nSignals; }
     int functionCount() const { return nFunctions; }
+    int inlineComponentCount() const { return nInlineComponents; }
 
     const Binding *bindingsBegin() const { return bindingTable(); }
     const Binding *bindingsEnd() const { return bindingTable() + nBindings; }

@@ -468,6 +468,8 @@ private slots:
 
     void engineTypeCrossTalk();
 
+    void onlyInlineComponent();
+
 private:
     QQmlEngine engine;
     QStringList defaultImportPathList;
@@ -9042,6 +9044,17 @@ void tst_qqmllanguage::engineTypeCrossTalk()
     const QUrl inner("qrc:/StaticTest/data/InnerObject.qml");
     first.wreck(inner);
     second.wreck(inner);
+}
+
+void tst_qqmllanguage::onlyInlineComponent()
+{
+    QQmlEngine e;
+    QQmlComponent c(&e, testFileUrl("onlyInlineComponent.qml"));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+
+    QCOMPARE(o->objectName(), QLatin1String("yes"));
 }
 
 QTEST_MAIN(tst_qqmllanguage)
