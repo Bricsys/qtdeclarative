@@ -1509,6 +1509,8 @@
 
 QT_BEGIN_NAMESPACE
 
+QQuickSelectable::~QQuickSelectable() { }
+
 Q_LOGGING_CATEGORY(lcTableViewDelegateLifecycle, "qt.quick.tableview.lifecycle")
 
 #define Q_TABLEVIEW_UNREACHABLE(output) { dumpTable(); qWarning() << "output:" << output; Q_UNREACHABLE(); }
