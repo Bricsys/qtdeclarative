@@ -132,6 +132,7 @@ private slots:
     void resetHoveredStateForItemsWithinPopup();
     void noInfiniteRecursionOnParentWindowDestruction();
     void popupWindowDestructedBeforeQQuickPopup();
+    void popupWindowWithPaddingFromSafeArea();
 
 private:
     QScopedPointer<QPointingDevice> touchScreen = QScopedPointer<QPointingDevice>(QTest::createTouchDevice());
@@ -3210,6 +3211,42 @@ void tst_QQuickPopup::popupWindowDestructedBeforeQQuickPopup()
     window->hide();
 
     // Doesn't crash on destruction
+}
+
+void tst_QQuickPopup::popupWindowWithPaddingFromSafeArea()
+{
+    if (!popupWindowsSupported)
+        QSKIP("The platform doesn't support popup windows. Skipping test.");
+
+    QQuickControlsApplicationHelper helper(this, "DialogWithPaddingFromSafeArea.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    QVERIFY(window);
+    window->show();
+    QVERIFY(QTest::qWaitForWindowExposed(window));
+
+    auto *dialog = helper.window->contentItem()->findChild<QQuickDialog *>();
+    QVERIFY(dialog);
+
+    const qreal dialogWidth = dialog->width();
+    const qreal dialogHeight = dialog->height();
+
+    dialog->open();
+    QTRY_VERIFY(dialog->isOpened());
+
+    QQuickPopupPrivate* popupPrivate = QQuickPopupPrivate::get(dialog);
+
+    QTRY_VERIFY(popupPrivate->popupWindow);
+    auto *popupWindow = popupPrivate->popupWindow;
+    QVERIFY(QTest::qWaitForWindowExposed(popupWindow));
+    QQuickTest::qWaitForPolish(popupWindow);
+
+    // Verify that the binding on topPadding didn't cause
+    // a change in geometry after the popup window was shown.
+    QCOMPARE(popupWindow->width(), dialogWidth);
+    QCOMPARE(popupWindow->height(), dialogHeight);
+    QCOMPARE(dialog->width(), dialogWidth);
+    QCOMPARE(dialog->height(), dialogHeight);
 }
 
 QTEST_QUICKCONTROLS_MAIN(tst_QQuickPopup)

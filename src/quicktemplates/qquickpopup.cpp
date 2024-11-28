@@ -1104,8 +1104,12 @@ void QQuickPopupPrivate::adjustPopupItemParentAndWindow()
         if (visible) {
             if (!popupWindow) {
                 popupWindow = new QQuickPopupWindow(q, window);
-                popupWindow->setWidth(popupItem->width() + windowInsets().left() + windowInsets().right());
-                popupWindow->setHeight(popupItem->height() + windowInsets().top() + windowInsets().bottom());
+                // Changing the visual parent can cause the popup item's implicit width/height to change.
+                // We store the initial size here first, to ensure that we're resizing the window to the correct size.
+                const qreal initialWidth = popupItem->width() + windowInsets().left() + windowInsets().right();
+                const qreal initialHeight = popupItem->height() + windowInsets().top() + windowInsets().bottom();
+                popupItem->setParentItem(popupWindow->contentItem());
+                popupWindow->resize(initialWidth, initialHeight);
                 popupWindow->setModality(modal ? Qt::ApplicationModal : Qt::NonModal);
                 popupItem->resetTitle();
                 popupWindow->setTitle(m_title);
