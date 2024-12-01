@@ -45,6 +45,7 @@ private slots:
     void contextMenuSelectAll();
     void customContextMenuOnRelease_data();
     void customContextMenuOnRelease();
+    void testCursorPositionChangedOnDeleteStartWord();
 
 private:
     QScopedPointer<QPointingDevice> touchDevice = QScopedPointer<QPointingDevice>(QTest::createTouchDevice());
@@ -498,6 +499,32 @@ void tst_QQuickTextArea::customContextMenuOnRelease()
     QVERIFY(userContextMenu);
     QTRY_VERIFY(userContextMenu->isOpened());
     QTRY_VERIFY_WITH_TIMEOUT(!ourContextMenu->isVisible(), 1000);
+}
+
+void tst_QQuickTextArea::testCursorPositionChangedOnDeleteStartWord()
+{
+    const QString initialText = "The quick brown fox jumps over the lazy dog.";
+    const QString expectedText = "The quick brown  jumps over the lazy dog.";
+    QQuickView window;
+    QVERIFY(QQuickTest::showView(window, testFileUrl("mouseselection_default.qml")));
+
+    QQuickTextEdit *textField = qobject_cast<QQuickTextEdit *>(window.rootObject());
+    QVERIFY(textField != nullptr);
+
+    textField->setText(initialText);
+    textField->setCursorPosition(19);
+
+    QSignalSpy spy(textField, &QQuickTextEdit::cursorPositionChanged);
+
+    textField->forceActiveFocus();
+
+    QTest::keySequence(&window, QKeySequence::DeleteStartOfWord);
+
+    QCOMPARE(spy.count(), 1);
+
+    QCOMPARE(textField->text(), expectedText);
+
+    QCOMPARE(textField->cursorPosition(), 16);
 }
 
 QTEST_QUICKCONTROLS_MAIN(tst_QQuickTextArea)
