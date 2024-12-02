@@ -33,6 +33,7 @@ qt_internal_add_test(tst_qquicktableview
         Qt::QuickPrivate
         Qt::QuickTest
         Qt::QuickTestUtilsPrivate
+        Qt::QuickTemplates2Private
     TESTDATA ${test_data}
 )
 
