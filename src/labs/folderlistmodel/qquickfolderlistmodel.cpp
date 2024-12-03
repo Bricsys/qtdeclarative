@@ -493,9 +493,11 @@ void QQuickFolderListModel::setRootFolder(const QUrl &path)
     QFileInfo info(resolvedPath);
     if (!info.exists() || !info.isDir())
         return;
-
-    d->fileInfoThread.setRootPath(resolvedPath);
-    d->rootDir = path;
+    if (path != d->rootDir) {
+        d->fileInfoThread.setRootPath(resolvedPath);
+        d->rootDir = path;
+        emit rootFolderChanged();
+    }
 }
 
 
@@ -554,6 +556,7 @@ void QQuickFolderListModel::setNameFilters(const QStringList &filters)
         return;
     d->fileInfoThread.setNameFilters(filters);
     d->nameFilters = filters;
+    emit nameFilterChanged();
 }
 
 void QQuickFolderListModel::classBegin()
@@ -592,9 +595,11 @@ QQuickFolderListModel::SortField QQuickFolderListModel::sortField() const
 void QQuickFolderListModel::setSortField(SortField field)
 {
     Q_D(QQuickFolderListModel);
+
     if (field != d->sortField) {
         d->sortField = field;
         d->updateSorting();
+        emit sortFieldChanged();
     }
 }
 
@@ -624,6 +629,7 @@ void QQuickFolderListModel::setSortReversed(bool rev)
     if (rev != d->sortReversed) {
         d->sortReversed = rev;
         d->updateSorting();
+        emit sortReversedChanged();
     }
 }
 
@@ -667,8 +673,11 @@ void QQuickFolderListModel::setShowFiles(bool on)
 {
     Q_D(QQuickFolderListModel);
 
-    d->fileInfoThread.setShowFiles(on);
-    d->showFiles = on;
+    if (on != d->showFiles) {
+        d->fileInfoThread.setShowFiles(on);
+        d->showFiles = on;
+        emit showFilesChanged();
+    }
 }
 
 /*!
@@ -693,8 +702,11 @@ void  QQuickFolderListModel::setShowDirs(bool on)
 {
     Q_D(QQuickFolderListModel);
 
-    d->fileInfoThread.setShowDirs(on);
-    d->showDirs = on;
+    if (on != d->showDirs) {
+        d->fileInfoThread.setShowDirs(on);
+        d->showDirs = on;
+        emit showDirsChanged();
+    }
 }
 
 /*!
@@ -716,8 +728,11 @@ void  QQuickFolderListModel::setShowDirsFirst(bool on)
 {
     Q_D(QQuickFolderListModel);
 
-    d->fileInfoThread.setShowDirsFirst(on);
-    d->showDirsFirst = on;
+    if (on != d->showDirsFirst) {
+       d->fileInfoThread.setShowDirsFirst(on);
+       d->showDirsFirst = on;
+       emit showDirsFirstChanged();
+    }
 }
 
 
@@ -744,6 +759,7 @@ void  QQuickFolderListModel::setShowDotAndDotDot(bool on)
     if (on != d->showDotAndDotDot) {
         d->fileInfoThread.setShowDotAndDotDot(on);
         d->showDotAndDotDot = on;
+        emit showDotAndDotDotChanged();
     }
 }
 
@@ -770,6 +786,7 @@ void QQuickFolderListModel::setShowHidden(bool on)
     if (on != d->showHidden) {
         d->fileInfoThread.setShowHidden(on);
         d->showHidden = on;
+        emit showHiddenChanged();
     }
 }
 
@@ -796,6 +813,7 @@ void QQuickFolderListModel::setShowOnlyReadable(bool on)
     if (on != d->showOnlyReadable) {
         d->fileInfoThread.setShowOnlyReadable(on);
         d->showOnlyReadable = on;
+        emit showOnlyReadableChanged();
     }
 }
 
@@ -821,6 +839,7 @@ void QQuickFolderListModel::setCaseSensitive(bool on)
     if (on != d->caseSensitive) {
         d->fileInfoThread.setCaseSensitive(on);
         d->caseSensitive = on;
+        emit caseSensitiveChanged();
     }
 }
 
@@ -884,6 +903,7 @@ void QQuickFolderListModel::setSortCaseSensitive(bool on)
     if (on != d->sortCaseSensitive) {
         d->sortCaseSensitive = on;
         d->updateSorting();
+        emit sortCaseSensitiveChanged();
     }
 }
 
