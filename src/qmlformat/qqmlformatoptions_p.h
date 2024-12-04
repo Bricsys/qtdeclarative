@@ -98,8 +98,7 @@ public:
     void setArguments(const QStringList &newArguments) { m_arguments = newArguments; }
     bool isVerbose() const { return m_verbose; }
     void setIsVerbose(bool newVerbose) { m_verbose = newVerbose; }
-    bool isValid() const { return m_valid; }
-    void setIsValid(bool newValid) { m_valid = newValid; }
+    bool isValid() const { return m_errors.isEmpty(); }
     bool isInplace() const { return m_inplace; }
     void setIsInplace(bool newInplace) { m_inplace = newInplace; }
     bool forceEnabled() const { return m_force; }
@@ -129,7 +128,6 @@ private:
     QStringList m_errors;
 
     bool m_verbose = false;
-    bool m_valid = false;
     bool m_inplace = false;
     bool m_force = false;
     bool m_ignoreSettings = false;

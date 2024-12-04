@@ -68,6 +68,9 @@ private Q_SLOTS:
 
     void ecmascriptModule();
 
+    void commandLineOptions_data();
+    void commandLineOptions();
+
 private:
     QString readTestFile(const QString &path);
     //TODO(QTBUG-117849) refactor this helper function
@@ -734,6 +737,53 @@ void TestQmlformat::testFilesOption()
 
         QCOMPARE(readFile(filePath), readFile(expectedFormattedFilePath));
     }
+}
+
+void TestQmlformat::commandLineOptions_data()
+{
+    QTest::addColumn<QString>("file");
+    QTest::addColumn<QStringList>("args");
+    QTest::addColumn<QString>("expectedErrorMessage");
+
+    QTest::newRow("columnWidthError")
+            << testFile("Annotations.qml") << QStringList{ "-W", "-11111" }
+            << "Error: Invalid value passed to -W. Must be an integer >= -1\n";
+    QTest::newRow("columnWidthNoError")
+            << testFile("Annotations.qml") << QStringList{ "-W", "80" } << "";
+    QTest::newRow("indentWidthError")
+            << testFile("Annotations.qml") << QStringList{ "--indent-width", "expect integer" }
+            << "Error: Invalid value passed to -w\n";
+    QTest::newRow("indentWidthNoError")
+            << testFile("Annotations.qml") << QStringList{ "--indent-width", "4" } << "";
+}
+
+void TestQmlformat::commandLineOptions()
+{
+    QFETCH(QString, file);
+    QFETCH(QStringList, args);
+    QFETCH(QString, expectedErrorMessage);
+
+    auto verify = [&]() {
+        QTemporaryDir tempDir;
+        const QString tempFile = tempDir.path() + QDir::separator() + "test_0.qml";
+        QFile::copy(file, tempFile);
+
+        QProcess process;
+        process.setStandardOutputFile(tempFile);
+        process.start(m_qmlformatPath, args);
+        QVERIFY(process.waitForFinished());
+        QCOMPARE(process.exitStatus(), QProcess::NormalExit);
+        // normalized error message
+        auto rawError = process.readAllStandardError();
+        QTextStream stream(&rawError, QIODeviceBase::ReadOnly | QIODeviceBase::Text);
+        QCOMPARE(stream.readAll(), expectedErrorMessage.toUtf8());
+        if (expectedErrorMessage.isEmpty())
+            QCOMPARE(process.exitCode(), 0);
+        else
+            QCOMPARE_NE(process.exitCode(), 0);
+    };
+
+    verify();
 }
 
 QString TestQmlformat::runQmlformat(const QString &fileToFormat, QStringList args,

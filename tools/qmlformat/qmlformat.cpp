@@ -186,7 +186,6 @@ QQmlFormatOptions buildCommandLineOptions(const QCoreApplication &app)
     if (parser.isSet(writeDefaultsOption)) {
         QQmlFormatOptions options;
         options.setWriteDefaultSettingsEnabled(true);
-        options.setIsValid(true);
         return options;
     }
 
@@ -223,7 +222,6 @@ QQmlFormatOptions buildCommandLineOptions(const QCoreApplication &app)
     options.setNormalizeEnabled(parser.isSet("normalize"));
     options.setObjectsSpacing(parser.isSet("objects-spacing"));
     options.setFunctionsSpacing(parser.isSet("functions-spacing"));
-    options.setIsValid(true);
 
     options.setIndentWidth(indentWidth);
     options.setIndentWidthSet(parser.isSet("indent-width"));
