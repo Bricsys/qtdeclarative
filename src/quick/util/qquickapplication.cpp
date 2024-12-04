@@ -142,7 +142,7 @@ QT_BEGIN_NAMESPACE
 */
 
 /*!
-    \qmlproperty QStringList Application::arguments
+    \qmlproperty list<string> Application::arguments
 
     This is a string list of the arguments the executable was invoked with.
  */

@@ -291,7 +291,7 @@ void QQuickPinchHandler::setPersistentRotation(qreal rot)
 */
 /*!
     \readonly
-    \qmlproperty QPointF QtQuick::PinchHandler::activeTranslation
+    \qmlproperty point QtQuick::PinchHandler::activeTranslation
 
     The translation of the cluster of points while the pinch gesture is being
     performed. It is \c {0, 0} when the gesture begins, and increases as the
@@ -304,7 +304,7 @@ void QQuickPinchHandler::setPersistentRotation(qreal rot)
 */
 
 /*!
-    \qmlproperty QPointF QtQuick::PinchHandler::persistentTranslation
+    \qmlproperty point QtQuick::PinchHandler::persistentTranslation
 
     The translation to be applied to the \l target if it is not \c null.
     Otherwise, bindings can be used to do arbitrary things with this value.
