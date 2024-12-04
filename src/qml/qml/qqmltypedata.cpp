@@ -885,7 +885,8 @@ void QQmlTypeData::resolveTypes()
     // Add any imported scripts to our resolved set
     const auto resolvedScripts = m_importCache->resolvedScripts();
     for (const QQmlImports::ScriptReference &script : resolvedScripts) {
-        QQmlRefPointer<QQmlScriptBlob> blob = typeLoader()->getScript(script.location);
+        QQmlRefPointer<QQmlScriptBlob> blob
+                = typeLoader()->getScript(script.location, script.fileName);
         addDependency(blob.data());
 
         ScriptReference ref;
