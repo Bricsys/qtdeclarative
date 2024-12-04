@@ -141,7 +141,7 @@ void QQuickPinchHandler::setActiveScale(qreal scale)
 
 /*!
     \readonly
-    \qmlproperty QVector2D QtQuick::PinchHandler::scale
+    \qmlproperty vector2d QtQuick::PinchHandler::scale
     \deprecated [6.5] Use persistentScale
 */
 
@@ -220,7 +220,7 @@ void QQuickPinchHandler::setMaximumRotation(qreal maximumRotation)
 
 /*!
     \readonly
-    \qmlproperty QVector2D QtQuick::PinchHandler::rotation
+    \qmlproperty vector2d QtQuick::PinchHandler::rotation
     \deprecated [6.5] Use activeRotation
 */
 
@@ -286,7 +286,7 @@ void QQuickPinchHandler::setPersistentRotation(qreal rot)
 
 /*!
     \readonly
-    \qmlproperty QVector2D QtQuick::PinchHandler::translation
+    \qmlproperty vector2d QtQuick::PinchHandler::translation
     \deprecated [6.5] Use activeTranslation
 */
 /*!

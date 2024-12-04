@@ -249,7 +249,7 @@ void QQuickHandlerPoint::reset(const QVector<QQuickHandlerPoint> &points)
 
 /*!
     \readonly
-    \qmlproperty QVector2D QtQuick::handlerPoint::velocity
+    \qmlproperty vector2d QtQuick::handlerPoint::velocity
     \brief A vector representing the average speed and direction of movement
 
     This is a velocity vector pointing in the direction of movement, in logical
