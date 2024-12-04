@@ -14,10 +14,10 @@ T.ToolBar {
 
     spacing: config.spacing || 0
 
-    topPadding: config.topPadding || 0
-    bottomPadding: config.bottomPadding || 0
-    leftPadding: config.leftPadding || 0
-    rightPadding: config.rightPadding || 0
+    topPadding: SafeArea.margins.top + (config.topPadding || 0)
+    bottomPadding: SafeArea.margins.bottom + (config.bottomPadding || 0)
+    leftPadding: SafeArea.margins.left + (config.leftPadding || 0)
+    rightPadding: SafeArea.margins.right + (config.rightPadding || 0)
 
     topInset: -config.topInset || 0
     bottomInset: -config.bottomInset || 0

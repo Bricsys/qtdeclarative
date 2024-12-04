@@ -13,10 +13,10 @@ T.MenuBar {
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding)
 
-    leftPadding: 3
-    rightPadding: 3
-    topPadding: 3
-    bottomPadding: 3
+    leftPadding: SafeArea.margins.left + 3
+    rightPadding: SafeArea.margins.right + 3
+    topPadding: SafeArea.margins.top + 3
+    bottomPadding: SafeArea.margins.bottom + 3
     spacing: 10
 
     delegate: MenuBarItem { }
