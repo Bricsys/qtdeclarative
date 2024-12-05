@@ -115,6 +115,7 @@ struct QQmlObjectCreatorSharedState final : QQmlRefCounted<QQmlObjectCreatorShar
     QQmlRefPointer<QQmlContextData> creationContext;
     QFiniteStack<QQmlAbstractBinding::Ptr> allCreatedBindings;
     QFiniteStack<QQmlParserStatus*> allParserStatusCallbacks;
+    std::unique_ptr<std::vector<QQmlParserStatus *>> attachedObjectParserStatusCallbacks;
     QFiniteStack<QQmlGuard<QObject> > allCreatedObjects;
     ObjectInCreationGCAnchorList allJavaScriptObjects; // pointer to vector on JS stack to reference JS wrappers during creation phase.
     QQmlComponentAttached *componentAttached;

@@ -1478,6 +1478,21 @@ void tst_qqmlecmascript::attachedProperties()
 
         QCOMPARE(attached->value2(), 9);
     }
+    {
+        qmlRegisterAnonymousType<MyQmlAttachedObject>("Qt.test", 1);
+        QQmlComponent component(&engine, testFileUrl("attachedLifeCycleMethods.qml"));
+        QScopedPointer<QObject> object(component.create());
+        QVERIFY2(object, qPrintable(component.errorString()));
+
+        MyQmlAttachedObject *attached = qobject_cast<MyQmlAttachedObject *>(
+            qmlAttachedPropertiesObject<MyQmlObject>(object.data()));
+        QVERIFY(attached != nullptr);
+
+        QCOMPARE(attached->value2(), 42);
+        QVERIFY(attached->classBeginCalled);
+        QVERIFY(attached->componentCompleteCalled);
+        QVERIFY(attached->orderCorrect);
+    }
 }
 
 void tst_qqmlecmascript::enums()

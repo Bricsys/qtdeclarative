@@ -859,6 +859,21 @@ bool QQmlObjectCreator::setPropertyBinding(const QQmlPropertyData *bindingProper
             return false;
         }
 
+        const QQmlType attachedObjectType = QQmlMetaType::qmlType(attachedType.attachedPropertiesType(QQmlEnginePrivate::get((engine))));
+        const int parserStatusCast = attachedObjectType.parserStatusCast();
+        QQmlParserStatus *parserStatus  = nullptr;
+        if (parserStatusCast != -1)
+            parserStatus = reinterpret_cast<QQmlParserStatus*>(reinterpret_cast<char *>(qmlObject) + parserStatusCast);
+        if (parserStatus) {
+            parserStatus->classBegin();
+            // we ignore them for profiling, because it doesn't interact well with the logic anyway
+            // can't use sharedState->allParserStatusCallbacks, we haven't reserved space TODO: could we?
+            if (!sharedState->attachedObjectParserStatusCallbacks)
+                sharedState->attachedObjectParserStatusCallbacks = std::make_unique<std::vector<QQmlParserStatus *>>();
+            sharedState->attachedObjectParserStatusCallbacks->push_back(parserStatus);
+            parserStatus->d = &sharedState->attachedObjectParserStatusCallbacks->back();
+        }
+
         if (!populateInstance(binding->value.objectIndex, qmlObject, qmlObject,
                               /*value type property*/ nullptr, binding))
             return false;
@@ -1573,6 +1588,19 @@ bool QQmlObjectCreator::finalize(QQmlInstantiationInterrupt &interrupt)
         while (!sharedState->allParserStatusCallbacks.isEmpty()) {
             QQmlObjectCompletionProfiler profiler(&sharedState->profiler);
             QQmlParserStatus *status = sharedState->allParserStatusCallbacks.pop();
+
+            if (status && status->d) {
+                status->d = nullptr;
+                status->componentComplete();
+            }
+
+            if (watcher.hasRecursed() || interrupt.shouldInterrupt())
+                return false;
+        }
+        while (sharedState->attachedObjectParserStatusCallbacks && !sharedState->attachedObjectParserStatusCallbacks->empty()) {
+            // ### TODO: no profiler integration (QTBUG-132827)
+            QQmlParserStatus *status = sharedState->attachedObjectParserStatusCallbacks->back();
+            sharedState->attachedObjectParserStatusCallbacks->pop_back();
 
             if (status && status->d) {
                 status->d = nullptr;
