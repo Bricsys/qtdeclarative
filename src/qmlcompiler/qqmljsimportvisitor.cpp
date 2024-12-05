@@ -415,7 +415,7 @@ void QQmlJSImportVisitor::processImportWarnings(
 
     m_logger->log(QStringLiteral("Warnings occurred while importing %1:").arg(what), qmlImport,
                   srcLocation);
-    m_logger->processMessages(warnings, qmlImport);
+    m_logger->processMessages(warnings, qmlImport, srcLocation);
 }
 
 void QQmlJSImportVisitor::importBaseModules()

@@ -796,7 +796,7 @@ void TestQmllint::dirtyQmlCode_data()
     QTest::newRow("InvalidImport")
             << QStringLiteral("invalidImport.qml")
             << Result { { Message { QStringLiteral(
-                       "Failed to import FooBar. Are your import paths set up properly?") } } };
+                       "Failed to import FooBar. Are your import paths set up properly?"), 2, 1 } } };
     QTest::newRow("Unused Import (simple)")
             << QStringLiteral("unused_simple.qml")
             << Result { { Message { QStringLiteral("Unused import"), 1, 1, QtInfoMsg } },
