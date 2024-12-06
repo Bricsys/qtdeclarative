@@ -34,7 +34,9 @@ Currently, it enables your editor to:
 
 \QMLLS can automatically lint opened QML files
 and display warnings or errors straight in the editor. See
-\l{qmllint} for more information about the linting process.
+\l{qmllint} for more information about the linting process,
+and \l{QML Lint Warning and Errors} on how to fix warnings and
+errors.
 
 \section2 Formatting
 
