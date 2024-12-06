@@ -20,6 +20,7 @@ set(qml_files
     "Frame.qml"
     "GroupBox.qml"
     "HorizontalHeaderView.qml"
+    "HorizontalHeaderViewDelegate.qml"
     "ItemDelegate.qml"
     "Label.qml"
     "Menu.qml"
@@ -57,6 +58,7 @@ set(qml_files
     "TreeViewDelegate.qml"
     "Tumbler.qml"
     "VerticalHeaderView.qml"
+    "VerticalHeaderViewDelegate.qml"
 )
 set_source_files_properties(DelayButton.qml PROPERTIES
     QT_QML_SOURCE_VERSIONS "2.2;6.0"

@@ -26,6 +26,7 @@ set(qml_files
     "Frame.qml"
     "GroupBox.qml"
     "HorizontalHeaderView.qml"
+    "HorizontalHeaderViewDelegate.qml"
     "ItemDelegate.qml"
     "Label.qml"
     "Menu.qml"
@@ -64,6 +65,7 @@ set(qml_files
     "ToolTip.qml"
     "Tumbler.qml"
     "VerticalHeaderView.qml"
+    "VerticalHeaderViewDelegate.qml"
 )
 if (QT_FEATURE_quicktemplates2_calendar)
     list(APPEND qml_files

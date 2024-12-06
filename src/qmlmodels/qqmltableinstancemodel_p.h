@@ -91,6 +91,8 @@ public:
     void setWatchedRoles(const QList<QByteArray> &) override { Q_UNREACHABLE(); }
     int indexOf(QObject *, QObject *) const override { Q_UNREACHABLE_RETURN(0); }
 
+    QQmlDelegateModelItem *getModelItem(int index);
+
 private:
     enum DestructionMode {
         Deferred,

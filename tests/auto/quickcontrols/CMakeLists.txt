@@ -57,6 +57,7 @@ add_subdirectory(translation)
 
 if (QT_FEATURE_quick_tableview)
     add_subdirectory(qquicktableviewdelegate)
+    add_subdirectory(qquickheaderviewdelegate) # inherits QQuickTableViewDelegate
 endif()
 
 if (QT_FEATURE_quick_treeview)

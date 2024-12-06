@@ -26,35 +26,15 @@ HorizontalHeaderView {
         orientation: Qt.Horizontal
     }
 
-    delegate: Rectangle {
+    textRole: "columnName"
+    delegate: HorizontalHeaderViewDelegate {
         id: headerDelegate
 
         required property var index
-        required property bool selected
+        required property int column
         required property bool containsDrag
-        readonly property real cellPadding: 8
-        readonly property bool containsMenu: columnMenu.column === column
-
-        implicitWidth: title.implicitWidth + (cellPadding * 2)
-        implicitHeight: Math.max(root.height, title.implicitHeight + (cellPadding * 2))
-        border {
-            width: containsDrag || containsMenu ? 1 : 0
-            color: palette.highlight
-        }
-        color: selected ? palette.highlight : palette.button
-
-        gradient: Gradient {
-            GradientStop {
-                position: 0
-                color: Qt.styleHints.colorScheme === Qt.Light ? headerDelegate.color
-                                                              : Qt.lighter(headerDelegate.color, 1.3)
-            }
-            GradientStop {
-                position: 1
-                color: Qt.styleHints.colorScheme === Qt.Light ? Qt.darker(headerDelegate.color, 1.3)
-                                                              : headerDelegate.color
-            }
-        }
+        readonly property bool visibleBorder: ((columnMenu.column === column)
+                                               || containsDrag)
 
         function rightClicked() {
             columnMenu.column = index
@@ -62,10 +42,25 @@ HorizontalHeaderView {
             columnMenu.popup(menu_pos)
         }
 
-        Label {
-            id: title
-            anchors.centerIn: parent
-            text: model.columnName
+        Binding {
+            target: headerDelegate.background
+            property: "color"
+            value: headerDelegate.palette.highlight
+            when: headerDelegate.highlighted
+        }
+
+        Binding {
+            target: headerDelegate.background
+            property: "border.width"
+            value: headerDelegate.visibleBorder ? 1 : 0
+            when: (headerDelegate.background as Rectangle) ?? false
+        }
+
+        Binding {
+            target: headerDelegate.background
+            property: "border.color"
+            value: headerDelegate.palette.highlight
+            when: (headerDelegate.background as Rectangle) ?? false
         }
 
         HeaderViewTapHandler {

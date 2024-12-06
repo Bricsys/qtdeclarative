@@ -407,6 +407,11 @@ bool QQmlTableInstanceModel::setRequiredProperty(int index, const QString &name,
     return wasInRequired;
 }
 
+QQmlDelegateModelItem *QQmlTableInstanceModel::getModelItem(int index)
+{
+    return m_modelItems.value(index, nullptr);
+}
+
 void QQmlTableInstanceModel::deleteIncubationTaskLater(QQmlIncubator *incubationTask)
 {
     // We often need to post-delete incubation tasks, since we cannot

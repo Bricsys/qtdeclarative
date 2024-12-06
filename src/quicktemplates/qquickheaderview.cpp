@@ -80,6 +80,9 @@
 
 QT_BEGIN_NAMESPACE
 
+static const char *kRequiredProperty_headerView = "headerView";
+static const char *kRequiredProperty_model = "model";
+
 QQuickHeaderViewBasePrivate::QQuickHeaderViewBasePrivate()
     : QQuickTableViewPrivate()
 {
@@ -182,6 +185,24 @@ QAbstractItemModel *QQuickHeaderViewBasePrivate::selectionSourceModel()
     // modelIndex(cell) and cellAtIndex(index) have not been overridden either).
     // Instead, we set the internal proxy model as selection source model.
     return &m_headerDataProxyModel;
+}
+
+void QQuickHeaderViewBasePrivate::initItemCallback(int modelIndex, QObject *object)
+{
+    Q_Q(QQuickHeaderViewBase);
+
+    QQuickTableViewPrivate::initItemCallback(modelIndex, object);
+
+    auto item = qobject_cast<QQuickItem *>(object);
+    if (!item)
+        return;
+
+    QQmlDelegateModelItem *modelItem = tableModel->getModelItem(modelIndex);
+
+    setRequiredProperty(kRequiredProperty_headerView, QVariant::fromValue(q),
+                        modelIndex, item, true);
+    setRequiredProperty(kRequiredProperty_model, QVariant::fromValue(modelItem->modelObject()),
+                        modelIndex, item, true);
 }
 
 int QQuickHeaderViewBasePrivate::logicalRowIndex(const int visualIndex) const
