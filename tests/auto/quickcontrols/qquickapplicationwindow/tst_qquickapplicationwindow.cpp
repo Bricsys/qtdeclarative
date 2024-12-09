@@ -5,6 +5,7 @@
 #include <QtCore/qoperatingsystemversion.h>
 #include <QtTest/QSignalSpy>
 #include <QtQml/qqmlengine.h>
+#include <QtQml/qqmlapplicationengine.h>
 #include <QtQml/qqmlcomponent.h>
 #include <QtQml/qqmlcontext.h>
 #include <QtQuick/qquickview.h>
@@ -39,6 +40,7 @@ private slots:
     void qmlCreation();
     void activeFocusOnTab1();
     void activeFocusOnTab2();
+    void defaultFocus_data();
     void defaultFocus();
     void implicitFill();
     void attachedProperties();
@@ -207,17 +209,22 @@ void tst_QQuickApplicationWindow::activeFocusOnTab2()
     }
 }
 
+void tst_QQuickApplicationWindow::defaultFocus_data()
+{
+    QTest::addColumn<bool>("itemFocused");
+    QTest::newRow("no item focus") << false;
+    QTest::newRow("item focused") << true;
+}
+
 void tst_QQuickApplicationWindow::defaultFocus()
 {
-    QQmlEngine engine;
-    QQmlComponent component(&engine);
-    component.loadUrl(testFileUrl("defaultFocus.qml"));
-    QObject* created = component.create();
-    QScopedPointer<QObject> cleanup(created);
-    Q_UNUSED(cleanup);
-    QVERIFY(created);
+    QFETCH(bool, itemFocused);
 
-    QQuickWindow* window = qobject_cast<QQuickWindow*>(created);
+    QQmlApplicationEngine engine;
+    engine.setInitialProperties({{ "itemFocused", itemFocused }});
+    engine.load(testFileUrl("defaultFocus.qml"));
+
+    QQuickWindow* window = qobject_cast<QQuickApplicationWindow *>(engine.rootObjects().value(0));
     QVERIFY(window);
     window->show();
     window->requestActivate();
@@ -228,11 +235,16 @@ void tst_QQuickApplicationWindow::defaultFocus()
     QVERIFY(contentItem);
     QVERIFY(contentItem->hasActiveFocus());
 
-    // A single item in an ApplicationWindow with focus: true should receive focus.
+    auto* appWindow = qobject_cast<QQuickApplicationWindow*>(window);
+    auto* appWindowContentItem = appWindow->contentItem();
+    QVERIFY(appWindowContentItem);
+    QCOMPARE(appWindowContentItem->hasFocus(), !itemFocused);
+    QCOMPARE(appWindowContentItem->hasActiveFocus(), !itemFocused);
+
     QQuickItem* item = findItem<QQuickItem>(window->contentItem(), "item");
     QVERIFY(item);
-    QVERIFY(item->hasFocus());
-    QVERIFY(item->hasActiveFocus());
+    QCOMPARE(item->hasFocus(), itemFocused);
+    QCOMPARE(item->hasActiveFocus(), itemFocused);
 }
 
 static QSizeF getExpectedElementSize()
