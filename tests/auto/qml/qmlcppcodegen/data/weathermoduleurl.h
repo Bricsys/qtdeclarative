@@ -49,6 +49,13 @@ private:
     QStringList m_strings;
 };
 
+class WeatherModelUrlDerived : public WeatherModelUrl
+{
+    Q_GADGET
+    QML_STRUCTURED_VALUE
+    QML_VALUE_TYPE(weatherModelUrlDerived)
+};
+
 class WeatherModelUrlUtils : public QObject
 {
     Q_OBJECT

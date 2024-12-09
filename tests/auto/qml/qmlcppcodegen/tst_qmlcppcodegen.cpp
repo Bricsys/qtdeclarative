@@ -4900,8 +4900,13 @@ void tst_QmlCppCodegen::structuredValueType()
 
     QCOMPARE(o->property("w").value<WeatherModelUrl>(), w);
 
-    w.setStrings(QStringList({u"three"_s, u"two"_s, u"one"_s}));
-    QCOMPARE(o->property("w2").value<WeatherModelUrl>(), w);
+    WeatherModelUrlDerived w1;
+    w1.setStrings(QStringList({u"four"_s, u"five"_s, u"six"_s}));
+    QCOMPARE(o->property("w1").value<WeatherModelUrlDerived>(), w1);
+
+    WeatherModelUrl w2;
+    w2.setStrings(QStringList({u"three"_s, u"two"_s, u"one"_s}));
+    QCOMPARE(o->property("w2").value<WeatherModelUrl>(), w2);
 }
 
 void tst_QmlCppCodegen::testIsnan()
