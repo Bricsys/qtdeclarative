@@ -49,6 +49,8 @@ private slots:
 
     void bindingLoop();
 
+    void safeAreaReuse();
+
 private:
     std::unique_ptr<QQmlApplicationEngine> m_engine;
 };
@@ -237,6 +239,23 @@ void tst_QQuickSafeArea::bindingLoop()
     windowSafeArea->setAdditionalMargins(QMarginsF(50, 0, 0, 0));
     QCOMPARE(warnings.size(), 1);
     QVERIFY(warnings.at(0).description().endsWith("Safe area binding loop detected"));
+}
+
+void tst_QQuickSafeArea::safeAreaReuse()
+{
+    auto *window = qobject_cast<QQuickWindow*>(m_engine->rootObjects().first());
+    QVERIFY(window);
+    QVERIFY(QTest::qWaitForWindowExposed(window));
+
+    auto *windowSafeArea = qobject_cast<QQuickSafeArea*>(
+        qmlAttachedPropertiesObject<QQuickSafeArea>(window, false));
+    QVERIFY(windowSafeArea);
+
+    auto *windowContentItemSafeArea = qobject_cast<QQuickSafeArea*>(
+        qmlAttachedPropertiesObject<QQuickSafeArea>(window->contentItem(), false));
+    QVERIFY(windowContentItemSafeArea);
+
+    QCOMPARE(windowSafeArea, windowContentItemSafeArea);
 }
 
 QTEST_MAIN(tst_QQuickSafeArea)

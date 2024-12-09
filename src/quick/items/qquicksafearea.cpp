@@ -100,6 +100,13 @@ QQuickSafeArea *QQuickSafeArea::qmlAttachedProperties(QObject *attachee)
         return nullptr;
     }
 
+    // We may already have created a safe area for Window, and are now
+    // requesting one for Window.contentItem (or the other way around).
+    // As both map to the same safe area item, we need to check first
+    // if we already have created one for this item.
+    if (auto *safeArea = item->findChild<QQuickSafeArea*>(Qt::FindDirectChildrenOnly))
+        return safeArea;
+
     return new QQuickSafeArea(item);
 }
 
