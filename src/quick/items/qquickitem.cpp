@@ -10,6 +10,7 @@
 
 #include "qquickevents_p_p.h"
 #include "qquickscreen_p.h"
+#include "qquicksafearea_p.h"
 
 #include <QtQml/qqmlengine.h>
 #include <QtQml/qqmlcomponent.h>
@@ -5377,6 +5378,9 @@ void QQuickItem::componentComplete()
         d->_anchors->componentComplete();
         QQuickAnchorsPrivate::get(d->_anchors)->updateOnComplete();
     }
+
+    if (auto *safeArea = findChild<QQuickSafeArea*>(Qt::FindDirectChildrenOnly))
+        safeArea->updateSafeArea();
 
     if (d->extra.isAllocated()) {
 #if QT_CONFIG(quick_shadereffect)

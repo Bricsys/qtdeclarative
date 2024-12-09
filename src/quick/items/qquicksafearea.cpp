@@ -209,6 +209,10 @@ void QQuickSafeArea::updateSafeArea()
     qCDebug(lcSafeArea) << "Updating" << this;
 
     auto *attachedItem = qobject_cast<QQuickItem*>(parent());
+    if (!QQuickItemPrivate::get(attachedItem)->componentComplete) {
+        qCDebug(lcSafeArea) << attachedItem << "is not complete. Deferring";
+        return;
+    }
 
     QMarginsF windowMargins;
     if (auto *window = attachedItem->window()) {

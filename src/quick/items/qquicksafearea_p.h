@@ -66,6 +66,8 @@ private:
     QMarginsF m_safeAreaMargins;
     QMarginsF m_additionalMargins;
     bool emittingMarginsUpdate = false;
+
+    friend class QQuickItem;
 };
 
 class Q_QUICK_EXPORT QQuickSafeAreaAttachable
