@@ -23,6 +23,7 @@ qt_internal_add_test(tst_qquicksafearea
         Qt::QmlPrivate
         Qt::QuickPrivate
         Qt::QuickTestUtilsPrivate
+        Qt::QuickTemplates2Private
     TESTDATA ${test_data}
 )
 

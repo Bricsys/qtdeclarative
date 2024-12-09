@@ -25,6 +25,7 @@ QT_BEGIN_NAMESPACE
 
 class QQuickAnchorLine;
 class QQuickItem;
+class QQuickControl;
 
 class Q_QUICK_EXPORT QQuickSafeArea : public QObject, public QQuickItemChangeListener
 {
@@ -68,12 +69,14 @@ private:
     QMarginsF m_safeAreaMargins;
     QMarginsF m_additionalMargins;
     bool emittingMarginsUpdate = false;
+    bool detectedPossibleBindingLoop = false;
 
     void addSourceItem(QQuickItem *item) override;
     void removeSourceItem(QQuickItem *item) override;
     QList<QPointer<QQuickItem>> m_listenedItems;
 
     friend class QQuickItem;
+    friend class QQuickControl;
 };
 
 class Q_QUICK_EXPORT QQuickSafeAreaAttachable

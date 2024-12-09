@@ -19,6 +19,8 @@
 
 #include <QtQuickTestUtils/private/visualtestutils_p.h>
 
+#include <QtQuickTemplates2/private/qquickcontrol_p.h>
+
 #if defined(Q_OS_MACOS)
 #include <AppKit/NSView.h>
 #endif
@@ -28,7 +30,8 @@ class tst_QQuickSafeArea : public QQmlDataTest
     Q_OBJECT
 public:
     tst_QQuickSafeArea()
-        : QQmlDataTest(QT_QMLTEST_DATADIR)
+        : QQmlDataTest(QT_QMLTEST_DATADIR,
+            FailOnWarningsPolicy::FailOnWarnings)
     {
     }
 
@@ -50,6 +53,9 @@ private slots:
     void bindingLoopApplicationWindow();
 
     void safeAreaReuse();
+
+    void controlBindingLoop_data();
+    void controlBindingLoop();
 };
 
 using namespace QQuickVisualTestUtils;
@@ -261,6 +267,141 @@ void tst_QQuickSafeArea::safeAreaReuse()
     QVERIFY(windowContentItemSafeArea);
 
     QCOMPARE(windowSafeArea, windowContentItemSafeArea);
+}
+
+void tst_QQuickSafeArea::controlBindingLoop_data()
+{
+    QTest::addColumn<QSize>("windowSize");
+    QTest::addColumn<QMargins>("safeAreaMargins");
+    QTest::addColumn<QMargins>("extraPadding");
+    QTest::addColumn<QPoint>("anchorPosition");
+    QTest::addColumn<QRect>("expectedControlGeometry");
+    QTest::addColumn<QRect>("expectedContentItemGeometry");
+
+    // Top/bottom
+
+    QTest::newRow("top margin, anchors bottom, inside safe area")
+        << QSize(500, 500) << QMargins(0, 100, 0, 0) << QMargins() << QPoint(0, 500)
+        << QRect(0, 400, 100, 100) << QRect(0, 0, 100, 100);
+
+    QTest::newRow("top margin, anchors top, overlapping non-safe area")
+        << QSize(500, 500) << QMargins(0, 100, 0, 0) << QMargins() << QPoint(0, 0)
+        << QRect(0, 0, 100, 200) << QRect(0, 100, 100, 100);
+
+    QTest::newRow("top margin, anchors bottom, overlapping non-safe area")
+        << QSize(500, 150) << QMargins(0, 100, 0, 0) << QMargins() << QPoint(0, 150)
+        << QRect(0, 50, 100, 100) << QRect(0, 50, 100, 50);
+
+    QTest::newRow("top margin, anchors top, overlapping non-safe area, extra padding")
+        << QSize(500, 500) << QMargins(0, 100, 0, 0) << QMargins(0, 10, 0, 10) << QPoint(0, 0)
+        << QRect(0, 0, 100, 220) << QRect(0, 110, 100, 100);
+
+    QTest::newRow("bottom margin, anchors top, inside safe area")
+        << QSize(500, 500) << QMargins(0, 0, 0, 100) << QMargins() << QPoint(0, 0)
+        << QRect(0, 0, 100, 100) << QRect(0, 0, 100, 100);
+
+    QTest::newRow("bottom margin, anchors bottom, overlapping non-safe area")
+        << QSize(500, 500) << QMargins(0, 0, 0, 100) << QMargins() << QPoint(0, 500)
+        << QRect(0, 300, 100, 200) << QRect(0, 0, 100, 100);
+
+    QTest::newRow("bottom margin, anchors top, overlapping non-safe area")
+        << QSize(500, 150) << QMargins(0, 0, 0, 100) << QMargins() << QPoint(0, 0)
+        << QRect(0, 0, 100, 100) << QRect(0, 0, 100, 50);
+
+    QTest::newRow("bottom margin, anchors bottom, overlapping non-safe area, extra padding")
+        << QSize(500, 500) << QMargins(0, 0, 0, 100) << QMargins(0, 10, 0, 10) << QPoint(0, 500)
+        << QRect(0, 280, 100, 220) << QRect(0, 10, 100, 100);
+
+    QTest::newRow("top and bottom margin, anchors top, overlapping non-safe area")
+        << QSize(500, 250) << QMargins(0, 100, 0, 100) << QMargins() << QPoint(0, 0)
+        << QRect(0, 0, 100, 200) << QRect(0, 100, 100, 50);
+
+    QTest::newRow("top and bottom margin, anchors top, overlapping non-safe area, extra padding")
+        << QSize(500, 250) << QMargins(0, 100, 0, 100) << QMargins(0, 10, 0, 10) << QPoint(0, 0)
+        << QRect(0, 0, 100, 220) << QRect(0, 110, 100, 30);
+
+    // Left/right
+
+    QTest::newRow("left margin, anchors right, inside safe area")
+        << QSize(500, 500) << QMargins(100, 0, 0, 0) << QMargins() << QPoint(500, 0)
+        << QRect(400, 0, 100, 100) << QRect(0, 0, 100, 100);
+
+    QTest::newRow("left margin, anchors left, overlapping non-safe area")
+        << QSize(500, 500) << QMargins(100, 0, 0, 0) << QMargins() << QPoint(0, 0)
+        << QRect(0, 0, 200, 100) << QRect(100, 0, 100, 100);
+
+    QTest::newRow("left margin, anchors right, overlapping non-safe area")
+        << QSize(150, 500) << QMargins(100, 0, 0, 0) << QMargins() << QPoint(150, 0)
+        << QRect(50, 0, 100, 100) << QRect(50, 0, 50, 100);
+
+    QTest::newRow("left margin, anchors left, overlapping non-safe area, extra padding")
+        << QSize(500, 500) << QMargins(100, 0, 0, 0) << QMargins(10, 0, 10, 0) << QPoint(0, 0)
+        << QRect(0, 0, 220, 100) << QRect(110, 0, 100, 100);
+
+    QTest::newRow("right margin, anchors left, inside safe area")
+        << QSize(500, 500) << QMargins(0, 0, 100, 0) << QMargins() << QPoint(0, 0)
+        << QRect(0, 0, 100, 100) << QRect(0, 0, 100, 100);
+
+    QTest::newRow("right margin, anchors right, overlapping non-safe area")
+        << QSize(500, 500) << QMargins(0, 0, 100, 0) << QMargins() << QPoint(500, 0)
+        << QRect(300, 0, 200, 100) << QRect(0, 0, 100, 100);
+
+    QTest::newRow("right margin, anchors left, overlapping non-safe area")
+        << QSize(150, 500) << QMargins(0, 0, 100, 0) << QMargins() << QPoint(0, 0)
+        << QRect(0, 0, 100, 100) << QRect(0, 0, 50, 100);
+
+    QTest::newRow("right margin, anchors right, overlapping non-safe area, extra padding")
+        << QSize(500, 500) << QMargins(0, 0, 100, 0) << QMargins(10, 0, 10, 0) << QPoint(500, 0)
+        << QRect(280, 0, 220, 100) << QRect(10, 0, 100, 100);
+
+    QTest::newRow("left and right margin, anchors left, overlapping non-safe area")
+        << QSize(250, 500) << QMargins(100, 0, 100, 0) << QMargins() << QPoint(0, 0)
+        << QRect(0, 0, 200, 100) << QRect(100, 0, 50, 100);
+
+    QTest::newRow("left and right margin, anchors left, overlapping non-safe area, extra padding")
+        << QSize(250, 500) << QMargins(100, 0, 100, 0) << QMargins(10, 0, 10, 0) << QPoint(0, 0)
+        << QRect(0, 0, 220, 100) << QRect(110, 0, 30, 100);
+
+}
+
+void tst_QQuickSafeArea::controlBindingLoop()
+{
+    QFETCH(QSize, windowSize);
+    QFETCH(QMargins, safeAreaMargins);
+    QFETCH(QMargins, extraPadding);
+    QFETCH(QPoint, anchorPosition);
+    QFETCH(QRect, expectedControlGeometry);
+    QFETCH(QRect, expectedContentItemGeometry);
+
+    // Try first with explicit size set, and then verify
+    // that the implicit size behaves the same.
+    for (int i = 0; i < 2; ++i) {
+        const bool explicitSize = i == 0;
+        QQuickApplicationHelper helper(this, "controlBindingLoop.qml", {
+            { "windowSize", QVariant::fromValue(windowSize) },
+            { "safeAreaMargins", QVariant::fromValue(safeAreaMargins) },
+            { "extraPadding", QVariant::fromValue(extraPadding) },
+            { "anchorPosition", anchorPosition },
+            { "explicitSize", explicitSize ?
+                QVariant::fromValue(expectedControlGeometry.size())
+              : QVariant() },
+            { "currentDataTag", QTest::currentDataTag() }
+        });
+        QVERIFY2(helper.ready, helper.failureMessage());
+        QQuickWindow *window = helper.window;
+        window->show();
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+
+        auto *control = window->findChild<QQuickControl*>("control");
+        QVERIFY(control);
+
+        QRectF controlGeometry(control->position(), control->size());
+        QCOMPARE(controlGeometry, expectedControlGeometry);
+
+        auto *contentItem = control->contentItem();
+        QRectF contentItemGeometry(contentItem->position(), contentItem->size());
+        QCOMPARE(contentItemGeometry, expectedContentItemGeometry);
+    }
 }
 
 QTEST_MAIN(tst_QQuickSafeArea)
