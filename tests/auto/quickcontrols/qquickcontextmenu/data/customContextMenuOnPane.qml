@@ -5,7 +5,7 @@ ApplicationWindow {
     width: 600
     height: 400
 
-    Control {
+    Pane {
         objectName: "tomato"
         x: 100
         y: 100

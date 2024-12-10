@@ -5,12 +5,15 @@ ApplicationWindow {
     width: 600
     height: 400
 
-    Control {
+    Label {
         objectName: "tomato"
         x: 100
         y: 100
         width: 100
         height: 100
+        text: "tomato"
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
 
         ContextMenu.menu: Menu {
             MenuItem {
