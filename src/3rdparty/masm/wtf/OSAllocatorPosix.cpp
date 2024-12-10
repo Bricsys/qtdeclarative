@@ -138,8 +138,8 @@ void* OSAllocator::reserveAndCommit(size_t bytes, Usage usage, bool writable, bo
         protection |= PROT_EXEC;
 
     int flags = MAP_PRIVATE | MAP_ANON;
-#if PLATFORM(IOS)
-    if (executable)
+#if OS(DARWIN)
+    if (executable || usage == OSAllocator::JSJITCodePages)
         flags |= MAP_JIT;
 #endif
 
@@ -274,9 +274,8 @@ void OSAllocator::releaseDecommitted(void* address, size_t bytes)
 bool OSAllocator::canAllocateExecutableMemory()
 {
     int flags = MAP_PRIVATE;
-#if PLATFORM(IOS)
-    if (executable)
-        flags |= MAP_JIT;
+#if OS(DARWIN)
+    flags |= MAP_JIT;
 #endif
 
     // Get a read/write memfd page
