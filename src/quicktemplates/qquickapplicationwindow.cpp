@@ -821,7 +821,10 @@ void QQuickApplicationWindow::classBegin()
     auto *contentItem = new QQuickContentItem(this, d->control);
     // The content item can't be its own focus scope here, as that
     // will detach focus of items inside the content item from focus
-    // in the menubar, header and footer.
+    // in the menubar, header and footer. Nor can set set the content
+    // item as focused, as that will prevent child items of the content
+    // item from getting the initial focus when they are reparented
+    // into the content item.
     d->control->setContentItem(contentItem);
 
     auto *context = qmlContext(this);
@@ -852,13 +855,7 @@ void QQuickApplicationWindow::componentComplete()
 {
     Q_D(QQuickApplicationWindow);
     d->componentComplete = true;
-    contentItem()->setObjectName(QQmlMetaType::prettyTypeName(this));
-    // If no other item has requested focus, make the app window's
-    // content item the focused item, matching the behavior from when
-    // the app window's content item was the root of the window and
-    // a focus scope.
-    if (!QQuickWindow::contentItem()->scopedFocusItem())
-        contentItem()->setFocus(true);
+    QQuickWindow::contentItem()->setObjectName(QQmlMetaType::prettyTypeName(this));
     d->executeBackground(true);
     QQuickWindowQmlImpl::componentComplete();
     d->relayout();

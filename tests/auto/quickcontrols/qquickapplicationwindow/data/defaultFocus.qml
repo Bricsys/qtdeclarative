@@ -9,13 +9,11 @@ ApplicationWindow {
     width: 200
     height: 200
 
-    required property bool itemFocused
-
     property bool receivedKeyPress: false
 
     Item {
         objectName: "item"
-        focus: itemFocused
+        focus: true
         anchors.fill: parent
 
         Keys.onLeftPressed: receivedKeyPress = true
