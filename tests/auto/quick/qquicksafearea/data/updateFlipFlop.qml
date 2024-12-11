@@ -1,7 +1,6 @@
 import QtQuick
 
 Window {
-    visible: true
     flags: Qt.FramelessWindowHint
     width: 500; height: 500
 

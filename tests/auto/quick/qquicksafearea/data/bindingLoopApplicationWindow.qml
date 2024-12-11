@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Controls
 
 ApplicationWindow {
-    visible: true
     flags: Qt.FramelessWindowHint
     width: 500; height: 500
 

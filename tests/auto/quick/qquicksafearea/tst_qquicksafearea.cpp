@@ -17,6 +17,8 @@
 #include <QtQuick/qquickwindow.h>
 #include <QtQuick/private/qquicksafearea_p.h>
 
+#include <QtQuickTestUtils/private/visualtestutils_p.h>
+
 #if defined(Q_OS_MACOS)
 #include <AppKit/NSView.h>
 #endif
@@ -31,9 +33,6 @@ public:
     }
 
 private slots:
-    void init() override;
-    void cleanup();
-
     void properties();
 
 #if defined(Q_OS_MACOS)
@@ -51,46 +50,16 @@ private slots:
     void bindingLoopApplicationWindow();
 
     void safeAreaReuse();
-
-private:
-    std::unique_ptr<QQmlApplicationEngine> m_engine;
 };
 
-void tst_QQuickSafeArea::init()
-{
-    QQmlDataTest::init();
-
-    auto loadTestFile = [this](const QString &testName) -> bool {
-        const auto testUrl = testFileUrl(testName + ".qml");
-        if (QFileInfo::exists(QQmlFile::urlToLocalFileOrQrc(testUrl))) {
-            m_engine.reset(new QQmlApplicationEngine(testUrl));
-            return true;
-        } else {
-            return false;
-        }
-    };
-
-    QString testFunction = QTest::currentTestFunction();
-    if (auto *dataTag = QTest::currentDataTag()) {
-        if (loadTestFile(testFunction % QChar('_') % dataTag)) {
-            QVERIFY(m_engine->rootObjects().size() > 0);
-            return;
-        }
-    }
-
-    if (loadTestFile(testFunction))
-        QVERIFY(m_engine->rootObjects().size() > 0);
-}
-
-void tst_QQuickSafeArea::cleanup()
-{
-    m_engine.reset(nullptr);
-}
+using namespace QQuickVisualTestUtils;
 
 void tst_QQuickSafeArea::properties()
 {
-    auto *window = qobject_cast<QQuickWindow*>(m_engine->rootObjects().first());
-    QVERIFY(window);
+    QQuickApplicationHelper helper(this, "properties.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+
     QCOMPARE(window->property("margins").metaType(), QMetaType::fromType<QMarginsF>());
     QCOMPARE(window->property("marginsTop").metaType(), QMetaType::fromType<qreal>());
     QCOMPARE(window->property("marginsLeft").metaType(), QMetaType::fromType<qreal>());
@@ -135,8 +104,10 @@ void tst_QQuickSafeArea::margins_data()
 
 void tst_QQuickSafeArea::margins()
 {
-    auto *window = qobject_cast<QQuickWindow*>(m_engine->rootObjects().first());
-    QVERIFY(window);
+    QQuickApplicationHelper helper(this, "margins.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    window->show();
     QVERIFY(QTest::qWaitForWindowExposed(window));
 
     QCOMPARE(window->property("margins").value<QMarginsF>(), QMarginsF());
@@ -166,8 +137,10 @@ void tst_QQuickSafeArea::margins()
 
 void tst_QQuickSafeArea::additionalMargins()
 {
-    auto *window = qobject_cast<QQuickWindow*>(m_engine->rootObjects().first());
-    QVERIFY(window);
+    QQuickApplicationHelper helper(this, "additionalMargins.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    window->show();
     QVERIFY(QTest::qWaitForWindowExposed(window));
 
     QCOMPARE(window->property("margins").value<QMarginsF>(),
@@ -199,8 +172,10 @@ void tst_QQuickSafeArea::independentMargins_data()
 
 void tst_QQuickSafeArea::independentMargins()
 {
-    auto *window = qobject_cast<QQuickWindow*>(m_engine->rootObjects().first());
-    QVERIFY(window);
+    QQuickApplicationHelper helper(this, "independentMargins.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    window->show();
     QVERIFY(QTest::qWaitForWindowExposed(window));
 
     QFETCH(QString, itemName);
@@ -214,8 +189,10 @@ void tst_QQuickSafeArea::independentMargins()
 
 void tst_QQuickSafeArea::updateFlipFlop()
 {
-    auto *window = qobject_cast<QQuickWindow*>(m_engine->rootObjects().first());
-    QVERIFY(window);
+    QQuickApplicationHelper helper(this, "updateFlipFlop.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    window->show();
     QVERIFY(QTest::qWaitForWindowExposed(window));
 
     QSignalSpy widthChangedSpy(window, SIGNAL(itemWidthChanged()));
@@ -227,14 +204,16 @@ void tst_QQuickSafeArea::updateFlipFlop()
 
 void tst_QQuickSafeArea::bindingLoop()
 {
-    auto *window = qobject_cast<QQuickWindow*>(m_engine->rootObjects().first());
-    QVERIFY(window);
+    QQuickApplicationHelper helper(this, "bindingLoop.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    window->show();
     QVERIFY(QTest::qWaitForWindowExposed(window));
 
-    m_engine->setOutputWarningsToStandardError(false);
+    helper.engine.setOutputWarningsToStandardError(false);
 
     QList<QQmlError> warnings;
-    QObject::connect(m_engine.get(), &QQmlEngine::warnings, [&](auto w) { warnings = w; });
+    QObject::connect(&helper.engine, &QQmlEngine::warnings, [&](auto w) { warnings = w; });
     auto *windowSafeArea = qobject_cast<QQuickSafeArea*>(qmlAttachedPropertiesObject<QQuickSafeArea>(window));
     QVERIFY(windowSafeArea);
     windowSafeArea->setAdditionalMargins(QMarginsF(50, 0, 0, 0));
@@ -244,14 +223,16 @@ void tst_QQuickSafeArea::bindingLoop()
 
 void tst_QQuickSafeArea::bindingLoopApplicationWindow()
 {
-    auto *window = qobject_cast<QQuickWindow*>(m_engine->rootObjects().first());
-    QVERIFY(window);
+    QQuickApplicationHelper helper(this, "bindingLoopApplicationWindow.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    window->show();
     QVERIFY(QTest::qWaitForWindowExposed(window));
 
-    m_engine->setOutputWarningsToStandardError(false);
+    helper.engine.setOutputWarningsToStandardError(false);
 
     QList<QQmlError> warnings;
-    QObject::connect(m_engine.get(), &QQmlEngine::warnings, [&](auto w) { warnings = w; });
+    QObject::connect(&helper.engine, &QQmlEngine::warnings, [&](auto w) { warnings = w; });
     auto *windowSafeArea = qobject_cast<QQuickSafeArea*>(qmlAttachedPropertiesObject<QQuickSafeArea>(window));
     QVERIFY(windowSafeArea);
 
@@ -265,8 +246,10 @@ void tst_QQuickSafeArea::bindingLoopApplicationWindow()
 
 void tst_QQuickSafeArea::safeAreaReuse()
 {
-    auto *window = qobject_cast<QQuickWindow*>(m_engine->rootObjects().first());
-    QVERIFY(window);
+    QQuickApplicationHelper helper(this, "safeAreaReuse.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    window->show();
     QVERIFY(QTest::qWaitForWindowExposed(window));
 
     auto *windowSafeArea = qobject_cast<QQuickSafeArea*>(
