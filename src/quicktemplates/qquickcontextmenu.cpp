@@ -108,6 +108,7 @@ bool QQuickContextMenu::eventFilter(QObject *object, QEvent *event)
         const QPoint posRelativeToParent(attacheeItem->mapFromScene(contextMenuEvent->pos()).toPoint());
         qCDebug(lcContextMenu) << this << "is showing menu instance" << menu << "at" << posRelativeToParent;
         menu->popup(posRelativeToParent);
+        event->accept();
         return true;
     }
     default:
