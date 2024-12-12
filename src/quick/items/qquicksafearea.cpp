@@ -174,7 +174,7 @@ void QQuickSafeArea::setAdditionalMargins(const QMarginsF &additionalMargins)
     emit additionalMarginsChanged();
 
     auto *attachedItem = qobject_cast<QQuickItem*>(parent());
-    QQuickItemPrivate::get(attachedItem)->transformChanged(attachedItem);
+    updateSafeAreasRecursively(attachedItem);
 }
 
 QMarginsF QQuickSafeArea::additionalMargins() const
@@ -326,6 +326,19 @@ void QQuickSafeArea::itemGeometryChanged(QQuickItem *item, QQuickGeometryChange 
     qCDebug(lcSafeArea) << "Geometry changed for" << item << "from" << oldGeometry
                         << "to" << QRectF(item->position(), item->size());
     updateSafeArea();
+}
+
+void QQuickSafeArea::updateSafeAreasRecursively(QQuickItem *item)
+{
+    Q_ASSERT(item);
+
+    if (auto *safeArea = item->findChild<QQuickSafeArea*>(Qt::FindDirectChildrenOnly))
+        safeArea->updateSafeArea();
+
+    auto *itemPrivate = QQuickItemPrivate::get(item);
+    const auto paintOrderChildItems = itemPrivate->paintOrderChildItems();
+    for (auto *child : paintOrderChildItems)
+        updateSafeAreasRecursively(child);
 }
 
 #ifndef QT_NO_DEBUG_STREAM

@@ -9,6 +9,7 @@
 #include "qquickevents_p_p.h"
 #include "qquickgraphicsdevice_p.h"
 #include "qquickwindowcontainer_p.h"
+#include "qquicksafearea_p.h"
 
 #include <QtQuick/private/qsgrenderer_p.h>
 #include <QtQuick/private/qsgplaintexture_p.h>
@@ -1607,9 +1608,7 @@ bool QQuickWindow::event(QEvent *event)
         physicalDpiChanged();
         break;
     case QEvent::SafeAreaMarginsChange:
-        // Update via transform instead of individual safeAreaMarginsChanged,
-        // so that we update the safe area margins in the correct paint order.
-        QQuickItemPrivate::get(d->contentItem)->transformChanged(d->contentItem);
+        QQuickSafeArea::updateSafeAreasRecursively(d->contentItem);
         break;
     case QEvent::ChildWindowAdded: {
         auto *childEvent = static_cast<QChildWindowEvent*>(event);

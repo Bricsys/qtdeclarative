@@ -48,6 +48,8 @@ public:
     QMarginsF additionalMargins() const;
     void setAdditionalMargins(const QMarginsF &additionalMargins);
 
+    static void updateSafeAreasRecursively(QQuickItem *fromItem);
+
 Q_SIGNALS:
     void marginsChanged();
     void additionalMarginsChanged();
