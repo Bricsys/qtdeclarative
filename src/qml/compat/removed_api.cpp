@@ -101,8 +101,10 @@ void QQmlPrivate::AOTCompiledContext::initCallQmlContextPropertyLookup(uint inde
 bool QQmlPrivate::AOTCompiledContext::loadGlobalLookup(uint index, void *target, QMetaType type) const
 {
     QV4::Lookup *lookup = compilationUnit->runtimeLookups + index;
+    QV4::Scope scope(engine->handle());
+    QV4::ScopedValue v(scope, lookup->globalGetter(engine->handle()));
     if (!QV4::ExecutionEngine::metaTypeFromJS(
-                lookup->globalGetter(engine->handle()), type, target)) {
+                v, type, target)) {
         engine->handle()->throwTypeError();
         return false;
     }

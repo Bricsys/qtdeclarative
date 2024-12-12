@@ -2477,7 +2477,9 @@ bool CallArgument::fromValue(QMetaType metaType, ExecutionEngine *engine, const 
     default:
         if (type == qMetaTypeId<QJSValue>()) {
             qjsValuePtr = new (&allocData) QJSValue;
-            QJSValuePrivate::setValue(qjsValuePtr, value.asReturnedValue());
+            Scope scope(engine);
+            ScopedValue v(scope, value);
+            QJSValuePrivate::setValue(qjsValuePtr, v);
             return true;
         }
 

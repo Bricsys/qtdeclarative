@@ -1395,7 +1395,9 @@ static PropertyResult storeObjectAsVariant(
         return storeObjectProperty<true>(lookup, object, variant->data());
 
     QVariant converted(propType);
-    if (v4->metaTypeFromJS(v4->fromVariant(*variant), propType, converted.data())
+    QV4::Scope scope(v4);
+    QV4::ScopedValue val(scope, v4->fromVariant(*variant));
+    if (v4->metaTypeFromJS(val, propType, converted.data())
             || QMetaType::convert(
                 variantMetaType, variant->constData(), propType, converted.data())) {
         return storeObjectProperty<true>(lookup, object, converted.data());
@@ -1429,7 +1431,9 @@ static PropertyResult storeFallbackAsVariant(
         return storeFallbackProperty(lookup, object, variant->data());
 
     QVariant converted(propType);
-    if (v4->metaTypeFromJS(v4->fromVariant(*variant), propType, converted.data())
+    QV4::Scope scope(v4);
+    QV4::ScopedValue val(scope, v4->fromVariant(*variant));
+    if (v4->metaTypeFromJS(val, propType, converted.data())
             || QMetaType::convert(
                 variant->metaType(), variant->constData(), propType, converted.data())) {
         return storeFallbackProperty(lookup, object, converted.data());
@@ -1697,7 +1701,9 @@ void AOTCompiledContext::storeNameSloppy(uint nameIndex, void *value, QMetaType 
 
             QVariant var(propType);
             QV4::ExecutionEngine *v4 = engine->handle();
-            if (v4->metaTypeFromJS(v4->metaTypeToJS(type, value), propType, var.data())
+            QV4::Scope scope(v4);
+            QV4::ScopedValue val(scope, v4->metaTypeToJS(type, value));
+            if (v4->metaTypeFromJS(val, propType, var.data())
                     || QMetaType::convert(type, value, propType, var.data())) {
                 storeResult = storeObjectProperty(&lookup, qmlScopeObject, var.data());
             }
@@ -1727,7 +1733,9 @@ void AOTCompiledContext::storeNameSloppy(uint nameIndex, void *value, QMetaType 
 
             QVariant var(propType);
             QV4::ExecutionEngine *v4 = engine->handle();
-            if (v4->metaTypeFromJS(v4->metaTypeToJS(type, value), propType, var.data())
+            QV4::Scope scope(v4);
+            QV4::ScopedValue val(scope, v4->metaTypeToJS(type, value));
+            if (v4->metaTypeFromJS(val, propType, var.data())
                     || QMetaType::convert(type, value, propType, var.data())) {
                 storeResult = storeFallbackProperty(&lookup, qmlScopeObject, var.data());
             }
@@ -2200,8 +2208,10 @@ bool AOTCompiledContext::loadGlobalLookup(uint index, void *target) const
     QV4::Lookup *lookup = compilationUnit->runtimeLookups + index;
     if (!lookup->protoLookup.metaType)
         return false;
+    QV4::Scope scope(engine->handle());
+    QV4::ScopedValue val(scope, lookup->globalGetter(engine->handle()));
     if (!QV4::ExecutionEngine::metaTypeFromJS(
-                lookup->globalGetter(engine->handle()),
+                val,
                 QMetaType(lookup->protoLookup.metaType), target)) {
         engine->handle()->throwTypeError();
         return false;
@@ -2739,7 +2749,9 @@ static PropertyResult storeValueAsVariant(
         return storeValueProperty(lookup, metaObject, target, variant->data());
 
     QVariant converted(propType);
-    if (v4->metaTypeFromJS(v4->fromVariant(*variant), propType, converted.data())
+    QV4::Scope scope(v4);
+    QV4::ScopedValue val(scope, v4->fromVariant(*variant));
+    if (v4->metaTypeFromJS(val, propType, converted.data())
         || QMetaType::convert(
                 variant->metaType(), variant->constData(), propType, converted.data())) {
         return storeValueProperty(lookup, metaObject, target, converted.data());

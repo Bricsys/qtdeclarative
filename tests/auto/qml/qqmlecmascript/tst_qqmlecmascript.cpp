@@ -4767,7 +4767,7 @@ void tst_qqmlecmascript::singletonTypeResolution()
 void tst_qqmlecmascript::verifyContextLifetime(const QQmlRefPointer<QQmlContextData> &ctxt) {
     QQmlRefPointer<QQmlContextData> childCtxt = ctxt->childContexts();
 
-    if (!ctxt->importedScripts().isNullOrUndefined()) {
+    if (!QV4::Value::fromReturnedValue(ctxt->importedScripts()).isNullOrUndefined()) {
         QV4::ExecutionEngine *v4 = ctxt->engine()->handle();
         QV4::Scope scope(v4);
         QV4::ScopedArrayObject scripts(scope, ctxt->importedScripts());
