@@ -309,20 +309,15 @@ void QQuickSafeArea::itemTransformChanged(QQuickItem *item, QQuickItem *transfor
     // hierarchy has already reacted to the geometry change of the transformed item.
     // This accounts for anchors, and items that listen to geometry changes, but not
     // property bindings, as those are emitted after notifying listeners (us) about
-    // the geometry change. We intentionally limit this optimization to pure size
-    // and/or position changes, and only if the transformed item is an ancestor
-    // to the one the safe area is attached to.
-    if (transformedItem != item) {
-        auto dirtyAttributes = transformedItemPrivate->dirtyAttributes;
-        if (dirtyAttributes == (QQuickItemPrivate::Position | QQuickItemPrivate::Size)
-            || dirtyAttributes == QQuickItemPrivate::Position
-            || dirtyAttributes == QQuickItemPrivate::Size) {
-            qCDebug(lcSafeArea) << "Deferring update of" << this << "until geometry change";
-            transformedItemPrivate->addItemChangeListener(
-                this, QQuickItemPrivate::Geometry);
-            return;
-        }
+    // the geometry change.
+    auto dirtyAttributes = transformedItemPrivate->dirtyAttributes;
+    if (dirtyAttributes & (QQuickItemPrivate::Position | QQuickItemPrivate::Size)) {
+        qCDebug(lcSafeArea) << "Deferring update of" << this << "until geometry change";
+        transformedItemPrivate->addItemChangeListener(
+            this, QQuickItemPrivate::Geometry);
+        return;
     }
+
     updateSafeArea();
 }
 
