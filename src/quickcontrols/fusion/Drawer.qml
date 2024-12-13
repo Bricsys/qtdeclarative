@@ -17,10 +17,10 @@ T.Drawer {
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding)
 
-    topPadding: control.edge === Qt.BottomEdge
-    leftPadding: control.edge === Qt.RightEdge
-    rightPadding: control.edge === Qt.LeftEdge
-    bottomPadding: control.edge === Qt.TopEdge
+    topPadding: SafeArea.margins.top + (control.edge === Qt.BottomEdge)
+    leftPadding: SafeArea.margins.left + (control.edge === Qt.RightEdge)
+    rightPadding: SafeArea.margins.right + (control.edge === Qt.LeftEdge)
+    bottomPadding: SafeArea.margins.bottom + (control.edge === Qt.TopEdge)
 
     enter: Transition { SmoothedAnimation { velocity: 5 } }
     exit: Transition { SmoothedAnimation { velocity: 5 } }

@@ -19,6 +19,11 @@ T.Drawer {
     property real inset: control.dim ? 8 : 0
     property bool vertical: control.edge === Qt.LeftEdge || control.edge === Qt.RightEdge
 
+    topPadding: SafeArea.margins.top
+    leftPadding: SafeArea.margins.left
+    rightPadding: SafeArea.margins.right
+    bottomPadding: SafeArea.margins.bottom
+
     rightInset: background && control.edge === Qt.LeftEdge ? -inset : 0
     leftInset: background && control.edge === Qt.RightEdge ? -inset : 0
     bottomInset: background && control.edge === Qt.TopEdge ? -inset : 0
