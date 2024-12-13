@@ -208,11 +208,6 @@ static const QString s_percentage_pattern = QString::fromUtf8("^(\\d+)%?$");
 static const QString s_degree_pattern = QString::fromUtf8("(\\d+)°?$");
 static const QString s_rgba_pattern = QString::fromUtf8("^#[0-9A-f]{6}(?:[0-9A-f]{2})?$");
 static const QString s_rgb_pattern = QString::fromUtf8("^#[0-9A-f]{6}$");
-static const QRegularExpressionValidator s_rgba_validator = QRegularExpressionValidator(QRegularExpression(s_rgba_pattern));
-static const QRegularExpressionValidator s_rgb_validator = QRegularExpressionValidator(QRegularExpression(s_rgb_pattern));
-static const QRegularExpressionValidator s_percentage_validator = QRegularExpressionValidator(QRegularExpression(s_percentage_pattern));
-static const QRegularExpressionValidator s_degree_validator = QRegularExpressionValidator(QRegularExpression(s_degree_pattern));
-static const QIntValidator s_intValdator = QIntValidator(0, 255);
 
 void QQuickColorInputsPrivate::repopulate()
 {
@@ -234,6 +229,12 @@ void QQuickColorInputsPrivate::repopulate()
     };
 
     removeAllItems();
+
+    static const QRegularExpressionValidator rgba_validator = QRegularExpressionValidator(QRegularExpression(s_rgba_pattern));
+    static const QRegularExpressionValidator rgb_validator = QRegularExpressionValidator(QRegularExpression(s_rgb_pattern));
+    static const QRegularExpressionValidator percentage_validator = QRegularExpressionValidator(QRegularExpression(s_percentage_pattern));
+    static const QRegularExpressionValidator degree_validator = QRegularExpressionValidator(QRegularExpression(s_degree_pattern));
+    static const QIntValidator intValdator = QIntValidator(0, 255);
 
     auto addInputField = [this, q, removeAllItems](const QString &name, const QValidator *validator,
                                                    void (QQuickColorInputsPrivate::*handler)(),
@@ -260,37 +261,37 @@ void QQuickColorInputsPrivate::repopulate()
 
     switch (m_currentMode) {
     case QQuickColorInputs::Hex:
-        addInputField(QStringLiteral("hex"), m_showAlpha ? &s_rgba_validator : &s_rgb_validator, &QQuickColorInputsPrivate::handleHexInput,
+        addInputField(QStringLiteral("hex"), m_showAlpha ? &rgba_validator : &rgb_validator, &QQuickColorInputsPrivate::handleHexInput,
                       [q](){ return q->color().name(); });
         break;
     case QQuickColorInputs::Rgb:
-        addInputField(QStringLiteral("red"), &s_intValdator, &QQuickColorInputsPrivate::handleRedInput, [q](){ return QString::number(q->red()); });
-        addInputField(QStringLiteral("green"), &s_intValdator, &QQuickColorInputsPrivate::handleGreenInput, [q](){ return QString::number(q->green()); });
-        addInputField(QStringLiteral("blue"), &s_intValdator, &QQuickColorInputsPrivate::handleBlueInput, [q](){ return QString::number(q->blue()); });
+        addInputField(QStringLiteral("red"), &intValdator, &QQuickColorInputsPrivate::handleRedInput, [q](){ return QString::number(q->red()); });
+        addInputField(QStringLiteral("green"), &intValdator, &QQuickColorInputsPrivate::handleGreenInput, [q](){ return QString::number(q->green()); });
+        addInputField(QStringLiteral("blue"), &intValdator, &QQuickColorInputsPrivate::handleBlueInput, [q](){ return QString::number(q->blue()); });
         if (m_showAlpha)
-            addInputField(QStringLiteral("alpha"), &s_percentage_validator, &QQuickColorInputsPrivate::handleAlphaInput,
+            addInputField(QStringLiteral("alpha"), &percentage_validator, &QQuickColorInputsPrivate::handleAlphaInput,
                           [q](){ return QString::number(qRound(q->alpha() * 100)).append(QStringLiteral("%")); });
         break;
     case QQuickColorInputs::Hsv:
-        addInputField(QStringLiteral("hsvHue"), &s_degree_validator, &QQuickColorInputsPrivate::handleHueInput,
+        addInputField(QStringLiteral("hsvHue"), &degree_validator, &QQuickColorInputsPrivate::handleHueInput,
                       [q](){ return QString::number(qRound(q->hue() * 360)).append(QStringLiteral("°")); });
-        addInputField(QStringLiteral("hsvSaturation"), &s_percentage_validator, &QQuickColorInputsPrivate::handleHsvSaturationInput,
+        addInputField(QStringLiteral("hsvSaturation"), &percentage_validator, &QQuickColorInputsPrivate::handleHsvSaturationInput,
                       [q](){ return QString::number(qRound(q->hsvSaturation() * 100)).append(QStringLiteral("%")); });
-        addInputField(QStringLiteral("value"), &s_percentage_validator, &QQuickColorInputsPrivate::handleValueInput,
+        addInputField(QStringLiteral("value"), &percentage_validator, &QQuickColorInputsPrivate::handleValueInput,
                       [q](){ return QString::number(qRound(q->value() * 100)).append(QStringLiteral("%")); });
         if (m_showAlpha)
-            addInputField(QStringLiteral("alpha"), &s_percentage_validator, &QQuickColorInputsPrivate::handleAlphaInput,
+            addInputField(QStringLiteral("alpha"), &percentage_validator, &QQuickColorInputsPrivate::handleAlphaInput,
                           [q](){ return QString::number(qRound(q->alpha() * 100)).append(QStringLiteral("%")); });
         break;
     case QQuickColorInputs::Hsl:
-        addInputField(QStringLiteral("hslHue"), &s_degree_validator, &QQuickColorInputsPrivate::handleHueInput,
+        addInputField(QStringLiteral("hslHue"), &degree_validator, &QQuickColorInputsPrivate::handleHueInput,
                       [q](){ return QString::number(qRound(q->hue() * 360)).append(QStringLiteral("°")); });
-        addInputField(QStringLiteral("hslSaturation"), &s_percentage_validator, &QQuickColorInputsPrivate::handleHslSaturationInput,
+        addInputField(QStringLiteral("hslSaturation"), &percentage_validator, &QQuickColorInputsPrivate::handleHslSaturationInput,
                       [q](){ return QString::number(qRound(q->hslSaturation() * 100)).append(QStringLiteral("%")); });
-        addInputField(QStringLiteral("lightness"), &s_percentage_validator, &QQuickColorInputsPrivate::handleLightnessInput,
+        addInputField(QStringLiteral("lightness"), &percentage_validator, &QQuickColorInputsPrivate::handleLightnessInput,
                       [q](){ return QString::number(qRound(q->lightness() * 100)).append(QStringLiteral("%")); });
         if (m_showAlpha)
-            addInputField(QStringLiteral("alpha"), &s_percentage_validator, &QQuickColorInputsPrivate::handleAlphaInput,
+            addInputField(QStringLiteral("alpha"), &percentage_validator, &QQuickColorInputsPrivate::handleAlphaInput,
                           [q](){ return QString::number(qRound(q->alpha() * 100)).append(QStringLiteral("%")); });
         break;
     default:
