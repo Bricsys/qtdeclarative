@@ -16,3 +16,8 @@ macos arm ci # QTBUG-102817
 [Action::test_repeater]
 macos
 linux
+
+# QTBUG-101704
+[ToolTip::test_attachedSizeBug]
+*
+
