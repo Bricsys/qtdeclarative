@@ -1599,4 +1599,39 @@ TestCase {
         loader.active = false
         tryCompare(overlay, "visible", false)
     }
+
+    Component {
+        id: contentSizePopup
+        Popup {
+            Item {
+                implicitWidth: 100
+                implicitHeight: 30
+            }
+        }
+    }
+
+    function test_contentSize() {
+        let control = createTemporaryObject(contentSizePopup, testCase)
+        verify(control)
+
+        compare(control.contentWidth, 100)
+        compare(control.contentHeight, 30)
+        compare(control.implicitContentWidth, 100)
+        compare(control.implicitContentHeight, 30)
+        verify(control.implicitWidth > 100)
+        verify(control.implicitHeight > 30)
+
+        control.contentWidth = 150
+        control.contentHeight = 50
+
+        compare(control.contentWidth, 150)
+        compare(control.contentHeight, 50)
+        compare(control.implicitContentWidth, 150)
+        compare(control.implicitContentHeight, 50)
+        verify(control.implicitWidth > 150)
+        verify(control.implicitHeight > 50)
+
+        // No reset for Popup's contentWidth/Height,
+        // so can't test that.
+    }
 }

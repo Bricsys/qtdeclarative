@@ -12,9 +12,9 @@ T.Drawer {
     parent: T.Overlay.overlay
 
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
-                            contentWidth + leftPadding + rightPadding)
+                            implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
-                             contentHeight + topPadding + bottomPadding)
+                             implicitContentHeight + topPadding + bottomPadding)
 
     property real inset: control.dim ? 8 : 0
     property bool vertical: control.edge === Qt.LeftEdge || control.edge === Qt.RightEdge
