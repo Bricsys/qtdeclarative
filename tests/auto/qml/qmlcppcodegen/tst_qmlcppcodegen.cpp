@@ -3218,7 +3218,7 @@ void tst_QmlCppCodegen::lotsOfRegisters()
         const qreal implicitBackgroundWidth = object->property("implicitBackgroundWidth").toDouble();
         const qreal leftInset = object->property("leftInset").toDouble();
         const qreal rightInset = object->property("rightInset").toDouble();
-        const qreal contentWidth = object->property("contentWidth").toDouble();
+        const qreal implicitContentWidth = object->property("implicitContentWidth").toDouble();
         const qreal leftPadding = object->property("leftPadding").toDouble();
         const qreal rightPadding = object->property("rightPadding").toDouble();
         const qreal implicitFooterWidth = object->property("implicitFooterWidth").toDouble();
@@ -3226,7 +3226,7 @@ void tst_QmlCppCodegen::lotsOfRegisters()
 
         const qreal implicitWidth = object->property("implicitWidth").toDouble();
         QCOMPARE(implicitWidth, qMax(qMax(implicitBackgroundWidth + leftInset + rightInset,
-                                     contentWidth + leftPadding + rightPadding),
+                                     implicitContentWidth + leftPadding + rightPadding),
                                      qMax(implicitHeaderWidth, implicitFooterWidth)));
     };
 

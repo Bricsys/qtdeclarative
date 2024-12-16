@@ -10,10 +10,10 @@ T.Frame {
 
     implicitWidth: Math.max((background.minimumWidth || implicitBackgroundWidth)
                             + leftInset + rightInset,
-                            contentWidth + leftPadding + rightPadding)
+                            implicitContentWidth + leftPadding + rightPadding)
     implicitHeight: Math.max((background.minimumHeight || implicitBackgroundHeight)
                             + topInset + bottomInset,
-                            contentHeight + topPadding + bottomPadding)
+                            implicitContentHeight + topPadding + bottomPadding)
 
     topPadding: config.topPadding || 0
     bottomPadding: config.bottomPadding || 0
