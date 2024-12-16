@@ -154,7 +154,7 @@ public:
         ItemDevicePixelRatioHasChanged, // value.realValue
         ItemEnabledHasChanged,     // value.boolValue
         ItemScaleHasChanged,       // value.realValue
-        ItemTransformHasChanged    // value.item
+        ItemTransformHasChanged,   // value.item
     };
     Q_ENUM(ItemChange)
 
