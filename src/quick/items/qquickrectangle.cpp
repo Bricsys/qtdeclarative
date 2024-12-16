@@ -266,12 +266,13 @@ int QQuickRectanglePrivate::doUpdateSlotIdx = -1;
 
 void QQuickRectanglePrivate::maybeSetImplicitAntialiasing()
 {
-    bool implicitAA = (radius != 0);
+    bool implicitAA = (radius > 0);
     if (extraRectangle.isAllocated() && !implicitAA) {
-        implicitAA = extraRectangle.value().topLeftRadius > 0.0
-            || extraRectangle.value().topRightRadius > 0.0
-            || extraRectangle.value().bottomLeftRadius > 0.0
-            || extraRectangle.value().bottomRightRadius > 0.0;
+        const auto &extra = extraRectangle.value();
+        implicitAA = (extra.isTopLeftRadiusSet && extra.topLeftRadius > 0)
+            || (extra.isTopRightRadiusSet && extra.topRightRadius > 0)
+            || (extra.isBottomLeftRadiusSet && extra.bottomLeftRadius > 0)
+            || (extra.isBottomRightRadiusSet && extra.bottomRightRadius > 0);
     }
     setImplicitAntialiasing(implicitAA);
 }
@@ -507,13 +508,13 @@ void QQuickRectangle::setRadius(qreal radius)
     emit radiusChanged();
 
     if (d->extraRectangle.isAllocated()) {
-        if (d->extraRectangle->topLeftRadius < 0.)
+        if (!d->extraRectangle->isTopLeftRadiusSet)
             emit topLeftRadiusChanged();
-        if (d->extraRectangle->topRightRadius < 0.)
+        if (!d->extraRectangle->isTopRightRadiusSet)
             emit topRightRadiusChanged();
-        if (d->extraRectangle->bottomLeftRadius < 0.)
+        if (!d->extraRectangle->isBottomLeftRadiusSet)
             emit bottomLeftRadiusChanged();
-        if (d->extraRectangle->bottomRightRadius < 0.)
+        if (!d->extraRectangle->isBottomRightRadiusSet)
             emit bottomRightRadiusChanged();
     } else {
         emit topLeftRadiusChanged();
@@ -539,22 +540,22 @@ void QQuickRectangle::setRadius(qreal radius)
 qreal QQuickRectangle::topLeftRadius() const
 {
     Q_D(const QQuickRectangle);
-    if (d->extraRectangle.isAllocated() && d->extraRectangle->topLeftRadius >= 0.)
-        return d->extraRectangle.value().topLeftRadius;
+    if (d->extraRectangle.isAllocated() && d->extraRectangle->isTopLeftRadiusSet)
+        return d->extraRectangle->topLeftRadius;
     return d->radius;
 }
 
 void QQuickRectangle::setTopLeftRadius(qreal radius)
 {
     Q_D(QQuickRectangle);
-    if (d->extraRectangle.value().topLeftRadius == radius)
-        return;
-
-    if (radius < 0) { // use the fact that radius < 0 resets the radius.
-        qmlWarning(this) << "topLeftRadius (" << radius << ") cannot be less than 0.";
+    if (d->extraRectangle.isAllocated()
+        && d->extraRectangle->topLeftRadius == radius
+        && d->extraRectangle->isTopLeftRadiusSet) {
         return;
     }
+
     d->extraRectangle.value().topLeftRadius = radius;
+    d->extraRectangle.value().isTopLeftRadiusSet = true;
     d->maybeSetImplicitAntialiasing();
 
     update();
@@ -566,10 +567,10 @@ void QQuickRectangle::resetTopLeftRadius()
     Q_D(QQuickRectangle);
     if (!d->extraRectangle.isAllocated())
         return;
-    if (d->extraRectangle.value().topLeftRadius < 0)
+    if (!d->extraRectangle->isTopLeftRadiusSet)
         return;
 
-    d->extraRectangle.value().topLeftRadius = -1.;
+    d->extraRectangle->isTopLeftRadiusSet = false;
     d->maybeSetImplicitAntialiasing();
 
     update();
@@ -592,22 +593,22 @@ void QQuickRectangle::resetTopLeftRadius()
 qreal QQuickRectangle::topRightRadius() const
 {
     Q_D(const QQuickRectangle);
-    if (d->extraRectangle.isAllocated()  && d->extraRectangle->topRightRadius >= 0.)
-        return d->extraRectangle.value().topRightRadius;
+    if (d->extraRectangle.isAllocated() && d->extraRectangle->isTopRightRadiusSet)
+        return d->extraRectangle->topRightRadius;
     return d->radius;
 }
 
 void QQuickRectangle::setTopRightRadius(qreal radius)
 {
     Q_D(QQuickRectangle);
-    if (d->extraRectangle.value().topRightRadius == radius)
-        return;
-
-    if (radius < 0) { // use the fact that radius < 0 resets the radius.
-        qmlWarning(this) << "topRightRadius (" << radius << ") cannot be less than 0.";
+    if (d->extraRectangle.isAllocated()
+        && d->extraRectangle->topRightRadius == radius
+        && d->extraRectangle->isTopRightRadiusSet) {
         return;
     }
+
     d->extraRectangle.value().topRightRadius = radius;
+    d->extraRectangle.value().isTopRightRadiusSet = true;
     d->maybeSetImplicitAntialiasing();
 
     update();
@@ -619,10 +620,10 @@ void QQuickRectangle::resetTopRightRadius()
     Q_D(QQuickRectangle);
     if (!d->extraRectangle.isAllocated())
         return;
-    if (d->extraRectangle.value().topRightRadius < 0)
+    if (!d->extraRectangle.value().isTopRightRadiusSet)
         return;
 
-    d->extraRectangle.value().topRightRadius = -1.;
+    d->extraRectangle->isTopRightRadiusSet = false;
     d->maybeSetImplicitAntialiasing();
 
     update();
@@ -645,23 +646,22 @@ void QQuickRectangle::resetTopRightRadius()
 qreal QQuickRectangle::bottomLeftRadius() const
 {
     Q_D(const QQuickRectangle);
-    if (d->extraRectangle.isAllocated() && d->extraRectangle->bottomLeftRadius >= 0.)
-        return d->extraRectangle.value().bottomLeftRadius;
+    if (d->extraRectangle.isAllocated() && d->extraRectangle->isBottomLeftRadiusSet)
+        return d->extraRectangle->bottomLeftRadius;
     return d->radius;
 }
 
 void QQuickRectangle::setBottomLeftRadius(qreal radius)
 {
     Q_D(QQuickRectangle);
-    if (d->extraRectangle.value().bottomLeftRadius == radius)
-        return;
-
-    if (radius < 0) { // use the fact that radius < 0 resets the radius.
-        qmlWarning(this) << "bottomLeftRadius (" << radius << ") cannot be less than 0.";
+    if (d->extraRectangle.isAllocated()
+        && d->extraRectangle->bottomLeftRadius == radius
+        && d->extraRectangle->isBottomLeftRadiusSet) {
         return;
     }
 
     d->extraRectangle.value().bottomLeftRadius = radius;
+    d->extraRectangle.value().isBottomLeftRadiusSet = true;
     d->maybeSetImplicitAntialiasing();
 
     update();
@@ -673,10 +673,10 @@ void QQuickRectangle::resetBottomLeftRadius()
     Q_D(QQuickRectangle);
     if (!d->extraRectangle.isAllocated())
         return;
-    if (d->extraRectangle.value().bottomLeftRadius < 0)
+    if (!d->extraRectangle.value().isBottomLeftRadiusSet)
         return;
 
-    d->extraRectangle.value().bottomLeftRadius = -1.;
+    d->extraRectangle->isBottomLeftRadiusSet = false;
     d->maybeSetImplicitAntialiasing();
 
     update();
@@ -699,23 +699,22 @@ void QQuickRectangle::resetBottomLeftRadius()
 qreal QQuickRectangle::bottomRightRadius() const
 {
     Q_D(const QQuickRectangle);
-    if (d->extraRectangle.isAllocated() && d->extraRectangle->bottomRightRadius >= 0.)
-        return d->extraRectangle.value().bottomRightRadius;
+    if (d->extraRectangle.isAllocated() && d->extraRectangle->isBottomRightRadiusSet)
+        return d->extraRectangle->bottomRightRadius;
     return d->radius;
 }
 
 void QQuickRectangle::setBottomRightRadius(qreal radius)
 {
     Q_D(QQuickRectangle);
-    if (d->extraRectangle.value().bottomRightRadius == radius)
-        return;
-
-    if (radius < 0) { // use the fact that radius < 0 resets the radius.
-        qmlWarning(this) << "bottomRightRadius (" << radius << ") cannot be less than 0.";
+    if (d->extraRectangle.isAllocated()
+        && d->extraRectangle->bottomRightRadius == radius
+        && d->extraRectangle->isBottomRightRadiusSet) {
         return;
     }
 
     d->extraRectangle.value().bottomRightRadius = radius;
+    d->extraRectangle.value().isBottomRightRadiusSet = true;
     d->maybeSetImplicitAntialiasing();
 
     update();
@@ -727,10 +726,10 @@ void QQuickRectangle::resetBottomRightRadius()
     Q_D(QQuickRectangle);
     if (!d->extraRectangle.isAllocated())
         return;
-    if (d->extraRectangle.value().bottomRightRadius < 0)
+    if (!d->extraRectangle.value().isBottomRightRadiusSet)
         return;
 
-    d->extraRectangle.value().bottomRightRadius = -1.;
+    d->extraRectangle->isBottomRightRadiusSet = false;
     d->maybeSetImplicitAntialiasing();
 
     update();
@@ -806,15 +805,28 @@ QSGNode *QQuickRectangle::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData 
 
     rectangle->setRadius(d->radius);
     if (d->extraRectangle.isAllocated()) {
-        rectangle->setTopLeftRadius(d->extraRectangle.value().topLeftRadius);
-        rectangle->setTopRightRadius(d->extraRectangle.value().topRightRadius);
-        rectangle->setBottomLeftRadius(d->extraRectangle.value().bottomLeftRadius);
-        rectangle->setBottomRightRadius(d->extraRectangle.value().bottomRightRadius);
+        const auto &extra = d->extraRectangle.value();
+        if (extra.isTopLeftRadiusSet)
+            rectangle->setTopLeftRadius(extra.topLeftRadius);
+        else
+            rectangle->resetTopLeftRadius();
+        if (extra.isTopRightRadiusSet)
+            rectangle->setTopRightRadius(extra.topRightRadius);
+        else
+            rectangle->resetTopRightRadius();
+        if (extra.isBottomLeftRadiusSet)
+            rectangle->setBottomLeftRadius(extra.bottomLeftRadius);
+        else
+            rectangle->resetBottomLeftRadius();
+        if (extra.isBottomRightRadiusSet)
+            rectangle->setBottomRightRadius(extra.bottomRightRadius);
+        else
+            rectangle->resetBottomRightRadius();
     } else {
-        rectangle->setTopLeftRadius(-1.);
-        rectangle->setTopRightRadius(-1.);
-        rectangle->setBottomLeftRadius(-1.);
-        rectangle->setBottomRightRadius(-1.);
+        rectangle->resetTopLeftRadius();
+        rectangle->resetTopRightRadius();
+        rectangle->resetBottomLeftRadius();
+        rectangle->resetBottomRightRadius();
     }
     rectangle->setAntialiasing(antialiasing());
 

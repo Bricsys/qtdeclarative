@@ -39,6 +39,10 @@ public:
     void setTopRightRadius(qreal radius) override;
     void setBottomLeftRadius(qreal radius) override;
     void setBottomRightRadius(qreal radius) override;
+    void resetTopLeftRadius() override;
+    void resetTopRightRadius() override;
+    void resetBottomLeftRadius() override;
+    void resetBottomRightRadius() override;
     void setAntialiasing(bool antialiasing) override { Q_UNUSED(antialiasing); }
     void setAligned(bool aligned) override;
 
@@ -71,6 +75,11 @@ private:
     QPixmap m_cornerPixmap;
 
     qreal m_devicePixelRatio;
+
+    uint m_isTopLeftRadiusSet : 1;
+    uint m_isTopRightRadiusSet : 1;
+    uint m_isBottomLeftRadiusSet : 1;
+    uint m_isBottomRightRadiusSet : 1;
 };
 
 QT_END_NAMESPACE
