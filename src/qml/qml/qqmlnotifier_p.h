@@ -58,6 +58,7 @@ public:
         QQmlVMEMetaObjectEndpoint = 3,
         QQmlUnbindableToUnbindableGuard = 4,
         QQmlUnbindableToBindableGuard = 5,
+        QQmlDirtyReferenceObject = 6,
     };
 
     inline QQmlNotifierEndpoint(Callback callback);

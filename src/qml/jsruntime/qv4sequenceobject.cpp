@@ -111,7 +111,7 @@ void Heap::Sequence::init(
     QMetaType listType, QMetaSequence metaSequence, const void *container,
     Heap::Object *object, int propertyIndex, Heap::ReferenceObject::Flags flags)
 {
-    ReferenceObject::init(object, propertyIndex, flags);
+    ReferenceObject::init(object, propertyIndex, flags | IsDirty);
     initTypes(listType, metaSequence);
 
     if (CppStackFrame *frame = internalClass->engine->currentStackFrame)

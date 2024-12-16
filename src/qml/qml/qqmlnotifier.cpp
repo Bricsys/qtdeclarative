@@ -15,6 +15,7 @@ void QQmlJavaScriptExpressionGuard_callback(QQmlNotifierEndpoint *, void **);
 void QQmlVMEMetaObjectEndpoint_callback(QQmlNotifierEndpoint *, void **);
 void QQmlUnbindableToUnbindableGuard_callback(QQmlNotifierEndpoint *, void **);
 void QQmlUnbindableToBindableGuard_callback(QQmlNotifierEndpoint *, void **);
+void QQmlDirtyReferenceObject_callback(QQmlNotifierEndpoint *, void **);
 
 static Callback QQmlNotifier_callbacks[] = {
     nullptr,
@@ -23,6 +24,7 @@ static Callback QQmlNotifier_callbacks[] = {
     QQmlVMEMetaObjectEndpoint_callback,
     QQmlUnbindableToUnbindableGuard_callback,
     QQmlUnbindableToBindableGuard_callback,
+    QQmlDirtyReferenceObject_callback,
 };
 
 namespace {

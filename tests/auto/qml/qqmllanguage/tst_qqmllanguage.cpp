@@ -500,6 +500,14 @@ private slots:
     void dateObjectReadBack_data();
     void dateObjectReadBack();
 
+    void referenceObjectDoesNotFetchBeforeNotify_data();
+    void referenceObjectDoesNotFetchBeforeNotify();
+    void referenceObjectFetchesAfterNotify();
+    void dateObjectFetchesAfterNotify();
+    void referenceToSingletonReadsBackOnlyWhenRequired();
+    void referenceToBindableReadsBackOnlyWhenRequired();
+    void referenceObjectChainReadsBackAsRequiredBasedOnParentSignals();
+
 private:
     QQmlEngine engine;
     QStringList defaultImportPathList;
@@ -9459,6 +9467,98 @@ void tst_qqmllanguage::dateObjectReadBack() {
     QVERIFY(dateProvider->property("datePropertyWasRead").toBool());
     QVERIFY(dateProvider->property("timePropertyWasRead").toBool());
     QVERIFY(dateProvider->property("dateTimePropertyWasRead").toBool());
+}
+
+void tst_qqmllanguage::referenceObjectDoesNotFetchBeforeNotify_data() {
+    QTest::addColumn<QString>("filepath");
+
+    QTest::newRow("Accessing Sequence length") << "referenceObjectDoesNotFetchWithoutNotifyEventSequenceLength.qml";
+    QTest::newRow("Stringify the property") << "referenceObjectDoesNotFetchWithoutNotifyEventStringify.qml";
+    QTest::newRow("Spread on list") << "referenceObjectDoesNotFetchWithoutNotifyEventSpread.qml";
+    QTest::newRow("DateObject") << "referenceObjectDoesNotFetchWithoutNotifyEventDateObject.qml";
+}
+
+void tst_qqmllanguage::referenceObjectDoesNotFetchBeforeNotify() {
+    QFETCH(QString, filepath);
+
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl(filepath));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+
+    auto *readCounter = qobject_cast<ReadCounter *>(o.data());
+    QVERIFY(readCounter);
+
+    QCOMPARE(readCounter->timesRead, 1);
+}
+
+void tst_qqmllanguage::referenceObjectFetchesAfterNotify() {
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl("referenceObjectFetchesAfterNotify.qml"));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+
+    auto *readCounter = qobject_cast<ReadCounter *>(o.data());
+    QVERIFY(readCounter);
+
+    QCOMPARE(readCounter->timesRead, readCounter->property("accessesCount").toInt());
+}
+
+void tst_qqmllanguage::dateObjectFetchesAfterNotify() {
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl("dateObjectFetchesAfterNotify.qml"));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+
+    auto *readCounter = qobject_cast<ReadCounter *>(o.data());
+    QVERIFY(readCounter);
+
+    QCOMPARE(readCounter->timesRead, readCounter->property("accessesCount").toInt());
+}
+
+void tst_qqmllanguage::referenceToSingletonReadsBackOnlyWhenRequired() {
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl("referenceToSingletonReadsBackOnlyWhenRequired.qml"));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+
+    auto *component = qobject_cast<QObject *>(o.data());
+    QVERIFY(component);
+
+    QObject* rawSingleton;
+    getSingletonInstance(engine, "referenceToSingletonReadsBackOnlyWhenRequired.qml", "singletonInstance", &rawSingleton);
+
+    ReadCounter* readCounterSingleton = qobject_cast<ReadCounter*>(rawSingleton);
+
+    QCOMPARE(readCounterSingleton->timesRead, 8);
+    QCOMPARE(component->property("finalQualityLevel").toInt(), readCounterSingleton->getValueType().quality());
+}
+
+void tst_qqmllanguage::referenceToBindableReadsBackOnlyWhenRequired() {
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl("referenceToBindableReadsBackOnlyWhenRequired.qml"));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+
+    auto *readCounter = qobject_cast<ReadCounter *>(o.data());
+    QVERIFY(readCounter);
+
+    QCOMPARE(readCounter->timesRead, 4);
+    QCOMPARE(readCounter->property("finalLength").toInt(), readCounter->bindableProperty().value().size());
+}
+
+void tst_qqmllanguage::referenceObjectChainReadsBackAsRequiredBasedOnParentSignals() {
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl("referenceObjectChainReadsBackAsRequiredBasedOnParentSignals.qml"));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+
+    auto *readCounter = qobject_cast<ReadCounter *>(o.data());
+    QVERIFY(readCounter);
+
+    auto inner = readCounter->getInner();
+
+    QCOMPARE(inner.timesRead, 4);
 }
 
 QTEST_MAIN(tst_qqmllanguage)

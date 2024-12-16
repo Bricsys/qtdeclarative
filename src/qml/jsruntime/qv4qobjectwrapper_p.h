@@ -120,6 +120,7 @@ private:
 struct Q_QML_EXPORT QObjectWrapper : public Object
 {
     V4_OBJECT2(QObjectWrapper, Object)
+    Q_MANAGED_TYPE(V4QObjectWrapper)
     V4_NEEDS_DESTROY
 
     enum Flag {

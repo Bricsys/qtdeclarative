@@ -106,6 +106,7 @@ struct Q_QML_EXPORT QQmlTypeWrapper : FunctionObject
 {
     V4_OBJECT2(QQmlTypeWrapper, FunctionObject)
     V4_PROTOTYPE(typeWrapperPrototype)
+    Q_MANAGED_TYPE(QMLTypeWrapper);
     V4_NEEDS_DESTROY
 
     bool isSingleton() const;
