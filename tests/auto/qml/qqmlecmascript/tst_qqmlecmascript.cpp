@@ -3745,6 +3745,8 @@ void tst_qqmlecmascript::attachedPropertyScope()
 
 void tst_qqmlecmascript::scriptConnect()
 {
+    QTest::failOnWarning();
+
     QQmlEngine engine;
 
     {
@@ -3796,8 +3798,6 @@ void tst_qqmlecmascript::scriptConnect()
 
         QCOMPARE(object->methodCalled(), false);
 
-        QTest::ignoreMessage(QtWarningMsg, QRegularExpression("When matching arguments for MyQmlObject_QML_[0-9]+::methodNoArgs\\(\\):"));
-        QTest::ignoreMessage(QtWarningMsg, QRegularExpression("Too many arguments, ignoring 5"));
         emit object->argumentSignal(19, "Hello world!", 10.25, MyQmlObject::EnumValue4, Qt::RightButton);
         QCOMPARE(object->methodCalled(), true);
     }
@@ -3811,8 +3811,6 @@ void tst_qqmlecmascript::scriptConnect()
         QVERIFY(object != nullptr);
 
         QCOMPARE(object->methodCalled(), false);
-        QTest::ignoreMessage(QtWarningMsg, QRegularExpression("When matching arguments for MyQmlObject_QML_[0-9]+::methodNoArgs\\(\\):"));
-        QTest::ignoreMessage(QtWarningMsg, QRegularExpression("Too many arguments, ignoring 5"));
         emit object->argumentSignal(19, "Hello world!", 10.25, MyQmlObject::EnumValue4, Qt::RightButton);
         QCOMPARE(object->methodCalled(), true);
     }
