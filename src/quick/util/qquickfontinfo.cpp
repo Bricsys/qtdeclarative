@@ -123,7 +123,7 @@ bool QQuickFontInfo::italic() const
 
     This property holds the weight of the matched font.
 
-    \sa {QFontInfo::weight()}
+    \sa bold, {QFontInfo::weight()}
 */
 int QQuickFontInfo::weight() const
 {
@@ -136,7 +136,7 @@ int QQuickFontInfo::weight() const
     This property is true if weight() would return a value greater than Font.Normal; otherwise
     returns false.
 
-    \sa weight(), {QFontInfo::bold()}
+    \sa weight, {QFontInfo::bold()}
 */
 bool QQuickFontInfo::bold() const
 {

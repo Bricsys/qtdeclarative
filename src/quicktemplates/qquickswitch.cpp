@@ -29,8 +29,9 @@ QT_BEGIN_NAMESPACE
 
     Switch inherits its API from \l AbstractButton. For instance, the state
     of the switch can be set with the \l {AbstractButton::}{checked} property.
-    The \l clicked and \l toggled signals are emitted when the switch is
-    interactively clicked by the user via touch, mouse, or keyboard.
+    The \l {AbstractButton::}{clicked} and \l {AbstractButton::toggled} signals
+    are emitted when the switch is interactively clicked by the user via touch,
+    mouse, or keyboard.
 
     \code
     ColumnLayout {

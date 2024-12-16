@@ -3550,7 +3550,7 @@ void QQuickTextEditPrivate::updateMouseCursorShape()
     \qmlsignal QtQuick::TextEdit::textEdited()
     \since 6.9
 
-    This signal is emitted whenever the text is edited. Unlike \l textChanged(),
+    This signal is emitted whenever the text is edited. Unlike \l{TextEdit::text}{textChanged()},
     this signal is not emitted when the text is changed programmatically, for example,
     by changing the value of the \l text property or by calling \l clear().
 */

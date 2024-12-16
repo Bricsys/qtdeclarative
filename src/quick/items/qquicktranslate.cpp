@@ -500,7 +500,7 @@ void QQuickShear::setOrigin(const QVector3D &point)
     displaced by \c{xFactor(P.y - origin.y)}
 
     This corresponds to the \c sh parameter in \l{QTransform::shear()} and the \c xShear parameter
-    in calls to \l{PlanarTransform.fromShear()}.
+    in calls to \l{PlanarTransform::fromShear()}.
 
     The default value is \c 0.0.
 
@@ -529,7 +529,7 @@ void QQuickShear::setXFactor(qreal xFactor)
     \c{xFactor(P.y - origin.y)}
 
     This corresponds to the \c sv parameter in \l{QTransform::shear()} and the \c yShear parameter
-    in calls to \l{PlanarTransform.fromShear()}.
+    in calls to \l{PlanarTransform::fromShear()}.
 
     The default value is \c 0.0.
 
