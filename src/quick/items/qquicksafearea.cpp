@@ -128,6 +128,17 @@ QQuickSafeArea::QQuickSafeArea(QQuickItem *item)
 QQuickSafeArea::~QQuickSafeArea()
 {
     qCInfo(lcSafeArea) << "Destroying" << this;
+
+    const auto listenedItems = m_listenedItems;
+    for (const auto &item : listenedItems) {
+        if (!item)
+            continue;
+        auto *itemPrivate = QQuickItemPrivate::get(item);
+        itemPrivate->removeItemChangeListener(this,
+            QQuickItemPrivate::Matrix);
+        itemPrivate->removeItemChangeListener(this,
+            QQuickItemPrivate::Geometry);
+    }
 }
 
 /*!
@@ -339,6 +350,16 @@ void QQuickSafeArea::updateSafeAreasRecursively(QQuickItem *item)
     const auto paintOrderChildItems = itemPrivate->paintOrderChildItems();
     for (auto *child : paintOrderChildItems)
         updateSafeAreasRecursively(child);
+}
+
+void QQuickSafeArea::addSourceItem(QQuickItem *item)
+{
+    m_listenedItems << item;
+}
+
+void QQuickSafeArea::removeSourceItem(QQuickItem *item)
+{
+    m_listenedItems.removeAll(item);
 }
 
 #ifndef QT_NO_DEBUG_STREAM

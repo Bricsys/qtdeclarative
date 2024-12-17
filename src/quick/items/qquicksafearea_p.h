@@ -69,6 +69,10 @@ private:
     QMarginsF m_additionalMargins;
     bool emittingMarginsUpdate = false;
 
+    void addSourceItem(QQuickItem *item) override;
+    void removeSourceItem(QQuickItem *item) override;
+    QList<QPointer<QQuickItem>> m_listenedItems;
+
     friend class QQuickItem;
 };
 
