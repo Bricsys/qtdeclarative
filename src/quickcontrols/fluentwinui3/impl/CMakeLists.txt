@@ -7,10 +7,16 @@
 set(qml_files
     "ButtonBackground.qml"
     "CheckIndicator.qml"
+    "CopyAction.qml"
+    "CutAction.qml"
+    "DeleteAction.qml"
+    "PasteAction.qml"
     "RadioIndicator.qml"
+    "SelectAllAction.qml"
     "SwitchIndicator.qml"
     "FocusFrame.qml"
     "StyleImage.qml"
+    "TextEditingContextMenu.qml"
 )
 
 qt_internal_add_qml_module(QuickControls2FluentWinUI3StyleImpl
