@@ -14,4 +14,20 @@ QQmlJSStructuredTypeError QQuickLiteralBindingCheck::check(const QString &typeNa
     return QQuickValueTypeFromStringCheck::check(typeName, value);
 }
 
+void QQuickLiteralBindingCheck::onBinding(
+        const QQmlSA::Element &element, const QString &propertyName, const QQmlSA::Binding &binding,
+        const QQmlSA::Element &bindingScope, const QQmlSA::Element &value)
+{
+    Q_UNUSED(value);
+    Q_UNUSED(element);
+
+    const auto property = getProperty(propertyName, binding, bindingScope);
+    if (!property.isValid())
+        return;
+
+    if (const auto propertyType = property.type())
+        warnOnCheckedBinding(binding, propertyType);
+}
+
+
 QT_END_NAMESPACE

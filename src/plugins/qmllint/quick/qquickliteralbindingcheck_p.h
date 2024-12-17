@@ -29,8 +29,12 @@ class QQuickLiteralBindingCheck: public LiteralBindingCheckBase
 public:
     using LiteralBindingCheckBase::LiteralBindingCheckBase;
 
-    virtual QQmlJSStructuredTypeError check(const QString &typeName,
-                                            const QString &value) const override;
+    void onBinding(
+            const QQmlSA::Element &element, const QString &propertyName,
+            const QQmlSA::Binding &binding, const QQmlSA::Element &bindingScope,
+            const QQmlSA::Element &value) override;
+
+    QQmlJSStructuredTypeError check(const QString &typeName, const QString &value) const override;
 };
 
 QT_END_NAMESPACE

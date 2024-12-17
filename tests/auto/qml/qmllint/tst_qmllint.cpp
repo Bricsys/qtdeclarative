@@ -36,8 +36,7 @@ public:
             ExitsNormally = 0x1,
             NoMessages = 0x2,
             AutoFixable = 0x4,
-            HasDuplicates = 0x8,
-            UseSettings = 0x10
+            UseSettings = 0x8
         };
 
         Q_DECLARE_FLAGS(Flags, Flag)
@@ -970,8 +969,7 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
             << Result{
                    { Message{ QStringLiteral("Cannot assign to read-only property activeFocus") } },
                    {},
-                   {},
-                   Result::HasDuplicates
+                   {}
                };
     QTest::newRow("AssignToReadOnlyProperty")
             << QStringLiteral("assignToReadOnlyProperty2.qml")
@@ -1878,10 +1876,9 @@ void TestQmllint::checkResult(const QJsonArray &warnings, const Result &result,
     const auto firstDuplicate =
             std::adjacent_find(sortedWarnings.constBegin(), sortedWarnings.constEnd());
     for (auto it = firstDuplicate; it != sortedWarnings.constEnd();
-         it = std::adjacent_find(it + 1, sortedWarnings.constEnd()))
+         it = std::adjacent_find(it + 1, sortedWarnings.constEnd())) {
         qDebug() << "Found duplicate warning: " << it->toString();
-    if (result.flags.testFlag(Result::HasDuplicates))
-        QEXPECT_FAIL("", "TODO: remove duplicate warnings", Continue);
+    }
     QVERIFY2(firstDuplicate == sortedWarnings.constEnd(), "Found duplicate warnings!");
 }
 
