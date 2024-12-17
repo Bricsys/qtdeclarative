@@ -9,6 +9,7 @@
 #include <QtQml/qqmlinfo.h>
 #include <QtQuick/qquickwindow.h>
 #include <QtQuick/private/qquickitem_p.h>
+#include <QtQuickTemplates2/private/qquickdeferredexecute_p_p.h>
 #include <QtQuickTemplates2/private/qquickmenu_p.h>
 
 QT_BEGIN_NAMESPACE
@@ -36,6 +37,22 @@ Q_STATIC_LOGGING_CATEGORY(lcContextMenu, "qt.quick.controls.contextmenu")
     context menus have data in common. For example:
 
     \snippet qtquickcontrols-contextmenu-shared.qml file
+
+    \section1 Performance
+
+    ContextMenu lazily creates its \c Menu only when it's requested. If it
+    wasn't for this optimization, the \c Menu would be created when the
+    containing component is being loaded, which is typically at application
+    startup.
+
+    It is recommended not to give the \c Menu assigned to ContextMenu's \l menu
+    property an id when it's defined where it's assigned. Doing so prevents
+    this optimization. For example:
+
+    \snippet qtquickcontrols-contextmenu-id.qml root
+
+    The example in the \l {Sharing context menus} section works because the
+    \c Menu is defined separately from its assignment.
 */
 
 /*!
@@ -66,10 +83,46 @@ public:
         return attachedObject->d_func();
     }
 
+    void cancelMenu();
+    void executeMenu(bool complete = false);
+
     bool isRequestedSignalConnected();
 
-    QPointer<QQuickMenu> menu;
+    QQuickDeferredPointer<QQuickMenu> menu;
+    bool complete = false;
 };
+
+static const QString menuPropertyName = QStringLiteral("menu");
+
+void QQuickContextMenuPrivate::cancelMenu()
+{
+    Q_Q(QQuickContextMenu);
+    quickCancelDeferred(q, menuPropertyName);
+}
+
+void QQuickContextMenuPrivate::executeMenu(bool complete)
+{
+    Q_Q(QQuickContextMenu);
+    if (menu.wasExecuted())
+        return;
+
+    QQmlEngine *engine = nullptr;
+    auto *parentItem = qobject_cast<QQuickItem *>(q->parent());
+    if (parentItem) {
+        engine = qmlEngine(parentItem);
+        // In most cases, the above line will work, but if it doesn't,
+        // it could be because we're attached to the contentItem of the window.
+        // In that case, we'll be created before the contentItem has a context
+        // and hence an engine. However, the window will have one, so use that.
+        if (!engine)
+            engine = qmlEngine(parentItem->window());
+    }
+
+    if (!menu || complete)
+        quickBeginAttachedDeferred(q, menuPropertyName, menu, engine);
+    if (complete)
+        quickCompleteAttachedDeferred(q, menuPropertyName, menu, engine);
+}
 
 bool QQuickContextMenuPrivate::isRequestedSignalConnected()
 {
@@ -107,7 +160,12 @@ QQuickContextMenu *QQuickContextMenu::qmlAttachedProperties(QObject *object)
 */
 QQuickMenu *QQuickContextMenu::menu() const
 {
-    Q_D(const QQuickContextMenu);
+    auto *d = const_cast<QQuickContextMenuPrivate *>(d_func());
+    if (!d->menu) {
+        qCDebug(lcContextMenu) << "creating menu via deferred execution"
+            << "- is component complete:" << d->complete;
+        d->executeMenu(d->complete);
+    }
     return d->menu;
 }
 
@@ -120,8 +178,23 @@ void QQuickContextMenu::setMenu(QQuickMenu *menu)
     if (menu == d->menu)
         return;
 
+    if (!d->menu.isExecuting())
+        d->cancelMenu();
+
     d->menu = menu;
-    emit menuChanged();
+
+    if (!d->menu.isExecuting())
+        emit menuChanged();
+}
+
+void QQuickContextMenu::classBegin()
+{
+}
+
+void QQuickContextMenu::componentComplete()
+{
+    Q_D(QQuickContextMenu);
+    d->complete = true;
 }
 
 bool QQuickContextMenu::event(QEvent *event)

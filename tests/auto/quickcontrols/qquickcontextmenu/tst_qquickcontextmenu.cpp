@@ -3,6 +3,7 @@
 
 #include <QtGui/private/qguiapplication_p.h>
 #include <QtGui/qpa/qplatformtheme.h>
+#include <QtTest/qsignalspy.h>
 #include <QtTest/qtest.h>
 #include <QtQuick/qquickview.h>
 #include <QtQuickTestUtils/private/viewtestutils_p.h>
@@ -28,12 +29,16 @@ private slots:
     void eventOrder();
     void notAttachedToItem();
     void nullMenu();
+    void idOnMenu();
     void createOnRequested_data();
     void createOnRequested();
+
+private:
+    bool contextMenuTriggeredOnRelease = false;
 };
 
 tst_QQuickContextMenu::tst_QQuickContextMenu()
-    : QQmlDataTest(QT_QMLTEST_DATADIR)
+    : QQmlDataTest(QT_QMLTEST_DATADIR, FailOnWarningsPolicy::FailOnWarnings)
 {
 }
 
@@ -43,6 +48,9 @@ void tst_QQuickContextMenu::initTestCase()
 
     // Can't test native menus with QTest.
     QCoreApplication::setAttribute(Qt::AA_DontUseNativeMenuWindows);
+
+    contextMenuTriggeredOnRelease = QGuiApplicationPrivate::platformTheme()->themeHint(
+        QPlatformTheme::ContextMenuOnMouseRelease).toBool();
 }
 
 void tst_QQuickContextMenu::customContextMenu_data()
@@ -69,22 +77,28 @@ void tst_QQuickContextMenu::customContextMenu()
     auto *tomatoItem = window->findChild<QQuickItem *>("tomato");
     QVERIFY(tomatoItem);
 
-    const bool contextMenuTriggeredOnRelease = QGuiApplicationPrivate::platformTheme()->themeHint(
-        QPlatformTheme::ContextMenuOnMouseRelease).toBool();
-
     const QPoint &tomatoCenter = mapCenterToWindow(tomatoItem);
-    QQuickMenu *menu = window->findChild<QQuickMenu *>();
-    QVERIFY(menu);
     QTest::mousePress(window, Qt::RightButton, Qt::NoModifier, tomatoCenter);
-    QTRY_COMPARE(menu->isOpened(), !contextMenuTriggeredOnRelease);
+    // Due to the menu property being deferred, the Menu isn't created until
+    // the context menu event is received, so we can't look for it before the press.
+    QQuickMenu *menu = window->findChild<QQuickMenu *>();
+    if (!contextMenuTriggeredOnRelease) {
+        QVERIFY(menu);
+        QTRY_VERIFY(menu->isOpened());
+    } else {
+        // It's triggered on press, so it shouldn't exist yet.
+        QVERIFY(!menu);
+    }
 
     QTest::mouseRelease(window, Qt::RightButton, Qt::NoModifier, tomatoCenter);
-
+    if (contextMenuTriggeredOnRelease)
+        menu = window->findChild<QQuickMenu *>();
 #ifdef Q_OS_WIN
     if (qgetenv("QTEST_ENVIRONMENT").split(' ').contains("ci"))
         QSKIP("Menu fails to open on Windows (QTBUG-132436)");
 #endif
-    QTRY_COMPARE(menu->isOpened(), true);
+    QVERIFY(menu);
+    QTRY_VERIFY(menu->isOpened());
 
     // Popups are positioned relative to their parent, and it should be opened at the center:
     // width (100) / 2 = 50
@@ -138,8 +152,10 @@ void tst_QQuickContextMenu::sharedContextMenu()
     QCOMPARE(menu->itemAt(0)->property("text").toString(), "Eat really ripe tomato");
 }
 
-// We should only send the context menu event if another item higher in the stacking order
-// didn't accept the mouse event.
+// After 70c61b12efe9d1faf24063b63cf5a69414d45cea in qtbase, accepting a press/release will not
+// prevent an item beneath the accepting item from getting a context menu event.
+// This test was originally written before that, and would verify that only the handler
+// got the event. Now it checks that both received events in the correct order.
 void tst_QQuickContextMenu::eventOrder()
 {
     QQuickApplicationHelper helper(this, "deliverToHandlersBeforeContextMenu.qml");
@@ -148,15 +164,26 @@ void tst_QQuickContextMenu::eventOrder()
     window->show();
     QVERIFY(QTest::qWaitForWindowExposed(window));
 
+    QSignalSpy eventReceivedSpy(window, SIGNAL(eventReceived(QObject *)));
+    QVERIFY(eventReceivedSpy.isValid());
+
     const QPoint &windowCenter = mapCenterToWindow(window->contentItem());
     QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, windowCenter);
-    QVERIFY(window->property("handlerGotEvent").toBool());
-    // There shouldn't be a menu since the attached type's context event handler
-    // never got the event and hence the menu was never created.
-    auto *menu = window->findChild<QQuickMenu *>();
-    QEXPECT_FAIL("", "TODO: we need to fix deferred execution so that the menu "
-        "is created lazily before this will pass", Continue);
-    QVERIFY(!menu);
+    // First check that the menu was actually created, as this is an easier to understand
+    // failure message than a signal spy count mismatch.
+    const auto *menu = window->findChild<QQuickMenu *>();
+    QVERIFY(menu);
+    QCOMPARE(eventReceivedSpy.count(), 2);
+    const auto *tapHandler = window->findChild<QObject *>("tapHandler");
+    QVERIFY(tapHandler);
+    if (!contextMenuTriggeredOnRelease) {
+        // If the context menu is triggered on press, it will open before the handler gets the release.
+        QCOMPARE(eventReceivedSpy.at(0).at(0).value<QObject *>(), menu);
+        QCOMPARE(eventReceivedSpy.at(1).at(0).value<QObject *>(), tapHandler);
+    } else {
+        QCOMPARE(eventReceivedSpy.at(0).at(0).value<QObject *>(), tapHandler);
+        QCOMPARE(eventReceivedSpy.at(1).at(0).value<QObject *>(), menu);
+    }
 }
 
 void tst_QQuickContextMenu::notAttachedToItem()
@@ -175,11 +202,27 @@ void tst_QQuickContextMenu::nullMenu()
     window->show();
     QVERIFY(QTest::qWaitForWindowExposed(window));
 
-    // Shouldn't crash.
+    // Shouldn't crash or warn.
     const QPoint &windowCenter = mapCenterToWindow(window->contentItem());
     QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, windowCenter);
     auto *menu = window->findChild<QQuickMenu *>();
     QVERIFY(!menu);
+}
+
+void tst_QQuickContextMenu::idOnMenu()
+{
+    QQuickApplicationHelper helper(this, "idOnMenu.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    window->show();
+    QVERIFY(QTest::qWaitForWindowExposed(window));
+
+    // Giving the menu an id prevents deferred execution, but the menu should still work.
+    const QPoint &windowCenter = mapCenterToWindow(window->contentItem());
+    QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, windowCenter);
+    auto *menu = window->findChild<QQuickMenu *>();
+    QVERIFY(menu);
+    QVERIFY(menu->isOpened());
 }
 
 void tst_QQuickContextMenu::createOnRequested_data()

@@ -6,9 +6,12 @@ ApplicationWindow {
     width: 600
     height: 400
 
-    property bool handlerGotEvent
+    signal eventReceived(QtObject receiver)
 
     contentItem.ContextMenu.menu: Menu {
+        objectName: "menu"
+        onOpened: window.eventReceived(this)
+
         MenuItem {
             text: qsTr("Eat tomato")
         }
@@ -21,10 +24,11 @@ ApplicationWindow {
     }
 
     TapHandler {
+        objectName: "tapHandler"
         acceptedButtons: Qt.RightButton
         // Ensure that it grabs mouse on press, as the default gesture policy results in a passive grab,
         // which would allow the ContextMenu to receive the context menu event.
         gesturePolicy: TapHandler.WithinBounds
-        onTapped: window.handlerGotEvent = true
+        onTapped: window.eventReceived(this)
     }
 }

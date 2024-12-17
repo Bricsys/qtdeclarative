@@ -24,10 +24,12 @@ QT_BEGIN_NAMESPACE
 class QQuickContextMenuPrivate;
 class QQuickMenu;
 
-class Q_QUICKTEMPLATES2_EXPORT QQuickContextMenu : public QObject
+class Q_QUICKTEMPLATES2_EXPORT QQuickContextMenu : public QObject, public QQmlParserStatus
 {
     Q_OBJECT
+    Q_INTERFACES(QQmlParserStatus)
     Q_PROPERTY(QQuickMenu *menu READ menu WRITE setMenu NOTIFY menuChanged FINAL)
+    Q_CLASSINFO("DeferredPropertyNames", "menu")
     QML_NAMED_ELEMENT(ContextMenu)
     QML_ATTACHED(QQuickContextMenu)
     QML_UNCREATABLE("")
@@ -50,6 +52,9 @@ protected:
 
 private:
     Q_DECLARE_PRIVATE(QQuickContextMenu)
+
+    void classBegin() override;
+    void componentComplete() override;
 };
 
 QT_END_NAMESPACE

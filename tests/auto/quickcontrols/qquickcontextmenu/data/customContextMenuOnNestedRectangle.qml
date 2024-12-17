@@ -16,7 +16,6 @@ ApplicationWindow {
         radius: width / 2
 
         ContextMenu.menu: Menu {
-            id: contextMenu
             MenuItem {
                 text: qsTr("Eat tomato")
             }
