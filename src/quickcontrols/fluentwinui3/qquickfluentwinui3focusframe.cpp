@@ -27,7 +27,7 @@ QQuickFluentWinUI3FocusFrame::QQuickFluentWinUI3FocusFrame()
                 moveToItem(control);
             }
         } else {
-            m_focusFrame.reset();
+            moveToItem(nullptr);
         }
     });
 }
@@ -68,6 +68,9 @@ void QQuickFluentWinUI3FocusFrame::moveToItem(QQuickControl *item)
 
 QQuickControl *QQuickFluentWinUI3FocusFrame::getFocusTarget(QQuickControl *focusItem) const
 {
+    if (!focusItem)
+        return nullptr;
+
     const auto parentItem = focusItem->parentItem();
     if (!parentItem)
         return nullptr;
