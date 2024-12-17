@@ -648,20 +648,17 @@ void TestQmllint::dirtyQmlCode_data()
                                << Result{ { Message{ QStringLiteral(
                                                   "unknown grouped property scope nanchors.") } },
                                           {},
-                                          {},
-                                          Result::HasDuplicates };
+                                          {} };
     QTest::newRow("nanchors2") << QStringLiteral("nanchors2.qml")
                                << Result{ { Message{ QStringLiteral(
                                                   "unknown grouped property scope nanchors.") } },
                                           {},
-                                          {},
-                                          Result::HasDuplicates };
+                                          {} };
     QTest::newRow("nanchors3") << QStringLiteral("nanchors3.qml")
                                << Result{ { Message{ QStringLiteral(
                                                   "unknown grouped property scope nanchors.") } },
                                           {},
-                                          {},
-                                          Result::HasDuplicates };
+                                          {} };
     QTest::newRow("badAliasObject")
             << QStringLiteral("badAliasObject.qml")
             << Result { { Message { QStringLiteral("Member \"wrongwrongwrong\" not "
@@ -1168,8 +1165,7 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
             << Result{ { Message{ QStringLiteral(u"Declaring an object which is not an Qml object"
                                                  " as a list member.") } },
                        {},
-                       {},
-                       Result::HasDuplicates };
+                       {} };
     QTest::newRow("duplicatedPropertyName")
             << QStringLiteral("duplicatedPropertyName.qml")
             << Result{ { Message{ QStringLiteral("Duplicated property name \"cat\"."), 5, 5 } } };
@@ -1220,8 +1216,7 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
                                    u"Namespace 'test' of 'test.Rectangle' must start with an upper case letter."_s },
                    },
                    {},
-                   {},
-                   Result::HasDuplicates
+                   {}
                };
     QTest::newRow("lowerCaseQualifiedImport2")
             << QStringLiteral("lowerCaseQualifiedImport2.qml")
@@ -1239,8 +1234,7 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
                                    u"Namespace 'test' of 'test.Grid' must start with an upper case letter."_s },
                    },
                    {},
-                   {},
-                   Result::HasDuplicates
+                   {}
                };
     QTest::newRow("notQmlRootMethods")
             << QStringLiteral("notQmlRootMethods.qml")
