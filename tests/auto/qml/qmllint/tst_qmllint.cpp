@@ -823,8 +823,7 @@ void TestQmllint::dirtyQmlCode_data()
             << QStringLiteral("badAttachedPropertyTypeString.qml")
             << Result{ { Message{ QStringLiteral("Cannot assign literal of type string to int") } },
                        {},
-                       {},
-                       Result::HasDuplicates };
+                       {} };
     QTest::newRow("badAttachedPropertyTypeQtObject")
             << QStringLiteral("badAttachedPropertyTypeQtObject.qml")
             << Result{ { Message{
