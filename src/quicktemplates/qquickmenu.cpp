@@ -657,6 +657,12 @@ void QQuickMenuPrivate::setNativeMenuVisible(bool visible)
     }
 }
 
+// Used by QQuickContextMenu when it's opened on a text-editing control.
+void QQuickMenuPrivate::makeEditMenu()
+{
+    handle->setMenuType(QPlatformMenu::EditMenu);
+}
+
 QQuickItem *QQuickMenuPrivate::itemAt(int index) const
 {
     return qobject_cast<QQuickItem *>(contentModel->get(index));
