@@ -1575,12 +1575,12 @@ void QQmlJSCodeGenerator::generate_SetLookup(int index, int baseReg)
 
     const QString indexString = QString::number(index);
     const QQmlJSScope::ConstPtr valueType = m_state.accumulatorIn().storedType();
-    const QQmlJSRegisterContent specific = m_state.readAccumulator();
-    Q_ASSERT(specific.isConversion());
+    const QQmlJSRegisterContent property = m_state.readAccumulator();
+    Q_ASSERT(property.isConversion());
     const QQmlJSScope::ConstPtr originalScope
-        = m_typeResolver->original(specific.conversionResultScope()).containedType();
+        = m_typeResolver->original(property.conversionResultScope()).containedType();
 
-    if (specific.storedType().isNull()) {
+    if (property.storedType().isNull()) {
         reject(u"SetLookup. Could not find property "
                + m_jsUnitGenerator->lookupName(index)
                + u" on type "
@@ -1588,27 +1588,11 @@ void QQmlJSCodeGenerator::generate_SetLookup(int index, int baseReg)
         return;
     }
 
-    // Choose a container that can hold both, the "in" accumulator and what we actually want.
-    // If the types are all the same because we can all store them as verbatim C++ types,
-    // the container will also be that type.
-
-    QQmlJSRegisterContent property = specific;
-    if (!specific.isStoredIn(valueType)) {
-        if (m_typeResolver->isPrimitive(specific.storedType())
-                && m_typeResolver->isPrimitive(valueType)) {
-            // Preferably store in QJSPrimitiveValue since we need the content pointer below.
-            property = m_pool->storedIn(property, m_typeResolver->jsPrimitiveType());
-        } else {
-            property = m_pool->storedIn(
-                    property, m_typeResolver->merge(specific.storedType(), valueType));
-        }
-    }
-
     const QString object = registerVariable(baseReg);
     m_body += u"{\n"_s;
     QString variableIn;
     if (!m_state.accumulatorIn().contains(property.containedType())) {
-        m_body += u"auto converted = "_s
+        m_body += property.storedType()->augmentedInternalName() + u" converted = "_s
                 + conversion(m_state.accumulatorIn(), property, consumedAccumulatorVariableIn())
                 + u";\n"_s;
         variableIn = contentPointer(property, u"converted"_s);

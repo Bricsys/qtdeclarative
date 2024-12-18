@@ -12,6 +12,11 @@ class TakeNumber : public QObject
     Q_OBJECT
     QML_ELEMENT
 
+    Q_PROPERTY(int propertyInt MEMBER propertyInt NOTIFY propertyIntChanged)
+    Q_PROPERTY(int propertyNegativeInt MEMBER propertyNegativeInt NOTIFY propertyNegativeIntChanged)
+    Q_PROPERTY(qsizetype propertyQSizeType MEMBER propertyQSizeType NOTIFY propertyQSizeTypeChanged)
+    Q_PROPERTY(qlonglong propertyQLongLong MEMBER propertyQLongLong NOTIFY propertyQLongLongChanged)
+
 public:
     explicit TakeNumber(QObject *parent = nullptr);
 
@@ -24,6 +29,17 @@ public:
     int takenNegativeInt = 0;
     qsizetype takenQSizeType = 0;
     qlonglong takenQLongLong = 0;
+
+    int propertyInt = 0;
+    int propertyNegativeInt = 0;
+    qsizetype propertyQSizeType = 0;
+    qsizetype propertyQLongLong = 0;
+
+signals:
+    void propertyIntChanged();
+    void propertyNegativeIntChanged();
+    void propertyQSizeTypeChanged();
+    void propertyQLongLongChanged();
 };
 
 #endif // TAKENUMBER_H
