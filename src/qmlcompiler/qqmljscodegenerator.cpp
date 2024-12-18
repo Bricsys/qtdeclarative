@@ -2761,8 +2761,17 @@ void QQmlJSCodeGenerator::generate_DefineObjectLiteral(int internalClassId, int 
         m_body += u"    {\n";
         const QString propName = m_jsUnitGenerator->jsClassMember(internalClassId, i);
         const int currentArg = args + i;
-        const QQmlJSRegisterContent propType = m_state.readRegister(currentArg);
+        const QQmlJSRegisterContent readType = m_state.readRegister(currentArg);
         const QQmlJSRegisterContent argType = registerType(currentArg);
+
+        // Merging the stored types makes sure that
+        // a, the type is expressible in C++ (since we can express argType)
+        // b, the type can hold readType.
+        const QQmlJSScope::ConstPtr readStored = readType.storedType();
+        const QQmlJSRegisterContent propType = m_typeResolver->isPrimitive(readStored)
+                ? readType
+                : readType.storedIn(m_typeResolver->merge(readStored, argType.storedType()));
+
         const QQmlJSMetaProperty property = contained->property(propName);
         const QString consumedArg = consumedRegisterVariable(currentArg);
         QString argument = conversion(argType, propType, consumedArg);
@@ -2770,7 +2779,8 @@ void QQmlJSCodeGenerator::generate_DefineObjectLiteral(int internalClassId, int 
         if (argument == consumedArg) {
             argument = registerVariable(currentArg);
         } else {
-            m_body += u"        auto arg = "_s + argument + u";\n";
+            m_body += u"        "_s + propType.storedType()->augmentedInternalName()
+                    + u" arg = "_s + argument + u";\n";
             argument = u"arg"_s;
         }
 

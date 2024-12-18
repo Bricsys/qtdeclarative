@@ -26,3 +26,8 @@ void TakeNumber::takeQLongLong(qlonglong a)
 {
     takenQLongLong = a;
 }
+
+void TakeNumber::takeNumbers(const Numbers &a)
+{
+    takenNumbers = a;
+}
