@@ -4926,10 +4926,12 @@ void tst_QmlCppCodegen::takeNumbers()
     QCOMPARE(takeNumber->takenNegativeInt, 0);
     QCOMPARE(takeNumber->takenQSizeType, 0);
     QCOMPARE(takeNumber->takenQLongLong, 0);
+    QCOMPARE(takeNumber->takenNumbers, (Numbers {0, 0, 0, 0}));
     QCOMPARE(takeNumber->propertyInt, 0);
     QCOMPARE(takeNumber->propertyNegativeInt, 0);
     QCOMPARE(takeNumber->propertyQSizeType, 0);
     QCOMPARE(takeNumber->propertyQLongLong, 0);
+    QCOMPARE(takeNumber->propertyNumbers, (Numbers {0, 0, 0, 0}));
 
     o->metaObject()->invokeMethod(o.data(), "literal56");
 
@@ -4937,10 +4939,12 @@ void tst_QmlCppCodegen::takeNumbers()
     QCOMPARE(takeNumber->takenNegativeInt, -56);
     QCOMPARE(takeNumber->takenQSizeType, 56);
     QCOMPARE(takeNumber->takenQLongLong, 56);
+    QCOMPARE(takeNumber->takenNumbers, (Numbers {56, -56, 56, 56}));
     QCOMPARE(takeNumber->propertyInt, 56);
     QCOMPARE(takeNumber->propertyNegativeInt, -56);
     QCOMPARE(takeNumber->propertyQSizeType, 56);
     QCOMPARE(takeNumber->propertyQLongLong, 56);
+    QCOMPARE(takeNumber->propertyNumbers, (Numbers {56, -56, 56, 56}));
 
     o->metaObject()->invokeMethod(o.data(), "variable0");
 
@@ -4948,10 +4952,12 @@ void tst_QmlCppCodegen::takeNumbers()
     QCOMPARE(takeNumber->takenNegativeInt, 0);
     QCOMPARE(takeNumber->takenQSizeType, 0);
     QCOMPARE(takeNumber->takenQLongLong, 0);
+    QCOMPARE(takeNumber->takenNumbers, (Numbers {0, 0, 0, 0}));
     QCOMPARE(takeNumber->propertyInt, 0);
     QCOMPARE(takeNumber->propertyNegativeInt, 0);
     QCOMPARE(takeNumber->propertyQSizeType, 0);
     QCOMPARE(takeNumber->propertyQLongLong, 0);
+    QCOMPARE(takeNumber->propertyNumbers, (Numbers {0, 0, 0, 0}));
 
     o->metaObject()->invokeMethod(o.data(), "variable484");
 
@@ -4959,10 +4965,12 @@ void tst_QmlCppCodegen::takeNumbers()
     QCOMPARE(takeNumber->takenNegativeInt, -484);
     QCOMPARE(takeNumber->takenQSizeType, 484);
     QCOMPARE(takeNumber->takenQLongLong, 484);
+    QCOMPARE(takeNumber->takenNumbers, (Numbers {484, -484, 484, 484}));
     QCOMPARE(takeNumber->propertyInt, 484);
     QCOMPARE(takeNumber->propertyNegativeInt, -484);
     QCOMPARE(takeNumber->propertyQSizeType, 484);
     QCOMPARE(takeNumber->propertyQLongLong, 484);
+    QCOMPARE(takeNumber->propertyNumbers, (Numbers {484, -484, 484, 484}));
 
     o->metaObject()->invokeMethod(o.data(), "literal0");
 
@@ -4970,10 +4978,12 @@ void tst_QmlCppCodegen::takeNumbers()
     QCOMPARE(takeNumber->takenNegativeInt, 0);
     QCOMPARE(takeNumber->takenQSizeType, 0);
     QCOMPARE(takeNumber->takenQLongLong, 0);
+    QCOMPARE(takeNumber->takenNumbers, (Numbers {0, 0, 0, 0}));
     QCOMPARE(takeNumber->propertyInt, 0);
     QCOMPARE(takeNumber->propertyNegativeInt, 0);
     QCOMPARE(takeNumber->propertyQSizeType, 0);
     QCOMPARE(takeNumber->propertyQLongLong, 0);
+    QCOMPARE(takeNumber->propertyNumbers, (Numbers {0, 0, 0, 0}));
 }
 
 void tst_QmlCppCodegen::testIsnan()

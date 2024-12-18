@@ -2843,7 +2843,8 @@ void QQmlJSCodeGenerator::generate_DefineObjectLiteral(int internalClassId, int 
         if (argument == consumedArg) {
             argument = registerVariable(currentArg);
         } else {
-            m_body += u"        auto arg = "_s + argument + u";\n";
+            m_body += u"        "_s + propType.storedType()->augmentedInternalName()
+                    + u" arg = "_s + argument + u";\n";
             argument = u"arg"_s;
         }
 

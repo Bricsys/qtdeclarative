@@ -13,6 +13,8 @@ TakeNumber {
         foo.propertyQSizeType = 0;
         foo.takeQLongLong(0)
         foo.propertyQLongLong = 0;
+        foo.takeNumbers({i:0, n:0, s:0, l:0});
+        foo.propertyNumbers = {i:0, n:0, s:0, l:0};
     }
 
     function literal56() {
@@ -24,6 +26,8 @@ TakeNumber {
         foo.propertyQSizeType = 56;
         foo.takeQLongLong(56)
         foo.propertyQLongLong = 56;
+        foo.takeNumbers({i:56, n:-56, s:56, l:56});
+        foo.propertyNumbers = {i:56, n:-56, s:56, l:56};
     }
 
     function variable0() {
@@ -36,6 +40,8 @@ TakeNumber {
         foo.propertyQSizeType = a;
         foo.takeQLongLong(a)
         foo.propertyQLongLong = a;
+        foo.takeNumbers({i:a, n:-a, s:a, l:a});
+        foo.propertyNumbers = {i:a, n:-a, s:a, l:a};
     }
 
     function variable484() {
@@ -48,5 +54,7 @@ TakeNumber {
         foo.propertyQSizeType = a;
         foo.takeQLongLong(a)
         foo.propertyQLongLong = a;
+        foo.takeNumbers({i:a, n:-a, s:a, l:a});
+        foo.propertyNumbers = {i:a, n:-a, s:a, l:a};
     }
 }
