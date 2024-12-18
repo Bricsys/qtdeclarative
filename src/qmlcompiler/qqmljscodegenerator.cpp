@@ -1735,10 +1735,22 @@ QString QQmlJSCodeGenerator::initAndCall(
         args = contentPointer(m_state.accumulatorOut(), *outVar);
     }
 
+    // We may need to convert the arguments to the function call so that they match what the
+    // function expects. They are passed as void* after all. We try to convert them where they
+    // are created, but if they are read as different types in multiple places, we can't.
+    QString argumentPreparation;
     for (int i = 0; i < argc; ++i) {
         const QQmlJSRegisterContent content = registerType(argv + i);
-        const QString var = registerVariable(argv + i);
-        args += u", "_s + contentPointer(content, var);
+        const QQmlJSRegisterContent read = m_state.readRegister(argv + i);
+        if (read.contains(content.containedType())) {
+            args += u", "_s + contentPointer(read, registerVariable(argv + i));
+        } else {
+            const QString var = u"arg"_s + QString::number(i);
+            argumentPreparation +=
+                    u"    "_s + read.storedType()->augmentedInternalName() + u' ' + var + u" = "_s
+                    + conversion(content, read, consumedRegisterVariable(argv + i)) + u";\n";
+            args += u", "_s + contentPointer(read, var);
+        }
     }
 
     QString initMethod;
@@ -1755,6 +1767,7 @@ QString QQmlJSCodeGenerator::initAndCall(
     }
 
     return u"const auto doCall = [&]() {\n"_s
+            + argumentPreparation
             + u"    void *args[] = {" + args + u"};\n"_s
             + u"    return aotContext->"_s + callMethodTemplate.arg(u"args"_s).arg(argc) + u";\n"
             + u"};\n"_s

@@ -9,10 +9,11 @@
 #include <data/getOptionalLookup.h>
 #include <data/listprovider.h>
 #include <data/objectwithmethod.h>
+#include <data/qmlusing.h>
 #include <data/resettable.h>
+#include <data/takenumber.h>
 #include <data/weathermoduleurl.h>
 #include <data/withlength.h>
-#include <data/qmlusing.h>
 
 #include <QtQml/private/qqmlengine_p.h>
 #include <QtQml/private/qqmlpropertycachecreator_p.h>
@@ -239,6 +240,7 @@ private slots:
     void stringLength();
     void stringToByteArray();
     void structuredValueType();
+    void takeNumbers();
     void testIsnan();
     void thisObject();
     void throwObjectName();
@@ -4907,6 +4909,51 @@ void tst_QmlCppCodegen::structuredValueType()
     WeatherModelUrl w2;
     w2.setStrings(QStringList({u"three"_s, u"two"_s, u"one"_s}));
     QCOMPARE(o->property("w2").value<WeatherModelUrl>(), w2);
+}
+
+void tst_QmlCppCodegen::takeNumbers()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, QUrl(u"qrc:/qt/qml/TestTypes/takenumber.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+
+    TakeNumber *takeNumber = qobject_cast<TakeNumber *>(o.data());
+    QVERIFY(takeNumber != nullptr);
+
+    QCOMPARE(takeNumber->takenInt, 0);
+    QCOMPARE(takeNumber->takenNegativeInt, 0);
+    QCOMPARE(takeNumber->takenQSizeType, 0);
+    QCOMPARE(takeNumber->takenQLongLong, 0);
+
+    o->metaObject()->invokeMethod(o.data(), "literal56");
+
+    QCOMPARE(takeNumber->takenInt, 56);
+    QCOMPARE(takeNumber->takenNegativeInt, -56);
+    QCOMPARE(takeNumber->takenQSizeType, 56);
+    QCOMPARE(takeNumber->takenQLongLong, 56);
+
+    o->metaObject()->invokeMethod(o.data(), "variable0");
+
+    QCOMPARE(takeNumber->takenInt, 0);
+    QCOMPARE(takeNumber->takenNegativeInt, 0);
+    QCOMPARE(takeNumber->takenQSizeType, 0);
+    QCOMPARE(takeNumber->takenQLongLong, 0);
+
+    o->metaObject()->invokeMethod(o.data(), "variable484");
+
+    QCOMPARE(takeNumber->takenInt, 484);
+    QCOMPARE(takeNumber->takenNegativeInt, -484);
+    QCOMPARE(takeNumber->takenQSizeType, 484);
+    QCOMPARE(takeNumber->takenQLongLong, 484);
+
+    o->metaObject()->invokeMethod(o.data(), "literal0");
+
+    QCOMPARE(takeNumber->takenInt, 0);
+    QCOMPARE(takeNumber->takenNegativeInt, 0);
+    QCOMPARE(takeNumber->takenQSizeType, 0);
+    QCOMPARE(takeNumber->takenQLongLong, 0);
 }
 
 void tst_QmlCppCodegen::testIsnan()

@@ -55,6 +55,7 @@ QQmlJSCompilePass::BlocksAndAnnotations QQmlJSStorageGeneralizer::run(Function *
     for (auto i = m_annotations.begin(), iEnd = m_annotations.end(); i != iEnd; ++i) {
         transformRegister(i->second.changedRegister);
         transformRegisters(i->second.typeConversions);
+        transformRegisters(i->second.readRegisters);
     }
 
     return { std::move(m_basicBlocks), std::move(m_annotations) };
