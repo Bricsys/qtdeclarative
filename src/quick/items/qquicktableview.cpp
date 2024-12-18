@@ -1727,6 +1727,11 @@ QQuickItem *QQuickTableViewPrivate::selectionPointerHandlerTarget() const
     return const_cast<QQuickTableView *>(q_func())->contentItem();
 }
 
+bool QQuickTableViewPrivate::hasSelection() const
+{
+    return selectionModel && selectionModel->hasSelection();
+}
+
 bool QQuickTableViewPrivate::startSelection(const QPointF &pos, Qt::KeyboardModifiers modifiers)
 {
     Q_Q(QQuickTableView);

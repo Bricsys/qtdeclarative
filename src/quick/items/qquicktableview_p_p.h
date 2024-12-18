@@ -659,6 +659,7 @@ public:
 
     // QQuickSelectable
     QQuickItem *selectionPointerHandlerTarget() const override;
+    bool hasSelection() const override;
     bool startSelection(const QPointF &pos, Qt::KeyboardModifiers modifiers) override;
     void setSelectionStartPos(const QPointF &pos) override;
     void setSelectionEndPos(const QPointF &pos) override;
