@@ -1593,8 +1593,7 @@ void QQmlJSCodeGenerator::generate_SetLookup(int index, int baseReg)
     if (!m_typeResolver->equals(specific.storedType(), valueType)) {
         if (m_typeResolver->isPrimitive(specific.storedType())
                 && m_typeResolver->isPrimitive(valueType)) {
-            // Preferably store in QJSPrimitiveValue since we need the content pointer below.
-            property = property.storedIn(m_typeResolver->jsPrimitiveType());
+            // Nothing to do here. We can store all primitive types as is.
         } else {
             property = property.storedIn(m_typeResolver->merge(specific.storedType(), valueType));
         }
@@ -1608,7 +1607,7 @@ void QQmlJSCodeGenerator::generate_SetLookup(int index, int baseReg)
     QString argType;
     if (!m_typeResolver->registerContains(
                 m_state.accumulatorIn(), m_typeResolver->containedType(property))) {
-        m_body += u"auto converted = "_s
+        m_body += property.storedType()->augmentedInternalName() + u" converted = "_s
                 + conversion(m_state.accumulatorIn(), property, consumedAccumulatorVariableIn())
                 + u";\n"_s;
         variableIn = contentPointer(property, u"converted"_s);

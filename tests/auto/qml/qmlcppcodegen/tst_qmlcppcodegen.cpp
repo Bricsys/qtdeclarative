@@ -9,10 +9,11 @@
 #include <data/getOptionalLookup.h>
 #include <data/listprovider.h>
 #include <data/objectwithmethod.h>
+#include <data/qmlusing.h>
 #include <data/resettable.h>
+#include <data/takenumber.h>
 #include <data/weathermoduleurl.h>
 #include <data/withlength.h>
-#include <data/qmlusing.h>
 
 #include <QtQml/private/qqmlengine_p.h>
 #include <QtQml/private/qqmlpropertycachecreator_p.h>
@@ -236,6 +237,7 @@ private slots:
     void stringLength();
     void stringToByteArray();
     void structuredValueType();
+    void takeNumbers();
     void testIsnan();
     void thisObject();
     void throwObjectName();
@@ -4843,6 +4845,71 @@ void tst_QmlCppCodegen::structuredValueType()
     WeatherModelUrlDerived w1;
     w1.setStrings(QStringList({u"four"_s, u"five"_s, u"six"_s}));
     QCOMPARE(o->property("w1").value<WeatherModelUrlDerived>(), w1);
+}
+
+void tst_QmlCppCodegen::takeNumbers()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, QUrl(u"qrc:/qt/qml/TestTypes/takenumber.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+
+    TakeNumber *takeNumber = qobject_cast<TakeNumber *>(o.data());
+    QVERIFY(takeNumber != nullptr);
+
+    QCOMPARE(takeNumber->takenInt, 0);
+    QCOMPARE(takeNumber->takenNegativeInt, 0);
+    QCOMPARE(takeNumber->takenQSizeType, 0);
+    QCOMPARE(takeNumber->takenQLongLong, 0);
+    QCOMPARE(takeNumber->propertyInt, 0);
+    QCOMPARE(takeNumber->propertyNegativeInt, 0);
+    QCOMPARE(takeNumber->propertyQSizeType, 0);
+    QCOMPARE(takeNumber->propertyQLongLong, 0);
+
+    o->metaObject()->invokeMethod(o.data(), "literal56");
+
+    QCOMPARE(takeNumber->takenInt, 56);
+    QCOMPARE(takeNumber->takenNegativeInt, -56);
+    QCOMPARE(takeNumber->takenQSizeType, 56);
+    QCOMPARE(takeNumber->takenQLongLong, 56);
+    QCOMPARE(takeNumber->propertyInt, 56);
+    QCOMPARE(takeNumber->propertyNegativeInt, -56);
+    QCOMPARE(takeNumber->propertyQSizeType, 56);
+    QCOMPARE(takeNumber->propertyQLongLong, 56);
+
+    o->metaObject()->invokeMethod(o.data(), "variable0");
+
+    QCOMPARE(takeNumber->takenInt, 0);
+    QCOMPARE(takeNumber->takenNegativeInt, 0);
+    QCOMPARE(takeNumber->takenQSizeType, 0);
+    QCOMPARE(takeNumber->takenQLongLong, 0);
+    QCOMPARE(takeNumber->propertyInt, 0);
+    QCOMPARE(takeNumber->propertyNegativeInt, 0);
+    QCOMPARE(takeNumber->propertyQSizeType, 0);
+    QCOMPARE(takeNumber->propertyQLongLong, 0);
+
+    o->metaObject()->invokeMethod(o.data(), "variable484");
+
+    QCOMPARE(takeNumber->takenInt, 484);
+    QCOMPARE(takeNumber->takenNegativeInt, -484);
+    QCOMPARE(takeNumber->takenQSizeType, 484);
+    QCOMPARE(takeNumber->takenQLongLong, 484);
+    QCOMPARE(takeNumber->propertyInt, 484);
+    QCOMPARE(takeNumber->propertyNegativeInt, -484);
+    QCOMPARE(takeNumber->propertyQSizeType, 484);
+    QCOMPARE(takeNumber->propertyQLongLong, 484);
+
+    o->metaObject()->invokeMethod(o.data(), "literal0");
+
+    QCOMPARE(takeNumber->takenInt, 0);
+    QCOMPARE(takeNumber->takenNegativeInt, 0);
+    QCOMPARE(takeNumber->takenQSizeType, 0);
+    QCOMPARE(takeNumber->takenQLongLong, 0);
+    QCOMPARE(takeNumber->propertyInt, 0);
+    QCOMPARE(takeNumber->propertyNegativeInt, 0);
+    QCOMPARE(takeNumber->propertyQSizeType, 0);
+    QCOMPARE(takeNumber->propertyQLongLong, 0);
 }
 
 void tst_QmlCppCodegen::testIsnan()
