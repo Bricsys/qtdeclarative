@@ -497,6 +497,9 @@ private slots:
 
     void fromAsIdentifier();
 
+    void dateObjectReadBack_data();
+    void dateObjectReadBack();
+
 private:
     QQmlEngine engine;
     QStringList defaultImportPathList;
@@ -9406,6 +9409,56 @@ void tst_qqmllanguage::fromAsIdentifier()
     QScopedPointer<QObject> o(c.create());
     QVERIFY(o);
     QCOMPARE(o->children().first()->property("from").toInt(), 3);
+}
+
+void tst_qqmllanguage::dateObjectReadBack_data() {
+    QTest::addColumn<QString>("file");
+
+    QTest::newRow("toString") << "DateObjectReadBackToString.qml";
+    QTest::newRow("toDateString") << "DateObjectReadBackToDateString.qml";
+    QTest::newRow("toTimeString") << "DateObjectReadBackToTimeString.qml";
+    QTest::newRow("toLocaleString") << "DateObjectReadBackToLocaleString.qml";
+    QTest::newRow("toLocaleDateString") << "DateObjectReadBackToLocaleDateString.qml";
+    QTest::newRow("toLocaleTimeString") << "DateObjectReadBackToLocaleTimeString.qml";
+    QTest::newRow("valueOf") << "DateObjectReadBackValueOf.qml";
+    QTest::newRow("getTime") << "DateObjectReadBackGetTime.qml";
+    QTest::newRow("getYear") << "DateObjectReadBackGetYear.qml";
+    QTest::newRow("getFullYear") << "DateObjectReadBackGetFullYear.qml";
+    QTest::newRow("getUTCFullYear") << "DateObjectReadBackGetUTCFullYear.qml";
+    QTest::newRow("getMonth") << "DateObjectReadBackGetMonth.qml";
+    QTest::newRow("getUTCMonth") << "DateObjectReadBackGetUTCMonth.qml";
+    QTest::newRow("getDate") << "DateObjectReadBackGetDate.qml";
+    QTest::newRow("getUTCDate") << "DateObjectReadBackGetUTCDate.qml";
+    QTest::newRow("getDay") << "DateObjectReadBackGetDay.qml";
+    QTest::newRow("getUTCDay") << "DateObjectReadBackGetUTCDay.qml";
+    QTest::newRow("getHours") << "DateObjectReadBackGetHours.qml";
+    QTest::newRow("getUTCHours") << "DateObjectReadBackGetUTCHours.qml";
+    QTest::newRow("getMinutes") << "DateObjectReadBackGetMinutes.qml";
+    QTest::newRow("getUTCMinutes") << "DateObjectReadBackGetUTCMinutes.qml";
+    QTest::newRow("getSeconds") << "DateObjectReadBackGetSeconds.qml";
+    QTest::newRow("getUTCSeconds") << "DateObjectReadBackGetUTCSeconds.qml";
+    QTest::newRow("getMilliseconds") << "DateObjectReadBackGetMilliseconds.qml";
+    QTest::newRow("getUTCMilliseconds") << "DateObjectReadBackGetUTCMilliseconds.qml";
+    QTest::newRow("toUTCString") << "DateObjectReadBackToUTCString.qml";
+    QTest::newRow("toISOString") << "DateObjectReadBackToISOString.qml";
+    QTest::newRow("toJSON") << "DateObjectReadBackToJSON.qml";
+    QTest::newRow("Date to String conversion") << "DateObjectReadBackStringConversion.qml";
+}
+
+void tst_qqmllanguage::dateObjectReadBack() {
+    QFETCH(QString, file);
+
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl(file));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+
+    auto *dateProvider = qobject_cast<MyTypeObject *>(o.data());
+    QVERIFY(dateProvider);
+
+    QVERIFY(dateProvider->property("datePropertyWasRead").toBool());
+    QVERIFY(dateProvider->property("timePropertyWasRead").toBool());
+    QVERIFY(dateProvider->property("dateTimePropertyWasRead").toBool());
 }
 
 QTEST_MAIN(tst_qqmllanguage)
