@@ -30,6 +30,7 @@
 using namespace Qt::StringLiterals;
 
 Q_IMPORT_QML_PLUGIN(TestTypesPlugin)
+Q_IMPORT_QML_PLUGIN(ConfusedPlugin)
 
 class tst_QmlCppCodegen : public QObject
 {
@@ -70,6 +71,7 @@ private slots:
     void componentReturnType();
     void compositeSingleton();
     void compositeTypeMethod();
+    void confusedModule();
     void consoleObject();
     void consoleTrace();
     void construct();
@@ -1094,6 +1096,16 @@ void tst_QmlCppCodegen::compositeTypeMethod()
     QVERIFY(!object.isNull());
     QSignalSpy spy(object.data(), SIGNAL(foo()));
     QTRY_VERIFY(spy.size() > 0);
+}
+
+void tst_QmlCppCodegen::confusedModule()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, QUrl(u"qrc:/qt/qml/Confused/Main.qml"_s));
+    QVERIFY2(!component.isError(), component.errorString().toUtf8());
+    QTest::ignoreMessage(QtDebugMsg, "Hello from Test");
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(!object.isNull());
 }
 
 void tst_QmlCppCodegen::consoleObject()
