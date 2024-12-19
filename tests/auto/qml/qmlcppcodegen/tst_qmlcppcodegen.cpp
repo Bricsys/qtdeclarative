@@ -238,6 +238,7 @@ private slots:
     void stringToByteArray();
     void structuredValueType();
     void takeNumbers();
+    void takeNumbers_data();
     void testIsnan();
     void thisObject();
     void throwObjectName();
@@ -4849,6 +4850,11 @@ void tst_QmlCppCodegen::structuredValueType()
 
 void tst_QmlCppCodegen::takeNumbers()
 {
+    QFETCH(QByteArray, method);
+    QFETCH(int, expectedInt);
+    QFETCH(qsizetype, expectedSizeType);
+    QFETCH(qlonglong, expectedLongLong);
+
     QQmlEngine engine;
     QQmlComponent c(&engine, QUrl(u"qrc:/qt/qml/TestTypes/takenumber.qml"_s));
     QVERIFY2(c.isReady(), qPrintable(c.errorString()));
@@ -4858,69 +4864,42 @@ void tst_QmlCppCodegen::takeNumbers()
     TakeNumber *takeNumber = qobject_cast<TakeNumber *>(o.data());
     QVERIFY(takeNumber != nullptr);
 
-    QCOMPARE(takeNumber->takenInt, 0);
-    QCOMPARE(takeNumber->takenNegativeInt, 0);
-    QCOMPARE(takeNumber->takenQSizeType, 0);
-    QCOMPARE(takeNumber->takenQLongLong, 0);
-    QCOMPARE(takeNumber->takenNumbers, (Numbers {0, 0, 0, 0}));
-    QCOMPARE(takeNumber->propertyInt, 0);
-    QCOMPARE(takeNumber->propertyNegativeInt, 0);
-    QCOMPARE(takeNumber->propertyQSizeType, 0);
-    QCOMPARE(takeNumber->propertyQLongLong, 0);
-    QCOMPARE(takeNumber->propertyNumbers, (Numbers {0, 0, 0, 0}));
+    o->metaObject()->invokeMethod(o.data(), method);
 
-    o->metaObject()->invokeMethod(o.data(), "literal56");
-
-    QCOMPARE(takeNumber->takenInt, 56);
-    QCOMPARE(takeNumber->takenNegativeInt, -56);
-    QCOMPARE(takeNumber->takenQSizeType, 56);
-    QCOMPARE(takeNumber->takenQLongLong, 56);
-    QCOMPARE(takeNumber->takenNumbers, (Numbers {56, -56, 56, 56}));
-    QCOMPARE(takeNumber->propertyInt, 56);
-    QCOMPARE(takeNumber->propertyNegativeInt, -56);
-    QCOMPARE(takeNumber->propertyQSizeType, 56);
-    QCOMPARE(takeNumber->propertyQLongLong, 56);
-    QCOMPARE(takeNumber->propertyNumbers, (Numbers {56, -56, 56, 56}));
-
-    o->metaObject()->invokeMethod(o.data(), "variable0");
-
-    QCOMPARE(takeNumber->takenInt, 0);
-    QCOMPARE(takeNumber->takenNegativeInt, 0);
-    QCOMPARE(takeNumber->takenQSizeType, 0);
-    QCOMPARE(takeNumber->takenQLongLong, 0);
-    QCOMPARE(takeNumber->takenNumbers, (Numbers {0, 0, 0, 0}));
-    QCOMPARE(takeNumber->propertyInt, 0);
-    QCOMPARE(takeNumber->propertyNegativeInt, 0);
-    QCOMPARE(takeNumber->propertyQSizeType, 0);
-    QCOMPARE(takeNumber->propertyQLongLong, 0);
-    QCOMPARE(takeNumber->propertyNumbers, (Numbers {0, 0, 0, 0}));
-
-    o->metaObject()->invokeMethod(o.data(), "variable484");
-
-    QCOMPARE(takeNumber->takenInt, 484);
-    QCOMPARE(takeNumber->takenNegativeInt, -484);
-    QCOMPARE(takeNumber->takenQSizeType, 484);
-    QCOMPARE(takeNumber->takenQLongLong, 484);
-    QCOMPARE(takeNumber->takenNumbers, (Numbers {484, -484, 484, 484}));
-    QCOMPARE(takeNumber->propertyInt, 484);
-    QCOMPARE(takeNumber->propertyNegativeInt, -484);
-    QCOMPARE(takeNumber->propertyQSizeType, 484);
-    QCOMPARE(takeNumber->propertyQLongLong, 484);
-    QCOMPARE(takeNumber->propertyNumbers, (Numbers {484, -484, 484, 484}));
-
-    o->metaObject()->invokeMethod(o.data(), "literal0");
-
-    QCOMPARE(takeNumber->takenInt, 0);
-    QCOMPARE(takeNumber->takenNegativeInt, 0);
-    QCOMPARE(takeNumber->takenQSizeType, 0);
-    QCOMPARE(takeNumber->takenQLongLong, 0);
-    QCOMPARE(takeNumber->takenNumbers, (Numbers {0, 0, 0, 0}));
-    QCOMPARE(takeNumber->propertyInt, 0);
-    QCOMPARE(takeNumber->propertyNegativeInt, 0);
-    QCOMPARE(takeNumber->propertyQSizeType, 0);
-    QCOMPARE(takeNumber->propertyQLongLong, 0);
-    QCOMPARE(takeNumber->propertyNumbers, (Numbers {0, 0, 0, 0}));
+    QCOMPARE(takeNumber->takenInt, expectedInt);
+    QCOMPARE(takeNumber->takenNegativeInt, -expectedInt);
+    QCOMPARE(takeNumber->takenQSizeType, expectedSizeType);
+    QCOMPARE(takeNumber->takenQLongLong, expectedLongLong);
+    QCOMPARE(takeNumber->takenNumbers,
+             (Numbers {expectedInt, -expectedInt, expectedSizeType, expectedLongLong}));
+    QCOMPARE(takeNumber->propertyInt, expectedInt);
+    QCOMPARE(takeNumber->propertyNegativeInt, -expectedInt);
+    QCOMPARE(takeNumber->propertyQSizeType, expectedSizeType);
+    QCOMPARE(takeNumber->propertyQLongLong, expectedLongLong);
+    QCOMPARE(takeNumber->propertyNumbers,
+             (Numbers {expectedInt, -expectedInt, expectedSizeType, expectedLongLong}));
 }
+
+void tst_QmlCppCodegen::takeNumbers_data()
+{
+    QTest::addColumn<QByteArray>("method");
+    QTest::addColumn<int>("expectedInt");
+    QTest::addColumn<qsizetype>("expectedSizeType");
+    QTest::addColumn<qlonglong>("expectedLongLong");
+
+    QTest::addRow("literal0") << "literal0"_ba << 0 << qsizetype(0) << 0ll;
+    QTest::addRow("literal56") << "literal56"_ba << 56 << qsizetype(56) << 56ll;
+
+    QTest::addRow("variable0") << "variable0"_ba << 0 << qsizetype(0) << 0ll;
+    QTest::addRow("variable484") << "variable484"_ba << 484 << qsizetype(484) << 484ll;
+
+    QTest::addRow("literal3B")
+            << "literal3B"_ba << int(3000000000ll) << qsizetype(3000000000ll) << 3000000000ll;
+    QTest::addRow("variable3B")
+            << "variable3B"_ba << int(3000000000ll) << qsizetype(3000000000ll) << 3000000000ll;
+
+}
+
 
 void tst_QmlCppCodegen::testIsnan()
 {

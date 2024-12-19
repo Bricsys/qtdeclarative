@@ -4049,6 +4049,12 @@ QString QQmlJSCodeGenerator::convertStored(
 
     if (m_typeResolver->equals(from, m_typeResolver->realType())
             || m_typeResolver->equals(from, m_typeResolver->floatType())) {
+        if (m_typeResolver->equals(to, m_typeResolver->int64Type())
+                || m_typeResolver->equals(to, m_typeResolver->uint64Type())) {
+            return to->internalName() + u"(QJSNumberCoercion::roundTowards0("_s
+                    + variable + u"))"_s;
+        }
+
         if (m_typeResolver->isSignedInteger(to))
             return u"QJSNumberCoercion::toInteger("_s + variable + u')';
         if (m_typeResolver->isUnsignedInteger(to))

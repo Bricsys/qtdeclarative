@@ -57,4 +57,31 @@ TakeNumber {
         foo.takeNumbers({i:a, n:-a, s:a, l:a});
         foo.propertyNumbers = {i:a, n:-a, s:a, l:a};
     }
+
+    function literal3B() {
+        foo.takeInt(3000000000)
+        foo.propertyInt = 3000000000;
+        foo.takeNegativeInt(-3000000000)
+        foo.propertyNegativeInt = -3000000000;
+        foo.takeQSizeType(3000000000)
+        foo.propertyQSizeType = 3000000000;
+        foo.takeQLongLong(3000000000)
+        foo.propertyQLongLong = 3000000000;
+        foo.takeNumbers({i:3000000000, n:-3000000000, s:3000000000, l:3000000000});
+        foo.propertyNumbers = {i:3000000000, n:-3000000000, s:3000000000, l:3000000000};
+    }
+
+    function variable3B() {
+        var a = 3000000000
+        foo.takeInt(a)
+        foo.propertyInt = a;
+        foo.takeNegativeInt(-a)
+        foo.propertyNegativeInt = -a;
+        foo.takeQSizeType(a)
+        foo.propertyQSizeType = a;
+        foo.takeQLongLong(a)
+        foo.propertyQLongLong = a;
+        foo.takeNumbers({i:a, n:-a, s:a, l:a});
+        foo.propertyNumbers = {i:a, n:-a, s:a, l:a};
+    }
 }
