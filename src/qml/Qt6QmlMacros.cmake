@@ -688,6 +688,12 @@ function(qt6_add_qml_module target)
     list(REMOVE_DUPLICATES all_dependency_targets)
     set_property(TARGET ${target} PROPERTY QT_QML_DEPENDENT_QML_MODULE_TARGETS "${all_dependency_targets}")
     _qt_internal_collect_qml_module_dependencies(${target})
+    # add a dependency at the build system level, too - we know that
+    # the module wouldn't run if the dependencies
+    # do not exist yet
+    if(all_dependency_targets)
+        add_dependencies(${target} ${all_dependency_targets})
+    endif()
 
     if(arg_AUTO_RESOURCE_PREFIX)
         if(arg_RESOURCE_PREFIX)
