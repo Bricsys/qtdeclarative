@@ -778,6 +778,8 @@ void QQmlJSCodeGenerator::generate_LoadElement(int base)
             conversion(literalType(m_typeResolver->voidType()),
                        m_state.accumulatorOut(), QString()) + u";\n"_s;
 
+    AccumulatorConverter registers(this);
+
     QString indexName = m_state.accumulatorVariableIn;
     QQmlJSScope::ConstPtr indexType;
     if (m_typeResolver->isNumeric(m_state.accumulatorIn())) {
@@ -797,7 +799,6 @@ void QQmlJSCodeGenerator::generate_LoadElement(int base)
         }
     }
 
-    AccumulatorConverter registers(this);
     const QString baseName = registerVariable(base);
 
     if (!m_typeResolver->isNativeArrayIndex(indexType)) {
@@ -3478,6 +3479,8 @@ void QQmlJSCodeGenerator::generateEqualityOperation(
             = isStrict && canStrictlyCompareWithVar(m_typeResolver, lhsContained, rhsContained);
     auto isComparable = [&]() {
         if (m_typeResolver->isPrimitive(lhsContent) && m_typeResolver->isPrimitive(rhsContent))
+            return true;
+        if (m_typeResolver->isNumeric(lhsContent) && m_typeResolver->isNumeric(rhsContent))
             return true;
         if (m_typeResolver->isNumeric(lhsContent) && rhsContent.isEnumeration())
             return true;
