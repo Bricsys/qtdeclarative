@@ -345,7 +345,7 @@ bool QQmlJSTypeResolver::isIntegral(const QQmlJSScope::ConstPtr &type) const
 
 bool QQmlJSTypeResolver::isPrimitive(const QQmlJSScope::ConstPtr &type) const
 {
-    return isNumeric(type)
+    return (isNumeric(type) && !equals(type, m_int64Type) && !equals(type, m_uint64Type))
             || equals(type, m_boolType) || equals(type, m_voidType) || equals(type, m_nullType)
             || equals(type, m_stringType) || equals(type, m_jsPrimitiveType);
 }
