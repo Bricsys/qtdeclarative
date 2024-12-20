@@ -128,6 +128,7 @@ public class MyDataModel extends QtAbstractItemModel {
     }
     //! [3]
 
+    //! [4]
     /*
     * Gets called when model data is edited from QML side.
     * Sets the role data for the item at index to value,
@@ -146,8 +147,9 @@ public class MyDataModel extends QtAbstractItemModel {
         dataChanged(index, index, new int[]{role});
         return true;
     }
-
     //! [4]
+
+    //! [5]
     /*
     * Adds a row.
     * Threading: called in Android main thread context.
@@ -171,9 +173,9 @@ public class MyDataModel extends QtAbstractItemModel {
             endRemoveRows();
         }
     }
-    //! [4]
-
     //! [5]
+
+    //! [6]
     /*
     * Adds a column.
     * Threading: called in Android main thread context.
@@ -201,7 +203,7 @@ public class MyDataModel extends QtAbstractItemModel {
             endRemoveColumns();
         }
     }
-    //! [5]
+    //! [6]
 
     synchronized private void generateNewColumn() {
         int amountOfRows = m_dataList.size();
