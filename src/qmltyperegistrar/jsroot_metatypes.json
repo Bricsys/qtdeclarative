@@ -5540,6 +5540,14 @@
                         "type": "number"
                     },
                     {
+                        "name": "ExpandedClientAreaHint",
+                        "type": "number"
+                    },
+                    {
+                        "name": "NoTitleBarBackgroundHint",
+                        "type": "number"
+                    },
+                    {
                         "name": "CustomizeWindowHint",
                         "type": "number"
                     },
