@@ -72,6 +72,11 @@ void tst_QQuickContextMenu::customContextMenu()
     QTRY_COMPARE(menu->isOpened(), !contextMenuTriggeredOnRelease);
 
     QTest::mouseRelease(window, Qt::RightButton, Qt::NoModifier, tomatoCenter);
+
+#ifdef Q_OS_WIN
+    if (qgetenv("QTEST_ENVIRONMENT").split(' ').contains("ci"))
+        QSKIP("Menu fails to open on Windows (QTBUG-132436)");
+#endif
     QTRY_COMPARE(menu->isOpened(), true);
 
     // Popups are positioned relative to their parent, and it should be opened at the center:
@@ -104,6 +109,10 @@ void tst_QQuickContextMenu::sharedContextMenu()
     auto menus = window->findChildren<QQuickMenu *>();
     QCOMPARE(menus.count(), 1);
     QPointer<QQuickMenu> menu = menus.first();
+#ifdef Q_OS_WIN
+    if (qgetenv("QTEST_ENVIRONMENT").split(' ').contains("ci"))
+        QSKIP("Menu fails to open on Windows (QTBUG-132436)");
+#endif
     QTRY_VERIFY(menu->isOpened());
     QCOMPARE(menu->parentItem(), tomato);
     QCOMPARE(menu->itemAt(0)->property("text").toString(), "Eat tomato");
