@@ -47,6 +47,7 @@ void tst_QQuickContextMenu::customContextMenu_data()
 
     QTest::addRow("Rectangle") << "customContextMenuOnRectangle.qml";
     QTest::addRow("Control") << "customContextMenuOnControl.qml";
+    QTest::addRow("NestedRectangle") << "customContextMenuOnNestedRectangle.qml";
 }
 
 void tst_QQuickContextMenu::customContextMenu()

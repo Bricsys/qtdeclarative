@@ -9184,6 +9184,8 @@ bool QQuickItem::event(QEvent *ev)
         break;
     case QEvent::ContextMenu:
         // ### Qt 7: add virtual contextMenuEvent (and to QWindow?)
+        ev->ignore();
+        break;
     default:
         return QObject::event(ev);
     }
