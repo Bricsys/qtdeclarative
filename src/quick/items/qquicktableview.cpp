@@ -7164,6 +7164,8 @@ void QQuickTableViewResizeHandler::updateDrag(QPointerEvent *event, QEventPoint 
 }
 
 // ----------------------------------------------
+#if QT_CONFIG(quick_draganddrop)
+
 QQuickTableViewSectionDragHandler::QQuickTableViewSectionDragHandler(QQuickTableView *view)
     : QQuickTableViewPointerHandler(view)
 {
@@ -7416,6 +7418,7 @@ void QQuickTableViewPrivate::destroySectionDragHandler()
         sectionDragHandler = nullptr;
     }
 }
+#endif // quick_draganddrop
 
 void QQuickTableViewPrivate::initializeIndexMapping()
 {
