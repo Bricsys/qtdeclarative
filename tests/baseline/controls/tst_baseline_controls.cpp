@@ -11,6 +11,8 @@
 #include <QtGui/QPalette>
 #include <QtGui/QFont>
 #include <QtQuickControls2/QQuickStyle>
+#include <QSortFilterProxyModel>
+#include <QQmlApplicationEngine>
 
 #include <algorithm>
 
@@ -153,6 +155,9 @@ void tst_Baseline_Controls::initTestCase()
     qInfo("PlatformName computed to be  : %s", qPrintable(platformName));
     qInfo("Color Scheme computed as    : %s", qPrintable(colorSchemeIdStr));
     qInfo("Native style name is         : %s", qPrintable(QQuickStyle::name()));
+
+    qmlRegisterAnonymousType<QAbstractItemModel>("Proxy", 1);
+    qmlRegisterType<QSortFilterProxyModel>("Proxy", 1, 0, "QSortFilterProxyModel");
 }
 
 void tst_Baseline_Controls::init()

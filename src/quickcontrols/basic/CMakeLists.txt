@@ -46,6 +46,7 @@ set(qml_files
     "ScrollBar.qml"
     "ScrollIndicator.qml"
     "ScrollView.qml"
+    "SearchField.qml"
     "SelectionRectangle.qml"
     "Slider.qml"
     "SpinBox.qml"
@@ -210,6 +211,7 @@ set(qtquickcontrols2basicstyle_resource_files
     "images/check@2x.png"
     "images/check@3x.png"
     "images/check@4x.png"
+    "images/close_circle.png"
     "images/dial-indicator.png"
     "images/dial-indicator@2x.png"
     "images/dial-indicator@3x.png"
@@ -222,6 +224,7 @@ set(qtquickcontrols2basicstyle_resource_files
     "images/drop-indicator@2x.png"
     "images/drop-indicator@3x.png"
     "images/drop-indicator@4x.png"
+    "images/search-magnifier.png"
 )
 
 qt_internal_add_resource(QuickControls2Basic "qtquickcontrols2basicstyle"

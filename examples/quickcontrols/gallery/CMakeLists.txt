@@ -10,6 +10,7 @@ qt_standard_project_setup(REQUIRES 6.8)
 
 qt_add_executable(galleryexample WIN32 MACOSX_BUNDLE
     gallery.cpp
+    qmlsortfilterproxymodel.h
 )
 
 qt_add_qml_module(galleryexample
@@ -36,6 +37,7 @@ qt_add_qml_module(galleryexample
         "pages/ScrollBarPage.qml"
         "pages/ScrollIndicatorPage.qml"
         "pages/ScrollablePage.qml"
+        "pages/SearchFieldPage.qml"
         "pages/SliderPage.qml"
         "pages/SpinBoxPage.qml"
         "pages/StackViewPage.qml"

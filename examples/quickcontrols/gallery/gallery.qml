@@ -149,6 +149,7 @@ ApplicationWindow {
                 ListElement { title: qsTr("RangeSlider"); source: "qrc:/pages/RangeSliderPage.qml" }
                 ListElement { title: qsTr("ScrollBar"); source: "qrc:/pages/ScrollBarPage.qml" }
                 ListElement { title: qsTr("ScrollIndicator"); source: "qrc:/pages/ScrollIndicatorPage.qml" }
+                ListElement { title: qsTr("SearchField"); source: "qrc:/pages/SearchFieldPage.qml" }
                 ListElement { title: qsTr("Slider"); source: "qrc:/pages/SliderPage.qml" }
                 ListElement { title: qsTr("SpinBox"); source: "qrc:/pages/SpinBoxPage.qml" }
                 ListElement { title: qsTr("StackView"); source: "qrc:/pages/StackViewPage.qml" }
