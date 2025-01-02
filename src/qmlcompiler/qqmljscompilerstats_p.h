@@ -22,6 +22,7 @@
 #include <private/qqmljsdiagnosticmessage_p.h>
 #include <private/qqmljssourcelocation_p.h>
 
+#include <chrono>
 #include <memory>
 
 QT_BEGIN_NAMESPACE
