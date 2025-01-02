@@ -32,6 +32,24 @@ Q_STATIC_LOGGING_CATEGORY(lcContextMenu, "qt.quick.controls.contextmenu")
     \endomit
 */
 
+/*!
+    \qmlsignal QtQuick.Controls::ContextMenu::requested(point position)
+
+    This signal is emitted when a context menu is requested.
+
+    If it was requested by a right mouse button click, \a position gives the
+    position of the click relative to the parent.
+
+    The example below shows how to programmatically open a context menu:
+
+    \snippet qtquickcontrols-contextmenu-onrequested.qml buttonAndMenu
+
+    If no menu is set, but this signal is connected, the context menu event
+    will be accepted and will not propagate.
+
+    \sa QContextMenuEvent::pos()
+*/
+
 class QQuickContextMenuPrivate : public QObjectPrivate
 {
 public:
@@ -42,8 +60,16 @@ public:
         return attachedObject->d_func();
     }
 
+    bool isRequestedSignalConnected();
+
     QPointer<QQuickMenu> menu;
 };
+
+bool QQuickContextMenuPrivate::isRequestedSignalConnected()
+{
+    Q_Q(QQuickContextMenu);
+    IS_SIGNAL_CONNECTED(q, QQuickContextMenu, requested, (QPointF));
+}
 
 QQuickContextMenu::QQuickContextMenu(QObject *parent)
     : QObject(*(new QQuickContextMenuPrivate), parent)
@@ -91,20 +117,36 @@ void QQuickContextMenu::setMenu(QQuickMenu *menu)
 
 bool QQuickContextMenu::event(QEvent *event)
 {
+    Q_D(QQuickContextMenu);
     switch (event->type()) {
     case QEvent::ContextMenu: {
         qCDebug(lcContextMenu) << this << "handling" << event << "on behalf of" << parent();
 
         auto *attacheeItem = qobject_cast<QQuickItem *>(parent());
-        auto *menu = this->menu();
-        if (!menu) {
-            qCDebug(lcContextMenu) << this << "no menu instance";
-            return QObject::event(event);
-        }
-        menu->setParentItem(attacheeItem);
-
+        Q_ASSERT(attacheeItem);
         const auto *contextMenuEvent = static_cast<QContextMenuEvent *>(event);
         const QPoint posRelativeToParent(attacheeItem->mapFromScene(contextMenuEvent->pos()).toPoint());
+
+        const bool isRequestedSignalConnected = d->isRequestedSignalConnected();
+        if (isRequestedSignalConnected)
+            Q_EMIT requested(posRelativeToParent);
+
+        auto *menu = this->menu();
+        if (!menu) {
+            if (isRequestedSignalConnected) {
+                qCDebug(lcContextMenu) << this << "no menu instance but accepting event anyway"
+                    << "since requested signal has connections";
+                event->accept();
+                return true;
+            }
+
+            // No menu set and requested isn't connected; let the event propagate
+            // onwards and do nothing.
+            return QObject::event(event);
+        }
+
+        menu->setParentItem(attacheeItem);
+
         qCDebug(lcContextMenu) << this << "showing" << menu << "at" << posRelativeToParent;
         menu->popup(posRelativeToParent);
         event->accept();

@@ -43,6 +43,7 @@ public:
 
 Q_SIGNALS:
     void menuChanged();
+    void requested(QPointF position);
 
 protected:
     bool event(QEvent *) override;

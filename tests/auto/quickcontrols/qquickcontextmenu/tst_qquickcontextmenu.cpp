@@ -4,6 +4,8 @@
 #include <QtGui/private/qguiapplication_p.h>
 #include <QtGui/qpa/qplatformtheme.h>
 #include <QtTest/qtest.h>
+#include <QtQuick/qquickview.h>
+#include <QtQuickTestUtils/private/viewtestutils_p.h>
 #include <QtQuickTestUtils/private/visualtestutils_p.h>
 #include <QtQuickControlsTestUtils/private/qtest_quickcontrols_p.h>
 #include <QtQuickTemplates2/private/qquickmenu_p.h>
@@ -26,6 +28,8 @@ private slots:
     void eventOrder();
     void notAttachedToItem();
     void nullMenu();
+    void createOnRequested_data();
+    void createOnRequested();
 };
 
 tst_QQuickContextMenu::tst_QQuickContextMenu()
@@ -176,6 +180,36 @@ void tst_QQuickContextMenu::nullMenu()
     QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, windowCenter);
     auto *menu = window->findChild<QQuickMenu *>();
     QVERIFY(!menu);
+}
+
+void tst_QQuickContextMenu::createOnRequested_data()
+{
+    QTest::addColumn<bool>("programmaticShow");
+
+    QTest::addRow("auto") << false;
+    QTest::addRow("manual") << true;
+}
+
+void tst_QQuickContextMenu::createOnRequested()
+{
+    QFETCH(bool, programmaticShow);
+
+    QQuickView window;
+    QVERIFY(QQuickTest::showView(window, testFileUrl("customContextMenuOnRequested.qml")));
+    auto *tomatoItem = window.findChild<QQuickItem *>("tomato");
+    QVERIFY(tomatoItem);
+    const QPoint &tomatoCenter = mapCenterToWindow(tomatoItem);
+    window.rootObject()->setProperty("showItToo", programmaticShow);
+
+    // On press or release (depending on QPlatformTheme::ContextMenuOnMouseRelease),
+    // ContextMenu.onRequested(pos) should create a standalone custom context menu.
+    // If programmaticShow, it will call popup() too; if not, QQuickContextMenu
+    // will show it.  Either way, it should still be open after the release.
+    QTest::mouseClick(&window, Qt::RightButton, Qt::NoModifier, tomatoCenter);
+    QQuickMenu *menu = window.findChild<QQuickMenu *>();
+    QVERIFY(menu);
+    QVERIFY(menu->isOpened());
+    QCOMPARE(window.rootObject()->property("pressPos").toPoint(), tomatoCenter);
 }
 
 QTEST_QUICKCONTROLS_MAIN(tst_QQuickContextMenu)
