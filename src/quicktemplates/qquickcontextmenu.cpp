@@ -19,9 +19,10 @@ Q_STATIC_LOGGING_CATEGORY(lcContextMenu, "qt.quick.controls.contextmenu")
     \brief The ContextMenu attached type provides a way to open a context menu
         in a platform-appropriate manner.
     \inqmlmodule QtQuick.Controls
+    \ingroup qtquickcontrols-menus
     \since 6.9
 
-    ContextMenu can be attached to any item in order to show a context menu
+    ContextMenu can be attached to any \l {QQuickItem}{item} in order to show a context menu
     upon a platform-specific event, such as a right click or the context menu
     key.
 
@@ -57,7 +58,7 @@ QQuickContextMenu *QQuickContextMenu::qmlAttachedProperties(QObject *object)
 }
 
 /*!
-    \qmlproperty Menu QtQuick.Controls::Control::menu
+    \qmlproperty Menu QtQuick.Controls::ContextMenu::menu
 
     This property holds the context menu that will be opened. It can be set to
     any \l Menu object.
