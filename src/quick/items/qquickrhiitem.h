@@ -103,7 +103,7 @@ Q_SIGNALS:
     void effectiveColorBufferSizeChanged();
 
 protected:
-    QQuickRhiItem(QQuickRhiItemPrivate &dd, QQuickItem *parent = nullptr);
+    explicit QQuickRhiItem(QQuickRhiItemPrivate &dd, QQuickItem *parent = nullptr);
 
     virtual QQuickRhiItemRenderer *createRenderer() = 0;
 
