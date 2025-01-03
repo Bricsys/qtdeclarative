@@ -63,6 +63,7 @@ private slots:
     void brokenAs();
     void boundComponents();
     void callContextPropertyLookupResult();
+    void callObjectLookupOnNull();
     void callWithSpread();
     void colorAsVariant();
     void colorString();
@@ -1017,6 +1018,25 @@ void tst_QmlCppCodegen::callContextPropertyLookupResult()
     QVERIFY(o);
 
     QVERIFY(qvariant_cast<QQmlComponent *>(o->property("c")) != nullptr);
+}
+
+void tst_QmlCppCodegen::callObjectLookupOnNull()
+{
+    QQmlEngine engine;
+    const QString urlString = u"qrc:/qt/qml/TestTypes/callObjectLookupOnNull.qml"_s;
+    QQmlComponent c(&engine, QUrl(urlString));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(o);
+
+    QCOMPARE(o->objectName(), u"horst"_s);
+
+    QTest::ignoreMessage(
+                QtWarningMsg,
+                qPrintable(urlString + u":5:5: TypeError: Cannot call method 'getName' of null"));
+    o->setProperty("person", QVariant::fromValue<Person *>(nullptr));
+
+    QCOMPARE(o->objectName(), QString());
 }
 
 void tst_QmlCppCodegen::callWithSpread()

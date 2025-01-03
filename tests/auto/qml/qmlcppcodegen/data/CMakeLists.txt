@@ -103,6 +103,7 @@ set(qml_files
     brokenAs.qml
     boundComponents.qml
     callContextPropertyLookupResult.qml
+    callObjectLookupOnNull.qml
     callWithSpread.qml
     childobject.qml
     colorAsVariant.qml

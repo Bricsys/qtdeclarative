@@ -2120,6 +2120,12 @@ bool AOTCompiledContext::callObjectPropertyLookup(
 {
     QV4::Lookup *lookup = compilationUnit->runtimeLookups + index;
 
+    if (!object) {
+        engine->handle()->throwTypeError(QStringLiteral("Cannot call method '%1' of null")
+                .arg(compilationUnit->runtimeStrings[lookup->nameIndex]->toQString()));
+        return false;
+    }
+
     switch (lookup->call) {
     case QV4::Lookup::Call::GetterQObjectMethod:
     case QV4::Lookup::Call::GetterQObjectMethodFallback:
