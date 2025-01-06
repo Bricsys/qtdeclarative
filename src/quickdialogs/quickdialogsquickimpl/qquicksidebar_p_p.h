@@ -18,9 +18,10 @@
 #include <QtQuickTemplates2/private/qquickcontainer_p_p.h>
 #include <QtCore/qstandardpaths.h>
 #include <QtQuickTemplates2/private/qquickmenu_p.h>
-//#include <QtQuickTemplates2/private/qquickcontextmenu_p.h>
 
 QT_BEGIN_NAMESPACE
+
+class QQuickContextMenu;
 
 class Q_QUICKDIALOGS2QUICKIMPL_EXPORT QQuickSideBarPrivate : public QQuickContainerPrivate
 {
@@ -54,8 +55,8 @@ public:
     void setAddFavoriteDelegateHovered(bool hovered);
     QQuickIcon addFavoriteIcon() const;
 
-    // void initContextMenu();
-    // void destroyContextMenu();
+    void initContextMenu();
+    void handleContextMenuRequested(QPointF pos);
     void handleRemoveAction();
 
 private:
@@ -63,7 +64,8 @@ private:
     QQmlComponent *buttonDelegate = nullptr;
     QQmlComponent *separatorDelegate = nullptr;
     QQmlComponent *addFavoriteDelegate = nullptr;
-    //QQuickContextMenu *contextMenu = nullptr;
+    QQuickContextMenu *contextMenu = nullptr;
+    QQuickMenu *menu = nullptr;
     QQuickAction *removeAction = nullptr;
     QUrl urlToBeRemoved;
     QList<QStandardPaths::StandardLocation> folderPaths;

@@ -359,7 +359,7 @@ void QQuickFileDialogTapHandler::handleEventPoint(QPointerEvent *event, QEventPo
                             &QQuickFileDialogTapHandler::handleContainsDragChanged);
                 }
 
-                m_sourceUrl = fileDialogDelegate->file().toLocalFile();
+                m_sourceUrl = fileDialogDelegate->file();
                 // set up the grab
                 grabFolder();
                 m_state = DraggingStarted;

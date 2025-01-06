@@ -10,6 +10,7 @@
 #endif
 
 #include <QtQuickTemplates2/private/qquickaction_p.h>
+#include <QtQuickTemplates2/private/qquickcontextmenu_p.h>
 
 /*!
     \internal
@@ -42,8 +43,6 @@ QQuickSideBar::QQuickSideBar(QQuickItem *parent)
         d->currentButtonClickedUrl.clear();
     });
 
-    //d->initContextMenu();
-
     // read in the favorites
 #if QT_CONFIG(settings)
     d->readSettings();
@@ -53,8 +52,6 @@ QQuickSideBar::QQuickSideBar(QQuickItem *parent)
 QQuickSideBar::~QQuickSideBar()
 {
     Q_D(QQuickSideBar);
-
-    //d->destroyContextMenu();
 
 #if QT_CONFIG(settings)
     d->writeSettings();
@@ -283,7 +280,7 @@ void QQuickSideBarPrivate::repopulate()
 
     // calculate the starting index for the favorites
     for (auto &favorite : favorites)
-        createButtonDelegate(insertIndex++, favorite.path(), folderIcon());
+        createButtonDelegate(insertIndex++, favorite.toLocalFile(), folderIcon());
 
     q->setCurrentIndex(-1);
 }
@@ -340,6 +337,7 @@ void QQuickSideBar::componentComplete()
     Q_D(QQuickSideBar);
     QQuickContainer::componentComplete();
     d->repopulate();
+    d->initContextMenu();
 }
 
 QQuickIcon QQuickSideBarPrivate::folderIcon() const
@@ -393,7 +391,7 @@ void QQuickSideBarPrivate::writeSettings() const
 
     for (int i = 0; i < favoritePaths.size(); ++i) {
         settings.setArrayIndex(i);
-        settings.setValue("favorite", favoritePaths.at(i).toString());
+        settings.setValue("favorite", favoritePaths.at(i));
     }
     settings.endArray();
 }
@@ -409,7 +407,7 @@ void QQuickSideBarPrivate::readSettings()
     for (int i = 0; i < size; ++i) {
         settings.setArrayIndex(i);
         const QUrl favorite = settings.value("favorite").toUrl();
-        const QFileInfo info(favorite.toString());
+        const QFileInfo info(favorite.toLocalFile());
 
         if (info.isDir())
             // check it is not a duplicate
@@ -426,8 +424,7 @@ void QQuickSideBarPrivate::addFavorite(const QUrl &favorite)
 {
     Q_Q(QQuickSideBar);
     QList<QUrl> newPaths = q->favoritePaths();
-    const QFileInfo info(favorite.toString());
-
+    const QFileInfo info(favorite.toLocalFile());
     if (info.isDir()) {
         // check it is not a duplicate
         if (!newPaths.contains(favorite)) {
@@ -441,9 +438,11 @@ void QQuickSideBarPrivate::removeFavorite(const QUrl &favorite)
 {
     Q_Q(QQuickSideBar);
     QList<QUrl> paths = q->favoritePaths();
-    paths.removeOne(favorite);
-
-    q->setFavoritePaths(paths);
+    bool success = paths.removeOne(favorite);
+    if (success)
+        q->setFavoritePaths(paths);
+    else
+        qmlWarning(q) << "Failed to remove favorite path" << favorite;
 }
 
 bool QQuickSideBarPrivate::showAddFavoriteDelegate() const
@@ -483,28 +482,47 @@ QQuickIcon QQuickSideBarPrivate::addFavoriteIcon() const
     return icon;
 }
 
-// void QQuickSideBarPrivate::initContextMenu()
-// {
-//     Q_Q(QQuickSideBar);
-//     contextMenu = new QQuickContextMenu(q);
-//     contextMenu->setMenu(new QQuickMenu(q));
-//     removeAction = new QQuickAction(contextMenu);
-//     removeAction->setText("Remove"_L1);
+void QQuickSideBarPrivate::initContextMenu()
+{
+    Q_Q(QQuickSideBar);
+    contextMenu = new QQuickContextMenu(q);
+    connect(contextMenu, &QQuickContextMenu::requested, this, &QQuickSideBarPrivate::handleContextMenuRequested);
+}
 
-//     QObjectPrivate::connect(removeAction, &QQuickAction::triggered, this,
-//                             &QQuickSideBarPrivate::handleRemoveAction);
+void QQuickSideBarPrivate::handleContextMenuRequested(QPointF pos)
+{
+    Q_Q(QQuickSideBar);
+    const int offset = q->effectiveFolderPaths().size() + (showSeparator ? 1 : 0);
+    for (int i = offset; i < q->count(); ++i) {
+        QQuickItem *itm = q->itemAt(i);
+        if (itm->contains(itm->mapFromItem(q, pos))) {
+            auto favorites = q->favoritePaths();
+            urlToBeRemoved = favorites.value(i - offset);
 
-//     contextMenu->menu()->addAction(removeAction);
-// }
-
-// void QQuickSideBarPrivate::destroyContextMenu()
-// {
-//     if (removeAction)
-//         removeAction->disconnect();
-// }
+            if (!urlToBeRemoved.isEmpty() && !menu) {
+                QQmlEngine *eng = qmlEngine(q);
+                Q_ASSERT(eng);
+                QQmlContext *context = qmlContext(q);
+                QQmlComponent component(eng);
+                component.loadFromModule("QtQuick.Controls", "Menu");
+                menu = qobject_cast<QQuickMenu*>(component.create(context));
+                if (menu) {
+                    auto *removeAction = new QQuickAction(menu);
+                    removeAction->setText(QCoreApplication::translate("FileDialog", "Remove"));
+                    menu->addAction(removeAction);
+                    connect(removeAction, &QQuickAction::triggered, this, &QQuickSideBarPrivate::handleRemoveAction);
+                }
+            }
+            contextMenu->setMenu(menu);
+            return;
+        }
+    }
+    contextMenu->setMenu(nullptr);  // prevent the Context menu from popping up otherwise
+}
 
 void QQuickSideBarPrivate::handleRemoveAction()
 {
     if (!urlToBeRemoved.isEmpty())
         removeFavorite(urlToBeRemoved);
+    urlToBeRemoved.clear();
 }
