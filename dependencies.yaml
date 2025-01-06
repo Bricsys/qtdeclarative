@@ -9,7 +9,7 @@ dependencies:
     ref: c24ae032c6991321046bb47ba3b680ddac1c242c
     required: false
   ../tqtc-qtshadertools:
-    ref: 3f0c3a8df2b9d59b935b0e8a1e1e941f47253f8b
+    ref: 5bf9de4a39fe2385998307c3e5ae16df6c0a5bd7
     required: false
   ../tqtc-qtsvg:
     ref: 7c01c49a83d851196d990da86c08d59b3c7951f8
