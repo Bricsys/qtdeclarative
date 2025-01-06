@@ -1905,7 +1905,7 @@ void DomEnvironment::addQmlFile(const std::shared_ptr<QmlFile> &file, AddOption 
 {
     addExternalItem(file, file->canonicalFilePath(), options);
     if (domCreationOptions().testFlag(DomCreationOption::WithSemanticAnalysis)) {
-        const QQmlJSScope::Ptr &handle =
+        QQmlJSScope::Ptr handle =
                 semanticAnalysis().m_importer->importFile(file->canonicalFilePath());
 
         // force reset the outdated qqmljsscope in case it was already populated
