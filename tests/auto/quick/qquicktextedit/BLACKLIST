@@ -45,3 +45,7 @@ opensuse-leap
 # QTBUG-132650
 [overwriteMode]
 opensuse-leap
+
+# QTBUG-132651
+[keyboardSelection]
+opensuse-leap
