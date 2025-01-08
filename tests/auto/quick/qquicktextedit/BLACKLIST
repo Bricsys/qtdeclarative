@@ -37,3 +37,7 @@ opensuse-leap
 # QTBUG-118066
 [inFlickableTouch]
 opensuse-leap
+
+# QTBUG-132632
+[cursorDelegate]
+opensuse-leap
