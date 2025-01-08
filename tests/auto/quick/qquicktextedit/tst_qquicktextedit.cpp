@@ -2428,7 +2428,7 @@ void tst_qquicktextedit::keyboardSelection()
     QQuickView window;
     QVERIFY(QQuickTest::showView(window, testFileUrl("focusByDefault.qml")));
     QQuickTextEdit *textEdit = qobject_cast<QQuickTextEdit *>(window.rootObject());
-    QVERIFY(textEdit->hasActiveFocus());
+    QTRY_VERIFY(textEdit->hasActiveFocus());
 
     textEdit->setText(text);
     textEdit->setSelectByKeyboard(selectByKeyboard);
@@ -2835,7 +2835,7 @@ void tst_qquicktextedit::cursorVisible()
     QQuickView window;
     QVERIFY(QQuickTest::showView(window, testFileUrl("cursorVisible.qml")));
 
-    QCOMPARE(qGuiApp->focusWindow(), &window);
+    QTRY_COMPARE(qGuiApp->focusWindow(), &window);
 
     QCOMPARE(edit.isCursorVisible(), false);
 
@@ -5704,7 +5704,7 @@ void tst_qquicktextedit::undo()
     QVERIFY(QQuickTest::showView(window, testFileUrl("focusByDefault.qml")));
     QQuickTextEdit *textEdit = qobject_cast<QQuickTextEdit *>(window.rootObject());
 
-    QVERIFY(textEdit->hasActiveFocus());
+    QTRY_VERIFY(textEdit->hasActiveFocus());
     QVERIFY(!textEdit->canUndo());
 
     QSignalSpy spy(textEdit, SIGNAL(canUndoChanged()));
@@ -5782,7 +5782,7 @@ void tst_qquicktextedit::redo()
     QVERIFY(QQuickTest::showView(window, testFileUrl("focusByDefault.qml")));
     QQuickTextEdit *textEdit = qobject_cast<QQuickTextEdit *>(window.rootObject());
 
-    QVERIFY(textEdit->hasActiveFocus());
+    QTRY_VERIFY(textEdit->hasActiveFocus());
 
     QVERIFY(!textEdit->canUndo());
     QVERIFY(!textEdit->canRedo());
@@ -5998,7 +5998,7 @@ void tst_qquicktextedit::undo_keypressevents()
     QVERIFY(QQuickTest::showView(window, testFileUrl("focusByDefault.qml")));
     QQuickTextEdit *textEdit = qobject_cast<QQuickTextEdit *>(window.rootObject());
 
-    QVERIFY(textEdit->hasActiveFocus());
+    QTRY_VERIFY(textEdit->hasActiveFocus());
 
     simulateKeys(&window, keys);
 
@@ -6016,7 +6016,7 @@ void tst_qquicktextedit::clear()
     QQuickView window;
     QVERIFY(QQuickTest::showView(window, testFileUrl("focusByDefault.qml")));
     QQuickTextEdit *textEdit = qobject_cast<QQuickTextEdit *>(window.rootObject());
-    QVERIFY(textEdit->hasActiveFocus());
+    QTRY_VERIFY(textEdit->hasActiveFocus());
 
     QSignalSpy spy(textEdit, SIGNAL(canUndoChanged()));
 
@@ -6219,7 +6219,7 @@ void tst_qquicktextedit::emptytags_QTBUG_22058()
     QQuickView window;
     QVERIFY(QQuickTest::showView(window, testFileUrl("qtbug-22058.qml")));
     QQuickTextEdit *input = qobject_cast<QQuickTextEdit *>(qvariant_cast<QObject *>(window.rootObject()->property("inputField")));
-    QVERIFY(input->hasActiveFocus());
+    QTRY_VERIFY(input->hasActiveFocus());
 
     QInputMethodEvent event("", QList<QInputMethodEvent::Attribute>());
     event.setCommitString("<b>Bold<");
@@ -6424,7 +6424,7 @@ void tst_qquicktextedit::keys_shortcutoverride()
     QCOMPARE(window.rootObject()->property("who").value<QString>(), QLatin1String("nobody"));
 
     // send Key_Escape to the Rectangle
-    QVERIFY(rectangle->hasActiveFocus());
+    QTRY_VERIFY(rectangle->hasActiveFocus());
     QTest::keyPress(&window, Qt::Key_Escape);
     QCOMPARE(window.rootObject()->property("who").value<QString>(), QLatin1String("Rectangle"));
 
@@ -6464,7 +6464,7 @@ void tst_qquicktextedit::keyEventPropagation()
     QSignalSpy upSpy(root, SIGNAL(keyUp(int)));
 
     QQuickTextEdit *textEdit = root->findChild<QQuickTextEdit *>();
-    QVERIFY(textEdit->hasActiveFocus());
+    QTRY_VERIFY(textEdit->hasActiveFocus());
     simulateKey(&window, Qt::Key_Back);
     QCOMPARE(downSpy.size(), 1);
     QCOMPARE(upSpy.size(), 1);
