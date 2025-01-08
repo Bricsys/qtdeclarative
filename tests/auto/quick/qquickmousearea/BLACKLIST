@@ -11,3 +11,7 @@ opensuse-leap
 android
 [containsMouseAndVisibility]
 android
+
+# QTBUG-132630
+[doubleTap]
+opensuse-leap
