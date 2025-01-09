@@ -418,13 +418,9 @@ enum FileLocationRegion : int {
 Q_ENUM_NS(FileLocationRegion);
 
 enum DomCreationOption : char {
-    None = 0,
-    WithSemanticAnalysis = 1,
-    WithScriptExpressions = 2,
-    WithRecovery = 4
+    Default, // required by qmlformat for example
+    Extended, // required by qmlls for example
 };
-
-Q_DECLARE_FLAGS(DomCreationOptions, DomCreationOption);
 
 } // end namespace Dom
 } // end namespace QQmlJS
