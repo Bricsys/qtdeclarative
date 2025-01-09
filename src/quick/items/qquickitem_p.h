@@ -345,6 +345,8 @@ public:
             CHANGETYPE_OUTPUT(ImplicitHeight);
             CHANGETYPE_OUTPUT(Enabled);
             CHANGETYPE_OUTPUT(Focus);
+            CHANGETYPE_OUTPUT(Scale);
+            CHANGETYPE_OUTPUT(Matrix);
 #undef CHANGETYPE_OUTPUT
         }
         return dbg;
