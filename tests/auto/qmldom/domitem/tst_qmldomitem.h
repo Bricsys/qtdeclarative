@@ -58,7 +58,7 @@ private slots:
                 std::shared_ptr<DomUniverse>(new DomUniverse(QStringLiteral(u"dummyUniverse")));
         envPtr = std::shared_ptr<DomEnvironment>(
                 new DomEnvironment(QStringList(), DomEnvironment::Option::SingleThreaded,
-                                   DomCreationOption::None, universePtr));
+                                   DomCreationOption::Default, universePtr));
         env = DomItem(envPtr);
         testOwnerPtr = std::shared_ptr<MockOwner>(new MockOwner(
                 Path::Root(u"env").field(u"testOwner"), 0,
@@ -409,7 +409,7 @@ private slots:
                 qmltypeDirs,
                 QQmlJS::Dom::DomEnvironment::Option::SingleThreaded
                         | QQmlJS::Dom::DomEnvironment::Option::NoDependencies,
-                DomCreationOption::None, univPtr));
+                DomCreationOption::Default, univPtr));
         QQmlJS::Dom::DomItem env(envPtr);
         QVERIFY(env);
         QString testFile1 = baseDir + QLatin1String("/test1.qml");
@@ -764,7 +764,7 @@ private slots:
 
         QString testFile = baseDir + u"/inlineComponents.qml"_s;
 
-        DomCreationOptions options{ DomCreationOption::WithScriptExpressions };
+        DomCreationOption options = DomCreationOption::Extended;
         auto envPtr = DomEnvironment::create(
                 QStringList(),
                 QQmlJS::Dom::DomEnvironment::Option::SingleThreaded
@@ -871,7 +871,7 @@ private slots:
                 importPaths,
                 QQmlJS::Dom::DomEnvironment::Option::SingleThreaded
                         | QQmlJS::Dom::DomEnvironment::Option::NoDependencies,
-                WithSemanticAnalysis);
+                Extended);
 
         envPtr->loadFile(FileToLoad::fromFileSystem(envPtr, fileName),
                          [&tFile](Path, const DomItem &, const DomItem &newIt) {
@@ -2674,14 +2674,11 @@ private slots:
         const QString canonicalFilePathB = QFileInfo(filePathB).canonicalFilePath();
         QVERIFY(!canonicalFilePathB.isEmpty());
 
-        DomCreationOptions options;
-        options.setFlag(DomCreationOption::WithScriptExpressions);
-        options.setFlag(DomCreationOption::WithSemanticAnalysis);
         auto envPtr = DomEnvironment::create(
                 qmltypeDirs,
                 QQmlJS::Dom::DomEnvironment::Option::SingleThreaded
                         | QQmlJS::Dom::DomEnvironment::Option::NoDependencies,
-                options);
+                Extended);
 
         DomItem fileA;
         DomItem fileB;
@@ -2707,14 +2704,11 @@ private slots:
         const QString canonicalFilePathB = QFileInfo(filePath).canonicalFilePath();
         QVERIFY(!canonicalFilePathB.isEmpty());
 
-        DomCreationOptions options;
-        options.setFlag(DomCreationOption::WithScriptExpressions);
-        options.setFlag(DomCreationOption::WithSemanticAnalysis);
         auto envPtr = DomEnvironment::create(
                 qmltypeDirs,
                 QQmlJS::Dom::DomEnvironment::Option::SingleThreaded
                         | QQmlJS::Dom::DomEnvironment::Option::NoDependencies,
-                options);
+                Extended);
 
         DomItem fileA;
         DomItem fileB;
@@ -2754,15 +2748,11 @@ private slots:
 private:
     static DomItem parse(const QString &path, const QStringList &qmltypeDirs)
     {
-        DomCreationOptions options;
-        options.setFlag(DomCreationOption::WithScriptExpressions);
-        options.setFlag(DomCreationOption::WithSemanticAnalysis);
-
         auto envPtr = DomEnvironment::create(
                 qmltypeDirs,
                 QQmlJS::Dom::DomEnvironment::Option::SingleThreaded
                         | QQmlJS::Dom::DomEnvironment::Option::NoDependencies,
-                options);
+                Extended);
 
         DomItem fileItem;
 
@@ -3118,12 +3108,9 @@ private slots:
 
         DomItem baseItem;
         DomItem derivedItem;
-        DomCreationOptions options;
-        options.setFlag(DomCreationOption::WithScriptExpressions);
-        options.setFlag(DomCreationOption::WithSemanticAnalysis);
 
-        auto envPtr =
-                DomEnvironment::create(qmltypeDirs, QQmlJS::Dom::DomEnvironment::Option{}, options);
+        auto envPtr = DomEnvironment::create(qmltypeDirs, QQmlJS::Dom::DomEnvironment::Option{},
+                                             Extended);
 
         envPtr->loadFile(
                 FileToLoad::fromFileSystem(envPtr, baseDir + u"/Base.qml"_s),
@@ -3148,12 +3135,9 @@ private slots:
     void propertyDefinitionScopes()
     {
         DomItem qmlObject;
-        DomCreationOptions options;
-        options.setFlag(DomCreationOption::WithScriptExpressions);
-        options.setFlag(DomCreationOption::WithSemanticAnalysis);
 
-        auto envPtr =
-                DomEnvironment::create(qmltypeDirs, QQmlJS::Dom::DomEnvironment::Option{}, options);
+        auto envPtr = DomEnvironment::create(qmltypeDirs, QQmlJS::Dom::DomEnvironment::Option{},
+                                             Extended);
 
         envPtr->loadFile(FileToLoad::fromFileSystem(envPtr, baseDir + u"/propertyBindings.qml"_s),
                          [&qmlObject](Path, const DomItem &, const DomItem &newIt) {
@@ -3181,13 +3165,9 @@ private slots:
     {
         DomItem qmlObject;
         DomItem qmlObject2;
-        DomCreationOptions options;
-        options.setFlag(DomCreationOption::WithScriptExpressions);
-        options.setFlag(DomCreationOption::WithSemanticAnalysis);
-        options.setFlag(DomCreationOption::WithRecovery);
 
         std::shared_ptr<DomEnvironment> envPtr = DomEnvironment::create(
-                qmltypeDirs, QQmlJS::Dom::DomEnvironment::Option::SingleThreaded, options);
+                qmltypeDirs, QQmlJS::Dom::DomEnvironment::Option::SingleThreaded, Extended);
 
         const QString fileName{ baseDir + u"/propertyBindings.qml"_s };
         QFile file(fileName);
@@ -3213,13 +3193,9 @@ private slots:
     void populateLazyFileBeforeCommitToBase()
     {
         DomItem qmlObject;
-        DomCreationOptions options;
-        options.setFlag(DomCreationOption::WithScriptExpressions);
-        options.setFlag(DomCreationOption::WithSemanticAnalysis);
-        options.setFlag(DomCreationOption::WithRecovery);
 
         std::shared_ptr<DomEnvironment> envPtr = DomEnvironment::create(
-                qmltypeDirs, QQmlJS::Dom::DomEnvironment::Option::SingleThreaded, options);
+                qmltypeDirs, QQmlJS::Dom::DomEnvironment::Option::SingleThreaded, Extended);
 
         const QString fileName{ QDir::cleanPath(baseDir + u"/propertyBindings.qml"_s) };
 
@@ -3260,13 +3236,9 @@ private slots:
     void populateLazyFileAfterCommitToBase()
     {
         DomItem qmlObject;
-        DomCreationOptions options;
-        options.setFlag(DomCreationOption::WithScriptExpressions);
-        options.setFlag(DomCreationOption::WithSemanticAnalysis);
-        options.setFlag(DomCreationOption::WithRecovery);
 
         std::shared_ptr<DomEnvironment> envPtr = DomEnvironment::create(
-                qmltypeDirs, QQmlJS::Dom::DomEnvironment::Option::SingleThreaded, options);
+                qmltypeDirs, QQmlJS::Dom::DomEnvironment::Option::SingleThreaded, Extended);
 
         const QString fileName{ QDir::cleanPath(baseDir + u"/propertyBindings.qml"_s) };
 
@@ -3309,13 +3281,9 @@ private slots:
         // completions before this fix)
 
         DomItem qmlObject;
-        DomCreationOptions options;
-        options.setFlag(DomCreationOption::WithScriptExpressions);
-        options.setFlag(DomCreationOption::WithSemanticAnalysis);
-        options.setFlag(DomCreationOption::WithRecovery);
 
         std::shared_ptr<DomEnvironment> envPtr = DomEnvironment::create(
-                qmltypeDirs, QQmlJS::Dom::DomEnvironment::Option::SingleThreaded, options);
+                qmltypeDirs, QQmlJS::Dom::DomEnvironment::Option::SingleThreaded, Extended);
 
         const QString fileName{ QDir::cleanPath(baseDir + u"/propertyBindings.qml"_s) };
 
@@ -3364,12 +3332,9 @@ private slots:
     void visitTreeFilter()
     {
         DomItem qmlObject;
-        DomCreationOptions options;
-        options.setFlag(DomCreationOption::WithScriptExpressions);
-        options.setFlag(DomCreationOption::WithSemanticAnalysis);
 
-        auto envPtr =
-                DomEnvironment::create(qmltypeDirs, QQmlJS::Dom::DomEnvironment::Option{}, options);
+        auto envPtr = DomEnvironment::create(qmltypeDirs, QQmlJS::Dom::DomEnvironment::Option{},
+                                             Extended);
 
         envPtr->loadFile(FileToLoad::fromFileSystem(envPtr, baseDir + u"/visitTreeFilter.qml"_s),
                          [&qmlObject](Path, const DomItem &, const DomItem &newIt) {
@@ -3602,9 +3567,10 @@ private slots:
     void commentLocations()
     {
         auto envPtr = DomEnvironment::create(
-        QStringList(),
-        QQmlJS::Dom::DomEnvironment::Option::SingleThreaded
-                | QQmlJS::Dom::DomEnvironment::Option::NoDependencies);
+                QStringList(),
+                QQmlJS::Dom::DomEnvironment::Option::SingleThreaded
+                        | QQmlJS::Dom::DomEnvironment::Option::NoDependencies,
+                DomCreationOption::Extended);
 
         const auto filePath = baseDir + u"/fileLocationRegions/comments.qml"_s;
         QFile f(filePath);
@@ -3635,7 +3601,6 @@ private slots:
             }
             return true;
         }, VisitOption::Default, emptyChildrenVisitor, emptyChildrenVisitor);
-
 
         QCOMPARE(locs, expctedCommentLocations);
     }
@@ -4550,15 +4515,11 @@ private slots:
 
     void environmentSetLoadPaths()
     {
-        DomCreationOptions options;
-        options.setFlag(DomCreationOption::WithScriptExpressions);
-        options.setFlag(DomCreationOption::WithSemanticAnalysis);
-
         auto envPtr = DomEnvironment::create(
                 QStringList{},
                 QQmlJS::Dom::DomEnvironment::Option::SingleThreaded
                         | QQmlJS::Dom::DomEnvironment::Option::NoDependencies,
-                options);
+                Extended);
 
         auto semanticAnalysis = envPtr->semanticAnalysis();
         QVERIFY(semanticAnalysis.m_mapper->isEmpty());

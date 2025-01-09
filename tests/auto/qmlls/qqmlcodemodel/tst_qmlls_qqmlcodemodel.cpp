@@ -120,12 +120,11 @@ using namespace QQmlJS::Dom;
 void tst_qmlls_qqmlcodemodel::fileNamesToWatch()
 {
     DomItem qmlFile;
-    DomCreationOptions options;
-    options.setFlag(DomCreationOption::WithSemanticAnalysis);
 
     auto envPtr = DomEnvironment::create(QStringList(),
                                          DomEnvironment::Option::SingleThreaded
-                                                 | DomEnvironment::Option::NoDependencies, options);
+                                                 | DomEnvironment::Option::NoDependencies,
+                                         Extended);
 
     envPtr->loadFile(FileToLoad::fromFileSystem(envPtr, testFile("MyCppModule/Main.qml")),
                      [&qmlFile](Path, const DomItem &, const DomItem &newIt) {
