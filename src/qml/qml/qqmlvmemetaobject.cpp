@@ -57,12 +57,9 @@ public:
 
         if (auto *md = static_cast<QV4::MemberData *>(
                     m_metaObject->propertyAndMethodStorage.asManaged())) {
-            const auto *v = (md->data() + m_id)->as<QV4::VariantObject>();
-            Q_ASSERT(v);
-            Q_ASSERT(v->d());
-            QVariant &data = v->d()->data();
-            Q_ASSERT(data.userType() == qMetaTypeId<QVector<QQmlGuard<QObject>>>());
-            m_list = static_cast<QVector<QQmlGuard<QObject>> *>(data.data());
+            const QV4::Value *v = md->data() + m_id;
+            Q_ASSERT(v->as<QV4::Object>());
+            m_list = static_cast<QV4::Heap::Object *>(v->heapObject());
             Q_ASSERT(m_list);
         }
     }
@@ -70,8 +67,32 @@ public:
     ~ResolvedList() = default;
 
     QQmlVMEMetaObject *metaObject() const { return m_metaObject; }
-    QVector<QQmlGuard<QObject>> *list() const { return m_list; }
+    QV4::Heap::Object *list() const { return m_list; }
     quintptr id() const { return m_id; }
+
+    void append(QObject *o) const;
+    void replace(qsizetype i, QObject *o) const;
+    QObject *at(qsizetype i) const;
+
+    qsizetype size() const { return m_list->arrayData->length(); }
+
+    void clear() const
+    {
+        QV4::Scope scope(m_list->internalClass->engine);
+        QV4::ScopedObject object(scope, m_list);
+        m_list->arrayData->vtable()->truncate(object, 0);
+    }
+
+    void removeLast() const
+    {
+        const uint length = m_list->arrayData->length();
+        if (length == 0)
+            return;
+
+        QV4::Scope scope(m_list->internalClass->engine);
+        QV4::ScopedObject object(scope, m_list);
+        m_list->arrayData->vtable()->truncate(object, length - 1);
+    }
 
     void activateSignal() const
     {
@@ -81,45 +102,76 @@ public:
 
 private:
     QQmlVMEMetaObject *m_metaObject = nullptr;
-    QVector<QQmlGuard<QObject>> *m_list = nullptr;
+    QV4::Heap::Object *m_list = nullptr;
     quintptr m_id = 0;
 };
+
+void ResolvedList::append(QObject *o) const
+{
+    QV4::Scope scope(m_list->internalClass->engine);
+    QV4::Heap::ArrayData *arrayData = m_list->arrayData;
+
+    const uint length = arrayData->length();
+    if (Q_UNLIKELY(length == std::numeric_limits<uint>::max())) {
+        scope.engine->throwRangeError(QLatin1String("Too many elements."));
+        return;
+    }
+
+    QV4::ScopedObject object(scope, m_list);
+    QV4::ArrayData::realloc(object, QV4::Heap::ArrayData::Simple, length + 1, false);
+    arrayData->vtable()->put(
+            object, length, QV4::QObjectWrapper::wrap(scope.engine, o));
+}
+
+QObject *ResolvedList::at(qsizetype i) const
+{
+    QV4::Scope scope(m_list->internalClass->engine);
+    QV4::Scoped<QV4::QObjectWrapper> result(scope, m_list->arrayData->get(i));
+    return result ? result->object() : nullptr;
+}
+
+void ResolvedList::replace(qsizetype i, QObject *o) const
+{
+    QV4::Scope scope(m_list->internalClass->engine);
+    QV4::ScopedObject object(scope, m_list);
+    m_list->arrayData->vtable()->put(object, i, QV4::QObjectWrapper::wrap(scope.engine, o));
+}
 
 static void list_append(QQmlListProperty<QObject> *prop, QObject *o)
 {
     const ResolvedList resolved(prop);
-    resolved.list()->append(o);
+    resolved.append(o);
     resolved.activateSignal();
 }
 
 static qsizetype list_count(QQmlListProperty<QObject> *prop)
 {
-    return ResolvedList(prop).list()->size();
+    return ResolvedList(prop).size();
 }
 
 static QObject *list_at(QQmlListProperty<QObject> *prop, qsizetype index)
 {
-    return ResolvedList(prop).list()->at(index);
+    return ResolvedList(prop).at(index);
 }
 
 static void list_clear(QQmlListProperty<QObject> *prop)
 {
     const ResolvedList resolved(prop);
-    resolved.list()->clear();
+    resolved.clear();
     resolved.activateSignal();
 }
 
 static void list_replace(QQmlListProperty<QObject> *prop, qsizetype index, QObject *o)
 {
     const ResolvedList resolved(prop);
-    resolved.list()->replace(index, o);
+    resolved.replace(index, o);
     resolved.activateSignal();
 }
 
 static void list_removeLast(QQmlListProperty<QObject> *prop)
 {
     const ResolvedList resolved(prop);
-    resolved.list()->removeLast();
+    resolved.removeLast();
     resolved.activateSignal();
 }
 
@@ -625,20 +677,19 @@ QObject* QQmlVMEMetaObject::readPropertyAsQObject(int id) const
     return wrapper->object();
 }
 
-QVector<QQmlGuard<QObject>> *QQmlVMEMetaObject::readPropertyAsList(int id) const
+void QQmlVMEMetaObject::initPropertyAsList(int id) const
 {
     QV4::MemberData *md = propertyAndMethodStorageAsMemberData();
     if (!md)
-        return nullptr;
+        return;
 
     QV4::Scope scope(engine);
-    QV4::Scoped<QV4::VariantObject> v(scope, *(md->data() + id));
-    if (!v || v->d()->data().metaType() != QMetaType::fromType<QVector<QQmlGuard<QObject>>>()) {
-        const QVector<QQmlGuard<QObject>> guards;
-        v = engine->newVariantObject(QMetaType::fromType<QVector<QQmlGuard<QObject>>>(), &guards);
+    QV4::ScopedObject v(scope, *(md->data() + id));
+    if (!v) {
+        v = engine->newObject();
+        v->arrayCreate();
         md->set(engine, id, v);
     }
-    return static_cast<QVector<QQmlGuard<QObject>> *>(v->d()->data().data());
 }
 
 QRectF QQmlVMEMetaObject::readPropertyAsRectF(int id) const
@@ -719,7 +770,7 @@ int QQmlVMEMetaObject::metaCall(QObject *o, QMetaObject::Call c, int _id, void *
                             }
                             quintptr encodedIndex = (inheritanceDepth << idBits) + id;
 
-                            readPropertyAsList(id); // Initializes if necessary
+                            initPropertyAsList(id);
                             *static_cast<QQmlListProperty<QObject> *>(a[0])
                                     = QQmlListProperty<QObject>(
                                         object, reinterpret_cast<void *>(quintptr(encodedIndex)),
@@ -980,15 +1031,20 @@ int QQmlVMEMetaObject::metaCall(QObject *o, QMetaObject::Call c, int _id, void *
                 int coreIndex = encodedIndex.coreIndex();
                 const int valueTypePropertyIndex = encodedIndex.valueTypeIndex();
 
-                // Remove binding (if any) on write
-                if(c == QMetaObject::WriteProperty) {
-                    int flags = *reinterpret_cast<int*>(a[3]);
-                    if (flags & QQmlPropertyData::RemoveBindingOnAliasWrite) {
-                        QQmlData *targetData = QQmlData::get(target);
-                        if (targetData && targetData->hasBindingBit(coreIndex))
-                            QQmlPropertyPrivate::removeBinding(target, encodedIndex);
+                const auto removePendingBinding
+                        = [c, a](QObject *target, int coreIndex, QQmlPropertyIndex encodedIndex) {
+                    // Remove binding (if any) on write
+                    if (c == QMetaObject::WriteProperty) {
+                        int flags = *reinterpret_cast<int*>(a[3]);
+                        if (flags & QQmlPropertyData::RemoveBindingOnAliasWrite) {
+                            QQmlData *targetData = QQmlData::get(target);
+                            if (targetData && targetData->hasBindingBit(coreIndex)) {
+                                QQmlPropertyPrivate::removeBinding(target, encodedIndex);
+                                targetData->clearBindingBit(coreIndex);
+                            }
+                        }
                     }
-                }
+                };
 
                 if (valueTypePropertyIndex != -1) {
                     if (!targetDData->propertyCache)
@@ -998,6 +1054,7 @@ int QQmlVMEMetaObject::metaCall(QObject *o, QMetaObject::Call c, int _id, void *
                     QQmlGadgetPtrWrapper *valueType = QQmlGadgetPtrWrapper::instance(
                                 ctxt->engine(), pd->propType());
                     if (valueType) {
+                        removePendingBinding(target, coreIndex, encodedIndex);
                         valueType->read(target, coreIndex);
                         int rv = QMetaObject::metacall(valueType, c, valueTypePropertyIndex, a);
 
@@ -1010,10 +1067,14 @@ int QQmlVMEMetaObject::metaCall(QObject *o, QMetaObject::Call c, int _id, void *
                         // deep alias
                         void *argv[1] = { &target };
                         QMetaObject::metacall(target, QMetaObject::ReadProperty, coreIndex, argv);
+                        removePendingBinding(
+                                target, valueTypePropertyIndex,
+                                QQmlPropertyIndex(valueTypePropertyIndex));
                         return QMetaObject::metacall(target, c, valueTypePropertyIndex, a);
                     }
 
                 } else {
+                    removePendingBinding(target, coreIndex, encodedIndex);
                     return QMetaObject::metacall(target, c, coreIndex, a);
                 }
 
@@ -1069,13 +1130,13 @@ int QQmlVMEMetaObject::metaCall(QObject *o, QMetaObject::Call c, int _id, void *
                     Q_ASSERT(parameterCount == function->formalParameterCount());
                     if (void *result = a[0])
                         arguments->types[0].destruct(result);
-                    function->call(nullptr, a, arguments->types, parameterCount);
+                    function->call(object, a, arguments->types, parameterCount);
                 } else {
                     Q_ASSERT(function->formalParameterCount() == 0);
                     const QMetaType returnType = methodData->propType();
                     if (void *result = a[0])
                         returnType.destruct(result);
-                    function->call(nullptr, a, &returnType, 0);
+                    function->call(object, a, &returnType, 0);
                 }
 
                 if (scope.hasException()) {

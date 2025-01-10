@@ -378,6 +378,7 @@ public:
     QPoint selectionEndCell = {-1, -1};
 
     QMargins edgesBeforeRebuild;
+    QSize tableSizeBeforeRebuild;
 
     int currentRow = -1;
     int currentColumn = -1;
@@ -532,6 +533,7 @@ public:
     void columnsRemovedCallback(const QModelIndex &parent, int begin, int end);
     void layoutChangedCallback(const QList<QPersistentModelIndex> &parents, QAbstractItemModel::LayoutChangeHint hint);
     void modelResetCallback();
+    bool compareModel(const QVariant& model1, const QVariant& model2) const;
 
     void positionViewAtRow(int row, Qt::Alignment alignment, qreal offset, const QRectF subRect = QRectF());
     void positionViewAtColumn(int column, Qt::Alignment alignment, qreal offset, const QRectF subRect = QRectF());

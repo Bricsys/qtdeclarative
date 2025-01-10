@@ -109,6 +109,7 @@ void QmlTypesClassDescription::collect(
     const auto classInfos = classDef->value(QLatin1String("classInfos")).toArray();
     const QString classDefName = classDef->value(QLatin1String("className")).toString();
     QString foreignTypeName;
+    bool foreignIsNamespace = false;
     for (const QJsonValue classInfo : classInfos) {
         const QJsonObject obj = classInfo.toObject();
         const QString name = obj[QLatin1String("name")].toString();
@@ -160,6 +161,8 @@ void QmlTypesClassDescription::collect(
                 isSingleton = true;
         } else if (name == QLatin1String("QML.Foreign")) {
             foreignTypeName = value;
+        } else if (name == QLatin1String("QML.ForeignIsNamespace")) {
+            foreignIsNamespace = (value == QLatin1String("true"));
         } else if (name == QLatin1String("QML.OmitFromQmlTypes")) {
             if (value == QLatin1String("true"))
                 omitFromQmlTypes = true;
@@ -175,7 +178,8 @@ void QmlTypesClassDescription::collect(
 
     // If the local type is a namespace the result can only be a namespace,
     // no matter what the foreign type is.
-    const bool isNamespace = classDef->value(QLatin1String("namespace")).toBool();
+    const bool isNamespace
+            = foreignIsNamespace || classDef->value(QLatin1String("namespace")).toBool();
 
     if (!foreignTypeName.isEmpty()) {
         const QJsonObject *other = findType(foreign, foreignTypeName);

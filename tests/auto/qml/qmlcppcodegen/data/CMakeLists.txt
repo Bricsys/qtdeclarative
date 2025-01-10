@@ -52,6 +52,9 @@ set(qml_files
     ProgressBar/TimelineAnimation.qml
     RootWithoutId.qml
     SelectionRectangle.qml
+    ShadowedObjectName.qml
+    ShadowedObjectNameDerived.qml
+    StoreMetaEnum.qml
     Test.qml
     TestCase.qml
     WindowDerived.qml
@@ -64,6 +67,7 @@ set(qml_files
     argumentConversion.qml
     array.qml
     asCast.qml
+    asCast2.qml
     attachedBaseEnum.qml
     badSequence.qml
     basicBlocksWithBackJump.qml
@@ -75,13 +79,15 @@ set(qml_files
     childobject.qml
     colorAsVariant.qml
     colorString.qml
-    consoleObject.qml
+    comparisonTypes.qml
     componentReturnType.qml
     compositeTypeMethod.qml
     compositesingleton.qml
+    consoleObject.qml
     construct.qml
     contextParam.qml
     conversionDecrement.qml
+    conversionInDeadCode.qml
     conversions.qml
     conversions2.qml
     curlygrouped.qml
@@ -169,6 +175,7 @@ set(qml_files
     popContextAfterRet.qml
     prefixedMetaType.qml
     pressAndHoldButton.qml
+    readEnumFromInstance.qml
     registerelimination.qml
     registerPropagation.qml
     revisions.qml
@@ -176,6 +183,7 @@ set(qml_files
     script.js
     script.mjs
     sequenceToIterable.qml
+    shadowedAsCasts.qml
     shared/Slider.qml
     shifts.qml
     signal.qml

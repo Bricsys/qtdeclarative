@@ -29,7 +29,7 @@ class Q_QUICK_PRIVATE_EXPORT QQuickTapHandler : public QQuickSinglePointHandler
     Q_PROPERTY(bool pressed READ isPressed NOTIFY pressedChanged)
     Q_PROPERTY(int tapCount READ tapCount NOTIFY tapCountChanged)
     Q_PROPERTY(qreal timeHeld READ timeHeld NOTIFY timeHeldChanged)
-    Q_PROPERTY(qreal longPressThreshold READ longPressThreshold WRITE setLongPressThreshold NOTIFY longPressThresholdChanged)
+    Q_PROPERTY(qreal longPressThreshold READ longPressThreshold WRITE setLongPressThreshold NOTIFY longPressThresholdChanged RESET resetLongPressThreshold)
     Q_PROPERTY(GesturePolicy gesturePolicy READ gesturePolicy WRITE setGesturePolicy NOTIFY gesturePolicyChanged)
     Q_PROPERTY(QQuickTapHandler::ExclusiveSignals exclusiveSignals READ exclusiveSignals WRITE setExclusiveSignals NOTIFY exclusiveSignalsChanged REVISION(6, 5))
 
@@ -62,6 +62,7 @@ public:
 
     qreal longPressThreshold() const;
     void setLongPressThreshold(qreal longPressThreshold);
+    void resetLongPressThreshold();
 
     GesturePolicy gesturePolicy() const { return m_gesturePolicy; }
     void setGesturePolicy(GesturePolicy gesturePolicy);
@@ -91,7 +92,6 @@ protected:
 
 private:
     void setPressed(bool press, bool cancel, QPointerEvent *event, QEventPoint &point);
-    int longPressThresholdMilliseconds() const;
     void connectPreRenderSignal(bool conn = true);
     void updateTimeHeld();
 
@@ -108,6 +108,7 @@ private:
     GesturePolicy m_gesturePolicy = GesturePolicy::DragThreshold;
     ExclusiveSignals m_exclusiveSignals = NotExclusive;
     bool m_pressed = false;
+    bool m_longPressed = false;
 
     static quint64 m_multiTapInterval;
     static int m_mouseMultiClickDistanceSquared;

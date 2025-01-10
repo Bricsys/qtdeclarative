@@ -12,6 +12,7 @@
 #include <QtQuick/private/qsgrenderer_p.h>
 #include <QtQuick/private/qsgplaintexture_p.h>
 #include <QtQuick/private/qquickpointerhandler_p.h>
+#include <QtQuick/private/qquickpointerhandler_p_p.h>
 #include <private/qsgrenderloop_p.h>
 #include <private/qsgrhisupport_p.h>
 #include <private/qquickrendercontrol_p.h>
@@ -1684,11 +1685,14 @@ void QQuickWindowPrivate::updateCursor(const QPointF &scenePos, QQuickItem *root
     if (!rootItem)
         rootItem = contentItem;
     auto cursorItemAndHandler = findCursorItemAndHandler(rootItem, scenePos);
-    if (cursorItem != cursorItemAndHandler.first || cursorHandler != cursorItemAndHandler.second) {
+    if (cursorItem != cursorItemAndHandler.first || cursorHandler != cursorItemAndHandler.second ||
+        (cursorItemAndHandler.second && QQuickPointerHandlerPrivate::get(cursorItemAndHandler.second)->cursorDirty)) {
         QWindow *renderWindow = QQuickRenderControl::renderWindowFor(q);
         QWindow *window = renderWindow ? renderWindow : q;
         cursorItem = cursorItemAndHandler.first;
         cursorHandler = cursorItemAndHandler.second;
+        if (cursorHandler)
+            QQuickPointerHandlerPrivate::get(cursorItemAndHandler.second)->cursorDirty = false;
         if (cursorItem) {
             const auto cursor = QQuickItemPrivate::get(cursorItem)->effectiveCursor(cursorHandler);
             qCDebug(lcHoverTrace) << "setting cursor" << cursor << "from" << cursorHandler << "or" << cursorItem;
@@ -3365,6 +3369,11 @@ void QQuickWindow::endExternalCommands()
 
     The (x,y) position is relative to the \l Screen if there is only one,
     or to the virtual desktop (arrangement of multiple screens).
+
+    \note Not all windowing systems support setting or querying top level
+    window positions. On such a system, programmatically moving windows
+    may not have any effect, and artificial values may be returned for
+    the current positions, such as \c QPoint(0, 0).
 
     \qml
     Window { x: 100; y: 100; width: 100; height: 100 }

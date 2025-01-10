@@ -448,6 +448,7 @@ void QQmlJSCodeGenerator::generate_MoveConst(int constIndex, int destTemp)
         input = toNumericString(v4Value.doubleValue());
     } else {
         reject(u"unknown const type"_s);
+        return;
     }
     m_body += conversion(contained, changed, input) + u";\n"_s;
     generateOutputVariantConversion(contained);
@@ -780,9 +781,15 @@ void QQmlJSCodeGenerator::generateEnumLookup(int index)
 {
     const QString enumMember = m_state.accumulatorOut().enumMember();
 
-    // If we're referring to the type, there's nothing to do.
-    if (enumMember.isEmpty())
+    if (enumMember.isEmpty()) {
+        // If we're referring to the type, there's nothing to do.
+        // However, we should not get here since no one can ever use the enum metatype.
+        // The lookup is dead code and should be optimized away.
+        // ... unless you are actually trying to store the metatype itself in a property.
+        //     We cannot compile such code.
+        reject(u"Lookup of enum metatype"_s);
         return;
+    }
 
     // If the metaenum has the value, just use it and skip all the rest.
     const QQmlJSMetaEnum metaEnum = m_state.accumulatorOut().enumeration();
@@ -2308,9 +2315,8 @@ void QQmlJSCodeGenerator::generate_As(int lhs)
             : conversion(inputContent.storedType(), genericContained, input);
 
     m_body += m_state.accumulatorVariableOut + u" = "_s;
-    if (m_typeResolver->equals(
-                m_state.accumulatorIn().storedType(), m_typeResolver->metaObjectType())
-            && contained->isComposite()) {
+    if (contained->isComposite() && m_typeResolver->equals(
+                m_state.accumulatorIn().storedType(), m_typeResolver->metaObjectType())) {
         m_body += conversion(
                     genericContained, m_state.accumulatorOut().storedType(),
                     m_state.accumulatorVariableIn + u"->cast("_s + inputConversion + u')');
@@ -2554,8 +2560,10 @@ QV4::Moth::ByteCodeHandler::Verdict QQmlJSCodeGenerator::startInstruction(
 
     // If the instruction has no side effects and doesn't write any register, it's dead.
     // We might still need the label, though, and the source code comment.
-    if (!m_state.hasSideEffects() && changedRegisterVariable().isEmpty())
+    if (!m_state.hasSideEffects() && changedRegisterVariable().isEmpty()) {
+        generateJumpCodeWithTypeConversions(0);
         return SkipInstruction;
+    }
 
     return ProcessInstruction;
 }

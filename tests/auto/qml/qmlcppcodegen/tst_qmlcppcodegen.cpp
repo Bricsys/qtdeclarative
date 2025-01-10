@@ -46,6 +46,8 @@ private slots:
     void jsmoduleImport();
     void methods();
     void math();
+    void shadowedAsCasts();
+    void storeMetaEnum();
     void unknownParameter();
     void array();
     void equalsUndefined();
@@ -74,6 +76,7 @@ private slots:
     void shifts();
     void valueTypeProperty();
     void propertyOfParent();
+    void readEnumFromInstance();
     void accessModelMethodFromOutSide();
     void functionArguments();
     void bindingExpression();
@@ -83,6 +86,7 @@ private slots:
     void parentProperty();
     void registerElimination();
     void asCast();
+    void asCast2();
     void noQQmlData();
     void scopeObjectDestruction();
     void colorAsVariant();
@@ -92,6 +96,7 @@ private slots:
     void ownPropertiesNonShadowable();
     void modulePrefix();
     void colorString();
+    void comparisonTypes();
     void urlString();
     void callContextPropertyLookupResult();
     void deadShoeSize();
@@ -132,6 +137,7 @@ private slots:
     void translation();
     void stringArg();
     void conversionDecrement();
+    void conversionInDeadCode();
     void unstoredUndefined();
     void registerPropagation();
     void argumentConversion();
@@ -1146,6 +1152,26 @@ void tst_QmlCppCodegen::propertyOfParent()
     }
 }
 
+void tst_QmlCppCodegen::readEnumFromInstance()
+{
+    QQmlEngine engine;
+    const QString url = u"qrc:/qt/qml/TestTypes/readEnumFromInstance.qml"_s;
+    QQmlComponent component(&engine, QUrl(url));
+    QVERIFY2(component.isReady(), component.errorString().toUtf8());
+    QTest::ignoreMessage(
+            QtWarningMsg, qPrintable(url + ":7:5: Unable to assign [undefined] to int"_L1));
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(!object.isNull());
+    QCOMPARE(object->property("priority"), QVariant::fromValue<int>(0));
+    QCOMPARE(object->property("prop2"), QVariant::fromValue<int>(1));
+    QCOMPARE(object->property("priorityIsVeryHigh"), QVariant::fromValue<bool>(false));
+    QTest::ignoreMessage(
+            QtWarningMsg, qPrintable(url + ":13: Error: Cannot assign [undefined] to int"_L1));
+    int result = 0;
+    QMetaObject::invokeMethod(object.data(), "cyclePriority", Q_RETURN_ARG(int, result));
+    QCOMPARE(result, 0);
+}
+
 void tst_QmlCppCodegen::accessModelMethodFromOutSide()
 {
     QQmlEngine engine;
@@ -1302,6 +1328,8 @@ void tst_QmlCppCodegen::overriddenProperty()
     QCOMPARE(child->objectName(), u"double"_s);
     QMetaObject::invokeMethod(child, "doArray");
     QCOMPARE(child->objectName(), u"javaScript"_s);
+    QMetaObject::invokeMethod(child, "doFoo");
+    QCOMPARE(child->objectName(), u"ObjectWithMethod"_s);
 
     ObjectWithMethod *benign = new ObjectWithMethod(object.data());
     benign->theThing = 10;
@@ -1429,6 +1457,24 @@ void tst_QmlCppCodegen::asCast()
     QCOMPARE(qvariant_cast<QObject *>(root->property("dummyAsItem")), dummy);
     QCOMPARE(qvariant_cast<QObject *>(root->property("dummyAsRectangle")), nullptr);
     QCOMPARE(qvariant_cast<QObject *>(root->property("dummyAsDummy")), dummy);
+}
+
+void tst_QmlCppCodegen::asCast2()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, QUrl(u"qrc:/qt/qml/TestTypes/asCast2.qml"_s));
+    QVERIFY2(component.isReady(), component.errorString().toUtf8());
+    QScopedPointer<QObject> root(component.create());
+    QVERIFY(!root.isNull());
+
+    QCOMPARE(qvariant_cast<QObject *>(root->property("nullAsObject")), nullptr);
+    QCOMPARE(qvariant_cast<QObject *>(root->property("nullAsItem")), nullptr);
+    QCOMPARE(qvariant_cast<QObject *>(root->property("nullAsRectangle")), nullptr);
+    QCOMPARE(qvariant_cast<QObject *>(root->property("nullAsDummy")), nullptr);
+    QCOMPARE(qvariant_cast<QObject *>(root->property("undefinedAsObject")), nullptr);
+    QCOMPARE(qvariant_cast<QObject *>(root->property("undefinedAsItem")), nullptr);
+    QCOMPARE(qvariant_cast<QObject *>(root->property("undefinedAsRectangle")), nullptr);
+    QCOMPARE(qvariant_cast<QObject *>(root->property("undefinedAsDummy")), nullptr);
 }
 
 void tst_QmlCppCodegen::noQQmlData()
@@ -1622,6 +1668,21 @@ void tst_QmlCppCodegen::colorString()
     QCOMPARE(qvariant_cast<QColor>(rootObject->property("c")), QColor::fromRgb(0xdd, 0xdd, 0xdd));
     QCOMPARE(qvariant_cast<QColor>(rootObject->property("d")), QColor::fromRgb(0xaa, 0xaa, 0xaa));
     QCOMPARE(qvariant_cast<QColor>(rootObject->property("e")), QColor::fromRgb(0x11, 0x22, 0x33));
+}
+
+void tst_QmlCppCodegen::comparisonTypes()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, QUrl(u"qrc:/qt/qml/TestTypes/comparisonTypes.qml"_s));
+    QVERIFY2(!component.isError(), component.errorString().toUtf8());
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(!object.isNull());
+
+    QCOMPARE(object->property("found").toInt(), 1);
+    QCOMPARE(object->property("foundStrict").toInt(), 0);
+
+    QCOMPARE(object->property("foundNot").toInt(), 2);
+    QCOMPARE(object->property("foundNotStrict").toInt(), 10);
 }
 
 void tst_QmlCppCodegen::urlString()
@@ -2460,6 +2521,22 @@ void tst_QmlCppCodegen::conversionDecrement()
     QCOMPARE(o->property("currentPageIndex").toInt(), 3);
 }
 
+void tst_QmlCppCodegen::conversionInDeadCode()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, QUrl(u"qrc:/qt/qml/TestTypes/conversionInDeadCode.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+    QCOMPARE(o->property("a").toInt(), -4);
+    QCOMPARE(o->property("b").toInt(), 12);
+    QCOMPARE(o->property("c").toInt(), 10);
+    QCOMPARE(o->property("d").toInt(), 10);
+    QCOMPARE(o->property("e").toInt(), 10);
+    QCOMPARE(o->property("f").toInt(), 20);
+    QCOMPARE(o->property("g").toInt(), 33);
+}
+
 void tst_QmlCppCodegen::unstoredUndefined()
 {
     QQmlEngine engine;
@@ -2906,6 +2983,36 @@ void tst_QmlCppCodegen::letAndConst()
     QCOMPARE(o->objectName(), u"ab"_s);
 }
 
+void tst_QmlCppCodegen::shadowedAsCasts()
+{
+    QQmlEngine e;
+    QQmlComponent c(&e, QUrl(u"qrc:/qt/qml/TestTypes/shadowedAsCasts.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> obj(c.create());
+    QVERIFY(!obj.isNull());
+
+    QObject *shadowed1 = obj->property("shadowed1").value<QObject *>();
+    QVERIFY(shadowed1);
+    QVERIFY(shadowed1->objectName().isEmpty());
+    const QVariant name1 = shadowed1->property("objectName");
+    QCOMPARE(name1.metaType(), QMetaType::fromType<int>());
+    QCOMPARE(name1.toInt(), 43);
+
+    QObject *shadowed2 = obj->property("shadowed2").value<QObject *>();
+    QVERIFY(shadowed2);
+    QVERIFY(shadowed2->objectName().isEmpty());
+    const QVariant name2 = shadowed2->property("objectName");
+    QCOMPARE(name2.metaType(), QMetaType::fromType<int>());
+    QCOMPARE(name2.toInt(), 42);
+
+    QObject *shadowed3 = obj->property("shadowed3").value<QObject *>();
+    QVERIFY(shadowed3);
+    QVERIFY(shadowed3->objectName().isEmpty());
+    const QVariant name3 = shadowed3->property("objectName");
+    QCOMPARE(name3.metaType(), QMetaType::fromType<double>());
+    QCOMPARE(name3.toDouble(), 41.0);
+}
+
 void tst_QmlCppCodegen::signalIndexMismatch()
 {
     QQmlEngine engine;
@@ -3061,6 +3168,20 @@ void tst_QmlCppCodegen::storeElementSideEffects()
     QVERIFY(prop.isArray());
     QCOMPARE(prop.property(0).toInt(), 10);
 };
+
+void tst_QmlCppCodegen::storeMetaEnum()
+{
+    QQmlEngine engine;
+
+    QQmlComponent c(&engine, QUrl(u"qrc:/qt/qml/TestTypes/StoreMetaEnum.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(o);
+
+    QCOMPARE(o->property("bar").toInt(), 0);
+    QCOMPARE(o->property("baz").toInt(), 1);
+}
 
 void tst_QmlCppCodegen::ambiguousSignals()
 {

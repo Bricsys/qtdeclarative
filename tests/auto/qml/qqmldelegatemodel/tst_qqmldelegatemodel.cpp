@@ -33,6 +33,7 @@ private slots:
     void deleteRace();
     void persistedItemsStayInCache();
     void doNotUnrefObjectUnderConstruction();
+    void clearCacheDuringInsertion();
 };
 
 class AbstractItemModel : public QAbstractItemModel
@@ -368,6 +369,16 @@ void tst_QQmlDelegateModel::doNotUnrefObjectUnderConstruction()
 {
     QQmlEngine engine;
     QQmlComponent component(&engine, testFileUrl("modifyObjectUnderConstruction.qml"));
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+    std::unique_ptr<QObject> object(component.create());
+    QVERIFY(object);
+    QTRY_COMPARE(object->property("testModel").toInt(), 0);
+}
+
+void tst_QQmlDelegateModel::clearCacheDuringInsertion()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, testFileUrl("clearCacheDuringInsertion.qml"));
     QVERIFY2(component.isReady(), qPrintable(component.errorString()));
     std::unique_ptr<QObject> object(component.create());
     QVERIFY(object);

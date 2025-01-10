@@ -162,6 +162,8 @@ public:
     bool canHoldUndefined(const QQmlJSRegisterContent &content) const;
     bool isNumeric(const QQmlJSScope::ConstPtr &type) const;
 
+    bool inherits(const QQmlJSScope::ConstPtr &derived, const QQmlJSScope::ConstPtr &base) const;
+
 protected:
 
     QQmlJSRegisterContent memberType(const QQmlJSScope::ConstPtr &type, const QString &name) const;

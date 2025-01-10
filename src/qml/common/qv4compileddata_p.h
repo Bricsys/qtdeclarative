@@ -43,7 +43,7 @@ QT_BEGIN_NAMESPACE
 // Also change the comment behind the number to describe the latest change. This has the added
 // benefit that if another patch changes the version too, it will result in a merge conflict, and
 // not get removed silently.
-#define QV4_DATA_STRUCTURE_VERSION 0x3B // Add isList flag to method parameters and return types
+#define QV4_DATA_STRUCTURE_VERSION 0x3D // Reserve special value for "no translation context"
 
 class QIODevice;
 class QQmlTypeNameCache;
@@ -497,6 +497,7 @@ static_assert(sizeof(ImportEntry) == 16, "ImportEntry structure needs to have th
 
 struct TranslationData
 {
+    enum { NoContextIndex = std::numeric_limits<quint32>::max() };
     quint32_le stringIndex;
     quint32_le commentIndex;
     qint32_le number;
@@ -1344,6 +1345,28 @@ struct TypeReferenceMap : QHash<int, TypeReference>
         return *insert(nameIndex, loc);
     }
 
+    template <typename Iterator>
+    void collectFromFunctions(Iterator it, Iterator end)
+    {
+        for (; it != end; ++it) {
+            auto formal = it->formalsBegin();
+            auto formalEnd = it->formalsEnd();
+            for ( ; formal != formalEnd; ++formal) {
+                if (!formal->type.indexIsBuiltinType()) {
+                    TypeReference &r
+                            = this->add(formal->type.typeNameIndexOrBuiltinType(), it->location);
+                    r.errorWhenNotFound = true;
+                }
+            }
+
+            if (!it->returnType.indexIsBuiltinType()) {
+                TypeReference &r
+                    = this->add(it->returnType.typeNameIndexOrBuiltinType(), it->location);
+                r.errorWhenNotFound = true;
+            }
+        }
+    }
+
     template <typename CompiledObject>
     void collectFromObject(const CompiledObject *obj)
     {
@@ -1374,13 +1397,6 @@ struct TypeReferenceMap : QHash<int, TypeReference>
         for (; ic != icEnd; ++ic) {
             this->add(ic->nameIndex, ic->location);
         }
-    }
-
-    template <typename Iterator>
-    void collectFromObjects(Iterator it, Iterator end)
-    {
-        for (; it != end; ++it)
-            collectFromObject(*it);
     }
 };
 

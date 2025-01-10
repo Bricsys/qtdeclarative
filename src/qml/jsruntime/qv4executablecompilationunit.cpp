@@ -480,6 +480,15 @@ int ExecutableCompilationUnit::totalObjectCount() const {
     return inlineComponentData[icRoot].totalObjectCount;
 }
 
+ResolvedTypeReference *ExecutableCompilationUnit::resolvedType(QMetaType type) const
+{
+    for (ResolvedTypeReference *ref : std::as_const(resolvedTypes)) {
+        if (ref->type().typeId() == type)
+            return ref;
+    }
+    return nullptr;
+}
+
 int ExecutableCompilationUnit::totalParserStatusCount() const {
     if (icRoot == -1)
         return m_totalParserStatusCount;
@@ -953,11 +962,13 @@ QString ExecutableCompilationUnit::translateFrom(TranslationDataIndex index) con
         return context.toUtf8();
     };
 
-    QByteArray context = stringAt(translation.contextIndex).toUtf8();
+    const bool hasContext
+            = translation.contextIndex != QV4::CompiledData::TranslationData::NoContextIndex;
     QByteArray comment = stringAt(translation.commentIndex).toUtf8();
     QByteArray text = stringAt(translation.stringIndex).toUtf8();
     return QCoreApplication::translate(
-                context.isEmpty() ? fileContext() : context, text, comment, translation.number);
+            hasContext ? stringAt(translation.contextIndex).toUtf8() : fileContext(),
+            text, comment, translation.number);
 #endif
 }
 
