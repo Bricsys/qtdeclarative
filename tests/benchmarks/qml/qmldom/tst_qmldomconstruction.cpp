@@ -32,6 +32,9 @@ void tst_qmldomconstruction::domConstructionTime_data()
 
     QTest::addRow("extended-tiger.qml") << baseDir + u"/longQmlFile.qml"_s << Extended;
     QTest::addRow("extended-deeplyNested.qml") << baseDir + u"/deeplyNested.qml"_s << Extended;
+
+    QTest::addRow("minimal-tiger.qml") << baseDir + u"/longQmlFile.qml"_s << Minimal;
+    QTest::addRow("minimal-deeplyNested.qml") << baseDir + u"/deeplyNested.qml"_s << Minimal;
 }
 
 void tst_qmldomconstruction::domConstructionTime()

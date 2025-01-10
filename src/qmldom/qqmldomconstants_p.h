@@ -414,6 +414,7 @@ Q_ENUM_NS(FileLocationRegion);
 enum DomCreationOption : char {
     Default, // required by qmlformat for example
     Extended, // required by qmlls for example
+    Minimal, // required by QmlDocumentParser in Qt Design Studio, for example
 };
 
 } // end namespace Dom

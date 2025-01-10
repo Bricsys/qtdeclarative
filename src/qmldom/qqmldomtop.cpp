@@ -2241,6 +2241,10 @@ void DomEnvironment::populateFromQmlFile(MutableDomItem &&qmlFile)
             Q_UNUSED(this); // note: integrity requires "this" to be in the capture list, while
                             // other compilers complain about "this" being unused in the lambda
             AST::Node::accept(qmlFilePtr->ast(), visitor);
+
+            if (m_domCreationOption == DomCreationOption::Minimal)
+                return;
+
             CommentCollector collector(qmlFile);
             collector.collectComments();
         };
