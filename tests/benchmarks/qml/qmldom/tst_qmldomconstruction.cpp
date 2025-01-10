@@ -57,6 +57,9 @@ void tst_qmldomconstruction::domConstructionTime()
                              tFile = newIt.fileObject();
                          });
         envPtr->loadPendingDependencies();
+
+        // make sure the file was loaded
+        QCOMPARE(tFile.field(Fields::components).size(), 1);
     }
 }
 
