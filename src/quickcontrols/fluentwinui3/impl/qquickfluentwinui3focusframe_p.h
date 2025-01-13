@@ -14,10 +14,11 @@
 // We mean it.
 //
 #include <QtQuickTemplates2/private/qquickcontrol_p.h>
+#include "qquickfluentwinui3styleimplglobal_p.h"
 
 QT_BEGIN_NAMESPACE
 
-class QQuickFluentWinUI3FocusFrame : public QObject
+class Q_QUICKCONTROLS2FLUENTWINUI3STYLEIMPL_EXPORT QQuickFluentWinUI3FocusFrame : public QObject
 {
     Q_OBJECT
 

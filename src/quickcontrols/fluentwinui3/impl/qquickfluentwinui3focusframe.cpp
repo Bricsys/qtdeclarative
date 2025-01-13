@@ -34,10 +34,7 @@ QQuickFluentWinUI3FocusFrame::QQuickFluentWinUI3FocusFrame()
 
 QQuickItem *QQuickFluentWinUI3FocusFrame::createFocusFrame(QQmlContext *context)
 {
-    QQmlComponent component(
-            context->engine(),
-            QUrl(QStringLiteral(
-                "qrc:/qt-project.org/imports/QtQuick/Controls/FluentWinUI3/FocusFrame.qml")));
+    QQmlComponent component(context->engine(), "QtQuick.Controls.FluentWinUI3.impl", "FocusFrame");
     auto frame = qobject_cast<QQuickItem *>(component.create());
     if (!frame)
         return nullptr;
@@ -54,11 +51,11 @@ void QQuickFluentWinUI3FocusFrame::moveToItem(QQuickControl *item)
         if (!context || !context->engine())
             return;
         m_focusFrame.reset(createFocusFrame(context));
-        QQuickItemPrivate::get(m_focusFrame.get())->setTransparentForPositioner(true);
         if (!m_focusFrame) {
             qWarning() << "Failed to create FocusFrame";
             return;
         }
+        QQuickItemPrivate::get(m_focusFrame.get())->setTransparentForPositioner(true);
     }
 
     const auto target = getFocusTarget(item);
@@ -85,3 +82,5 @@ QQuickControl *QQuickFluentWinUI3FocusFrame::getFocusTarget(QQuickControl *focus
 }
 
 QT_END_NAMESPACE
+
+#include "moc_qquickfluentwinui3focusframe_p.cpp"
