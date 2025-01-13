@@ -5,6 +5,7 @@
 
 #include <QtQuick/private/qquickanchors_p_p.h>
 #include <QtQuick/private/qquickitem_p.h>
+#include <QtQuick/private/qquickflickable_p.h>
 #include <QtQuick/qquickwindow.h>
 #include <QtQuick/qquickitem.h>
 
@@ -225,22 +226,34 @@ void QQuickSafeArea::updateSafeArea()
         return;
     }
 
-    QMarginsF windowMargins;
-    if (auto *window = attachedItem->window()) {
-        windowMargins = toLocalMargins(window->safeAreaMargins(),
-            window->contentItem(), attachedItem);
-    }
+    const auto *window = attachedItem->window();
 
-    QMarginsF additionalMargins;
+    QMarginsF additionalMargins, windowMargins;
     for (auto *item = attachedItem; item; item = item->parentItem()) {
         // We attach the safe area to the relevant item for an attachee
         // such as QQuickWindow or QQuickPopup, so we can't go via
         // qmlAttachedPropertiesObject to find the safe area for an
         // item, as the attached object cache is based on the original
         // attachee.
+
+        if (item != attachedItem && qobject_cast<QQuickFlickable*>(item)) {
+            // Stop propagation of safe areas when we hit a Flickable,
+            // as items within the content item that account for safe
+            // area margins will continuously update when the content
+            // item is moved, which is not necessarily what the user
+            // expects.
+            qCDebug(lcSafeArea) << "Stopping safe area margin propagation on" << item;
+            break;
+        }
+
         if (auto *safeArea = item->findChild<QQuickSafeArea*>(Qt::FindDirectChildrenOnly)) {
             additionalMargins = additionalMargins | toLocalMargins(
                 safeArea->additionalMargins(), item, attachedItem);
+        }
+
+        if (window && item == window->contentItem()) {
+            windowMargins = toLocalMargins(
+                window->safeAreaMargins(), item, attachedItem);
         }
     }
 
@@ -302,6 +315,11 @@ void QQuickSafeArea::itemTransformChanged(QQuickItem *item, QQuickItem *transfor
     auto *transformedItemPrivate = QQuickItemPrivate::get(transformedItem);
     qCDebug(lcSafeArea) << "Transform changed for" << transformedItem
                         << "with dirty state" << transformedItemPrivate->dirtyToString();
+
+    if (qobject_cast<QQuickFlickable*>(transformedItem->parentItem())) {
+        qCDebug(lcSafeArea) << "Ignoring transform change for Flickable content item";
+        return;
+    }
 
     // The dirtying of position and size will be followed by a geometry change,
     // which via anchors or event listeners may result in an ancestor invalidating

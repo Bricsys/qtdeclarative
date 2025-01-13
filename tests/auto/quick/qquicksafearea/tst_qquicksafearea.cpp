@@ -56,6 +56,8 @@ private slots:
 
     void controlBindingLoop_data();
     void controlBindingLoop();
+
+    void flickable();
 };
 
 using namespace QQuickVisualTestUtils;
@@ -402,6 +404,27 @@ void tst_QQuickSafeArea::controlBindingLoop()
         QRectF contentItemGeometry(contentItem->position(), contentItem->size());
         QCOMPARE(contentItemGeometry, expectedContentItemGeometry);
     }
+}
+
+void tst_QQuickSafeArea::flickable()
+{
+    QQuickApplicationHelper helper(this, "flickable.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    window->show();
+    QVERIFY(QTest::qWaitForWindowExposed(window));
+
+    auto *flickable = window->findChild<QQuickItem*>("flickable");
+    auto *flickableSafeArea = qobject_cast<QQuickSafeArea*>(
+        qmlAttachedPropertiesObject<QQuickSafeArea>(flickable));
+    QVERIFY(flickableSafeArea);
+    QCOMPARE(flickableSafeArea->margins(), QMarginsF(50, 200, 0, 0));
+
+    auto *contentChild = window->findChild<QQuickItem*>("contentChild");
+    auto *contentChildSafeArea = qobject_cast<QQuickSafeArea*>(
+        qmlAttachedPropertiesObject<QQuickSafeArea>(contentChild));
+    QVERIFY(contentChildSafeArea);
+    QCOMPARE(contentChildSafeArea->margins(), QMarginsF(0, 100, 0, 0));
 }
 
 QTEST_MAIN(tst_QQuickSafeArea)
