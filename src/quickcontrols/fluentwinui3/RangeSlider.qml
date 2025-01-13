@@ -3,6 +3,7 @@
 
 import QtQuick
 import QtQuick.Controls.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 import QtQuick.Templates as T
 
 T.RangeSlider {
@@ -47,7 +48,7 @@ T.RangeSlider {
     readonly property Item __focusFrameControl: control
     readonly property Item __focusFrameTarget: control
 
-    first.handle: StyleImage {
+    first.handle: Impl.StyleImage {
         x: Math.round(control.leftPadding + (control.horizontal
             ? control.first.visualPosition * (control.availableWidth - width)
             : (control.availableWidth - width) / 2))
@@ -81,7 +82,7 @@ T.RangeSlider {
         }
     }
 
-    second.handle: StyleImage {
+    second.handle: Impl.StyleImage {
         x: Math.round(control.leftPadding + (control.horizontal
             ? control.second.visualPosition * (control.availableWidth - width)
             : (control.availableWidth - width) / 2))
@@ -123,13 +124,13 @@ T.RangeSlider {
             ? (_background.implicitHeight || _background.groove.implicitHeight)
             : (_background.implicitWidth || _background.groove.implicitWidth)
 
-        property Item _background: StyleImage {
+        property Item _background: Impl.StyleImage {
             parent: control.background
             width: parent.width
             height: parent.width
             imageConfig: control.config.background
 
-            property Item groove: StyleImage {
+            property Item groove: Impl.StyleImage {
                 parent: control.background._background
                 x: control.leftPadding - control.leftInset + (control.horizontal
                     ? control.firstHandleConfig.first_handle.width / 2

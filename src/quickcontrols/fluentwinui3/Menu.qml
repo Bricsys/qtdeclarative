@@ -4,6 +4,7 @@
 import QtQuick
 import QtQuick.Templates as T
 import QtQuick.Controls.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 import QtQuick.Effects
 
 T.Menu {
@@ -46,7 +47,7 @@ T.Menu {
         }
     }
 
-    background: StyleImage {
+    background: Impl.StyleImage {
         implicitWidth: 200
         implicitHeight: 30
         imageConfig: Config.controls.popup["normal"].background

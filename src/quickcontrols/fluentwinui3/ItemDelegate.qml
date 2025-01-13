@@ -3,6 +3,7 @@
 
 import QtQuick
 import QtQuick.Controls.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 import QtQuick.Templates as T
 
 T.ItemDelegate {
@@ -61,7 +62,7 @@ T.ItemDelegate {
         implicitWidth: 160
         implicitHeight: 40
 
-        property Item backgroundImage: StyleImage {
+        property Item backgroundImage: Impl.StyleImage {
             parent: control.background
             imageConfig: control.config.background
             implicitWidth: parent.width - control.__horizontalOffset * 2

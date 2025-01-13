@@ -3,7 +3,7 @@
 
 import QtQuick
 import QtQuick.Controls.impl
-import QtQuick.Controls.FluentWinUI3.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 import QtQuick.Templates as T
 
 T.RadioButton {
@@ -38,7 +38,7 @@ T.RadioButton {
 
     readonly property Item __focusFrameTarget: control
 
-    indicator: RadioIndicator {
+    indicator: Impl.RadioIndicator {
         x: control.text ? (control.mirroredIndicator ? control.width - width - control.rightPadding : control.leftPadding) : control.leftPadding + (control.availableWidth - width) / 2
         y: control.topPadding + (control.availableHeight - height) / 2
         control: control
@@ -57,7 +57,7 @@ T.RadioButton {
         verticalAlignment: Text.AlignVCenter
     }
 
-    background: StyleImage {
+    background: Impl.StyleImage {
         imageConfig: control.config.background
     }
 }

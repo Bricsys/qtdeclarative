@@ -3,6 +3,7 @@
 
 import QtQuick
 import QtQuick.Controls.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 import QtQuick.Templates as T
 
 T.Popup {
@@ -36,7 +37,7 @@ T.Popup {
         NumberAnimation { property: "scale"; from: 1; to: control.modal ? 1.05 : 1; easing.type: Easing.OutCubic; duration: 167 }
     }
 
-    background: StyleImage {
+    background: Impl.StyleImage {
         implicitWidth: 320
         implicitHeight: 72
         imageConfig: control.config.background

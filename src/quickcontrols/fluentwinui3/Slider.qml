@@ -3,6 +3,7 @@
 
 import QtQuick
 import QtQuick.Controls.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 import QtQuick.Templates as T
 
 T.Slider {
@@ -31,7 +32,7 @@ T.Slider {
     readonly property bool __isDiscrete: stepSize >= Number.EPSILON
         && Math.abs(Math.round(__steps) - __steps) < Number.EPSILON
 
-    handle: StyleImage {
+    handle: Impl.StyleImage {
         x: Math.round(control.leftPadding + (control.horizontal
             ? control.visualPosition * (control.availableWidth - width)
             : (control.availableWidth - width) / 2))
@@ -72,13 +73,13 @@ T.Slider {
             ? (_background.implicitHeight || _background.groove.implicitHeight)
             : (_background.implicitWidth || _background.groove.implicitWidth)
 
-        property Item _background: StyleImage {
+        property Item _background: Impl.StyleImage {
             parent: control.background
             width: parent.width
             height: parent.height
             imageConfig: control.config.background
 
-            property Item groove: StyleImage {
+            property Item groove: Impl.StyleImage {
                 parent: control.background._background
                 x: control.leftPadding - control.leftInset + (control.horizontal
                     ? control.config.handle.width / 2

@@ -3,8 +3,8 @@
 
 import QtQuick
 import QtQuick.Controls.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 import QtQuick.Templates as T
-import QtQuick.Controls.FluentWinUI3.impl
 
 T.SpinBox {
     id: control
@@ -60,42 +60,42 @@ T.SpinBox {
         inputMethodHints: control.inputMethodHints
     }
 
-    down.indicator: StyleImage {
+    down.indicator: Impl.StyleImage {
         x: !control.mirrored ? control.up.indicator ? (control.up.indicator.x - width) : 0
                              : control.config.rightPadding
         y: control.topPadding
         height: control.availableHeight
         imageConfig: control.downConfig.indicator_down_background
 
-        StyleImage {
+        Impl.StyleImage {
             x: (parent.width - width) / 2
             y: (parent.height - height) / 2
             imageConfig: control.downConfig.indicator_down_icon
         }
     }
 
-    up.indicator: StyleImage {
+    up.indicator: Impl.StyleImage {
         x: control.mirrored ? control.config.rightPadding + (control.down.indicator ? control.down.indicator.width : 0)
                             : control.width - width - control.config.rightPadding
         y: control.topPadding
         height: control.availableHeight
         imageConfig: control.upConfig.indicator_up_background
 
-        StyleImage {
+        Impl.StyleImage {
             x: (parent.width - width) / 2
             y: (parent.height - height) / 2
             imageConfig: control.upConfig.indicator_up_icon
         }
     }
 
-    background: StyleImage {
+    background: Impl.StyleImage {
         imageConfig: control.config.background
         Item {
             visible: control.activeFocus
             width: parent.width
             height: 2
             y: parent.height - height
-            FocusStroke {
+            Impl.FocusStroke {
                 width: parent.width
                 height: parent.height
                 radius: control.config.background.bottomOffset

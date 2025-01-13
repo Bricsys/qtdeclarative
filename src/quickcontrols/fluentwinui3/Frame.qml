@@ -3,6 +3,7 @@
 
 import QtQuick
 import QtQuick.Controls.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 import QtQuick.Templates as T
 
 T.Frame {
@@ -28,7 +29,7 @@ T.Frame {
     readonly property string __currentState: !control.enabled ? "disabled" : "normal";
     readonly property var config: Config.controls.frame[__currentState] || {}
 
-    background: StyleImage {
+    background: Impl.StyleImage {
         imageConfig: control.config.background
     }
 }

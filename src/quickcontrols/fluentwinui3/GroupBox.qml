@@ -3,6 +3,7 @@
 
 import QtQuick
 import QtQuick.Controls.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 import QtQuick.Templates as T
 
 T.GroupBox {
@@ -52,12 +53,12 @@ T.GroupBox {
         horizontalAlignment: control.config.label_text.textHAlignment
         verticalAlignment: control.config.label_text.textVAlignment
 
-        background: StyleImage {
+        background: Impl.StyleImage {
             imageConfig: control.config.label_background
         }
     }
 
-    background: StyleImage {
+    background: Impl.StyleImage {
         imageConfig: control.config.background.filePath ? control.config.background : Config.controls.frame["normal"].background // fallback to regular frame background
         height: parent.height - control.topPadding + control.bottomPadding
     }

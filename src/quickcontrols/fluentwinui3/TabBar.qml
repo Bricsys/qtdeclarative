@@ -3,6 +3,7 @@
 
 import QtQuick
 import QtQuick.Controls.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 import QtQuick.Templates as T
 
 T.TabBar {
@@ -46,7 +47,7 @@ T.TabBar {
         preferredHighlightEnd: width - 48
     }
 
-    background: StyleImage {
+    background: Impl.StyleImage {
         imageConfig: control.config.background
     }
 }

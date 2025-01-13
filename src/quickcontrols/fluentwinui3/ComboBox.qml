@@ -6,7 +6,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Templates as T
 import QtQuick.Controls.impl
-import QtQuick.Controls.FluentWinUI3.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 
 T.ComboBox {
     id: control
@@ -95,14 +95,14 @@ T.ComboBox {
         readonly property Item __focusFrameControl: control
     }
 
-    background: StyleImage {
+    background: Impl.StyleImage {
         imageConfig: control.config.background
         Item {
             visible: control.editable && ((control.down && control.popup.visible) || control.activeFocus)
             width: parent.width
             height: 2
             y: parent.height - height
-            FocusStroke {
+            Impl.FocusStroke {
                 width: parent.width
                 height: parent.height
                 radius: control.down && control.popup.visible ? 0 : control.config.background.bottomOffset
@@ -139,7 +139,7 @@ T.ComboBox {
             NumberAnimation { property: "height"; from: control.popup.height / 3; to: control.popup.height; easing.type: Easing.OutCubic; duration: 250 }
         }
 
-        background: StyleImage {
+        background: Impl.StyleImage {
             imageConfig: control.config.popup_background.filePath ? control.config.popup_background : Config.controls.popup["normal"].background // fallback to regular popup
         }
     }

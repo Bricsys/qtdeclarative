@@ -3,10 +3,6 @@
 
 import QtQuick
 
-@Deprecated {
-    reason: "StyleImage component has been moved to private FluentWinUI3.impl module \
-    and is no longer part of the public QML API."
-}
 // This item will resize the child image in such a way that any drop shadow
 // or blur (or other effects) will be drawn outside its own bounds.
 // The effect is that users of this item won't have to take e.g shadows
@@ -15,12 +11,6 @@ import QtQuick
 
 Item {
     id: root
-
-    Component.onCompleted: {
-        print("StyleImage has been moved to private FluentWinUI3.impl module "
-             + "and is no longer part of the public QML API.")
-    }
-
     implicitWidth: horizontal ? imageConfig.width : imageConfig.height
     implicitHeight: horizontal ? imageConfig.height : imageConfig.width
 
@@ -43,7 +33,7 @@ Item {
                + imageConfig.leftShadow + imageConfig.rightShadow
         height: Math.max(root.minimumHeight, (root.horizontal ? root.height : root.width))
                 + imageConfig.topShadow + imageConfig.bottomShadow
-        source: Qt.resolvedUrl(imageConfig.filePath)
+        source: imageConfig.filePath ? `qrc:/qt-project.org/imports/QtQuick/Controls/FluentWinUI3/${imageConfig.filePath}` : ""
 
         border {
             top: Math.min(height / 2, imageConfig.topOffset + imageConfig.topShadow)

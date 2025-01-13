@@ -4,6 +4,7 @@
 import QtQuick
 import QtQuick.Templates as T
 import QtQuick.Controls.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 
 T.MenuBar {
     id: control
@@ -31,7 +32,7 @@ T.MenuBar {
         }
     }
 
-    background: StyleImage {
+    background: Impl.StyleImage {
         imageConfig: control.config.background
     }
 }

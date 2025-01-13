@@ -10,6 +10,7 @@ set(qml_files
     "RadioIndicator.qml"
     "SwitchIndicator.qml"
     "FocusFrame.qml"
+    "StyleImage.qml"
 )
 
 qt_internal_add_qml_module(QuickControls2FluentWinUI3StyleImpl

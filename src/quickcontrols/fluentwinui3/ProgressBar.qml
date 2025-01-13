@@ -3,6 +3,7 @@
 
 import QtQuick
 import QtQuick.Controls.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 import QtQuick.Templates as T
 import QtQuick.Effects
 
@@ -104,7 +105,7 @@ T.ProgressBar {
 
     background: Item {
         implicitWidth: groove.width
-        property Item groove: StyleImage {
+        property Item groove: Impl.StyleImage {
             imageConfig: control.config.groove
             visible: !control.indeterminate
             parent: control.background

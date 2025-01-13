@@ -4,7 +4,7 @@
 import QtQuick
 import QtQuick.Templates as T
 import QtQuick.Controls.impl
-import QtQuick.Controls.FluentWinUI3.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 
 T.TextArea {
     id: control
@@ -55,14 +55,14 @@ T.TextArea {
         renderType: control.renderType
     }
 
-    background: StyleImage {
+    background: Impl.StyleImage {
         imageConfig: control.config.background
         Item{
             visible: control.activeFocus
             width: parent.width
             height: 2
             y: parent.height - height
-            FocusStroke {
+            Impl.FocusStroke {
                 width: parent.width
                 height: parent.height
                 radius: control.config.background.bottomOffset

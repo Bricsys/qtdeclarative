@@ -3,6 +3,7 @@
 
 import QtQuick
 import QtQuick.Controls.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 import QtQuick.Templates as T
 
 T.PageIndicator {
@@ -31,7 +32,7 @@ T.PageIndicator {
     ].filter(Boolean).join("_") || "normal"
     readonly property var config: Config.controls.pageindicator[__currentState] || {}
 
-    delegate: StyleImage {
+    delegate: Impl.StyleImage {
         required property int index
 
         property alias hovered: hoverHandler.hovered
@@ -62,7 +63,7 @@ T.PageIndicator {
         }
     }
 
-    background: StyleImage {
+    background: Impl.StyleImage {
         imageConfig: control.config.background
     }
 }

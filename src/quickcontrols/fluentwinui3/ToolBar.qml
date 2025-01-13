@@ -3,6 +3,7 @@
 
 import QtQuick
 import QtQuick.Templates as T
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 
 T.ToolBar {
     id: control
@@ -29,7 +30,7 @@ T.ToolBar {
         : (enabled ? "normal_footer" : "disabled_footer")
     readonly property var config: Config.controls.toolbar[__currentState] || {}
 
-    background: StyleImage {
+    background: Impl.StyleImage {
         imageConfig: control.config.background
     }
 }

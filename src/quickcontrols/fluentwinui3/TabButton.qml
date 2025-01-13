@@ -3,6 +3,7 @@
 
 import QtQuick
 import QtQuick.Controls.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 import QtQuick.Templates as T
 
 T.TabButton {
@@ -57,7 +58,7 @@ T.TabButton {
         color: control.icon.color
     }
 
-    background: StyleImage {
+    background: Impl.StyleImage {
         imageConfig: control.config.background
         property Rectangle selector: Rectangle {
             parent: control.background

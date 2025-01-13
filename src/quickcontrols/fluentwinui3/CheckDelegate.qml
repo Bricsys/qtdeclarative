@@ -4,7 +4,7 @@
 import QtQuick
 import QtQuick.Templates as T
 import QtQuick.Controls.impl
-import QtQuick.Controls.FluentWinUI3.impl
+import QtQuick.Controls.FluentWinUI3.impl as Impl
 
 T.CheckDelegate {
     id: control
@@ -43,7 +43,7 @@ T.CheckDelegate {
 
     readonly property Item __focusFrameTarget: control
 
-    indicator: CheckIndicator {
+    indicator: Impl.CheckIndicator {
         readonly property string currentState: [
             control.checkState === Qt.Checked && "checked",
             !control.enabled && control.checkState !== Qt.Unchecked && "disabled",
@@ -77,7 +77,7 @@ T.CheckDelegate {
         implicitWidth: 160
         implicitHeight: 40
 
-        property Item backgroundImage: StyleImage {
+        property Item backgroundImage: Impl.StyleImage {
             parent: control.background
             imageConfig: control.config.background
             implicitWidth: parent.width - control.__horizontalOffset * 2
