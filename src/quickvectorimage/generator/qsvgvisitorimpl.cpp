@@ -1223,6 +1223,11 @@ void QSvgVisitorImpl::fillTransformAnimationInfo(const QSvgNode *node, NodeInfo 
                 }
 
                 keyFrames[QFixed::fromReal(currentFrameTime)] = NodeInfo::TransformAnimation::TransformKeyFrame{};
+
+                // For animations that end before the full running time, we also add a key frame
+                // right after to record the state when it has stopped.
+                if (currentFrameTime < maxRunningTime)
+                    keyFrames[QFixed::fromReal(currentFrameTime) + 1] = NodeInfo::TransformAnimation::TransformKeyFrame{};
             } else {
                 // For animations with infinite repeats, we first do the same as for finite
                 // animations during the finite part, and then we add key frames for the infinite
@@ -1237,6 +1242,11 @@ void QSvgVisitorImpl::fillTransformAnimationInfo(const QSvgNode *node, NodeInfo 
                 }
 
                 keyFrames[QFixed::fromReal(currentFrameTime) - 1] = NodeInfo::TransformAnimation::TransformKeyFrame{};
+
+                // For animations that end before the full running time, we also add a key frame
+                // right after to record the state when it has stopped.
+                if (currentFrameTime < maxRunningTime)
+                    keyFrames[QFixed::fromReal(currentFrameTime) + 1] = NodeInfo::TransformAnimation::TransformKeyFrame{};
 
                 // Start infinite portion at 1ms after finite part to make sure we
                 // reset the animation to the correct position
@@ -1288,6 +1298,7 @@ void QSvgVisitorImpl::fillTransformAnimationInfo(const QSvgNode *node, NodeInfo 
             // We count backwards so that we only evaluate up until the last active animation
             // that is set to additive==replace
             for (int i = animateTransforms.size() - 1; i >= 0; --i) {
+                qCDebug(lcVectorImageAnimations) << "       -> Checking animation" << i;
                 const QSvgAbstractAnimation *animation = animateTransforms.at(i).first;
                 const QSvgAnimatedPropertyTransform *property = animateTransforms.at(i).second;
                 const int start = animation->start();
@@ -1306,9 +1317,16 @@ void QSvgVisitorImpl::fillTransformAnimationInfo(const QSvgNode *node, NodeInfo 
                     freeze = animateNode->fill() == QSvgAnimateNode::Freeze;
                 }
 
+                qCDebug(lcVectorImageAnimations) << "       -> Start:" << start
+                                                 << ", repeatCount:" << repeatCount
+                                                 << ", end:" << end
+                                                 << ", freeze:" << freeze
+                                                 << ", replacesOtherTransforms:" << replacesOtherTransforms;
+
                 // Does it apply to this time code? If not, we skip this animation
                 if (QFixed(start) > timecode
                     || (repeatCount > 0 && QFixed(end) < timecode && !freeze)) {
+                    qCDebug(lcVectorImageAnimations) << "       -> Skipping" << i;
                     continue;
                 }
 
