@@ -5802,6 +5802,18 @@ bool QQuickItemPrivate::handlePointerEvent(QPointerEvent *event, bool avoidGrabb
     return delivered;
 }
 
+#if QT_VERSION < QT_VERSION_CHECK(7, 0, 0)
+bool QQuickItemPrivate::handleContextMenuEvent(QContextMenuEvent *event)
+#else
+bool QQuickItem::contextMenuEvent(QContextMenuEvent *event)
+#endif
+{
+    if (extra.isAllocated() && extra->contextMenu)
+        return extra->contextMenu->event(event);
+    event->ignore();
+    return false;
+}
+
 /*!
     Called when \a change occurs for this item.
 
@@ -9186,7 +9198,7 @@ bool QQuickItem::event(QEvent *ev)
         break;
     case QEvent::ContextMenu:
         // ### Qt 7: add virtual contextMenuEvent (and to QWindow?)
-        ev->ignore();
+        d->handleContextMenuEvent(static_cast<QContextMenuEvent*>(ev));
         break;
     default:
         return QObject::event(ev);
@@ -9490,6 +9502,17 @@ void QQuickItemPrivate::removePointerHandler(QQuickPointerHandler *h)
     QObject::disconnect(h, &QObject::destroyed, q, nullptr);
     if (handlers.isEmpty())
         extra.value().acceptedMouseButtons = extra.value().acceptedMouseButtonsWithoutHandlers;
+}
+
+/*! \internal
+    Replaces any existing context menu with the given \a menu,
+    and returns the one that was already set before, or \c nullptr.
+*/
+QObject *QQuickItemPrivate::setContextMenu(QObject *menu)
+{
+    QObject *ret = (extra.isAllocated() ? extra->contextMenu : nullptr);
+    extra.value().contextMenu = menu;
+    return ret;
 }
 
 #if QT_CONFIG(quick_shadereffect)
@@ -10053,7 +10076,7 @@ QQuickItemPrivate::ExtraData::ExtraData()
 : z(0), scale(1), rotation(0), opacity(1),
   contents(nullptr), screenAttached(nullptr), layoutDirectionAttached(nullptr),
   enterKeyAttached(nullptr),
-  keyHandler(nullptr),
+  keyHandler(nullptr), contextMenu(nullptr),
 #if QT_CONFIG(quick_shadereffect)
   layer(nullptr),
 #endif

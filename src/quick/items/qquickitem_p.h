@@ -272,6 +272,8 @@ public:
     virtual void addPointerHandler(QQuickPointerHandler *h);
     virtual void removePointerHandler(QQuickPointerHandler *h);
 
+    QObject *setContextMenu(QObject *menu);
+
     // data property
     static void data_append(QQmlListProperty<QObject> *, QObject *);
     static qsizetype data_count(QQmlListProperty<QObject> *);
@@ -430,6 +432,7 @@ public:
         QQuickEnterKeyAttached *enterKeyAttached;
         QQuickItemKeyFilter *keyHandler;
         QVector<QQuickPointerHandler *> pointerHandlers;
+        QObject *contextMenu;
 #if QT_CONFIG(quick_shadereffect)
         mutable QQuickItemLayer *layer;
 #endif
@@ -710,6 +713,9 @@ public:
 
     bool anyPointerHandlerWants(const QPointerEvent *event, const QEventPoint &point) const;
     virtual bool handlePointerEvent(QPointerEvent *, bool avoidGrabbers = false);
+#if QT_VERSION < QT_VERSION_CHECK(7, 0, 0)
+    virtual bool handleContextMenuEvent(QContextMenuEvent *event);
+#endif
 
     virtual void setVisible(bool visible);
 

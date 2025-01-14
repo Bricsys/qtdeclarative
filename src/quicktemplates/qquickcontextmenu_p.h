@@ -44,10 +44,11 @@ public:
 Q_SIGNALS:
     void menuChanged();
 
+protected:
+    bool event(QEvent *) override;
+
 private:
     Q_DECLARE_PRIVATE(QQuickContextMenu)
-
-    bool eventFilter(QObject *object, QEvent *event) override;
 };
 
 QT_END_NAMESPACE

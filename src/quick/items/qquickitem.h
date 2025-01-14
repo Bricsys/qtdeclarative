@@ -463,6 +463,9 @@ protected:
     virtual void dropEvent(QDropEvent *);
 #endif
     virtual bool childMouseEventFilter(QQuickItem *, QEvent *);
+#if QT_VERSION >= QT_VERSION_CHECK(7, 0, 0)
+    virtual bool contextMenuEvent(QContextMenuEvent *event);
+#endif
 
     virtual QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *);
     virtual void releaseResources();

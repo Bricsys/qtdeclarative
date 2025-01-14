@@ -8,6 +8,7 @@
 #include <QtQml/qqmlcomponent.h>
 #include <QtQml/qqmlinfo.h>
 #include <QtQuick/qquickwindow.h>
+#include <QtQuick/private/qquickitem_p.h>
 #include <QtQuickTemplates2/private/qquickmenu_p.h>
 
 QT_BEGIN_NAMESPACE
@@ -48,8 +49,14 @@ QQuickContextMenu::QQuickContextMenu(QObject *parent)
     : QObject(*(new QQuickContextMenuPrivate), parent)
 {
     Q_ASSERT(parent);
-    if (!parent->isQuickItemType())
+    if (parent->isQuickItemType()) {
+        auto *itemPriv = QQuickItemPrivate::get(static_cast<QQuickItem *>(parent));
+        Q_ASSERT(itemPriv);
+        if (QObject *oldMenu = itemPriv->setContextMenu(this))
+            qCWarning(lcContextMenu) << this << "replaced" << oldMenu << "on" << parent;
+    } else {
         qmlWarning(parent) << "ContextMenu must be attached to an Item";
+    }
 }
 
 QQuickContextMenu *QQuickContextMenu::qmlAttachedProperties(QObject *object)
@@ -78,36 +85,27 @@ void QQuickContextMenu::setMenu(QQuickMenu *menu)
     if (menu == d->menu)
         return;
 
-    if (d->menu) {
-        auto *attacheeItem = qobject_cast<QQuickItem *>(parent());
-        qCDebug(lcContextMenu) << this << "is removing its event filter on attachee" << attacheeItem;
-        attacheeItem->removeEventFilter(this);
-    }
-
     d->menu = menu;
-
-    if (d->menu) {
-        auto *attacheeItem = qobject_cast<QQuickItem *>(parent());
-        qCDebug(lcContextMenu) << this << "is installing an event filter on attachee" << attacheeItem;
-        attacheeItem->installEventFilter(this);
-    }
-
     emit menuChanged();
 }
 
-bool QQuickContextMenu::eventFilter(QObject *object, QEvent *event)
+bool QQuickContextMenu::event(QEvent *event)
 {
     switch (event->type()) {
     case QEvent::ContextMenu: {
-        qCDebug(lcContextMenu) << this << "is handling filtered ContextMenu event" << event;
+        qCDebug(lcContextMenu) << this << "handling" << event << "on behalf of" << parent();
 
         auto *attacheeItem = qobject_cast<QQuickItem *>(parent());
         auto *menu = this->menu();
+        if (!menu) {
+            qCDebug(lcContextMenu) << this << "no menu instance";
+            return QObject::event(event);
+        }
         menu->setParentItem(attacheeItem);
 
         const auto *contextMenuEvent = static_cast<QContextMenuEvent *>(event);
         const QPoint posRelativeToParent(attacheeItem->mapFromScene(contextMenuEvent->pos()).toPoint());
-        qCDebug(lcContextMenu) << this << "is showing menu instance" << menu << "at" << posRelativeToParent;
+        qCDebug(lcContextMenu) << this << "showing" << menu << "at" << posRelativeToParent;
         menu->popup(posRelativeToParent);
         event->accept();
         return true;
@@ -115,7 +113,7 @@ bool QQuickContextMenu::eventFilter(QObject *object, QEvent *event)
     default:
         break;
     }
-    return QObject::eventFilter(object, event);
+    return QObject::event(event);
 }
 
 QT_END_NAMESPACE
