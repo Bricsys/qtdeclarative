@@ -23,7 +23,7 @@ QT_BEGIN_NAMESPACE
     The performance of RectangularShadow is much better than a general
     one that creates blurred shadow/glow of any shaped item.
 
-    The following example shows how to add a shadow for an \l Rectangle:
+    The following example shows how to add a shadow to a \l Rectangle:
     \table 70%
     \row
     \li \image rectangularshadow-example-1.png
@@ -52,36 +52,41 @@ QT_BEGIN_NAMESPACE
     \endqml
     \endtable
 
-    The API of RectangularShadow is similar to CSS box-shadow, with color, offset,
-    spread and blur values. Additionally, RectangularShadow API contains:
+    The API of RectangularShadow is similar to CSS box-shadow, with color,
+    offset, spread, and blur values. Additionally, RectangularShadow API
+    contains:
+
     \list
-    \li \c real \l radius: Controls the rounding radius applied into rectangle corners.
-    Compared to CSS box-shadow which inherits radius from the parent element,
-    RectangularShadow expects user to set it. This allows different radius and
-    moving the RectangularShadow separately from any parent item.
-    \li \c bool \l cached: Allows caching the blurred shadow texture. This increases
-    the memory usage while potentially improving rendering performance, especially
-    with bigger shadows that don't change dynamically.
-    \li \c item \l material: Contains the ShaderEffect element of the RectangularShadow
-    for advanced use. This allows for example extending the effect with a custom
-    shader.
+    \li \c real \l radius: Controls the rounding radius applied to rectangle
+    corners. Compared to CSS box-shadow, which inherits radius from the parent
+    element, RectangularShadow expects user to set it. This allows you to use
+    different radiuses and move the RectangularShadow separately from its parent
+    item.
+    \li \c bool \l cached: Allows caching the blurred shadow texture. This
+    increases memory usage while potentially improving rendering performance,
+    especially with bigger shadows that don't change dynamically.
+    \li \c item \l material: Contains the ShaderEffect element of the
+    RectangularShadow for advanced use. This allows, for example, extending the
+    effect with a custom shader.
     \endlist
 
-    The rendering output also matches to CSS box-shadow, with few notable
-    differences. These differences exist to make the RectangularShadow as high
-    performance as possible.
+    The rendering output also matches the CSS box-shadow, with few notable
+    differences. These differences exist to make the RectangularShadow as
+    high-performance as possible.
     \list
-    \li Blurring is calculated mathematically in the shader rather than using gaussian
-    blur which CSS box-shadow implementations often use. This makes the shadow look
-    a bit different, especially with larger blur values.
-    \li All the rectangle corners must have even radius. When creating shadow for
-    \l Rectangle with different radii, select the best matchin radius for the shadow
-    or use alternative shadow method (e.g. \l MultiEffect).
+    \li Blurring is calculated mathematically in the shader rather than using
+    Gaussian blur, which CSS box-shadow implementations often use. This makes
+    the shadow look slightly different, especially with larger blur values.
+    \li All the rectangle corners must have an even radius. When creating a
+    shadow for a \l Rectangle with different radiuses, select the best-matching
+    radius for the shadow or use an alternative shadow method, for example,
+    \l MultiEffect.
     \endlist
 
-    Here is a table with screenshots to compare rendering output of RectangularShadow
-    vs. CSS box-shadow on Chrome browser. The right-most element is RectangularShadow
-    in blur multipled with \c {1.2} (so \c 24, \c 48, \c 48) for a closer match.
+    Here is a table with screenshots to compare the rendering output of
+    RectangularShadow and CSS box-shadow in the Chrome browser. The right-most
+    element is RectangularShadow in blur multiplied with \c {1.2}
+    (so \c 24, \c 48, \c 48) for a closer match.
 
     \table 80%
     \header
@@ -114,7 +119,7 @@ QT_BEGIN_NAMESPACE
 
 
     RectangularShadow extends the shadow size with an exact amount regarding
-    to blur amount, while some other shadows (including CSS box-shadow) have
+    the blur amount, while some other shadows (including CSS box-shadow) have
     a multiplier for the size. The size of the shadow item inside a
     RectangularShadow is:
     \badcode
@@ -122,7 +127,7 @@ QT_BEGIN_NAMESPACE
         height = rectangularShadow.height + 2 * blur + 2 * spread
     \endcode
 
-    So for example the shadow item size of the code below is 280x180 pixels.
+    For example, the shadow item size of the code below is 280x180 pixels.
     Radius or offset values do not affect the shadow item size.
     \qml
     RectangularShadow {
@@ -140,10 +145,10 @@ QT_BEGIN_NAMESPACE
     \qmlproperty bool QtQuick.Effects::RectangularShadow::antialiasing
 
     Used to decide if the shadow should use antialiasing or not.
-    When this is true, a single pixel antialiasing is used even
+    When this is \c true, a single pixel antialiasing is used even
     when the \l blur is \c 0.
 
-    By default, the property is set to \c true.
+    The default value is \c true.
 */
 
 QQuickRectangularShadow::QQuickRectangularShadow(QQuickItem *parent)
@@ -159,7 +164,7 @@ QQuickRectangularShadow::QQuickRectangularShadow(QQuickItem *parent)
     This offset is appended to the shadow position, relative to the
     RectangularShadow item position.
 
-    By default, the property is set to \c {Qt.vector2d(0.0, 0.0)} (no offset).
+    The default value is \c {Qt.vector2d(0.0, 0.0)} (no offset).
 */
 QVector2D QQuickRectangularShadow::offset() const
 {
@@ -184,7 +189,7 @@ void QQuickRectangularShadow::setOffset(const QVector2D &offset)
 
     This property defines the RGBA color value that is used for the shadow.
 
-    By default, the property is set to \c {Qt.rgba(0.0, 0.0, 0.0, 1.0)} (black).
+    The default value is \c {Qt.rgba(0.0, 0.0, 0.0, 1.0)} (black).
 */
 QColor QQuickRectangularShadow::color() const
 {
@@ -210,10 +215,11 @@ void QQuickRectangularShadow::setColor(const QColor &color)
     This property defines how many pixels outside the item area are reached
     by the shadow.
 
-    The value ranges from 0.0 (no blur) to inf (infinite blur). By default,
-    the property is set to \c 10.0.
-    \note To match with the CSS box-shadow rendering output, optimal blur amount
-    is something like: \c {1.2 * cssBlur}
+    The value ranges from 0.0 (no blur) to inf (infinite blur).
+    The default value is \c 10.0.
+
+    \note To match with the CSS box-shadow rendering output, the optimal blur
+    amount is something like: \c {1.2 * cssBlur}
 */
 qreal QQuickRectangularShadow::blur() const
 {
@@ -243,7 +249,7 @@ void QQuickRectangularShadow::setBlur(qreal blur)
     The value ranges from 0.0 to half of the effective width or height of
     the item, whichever is smaller.
 
-    By default, the value is \c 0.
+    The default value is \c 0.
 */
 qreal QQuickRectangularShadow::radius() const
 {
@@ -271,17 +277,16 @@ void QQuickRectangularShadow::setRadius(qreal radius)
     pixels. This spread is appended to the shadow size, relative to the
     RectangularShadow item size.
 
-    The value ranges from -inf to inf. By default, the property is
-    set to \c 0.0.
+    The value ranges from -inf to inf. The default value is \c 0.0.
 
     \note The radius behavior with spread matches to CSS box-shadow
     standard. So when the spread is smaller than the radius, the
-    shadow radius grows by the amount of spread. But when the spread grows
-    bigger, radius will grow only partially.
-    https://www.w3.org/TR/css-backgrounds-3/#shadow-shape
+    shadow radius grows by the amount of spread. When the spread grows
+    bigger, radius grows only partially. See \l
+    {https://www.w3.org/TR/css-backgrounds-3/#shadow-shape}.
     If the shadow radius should grow in sync when the shadow grows (like
-    with the Firefox CSS box-shadow implementation), grow the RectangularShadow
-    \c with and \c height instead of using the \c spread.
+    with the Firefox CSS box-shadow implementation), increase the
+    RectangularShadow \c width and \c height instead of using the \c spread.
 */
 qreal QQuickRectangularShadow::spread() const
 {
@@ -313,7 +318,7 @@ void QQuickRectangularShadow::setSpread(qreal spread)
     It is recommended to disable the cache when the source or the effect
     properties are animated.
 
-    By default, the property is set to \c false.
+    The default value is \c false.
 */
 bool QQuickRectangularShadow::isCached() const
 {
@@ -336,16 +341,15 @@ void QQuickRectangularShadow::setCached(bool cached)
 /*!
     \qmlproperty item QtQuick.Effects::RectangularShadow::material
 
-    This property contains the ShaderEffect item of the shadow. It can
-    be useful in different ways, for one to visualize the reach of the shadow
-    as the effect item has often different position and size than the
+    This property contains the \l ShaderEffect item of the shadow. You can use
+    this property to visualize the reach of the shadow, because the effect item
+    often has different position and size than the
     RectangularShadow item, due to \l blur, \l offset and \l spread.
 
     The material can also be replaced with a custom one. The default material
-    is a ShaderEffect with the following fragmentShader:
+    is a \l ShaderEffect with the following \l {ShaderEffect::}{fragmentShader}:
 
     \badcode
-
     #version 440
 
     layout(location = 0) in vec2 texCoord;
@@ -374,9 +378,9 @@ void QQuickRectangularShadow::setCached(bool cached)
     }
     \endcode
 
-    Qt Quick Effect Maker contains RectangularShadow node that can be used
-    as a starting point for a custom material. Exported effect containing
-    that node can be directly used as a RectangularShadow material.
+    Qt Quick Effect Maker contains the RectangularShadow node that can be used
+    as a starting point for a custom material. You can directly use the exported
+    effect containing that node as a RectangularShadow material.
     \qml
         RectangularShadow {
             ...
@@ -384,7 +388,7 @@ void QQuickRectangularShadow::setCached(bool cached)
         }
     \endqml
 
-    To return to use the default material, set the material property to null.
+    To return to use the default material, set the material property to \c null.
 */
 QQuickItem *QQuickRectangularShadow::material() const
 {
