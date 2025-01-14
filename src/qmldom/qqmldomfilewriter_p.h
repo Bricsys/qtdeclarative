@@ -39,7 +39,7 @@ public:
     {
         if (!silentWarnings) {
             for (const QString &w : std::as_const(warnings))
-                qWarning() << w;
+                qWarning("%ls", qUtf16Printable(w));
         }
         if (shouldRemoveTempFile)
             tempFile.remove();
