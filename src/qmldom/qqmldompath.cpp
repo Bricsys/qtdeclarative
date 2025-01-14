@@ -22,17 +22,118 @@ namespace PathEls {
 \brief Represents an immutable JsonPath like path in the Qml code model (from a DomItem to another
  DomItem)
 
+
+\section1 Implementation Details
+
+The Path class is implemented as a linked list tree where components of the path can be shared
+between multiple paths.
+
+We will represent a list of components with
+\badcode
+[a] // one element "a" in the list
+[a,b,c] // three elements in the list
+\endcode
+and the linked list tree structure with arrows:
+\badcode
+[a,b,c] <- [y,z] // one linked list made up of two nodes consisting of a, b, c, y and z
+   ^
+   |______ [q] <- [w] // one linked list made up of three nodes consisting of a, b, c, q and w,
+                      // sharing the a,b and c part with the above list
+\endcode
+
+Appending components to the path will create a new linked list node, for example when appending \c d
+to \c{[a,b,c]}:
+\badcode
+[a,b,c] <- [d]
+\endcode
+This allows to share the path prefix when constructing paths recursively, for example.
+
+\section2 PathData as elements of the linked list trees
+
+Each node of the linked list tree is stored as \c PathData. It contains a vector of
+\c PathComponents, a pointer to the previous element in the path (called parent), and a QStringList
+to extend the lifetime of QStringViews used inside of PathComponent.
+
+\section3 PathComponents
+
+The path can also be "compressed", as the linked list structure contains vectors of components:
+\c {a.b.c.d} could be represented by
+\badcode
+[a] <- [b] <- [c] <- [d]
+\endcode
+(which is the default) or also
+\badcode
+[a, b] <- [c, d]
+\endcode
+when \c{[c,d]} got appended to \c{[a, b]} via \c withPath, for example.
+
+\section3 String Data
+
+The PathData is responsible to own the string data used by the PathComponents it contains.
+PathComponents do not contain any owning QStrings, they only hold QStringViews. To construct a
+PathData, store the string data in the QStringList such that it can be referenced by the
+QStringViews of PathData's PathComponents. PathData are assumed to be immutable after construction
+to avoid any dangling references due to a QStringList reallocation, for example.
+
+\section2 Appending
+
+Appending one component to the Path allows to share the "parent" path in the memory and should be
+the preferred way of constructing paths for DomItems.
+
+\section2 Iteration
+
+To iterate through the path, you need two iterators. One for the current data (that contains the
+vector of components and the pointer to the "parent") and one for the current idx in the vector of
+components.
+
+To access \c d in that path:
+\badcode
+[a, b] <- [c, d]
+\endcode
+you need to do
+\badcode
+path.m_data->components[1].
+\endcode
+to access \c b instead, you need to do:
+\badcode
+path.m_data->parent->components[1]
+\endcode
+
+Note that all kind of forward iterations (getting the components a, b, c, and d in this order from
+a.b.c.d) is a bit more involved, and backward iteration is much faster/easier.
+
+\section2 Slicing
+
+The path also supports slicing via the \c m_length and \c m_endOffset members. \c m_endOffset
+ignores the n last components, for example \c{a.b.c.d} can be stored as
+
+\badcode
+[root] <- [a] <- [b] <- [c] <- [d] <- [e] <- [f] <- [g]
+\endcode
+with m_endOffset = 3 and m_length = 4.
+
+\section2 Lifetime in the DOM
+
+Paths are usually created during the Dom construction, and destroyed when the DomItem or Dom
+element holding it is destroyed.
+
+The underlying PathData, on the other hand, is managed by a std::shared_ptr. It is destroyed when
+all Paths referencing it are destroyed. PathData can be referenced either directly through Path's \c
+m_data member, or indirectly through another PathData's \c m_parent member.
+
+\section1 Usage
+
 It can be created either from a string, with the path static functions
 or by modifying an existing path
 \code
 Path qmlFilePath =
     Path::fromString(u"$env.qmlFilesByPath[\"/path/to/file\"]");
-Path imports = qmlFilePath.subField(u"imports")
-Path currentComponentImports = Path::current(u"component").subField(u"imports");
+Path imports = qmlFilePath.withField(u"imports")
+Path currentComponentImports = Path::fromCurrent(u"component").withField(u"imports");
 \endcode
 
 This is a way to refer to elements in the Dom models that is not dependent from the source location,
-and thus can be used also be used in visual tools.
+and thus can also be used in visual tools.
 A Path is quite stable toward reallocations or changes in the Dom model, and accessing it is safe
 even when "dangling", thus it is a good long term reference to an element in the Dom model.
 
@@ -64,7 +165,8 @@ The current contexts are:
 \li \l{@component} The root object of the current component.
 \li \l{@module} The current module instantiation.
 \li \l{@ids} The ids in the current component.
-\li \l{@types} All the types in the current component (reachable through imports, respecting renames)
+\li \l{@types} All the types in the current component (reachable through imports, respecting
+       renames)
 \li \l{@lookupStrict} The strict lookup inside the current object: localJS, ids, properties, proto
        properties, component, its properties, global context, oterwise error
 \li \l{@lookupDynamic} The default lookup inside the current object: localJS, ids, properties, proto
@@ -170,6 +272,16 @@ int PathComponent::cmp(const PathComponent &p1, const PathComponent &p2)
 
 } // namespace PathEls
 
+/*!
+\internal
+\brief Returns the n.th component in linear(!) time.
+
+Especially component(0)-calls have to iterate through the entire path.
+Example: returns \c d for 3 on
+\badcode
+a.b <- c.d <- e <- f
+\endcode
+*/
 const PathEls::PathComponent &Path::component(int i) const
 {
     static Component emptyComponent;
@@ -268,6 +380,10 @@ Path Path::last() const
     return mid(m_length-1, 1);
 }
 
+/*!
+\internal
+\brief Splits the path at the last field, root or current Component.
+*/
 Source Path::split() const
 {
     int i = length();
@@ -694,6 +810,12 @@ collectBackwards(PathEls::PathData *pathStart, qsizetype size)
     return std::make_pair(componentList, addedStrs);
 }
 
+/*!
+\internal
+\brief Returns a copy of this with \c toAdd appended to it
+
+Compresses \c toAdd into one vector of components before adding it to \c this.
+*/
 Path Path::withPath(const Path &toAdd, bool avoidToAddAsBase) const
 {
     if (toAdd.length() == 0)
@@ -732,6 +854,21 @@ Path Path::withPath(const Path &toAdd, bool avoidToAddAsBase) const
     return result;
 }
 
+/*!
+\internal
+\brief Expand a path prefix hidden by slicing
+
+This sets m_length to the maximum length this path can have.
+
+For example, for a path
+\badcode
+b -> c -> d when encoded as a -> b -> c -> d -> e -> f, m_endOffset = 2, m_length = 3
+\endcode
+expandFront() will return
+\badcode
+a -> b -> c -> d when encoded as a -> b -> c -> d -> e -> f, m_endOffset = 2, m_length = 4
+\endcode
+*/
 Path Path::expandFront() const
 {
     int newLen = 0;
@@ -744,6 +881,21 @@ Path Path::expandFront() const
     return Path(m_endOffset, newLen, m_data);
 }
 
+/*!
+\internal
+\brief Expand a path suffix hidden by slicing.
+
+This sets m_endOffset to 0.
+
+For example, for a path
+\badcode
+c -> d when encoded as a -> b -> c -> d -> e -> f -> g, m_endOffset = 3, m_length = 2
+\endcode
+expandBack() will return
+\badcode
+c -> d -> e -> f -> g when encoded as a -> b -> c -> d -> e -> f -> g, m_endOffset = 0, m_length = 5
+\endcode
+*/
 Path Path::expandBack() const
 {
     if (m_endOffset > 0)
