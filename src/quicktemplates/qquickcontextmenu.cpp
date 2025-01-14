@@ -27,9 +27,15 @@ Q_STATIC_LOGGING_CATEGORY(lcContextMenu, "qt.quick.controls.contextmenu")
     upon a platform-specific event, such as a right click or the context menu
     key.
 
-    \omit
-    TODO: code snippet
-    \endomit
+    \snippet qtquickcontrols-contextmenu.qml root
+
+    \section1 Sharing context menus
+
+    It's possible to share a \l Menu amongst several attached context menu
+    objects. This allows reusing a single Menu when the items that need
+    context menus have data in common. For example:
+
+    \snippet qtquickcontrols-contextmenu-shared.qml file
 */
 
 /*!
@@ -95,6 +101,9 @@ QQuickContextMenu *QQuickContextMenu::qmlAttachedProperties(QObject *object)
 
     This property holds the context menu that will be opened. It can be set to
     any \l Menu object.
+
+    \note The \l Menu assigned to this property cannot be given an id. See
+    \l {Sharing context menus} for more information.
 */
 QQuickMenu *QQuickContextMenu::menu() const
 {
