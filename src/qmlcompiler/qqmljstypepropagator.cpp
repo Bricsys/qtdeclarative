@@ -265,8 +265,7 @@ void QQmlJSTypePropagator::generate_LoadRuntimeString(int stringId)
 void QQmlJSTypePropagator::generate_MoveRegExp(int regExpId, int destReg)
 {
     Q_UNUSED(regExpId)
-    Q_UNUSED(destReg)
-    INSTR_PROLOGUE_NOT_IMPLEMENTED();
+    m_state.setRegister(destReg, m_typeResolver->literalType(m_typeResolver->regexpType()));
 }
 
 void QQmlJSTypePropagator::generate_LoadClosure(int value)

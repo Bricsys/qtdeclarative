@@ -98,6 +98,9 @@ QQmlJSTypeResolver::QQmlJSTypeResolver(QQmlJSImporter *importer)
     m_timeType = builtinTypes.type(u"QTime"_s).scope;
     Q_ASSERT(m_timeType);
 
+    m_regexpType = builtinTypes.type(u"QRegularExpression"_s).scope;
+    Q_ASSERT(m_regexpType);
+
     m_variantListType = builtinTypes.type(u"QVariantList"_s).scope;
     assertExtension(m_variantListType, "Array"_L1);
 

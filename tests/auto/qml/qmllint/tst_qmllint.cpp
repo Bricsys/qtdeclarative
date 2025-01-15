@@ -1396,6 +1396,7 @@ void TestQmllint::cleanQmlCode_data()
     QTest::newRow("aliasGroup") << QStringLiteral("aliasGroup.qml");
 
     QTest::addRow("deceptiveLayout") << u"deceptiveLayout.qml"_s;
+    QTest::addRow("regExp") << u"regExp.qml"_s;
 }
 
 void TestQmllint::cleanQmlCode()
