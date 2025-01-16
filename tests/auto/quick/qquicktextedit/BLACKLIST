@@ -41,7 +41,3 @@ opensuse-leap
 # QTBUG-132632
 [cursorDelegate]
 opensuse-leap
-
-# QTBUG-132651
-[keyboardSelection]
-opensuse-leap
