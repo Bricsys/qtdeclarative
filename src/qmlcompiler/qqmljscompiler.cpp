@@ -685,8 +685,13 @@ std::variant<QQmlJSAotFunction, QList<QQmlJS::DiagnosticMessage>> QQmlJSAotCompi
     const QString name = m_document->stringAt(irBinding.propertyNameIndex);
     QQmlJSCompilePass::Function function = initializer.run(
                 context, name, astNode, irBinding, &errors);
-    const QQmlJSAotFunction aotFunction = doCompileAndRecordAotStats(
-            context, &function, &errors, name, astNode->firstSourceLocation());
+
+    QQmlJSAotFunction aotFunction;
+    if (errors.isEmpty()) {
+        aotFunction = doCompileAndRecordAotStats(
+                context, &function, &errors, name, astNode->firstSourceLocation());
+    }
+
 
     if (!errors.isEmpty()) {
         for (auto &error : errors) {

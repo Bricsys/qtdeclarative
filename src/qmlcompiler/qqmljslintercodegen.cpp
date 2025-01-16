@@ -41,8 +41,10 @@ QQmlJSLinterCodegen::compileBinding(const QV4::Compiler::Context *context,
     const QString name = m_document->stringAt(irBinding.propertyNameIndex);
     QQmlJSCompilePass::Function function =
             initializer.run(context, name, astNode, irBinding, &initializationErrors);
-    for (const auto &error : initializationErrors)
-        diagnose(error.message, error.type, error.loc);
+    for (const auto &error : initializationErrors) {
+        diagnose(u"Could not determine signature of binding for %1: %2"_s.arg(name, error.message),
+                 error.type, error.loc);
+    }
 
     QList<QQmlJS::DiagnosticMessage> analyzeErrors;
     if (!analyzeFunction(context, &function, &analyzeErrors)) {
@@ -70,8 +72,10 @@ QQmlJSLinterCodegen::compileFunction(const QV4::Compiler::Context *context,
                 &m_typeResolver, m_currentObject->location, m_currentScope->location);
     QQmlJSCompilePass::Function function =
             initializer.run(context, name, astNode, &initializationErrors);
-    for (const auto &error : initializationErrors)
-        diagnose(error.message, error.type, error.loc);
+    for (const auto &error : initializationErrors) {
+        diagnose(u"Could not determine signature of function %1: %2"_s.arg(name, error.message),
+                 error.type, error.loc);
+    }
 
     QList<QQmlJS::DiagnosticMessage> analyzeErrors;
     if (!analyzeFunction(context, &function, &analyzeErrors)) {

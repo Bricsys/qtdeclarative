@@ -259,6 +259,9 @@ protected:
     }
 
     void warnUnresolvedType(const QQmlJSScope::ConstPtr &type) const;
+    void warnMissingPropertyForBinding(
+            const QString &property, const QQmlJS::SourceLocation &location,
+            const std::optional<QQmlJSFixSuggestion> &fixSuggestion = {});
 
     QVector<QQmlJSAnnotation> parseAnnotations(QQmlJS::AST::UiAnnotationList *list);
     void setAllBindings();
