@@ -218,7 +218,7 @@ static QMarginsF toLocalMargins(const QMarginsF &margins, QQuickItem *fromItem, 
 
 void QQuickSafeArea::updateSafeArea()
 {
-    qCDebug(lcSafeArea) << "Updating" << this;
+    qCDebug(lcSafeArea) << "✨ Updating" << this;
 
     auto *attachedItem = qobject_cast<QQuickItem*>(parent());
     if (!QQuickItemPrivate::get(attachedItem)->componentComplete) {
@@ -313,11 +313,30 @@ void QQuickSafeArea::itemTransformChanged(QQuickItem *item, QQuickItem *transfor
     Q_ASSERT(item == parent());
 
     auto *transformedItemPrivate = QQuickItemPrivate::get(transformedItem);
-    qCDebug(lcSafeArea) << "Transform changed for" << transformedItem
+    qCDebug(lcSafeArea) << "📏 Transform changed for" << transformedItem
                         << "with dirty state" << transformedItemPrivate->dirtyToString();
 
     if (qobject_cast<QQuickFlickable*>(transformedItem->parentItem())) {
         qCDebug(lcSafeArea) << "Ignoring transform change for Flickable content item";
+        return;
+    }
+
+    // The order of transform and geometry change callbacks may not be in paint order,
+    // so to ensure we update the safe areas in paint order we find the item closest
+    // to the transformed item with a safe area, and let that safe area trigger the
+    // update recursively in paint order.
+    if (transformedItem != item) {
+        for (auto *parent = item->parentItem(); parent; parent = parent->parentItem()) {
+            if (parent->findChild<QQuickSafeArea*>(Qt::FindDirectChildrenOnly))
+                item = parent;
+
+            if (parent == transformedItem)
+                break;
+        }
+    }
+
+    if (item != parent()) {
+        qCDebug(lcSafeArea) << "Found" << item << "closer to transformed item than" << this;
         return;
     }
 
@@ -338,7 +357,7 @@ void QQuickSafeArea::itemTransformChanged(QQuickItem *item, QQuickItem *transfor
         return;
     }
 
-    updateSafeArea();
+    updateSafeAreasRecursively(item);
 }
 
 void QQuickSafeArea::itemGeometryChanged(QQuickItem *item, QQuickGeometryChange change, const QRectF &oldGeometry)
@@ -349,9 +368,10 @@ void QQuickSafeArea::itemGeometryChanged(QQuickItem *item, QQuickGeometryChange 
     auto *itemPrivate = QQuickItemPrivate::get(item);
     itemPrivate->removeItemChangeListener(this, QQuickItemPrivate::Geometry);
 
-    qCDebug(lcSafeArea) << "Geometry changed for" << item << "from" << oldGeometry
+    qCDebug(lcSafeArea) << "📐 Geometry changed for" << item << "from" << oldGeometry
                         << "to" << QRectF(item->position(), item->size());
-    updateSafeArea();
+
+    updateSafeAreasRecursively(item);
 }
 
 void QQuickSafeArea::updateSafeAreasRecursively(QQuickItem *item)
