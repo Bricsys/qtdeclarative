@@ -874,7 +874,19 @@ void QQmlJSTypePropagator::propagatePropertyLookup(const QString &propertyName, 
 
     if (!m_state.accumulatorOut().isValid()) {
         if (m_typeResolver->isPrefix(propertyName)) {
-            Q_ASSERT(m_state.accumulatorIn().isValid());
+
+            const QQmlJSRegisterContent accumulatorIn = m_state.accumulatorIn();
+            Q_ASSERT(accumulatorIn.isValid());
+
+            if (!accumulatorIn.containedType()->isReferenceType()) {
+                m_logger->log(u"Cannot use non-QObject type %1 to access prefixed import"_s.arg(
+                                      accumulatorIn.containedType()->internalName()),
+                              qmlPrefixedImportType,
+                              currentSourceLocation());
+                setVarAccumulatorAndError();
+                return;
+            }
+
             addReadAccumulator();
             setAccumulator(m_pool->createImportNamespace(
                         m_jsUnitGenerator->getStringId(propertyName),
