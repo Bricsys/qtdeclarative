@@ -5465,6 +5465,15 @@ bool QQuickItemPrivate::transformChanged(QQuickItem *transformedItem)
 {
     Q_Q(QQuickItem);
 
+#if QT_CONFIG(quick_shadereffect)
+    if (q == transformedItem) {
+        if (extra.isAllocated() && extra->layer)
+            extra->layer->updateMatrix();
+    }
+#endif
+
+    itemChange(QQuickItem::ItemTransformHasChanged, transformedItem);
+
     bool childWantsIt = false;
     if (subtreeTransformChangedEnabled) {
         // Inform the children in paint order: by the time we visit leaf items,
@@ -5474,12 +5483,6 @@ bool QQuickItemPrivate::transformChanged(QQuickItem *transformedItem)
             childWantsIt |= QQuickItemPrivate::get(child)->transformChanged(transformedItem);
     }
 
-#if QT_CONFIG(quick_shadereffect)
-    if (q == transformedItem) {
-        if (extra.isAllocated() && extra->layer)
-            extra->layer->updateMatrix();
-    }
-#endif
     const bool thisWantsIt = q->flags().testFlag(QQuickItem::ItemObservesViewport);
     const bool ret = childWantsIt || thisWantsIt;
     if (!ret && componentComplete && subtreeTransformChangedEnabled) {
@@ -5491,7 +5494,6 @@ bool QQuickItemPrivate::transformChanged(QQuickItem *transformedItem)
     if (thisWantsIt && q->clip() && !(dirtyAttributes & QQuickItemPrivate::Clip))
         dirty(QQuickItemPrivate::Clip);
 
-    itemChange(QQuickItem::ItemTransformHasChanged, transformedItem);
     return ret;
 }
 
