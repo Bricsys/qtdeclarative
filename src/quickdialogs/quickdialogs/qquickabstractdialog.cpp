@@ -88,6 +88,8 @@ Q_LOGGING_CATEGORY(lcDialogs, "qt.quick.dialogs")
     Dialog implementations, set the desired properties, and call \l open().
     Dialog emits \l accepted() or \l rejected() when the user is done with
     the dialog.
+
+    \note This is an internal type that cannot be created in QML.
 */
 
 /*!
