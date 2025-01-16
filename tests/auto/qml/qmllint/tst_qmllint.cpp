@@ -854,7 +854,12 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
     QTest::newRow("BadModulePrefix2")
             << QStringLiteral("badModulePrefix2.qml")
             << Result { { Message { QStringLiteral(
-                       "Cannot use a non-QObject type QRectF to access prefixed import") } } };
+                       "Cannot use non-QObject type QRectF to access prefixed import") } },
+                        { Message { QStringLiteral(
+                       "Type not found in namespace") },
+                          Message { QStringLiteral(
+                       "Member \"BirthdayParty\" not found on type \"QRectF\"") } },
+               };
     QTest::newRow("AssignToReadOnlyProperty")
             << QStringLiteral("assignToReadOnlyProperty.qml")
             << Result { { Message {

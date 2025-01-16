@@ -1580,13 +1580,7 @@ QQmlJSRegisterContent QQmlJSTypeResolver::memberType(
                 QQmlJSRegisterContent::GenericObjectProperty, jsValueType());
     }
     if (type.isImportNamespace()) {
-        if (type.scopeType()->accessSemantics() != QQmlJSScope::AccessSemantics::Reference) {
-            m_logger->log(u"Cannot use a non-QObject type %1 to access prefixed import"_s.arg(
-                                  type.scopeType()->internalName()),
-                          qmlPrefixedImportType, type.scopeType()->sourceLocation());
-            return {};
-        }
-
+        Q_ASSERT(type.scopeType()->isReferenceType());
         return registerContentForName(
                     name, type.scopeType(),
                     type.variant() == QQmlJSRegisterContent::ObjectModulePrefix);
