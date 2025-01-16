@@ -236,6 +236,14 @@ void QQmlJSImportVisitor::warnUnresolvedType(const QQmlJSScope::ConstPtr &type) 
                           qmlUnresolvedType, type->sourceLocation());
 }
 
+void QQmlJSImportVisitor::warnMissingPropertyForBinding(
+        const QString &property, const QQmlJS::SourceLocation &location,
+        const std::optional<QQmlJSFixSuggestion> &fixSuggestion)
+{
+    m_logger->log(QStringLiteral("Could not find property \"%1\".").arg(property),
+                  qmlMissingProperty, location, true, true, fixSuggestion);
+}
+
 static bool mayBeUnresolvedGroupedProperty(const QQmlJSScope::ConstPtr &scope)
 {
     return scope->scopeType() == QQmlSA::ScopeType::GroupedPropertyScope && !scope->baseType();
@@ -767,8 +775,7 @@ void QQmlJSImportVisitor::processPropertyBindingObjects()
         QQmlJSMetaProperty property = objectBinding.scope->property(propertyName);
 
         if (!property.isValid()) {
-            m_logger->log(QStringLiteral("Property \"%1\" does not exist").arg(propertyName),
-                          qmlMissingProperty, objectBinding.location);
+            warnMissingPropertyForBinding(propertyName, objectBinding.location);
             continue;
         }
         const auto handleUnresolvedProperty = [&](const QQmlJSScope::ConstPtr &) {
@@ -989,9 +996,7 @@ void QQmlJSImportVisitor::processPropertyBindings()
                     }
                 }
 
-                m_logger->log(QStringLiteral("Property \"%1\" does not exist.")
-                                      .arg(name),
-                              qmlMissingProperty, location, true, true, fixSuggestion);
+                warnMissingPropertyForBinding(name, location, fixSuggestion);
                 continue;
             }
 
