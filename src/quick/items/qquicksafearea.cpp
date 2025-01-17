@@ -53,7 +53,7 @@ Q_STATIC_LOGGING_CATEGORY(lcSafeArea, "qt.quick.safearea", QtWarningMsg)
     In this scenario, the item may reflect the header's position and size
     to the child items via the additionalMargins property.
 
-    The additional margins will be combined with any margins that the
+    The additional margins will be added to any margins that the
     item already picks up from its parent hierarchy (including system
     margins, such as title bars or status bars), and child items will
     reflect the combined margins accordingly.
@@ -64,13 +64,11 @@ Q_STATIC_LOGGING_CATEGORY(lcSafeArea, "qt.quick.safearea", QtWarningMsg)
       \li \br \inlineimage safearea-ios-header.webp
     \endtable
 
-    In the example above, the header item also takes safe area margins
-    into account, to ensure there's enough room for its content, even
-    when the header is partially covered by a title bar or status bar.
-
-    This will increase the height of the header, which is then
-    reflected via the additional safe area margins to children
-    of the content item.
+    In the example above, the header item is positioned at the top of
+    the window, which may potentially overlap with existing safe area
+    margins coming from the window. To account for this we only add
+    additional margins for the part of the header that extends beyond
+    the window's safe area margins.
 
     \note In this example the header item does not overlap the child item,
     as the goal is to show how the items are positioned and resized in
@@ -169,19 +167,25 @@ QMarginsF QQuickSafeArea::margins() const
 
     This property holds the additional safe area margins for the item.
 
-    The resulting safe area margins of the item are the maximum of any
-    inherited safe area margins (for example from title bars or status bar)
-    and the additional margins applied to the item.
+    The additional safe area margins can not be negative, and will be
+    automatically clamped to 0.
+
+    The resulting safe area margins of the item are the sum of the inherited
+    margins (for example from title bars or status bar) and the additional
+    margins applied to the item.
 
     \sa margins
  */
 
 void QQuickSafeArea::setAdditionalMargins(const QMarginsF &additionalMargins)
 {
-    if (additionalMargins == m_additionalMargins)
+    // Additional margins should never be negative
+    auto newMargins = additionalMargins | QMarginsF();
+
+    if (newMargins == m_additionalMargins)
         return;
 
-    m_additionalMargins = additionalMargins;
+    m_additionalMargins = newMargins;
 
     emit additionalMarginsChanged();
 
@@ -213,7 +217,7 @@ static QMarginsF toLocalMargins(const QMarginsF &margins, QQuickItem *fromItem, 
         margins.top() > 0 ? localMarginRect.top() : 0,
         margins.right() > 0 ? toItem->width() - localMarginRect.right() : 0,
         margins.bottom() > 0 ? toItem->height() - localMarginRect.bottom() : 0
-    );
+    ) | QMarginsF();
 }
 
 void QQuickSafeArea::updateSafeArea()
@@ -226,45 +230,52 @@ void QQuickSafeArea::updateSafeArea()
         return;
     }
 
-    const auto *window = attachedItem->window();
-
-    QMarginsF additionalMargins, windowMargins;
-    for (auto *item = attachedItem; item; item = item->parentItem()) {
-        // We attach the safe area to the relevant item for an attachee
-        // such as QQuickWindow or QQuickPopup, so we can't go via
-        // qmlAttachedPropertiesObject to find the safe area for an
-        // item, as the attached object cache is based on the original
-        // attachee.
-
-        if (item != attachedItem && qobject_cast<QQuickFlickable*>(item)) {
+    QMarginsF inheritedMargins;
+    auto *parentItem = attachedItem->parentItem();
+    while (parentItem) {
+        if (qobject_cast<QQuickFlickable*>(parentItem)) {
             // Stop propagation of safe areas when we hit a Flickable,
             // as items within the content item that account for safe
             // area margins will continuously update when the content
             // item is moved, which is not necessarily what the user
             // expects.
-            qCDebug(lcSafeArea) << "Stopping safe area margin propagation on" << item;
+            qCDebug(lcSafeArea) << "Stopping safe area margin propagation on" << parentItem;
             break;
         }
 
-        if (auto *safeArea = item->findChild<QQuickSafeArea*>(Qt::FindDirectChildrenOnly)) {
-            additionalMargins = additionalMargins | toLocalMargins(
-                safeArea->additionalMargins(), item, attachedItem);
+
+        // We attach the safe area to the relevant item for an attachee
+        // such as QQuickWindow or QQuickPopup, so we can't go via
+        // qmlAttachedPropertiesObject to find the safe area for an
+        // item, as the attached object cache is based on the original
+        // attachee.
+        if (auto *safeArea = parentItem->findChild<QQuickSafeArea*>(Qt::FindDirectChildrenOnly)) {
+            inheritedMargins = safeArea->margins();
+            break;
         }
 
-        if (window && item == window->contentItem()) {
-            windowMargins = toLocalMargins(
-                window->safeAreaMargins(), item, attachedItem);
-        }
+        parentItem = parentItem->parentItem();
     }
 
-    // Combine margins, but make sure they are never negative
-    const QMarginsF newMargins = QMarginsF() | windowMargins | additionalMargins;
+    const auto *window = attachedItem->window();
+    if (!parentItem && window) {
+        // We didn't find a parent item with a safe area,
+        // so inherit the margins from the window.
+        parentItem = window->contentItem();
+        inheritedMargins = window->safeAreaMargins();
+    }
+
+    auto inheritedMarginsMapped = toLocalMargins(inheritedMargins, parentItem, attachedItem);
+
+    // Make sure margins are never negative
+    const QMarginsF newMargins = QMarginsF() | (inheritedMarginsMapped + additionalMargins());
 
     if (newMargins != m_safeAreaMargins) {
         qCDebug(lcSafeArea) << "Margins changed from" << m_safeAreaMargins
             << "to" << newMargins
-            << "based on window margins" << windowMargins
-            << "and additional margins" << additionalMargins;
+            << "based on inherited" << inheritedMargins
+            << "mapped to local" << inheritedMarginsMapped
+            << "and additional" << additionalMargins();
 
         m_safeAreaMargins = newMargins;
 

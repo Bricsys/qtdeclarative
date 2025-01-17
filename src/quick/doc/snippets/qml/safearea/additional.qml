@@ -16,7 +16,7 @@ Rectangle {
     Rectangle {
         id: headerItem
         width: parent.width
-        height: 80 + parent.SafeArea.margins.top
+        height: 80
         gradient: Gradient.WinterNeva
         z: 1
     }
@@ -27,6 +27,7 @@ Rectangle {
         z: 0
 
         SafeArea.additionalMargins.top: headerItem.height
+                                      - parent.SafeArea.margins.top
 
         Rectangle {
             id: childItem

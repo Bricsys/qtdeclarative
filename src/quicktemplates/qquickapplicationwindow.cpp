@@ -235,8 +235,12 @@ void QQuickApplicationWindowPrivate::relayout()
     // Install additional margins on the control, which get reflected
     // to the content item, but not to the header/footer/menuBar, as
     // these are siblings of the control
-    auto *safeArea = static_cast<QQuickSafeArea*>(qmlAttachedPropertiesObject<QQuickSafeArea>(control));
-    safeArea->setAdditionalMargins(QMarginsF(0, menuBarHeight + headerheight, 0, footerHeight));
+    auto *controlSafeArea = static_cast<QQuickSafeArea*>(qmlAttachedPropertiesObject<QQuickSafeArea>(control));
+    auto *windowSafeArea = static_cast<QQuickSafeArea*>(qmlAttachedPropertiesObject<QQuickSafeArea>(q));
+    const auto inheritedMargins = windowSafeArea->margins();
+    controlSafeArea->setAdditionalMargins(QMarginsF(
+        0, (menuBarHeight + headerheight) - inheritedMargins.top(),
+        0, footerHeight - inheritedMargins.bottom()));
 }
 
 void QQuickApplicationWindowPrivate::itemGeometryChanged(QQuickItem *item, QQuickGeometryChange change, const QRectF &diff)
@@ -844,11 +848,17 @@ void QQuickApplicationWindow::classBegin()
     // user to the QQuickWindow's content item, as well the additional
     // margins we add to the control directly to account for the header,
     // footer and menu bar.
-    auto *safeArea = qmlAttachedPropertiesObject<QQuickSafeArea>(d->control);
-    installPropertyBinding(this, "leftPadding"_L1, safeArea, "margins.left"_L1);
-    installPropertyBinding(this, "topPadding"_L1, safeArea, "margins.top"_L1);
-    installPropertyBinding(this, "rightPadding"_L1, safeArea, "margins.right"_L1);
-    installPropertyBinding(this, "bottomPadding"_L1, safeArea, "margins.bottom"_L1);
+    auto *controlSafeArea = qmlAttachedPropertiesObject<QQuickSafeArea>(d->control);
+    installPropertyBinding(this, "leftPadding"_L1, controlSafeArea, "margins.left"_L1);
+    installPropertyBinding(this, "topPadding"_L1, controlSafeArea, "margins.top"_L1);
+    installPropertyBinding(this, "rightPadding"_L1, controlSafeArea, "margins.right"_L1);
+    installPropertyBinding(this, "bottomPadding"_L1, controlSafeArea, "margins.bottom"_L1);
+
+    // The additional margins for our header, footer and menu bar depend on the window margins
+    auto *windowSafeArea = static_cast<QQuickSafeArea*>(qmlAttachedPropertiesObject<QQuickSafeArea>(this));
+    QObject::connect(windowSafeArea, &QQuickSafeArea::marginsChanged, this, [d]{
+        d->relayout();
+    });
 }
 
 void QQuickApplicationWindow::componentComplete()

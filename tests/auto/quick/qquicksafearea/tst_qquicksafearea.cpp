@@ -156,15 +156,28 @@ void tst_QQuickSafeArea::additionalMargins()
 
     auto *additionalItem = window->findChild<QQuickItem*>("additionalItem");
     QCOMPARE(additionalItem->property("margins").value<QMarginsF>(),
-        QMarginsF(120, 110, 140, 130));
+        QMarginsF(140, 120, 180, 160));
 
     auto *additionalChild = additionalItem->findChild<QQuickItem*>("additionalChild");
     QCOMPARE(additionalChild->property("margins").value<QMarginsF>(),
-        QMarginsF(117, 107, 137, 127));
+        QMarginsF(137, 117, 177, 157));
 
     auto *additionalSibling = window->findChild<QQuickItem*>("additionalSibling");
     QCOMPARE(additionalSibling->property("margins").value<QMarginsF>(),
         QMarginsF(20, 10, 40, 30));
+
+    auto *negativeItem = window->findChild<QQuickItem*>("negativeItem");
+    auto *negativeSafeArea = qobject_cast<QQuickSafeArea*>(
+        qmlAttachedPropertiesObject<QQuickSafeArea>(negativeItem));
+    QVERIFY(negativeSafeArea);
+    QCOMPARE(negativeSafeArea->additionalMargins(), QMarginsF());
+
+    QCOMPARE(negativeItem->property("margins").value<QMarginsF>(),
+        QMarginsF(20, 10, 40, 30));
+
+    auto *negativeChild = negativeItem->findChild<QQuickItem*>("negativeChild");
+    QCOMPARE(negativeChild->property("margins").value<QMarginsF>(),
+        QMarginsF(17, 7, 37, 27));
 }
 
 void tst_QQuickSafeArea::independentMargins_data()
