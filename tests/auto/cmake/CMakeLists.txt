@@ -137,7 +137,7 @@ if(TARGET Qt::Qml)
     if(NOT CMAKE_CROSSCOMPILING)
         list(APPEND test_duplicate_files_extra_args BINARY main)
     endif()
-    _qt_internal_test_expect_fail(test_duplicate_files
+    _qt_internal_test_expect_pass(test_duplicate_files
         TESTNAME test_duplicate_files_qml_files
         BUILD_OPTIONS -Drun=case_qml_files
         ${test_duplicate_files_extra_args}

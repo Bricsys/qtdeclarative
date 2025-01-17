@@ -2901,8 +2901,122 @@ function(qt6_target_qml_sources target)
         message(FATAL_ERROR "Unknown/unexpected arguments: ${arg_UNPARSED_ARGUMENTS}")
     endif()
 
+    # Filter out duplicates in QML_FILES and RESOURCES
+    set(valid_qml_file_ext .qml .js .mjs)
+    # TODO: maybe there is a better way to query for all languages enabled?
+    set(other_source_file_ext
+        .cpp .cxx .cc .c .c++
+        .hpp .hxx .hh .h .h++
+    )
+    set(warning_message_file_prefix "    ")
+    # Note: The order of the file_set is important
+    #   - can add an additional warning check for qml files present in RESOURCES
+    #   - non-valid QML_FILES should still be considered as RESOURCES
+    #     (change postponed to keep backwards compatibility, using `skip_qml_processing` instead)
+    set(skip_qml_processing "")
+    foreach(file_set IN ITEMS QML_FILES RESOURCES)
+        # For now, we have to keep the path in `actual_${file_set}` unnormalized for the qmldir
+        # entry consistency
+        set(actual_${file_set} "")
+        set(actual_${file_set}_absolute "")
+        set(duplicate_in_${file_set} "")
+        get_target_property(current_${file_set} ${target} QT_QML_MODULE_${file_set})
+        foreach(file_src IN LISTS arg_${file_set})
+            # TODO: For now we check against absolute path to avoid surprises with other
+            #       duplications
+            get_filename_component(file_absolute ${file_src} ABSOLUTE)
+            # Check for duplicates in the current list
+            if(file_absolute IN_LIST actual_${file_set}_absolute)
+                # We can silently ignore these because they have the same function parameters
+                continue()
+            endif()
+            # Check for duplicates in the target property added so far
+            if(current_${file_set} AND file_absolute IN_LIST current_${file_set})
+                list(APPEND duplicate_in_${file_set} "${file_src}")
+                continue()
+            endif()
+            # Further checks specific to QML_FILES
+            if(file_set STREQUAL "QML_FILES")
+                # Check if file has an appropriate qml file extension
+                get_filename_component(file_ext "${file_src}" LAST_EXT)
+                if(NOT file_ext IN_LIST valid_qml_file_ext)
+                    if(file_ext IN_LIST other_source_file_ext)
+                        list(APPEND sources_in_qml_files "${file_src}")
+                    else()
+                        list(APPEND resources_in_qml_files "${file_src}")
+                    endif()
+                    # TODO: It would be cleaner to move invalid QML_FILES to RESOURCES, but for
+                    # now we add them to `skip_qml_processing` instead
+                    list(APPEND skip_qml_processing "${file_src}")
+                endif()
+            endif()
+            # TODO: Shouldn't there be an extra check that a qml file is in QML_FILES and not
+            #   in RESOURCES?
+            # If all is ok so far add them to the actual file set to process
+            list(APPEND actual_${file_set} "${file_src}")
+            list(APPEND actual_${file_set}_absolute "${file_absolute}")
+        endforeach()
+
+        # Display warnings for all invalid files
+        # Warn about duplicated files
+        if(duplicate_in_${file_set})
+            # We trigger a warning here because it was added before with potentially different
+            # parameters, properties
+            set(warning_message
+                "The following files have already been included as a ${file_set} for ${target}:"
+            )
+            list(JOIN duplicate_in_${file_set}
+                "\n${warning_message_file_prefix}"
+                warning_file_set
+            )
+            string(APPEND warning_message
+                "\n${warning_message_file_prefix}"
+                "${warning_file_set}"
+            )
+            message(WARNING "${warning_message}")
+        endif()
+        # Additional warnings specific to QML_FILES
+        if(file_set STREQUAL "QML_FILES")
+            # Warn about non-qml files added in QML_FILES
+            if(sources_in_qml_files OR resources_in_qml_files)
+                set(warning_message
+                    "Only .qml, .js or .mjs files should be added with QML_FILES. "
+                    "The following files are added as RESOURCES only, but should "
+                    "instead be added:"
+                )
+                set(warning_file_set "")
+                if(sources_in_qml_files)
+                    list(JOIN sources_in_qml_files
+                        "\n${warning_message_file_prefix}"
+                        warning_file_set
+                    )
+                endif()
+                string(APPEND warning_message
+                    "\n- as source files using `target_sources()` or with SOURCES."
+                    "\n  Possible candidates:"
+                    "\n${warning_message_file_prefix}"
+                    "${warning_file_set}"
+                )
+                set(warning_file_set "")
+                if(resources_in_qml_files)
+                    list(JOIN resources_in_qml_files
+                        "\n${warning_message_file_prefix}"
+                        warning_file_set
+                    )
+                endif()
+                string(APPEND warning_message
+                    "\n- as resources with RESOURCES:"
+                    "\n  Possible candidates:"
+                    "\n${warning_message_file_prefix}"
+                    "${warning_file_set}"
+                )
+                message(WARNING "${warning_message}")
+            endif()
+        endif()
+    endforeach()
+
     get_target_property(no_lint ${target} QT_QML_MODULE_NO_LINT)
-    if(NOT arg_QML_FILES AND NOT arg_RESOURCES)
+    if(NOT actual_QML_FILES AND NOT actual_RESOURCES)
         if(NOT arg_NO_LINT AND NOT no_lint)
             _qt_internal_target_enable_qmllint(${target})
         endif()
@@ -2983,7 +3097,7 @@ function(qt6_target_qml_sources target)
         set(no_qmldir TRUE)
     endif()
 
-    if(NOT no_cachegen AND arg_QML_FILES)
+    if(NOT no_cachegen AND actual_QML_FILES)
 
         # Even if we don't generate a qmldir file, it still should be here, manually written.
         # We can pass it unconditionally. If it's not there, qmlcachegen or qmlsc might warn,
@@ -3058,8 +3172,6 @@ function(qt6_target_qml_sources target)
         endif()
     endif()
 
-    set(non_qml_cpp_files "")
-    set(non_qml_files "")
     set(output_targets "")
     set(copied_files "")
 
@@ -3172,18 +3284,11 @@ function(qt6_target_qml_sources target)
 
     set(generated_sources_other_scope)
     set(extra_qmldirs)
-    foreach(qml_file_src IN LISTS arg_QML_FILES)
-        # This is to facilitate updating code that used the earlier tech preview
-        # API function qt6_target_qml_files()
-        if(NOT qml_file_src MATCHES "\\.(js|mjs|qml)$")
-            if(qml_file_src MATCHES "\\.(cpp|cxx|cc|c|c\\+\\+|h|hh|hxx|hpp|h\\+\\+)")
-                list(APPEND non_qml_cpp_files "${qml_file_src}")
-            else()
-                list(APPEND non_qml_files "${qml_file_src}")
-            endif()
+    foreach(qml_file_src IN LISTS actual_QML_FILES)
+        # Skip invalid qml files
+        if(qml_file_src IN_LIST skip_qml_processing)
             continue()
         endif()
-
         # Mark QML files as source files, so that they do not appear in <Other Locations> in Creator
         # or other IDEs
         set_source_files_properties(${qml_file_src} HEADER_FILE_ONLY ON)
@@ -3410,22 +3515,7 @@ function(qt6_target_qml_sources target)
     endif()
 
     if(ANDROID)
-        _qt_internal_collect_qml_root_paths("${target}" ${arg_QML_FILES})
-    endif()
-
-    if(non_qml_files OR non_qml_cpp_files)
-        if(non_qml_cpp_files)
-            list(JOIN non_qml_cpp_files "\n    " file_list)
-            set(wrong_sources "\nwith SOURCES:\n    ${file_list}"
-            )
-        endif()
-        if(non_qml_files)
-            list(JOIN non_qml_files "\n    " file_list)
-            set(wrong_resources "\nwith RESOURCES:\n    ${file_list}")
-        endif()
-
-        message(WARNING "Only .qml, .js or .mjs files should be added with QML_FILES. "
-            "The following files should be added${wrong_sources}${wrong_resources}")
+        _qt_internal_collect_qml_root_paths("${target}" ${actual_QML_FILES})
     endif()
 
     if(set_should_create_tooling_target OR copied_files OR generated_sources_other_scope)
@@ -3508,7 +3598,7 @@ function(qt6_target_qml_sources target)
     endif()
     qt6_add_resources(${target} ${qml_resource_name}
         PREFIX ${arg_PREFIX}
-        FILES ${arg_QML_FILES}
+        FILES ${actual_QML_FILES}
         OUTPUT_TARGETS qml_resource_targets
         ${qml_resource_options}
     )
@@ -3520,12 +3610,12 @@ function(qt6_target_qml_sources target)
     set_property(TARGET ${target} APPEND PROPERTY
         _qt_qml_module_sanitized_resource_names "${sanitized_qml_resource_name}")
 
-    if(arg_RESOURCES)
+    if(actual_RESOURCES)
         set(resources_resource_name ${target}_raw_res_${counter})
         set(resources_resource_targets)
         qt6_add_resources(${target} ${resources_resource_name}
             PREFIX ${arg_PREFIX}
-            FILES ${arg_RESOURCES}
+            FILES ${actual_RESOURCES}
             OUTPUT_TARGETS resources_resource_targets
         )
         list(APPEND output_targets ${resources_resource_targets})
