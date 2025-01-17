@@ -6050,6 +6050,9 @@ public:
 
     InnerObject *attached() const { return m_attached; }
 
+signals:
+    Q_REVISION(25) void revisionedSignal();
+
 private:
     InnerObject *m_attached;
 };
@@ -6081,11 +6084,25 @@ void tst_qqmllanguage::revisionedPropertyOfAttachedObjectProperty()
     component.setData("import foo 2.2\n"
                       "OuterObject {\n"
                       "    InnerObject.attached.revisionedProperty: true\n"
+                      "    InnerObject.onRevisionedSignal: objectName = 'yes'\n"
                       "}", QUrl());
 
-    QVERIFY(component.isReady());
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
     QScopedPointer<QObject> obj(component.create());
     QVERIFY(!obj.isNull());
+
+    QVERIFY(obj->objectName().isEmpty());
+
+    QObject *a = qmlAttachedPropertiesObject<InnerObject>(obj.data());
+    QVERIFY(a);
+
+    AttachedObject *attached = qobject_cast<AttachedObject *>(a);
+    QVERIFY(attached);
+
+    QCOMPARE(attached->attached()->revisionedProperty(), true);
+
+    emit attached->revisionedSignal();
+    QCOMPARE(obj->objectName(), "yes");
 }
 
 void tst_qqmllanguage::inlineComponent()
