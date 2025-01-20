@@ -429,11 +429,11 @@ All warnings can be set to three levels:
                                          qmldirFiles, resourceFiles, categories);
         }
         success &= (lintResult == QQmlJSLinter::LintSuccess || lintResult == QQmlJSLinter::HasWarnings);
-        if (success)
-        {
-            int value = parser.isSet(maxWarnings) ? parser.value(maxWarnings).toInt()
-                                                  : settings.value(maxWarningsSetting).toInt();
-            if (value != -1 && value < linter.logger()->warnings().size())
+        if (success) {
+            const qsizetype value = parser.isSet(maxWarnings)
+                    ? parser.value(maxWarnings).toInt()
+                    : settings.value(maxWarningsSetting).toInt();
+            if (value != -1 && value < linter.logger()->numWarnings())
                 success = false;
         }
 

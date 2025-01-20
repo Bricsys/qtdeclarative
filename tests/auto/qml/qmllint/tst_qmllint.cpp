@@ -1210,6 +1210,12 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
                          Message { QStringLiteral(
                            "Type QQC2.Label is used but it is not resolved") } },
                        };
+
+    // The warning should show up only once even though
+    // we have to run the type propagator multiple times.
+    QTest::newRow("multiplePasses")
+            << testFile("multiplePasses.qml")
+            << Result {{ Message { QStringLiteral("Unqualified access") }}};
 }
 
 void TestQmllint::dirtyQmlCode()

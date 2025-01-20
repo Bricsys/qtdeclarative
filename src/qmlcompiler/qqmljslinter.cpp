@@ -423,12 +423,8 @@ static void addJsonWarning(QJsonArray &warnings, const QQmlJS::DiagnosticMessage
 
 void QQmlJSLinter::processMessages(QJsonArray &warnings)
 {
-    for (const auto &error : m_logger->errors())
-        addJsonWarning(warnings, error, error.id, error.fixSuggestion);
-    for (const auto &warning : m_logger->warnings())
-        addJsonWarning(warnings, warning, warning.id, warning.fixSuggestion);
-    for (const auto &info : m_logger->infos())
-        addJsonWarning(warnings, info, info.id, info.fixSuggestion);
+    for (const Message &message : m_logger->messages())
+        addJsonWarning(warnings, message, message.id, message.fixSuggestion);
 }
 
 QQmlJSLinter::LintResult QQmlJSLinter::lintFile(const QString &filename,
@@ -831,20 +827,19 @@ QQmlJSLinter::FixResult QQmlJSLinter::applyFixes(QString *fixedCode, bool silent
     if (isESModule || isJavaScript)
         return NothingToFix;
 
-    for (const auto &messages : { m_logger->infos(), m_logger->warnings(), m_logger->errors() })
-        for (const Message &msg : messages) {
-            if (!msg.fixSuggestion.has_value() || !msg.fixSuggestion->isAutoApplicable())
-                continue;
+    for (const Message &msg : m_logger->messages()) {
+        if (!msg.fixSuggestion.has_value() || !msg.fixSuggestion->isAutoApplicable())
+            continue;
 
-            // Ignore fix suggestions for other files
-            const QString filename = msg.fixSuggestion->filename();
-            if (!filename.isEmpty()
-                    && QFileInfo(filename).absoluteFilePath() != currentFileAbsolutePath) {
-                continue;
-            }
-
-            fixesToApply << msg.fixSuggestion.value();
+        // Ignore fix suggestions for other files
+        const QString filename = msg.fixSuggestion->filename();
+        if (!filename.isEmpty()
+                && QFileInfo(filename).absoluteFilePath() != currentFileAbsolutePath) {
+            continue;
         }
+
+        fixesToApply << msg.fixSuggestion.value();
+    }
 
     if (fixesToApply.isEmpty())
         return NothingToFix;

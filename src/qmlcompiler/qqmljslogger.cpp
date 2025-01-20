@@ -273,11 +273,11 @@ void QQmlJSLogger::log(const QString &message, QQmlJS::LoggerWarningId id,
     diagMsg.type = type;
     diagMsg.fixSuggestion = suggestion;
 
-    switch (type) {
-    case QtWarningMsg: m_warnings.push_back(diagMsg); break;
-    case QtCriticalMsg: m_errors.push_back(diagMsg); break;
-    case QtInfoMsg: m_infos.push_back(diagMsg); break;
-    default: break;
+    if (m_inTransaction) {
+        m_pendingMessages.push_back(std::move(diagMsg));
+    } else {
+        countMessage(diagMsg);
+        m_committedMessages.push_back(std::move(diagMsg));
     }
 
     if (srcLocation.length > 0 && !m_code.isEmpty() && showContext)
@@ -285,6 +285,23 @@ void QQmlJSLogger::log(const QString &message, QQmlJS::LoggerWarningId id,
 
     if (suggestion.has_value())
         printFix(suggestion.value());
+
+    if (!m_inTransaction)
+        m_output.flushBuffer();
+}
+
+void QQmlJSLogger::countMessage(const Message &message)
+{
+    switch (message.type) {
+    case QtWarningMsg:
+        ++m_numWarnings;
+        break;
+    case QtCriticalMsg:
+        ++m_numErrors;
+        break;
+    default:
+        break;
+    }
 }
 
 void QQmlJSLogger::processMessages(const QList<QQmlJS::DiagnosticMessage> &messages,
@@ -302,6 +319,52 @@ void QQmlJSLogger::processMessages(const QList<QQmlJS::DiagnosticMessage> &messa
         log(message.message, id, sourceLocation, false, false);
 
     m_output.write(QStringLiteral("---\n\n"));
+}
+
+/*!
+    \internal
+    Starts a transaction for a compile pass. This buffers all messages until the
+    transaction completes. If you commit the transaction, the messages are printed
+    and added to the list of committed messages. If you roll it back, the logger
+    reverts to the state before the start of the transaction.
+
+    This is useful for compile passes that potentially have to be repeated, such
+    as the type propagator. We don't want to see the same messages logged multiple
+    times.
+ */
+void QQmlJSLogger::startTransaction()
+{
+    Q_ASSERT(!m_inTransaction);
+    m_inTransaction = true;
+}
+
+/*!
+    \internal
+    Commit the current transaction. Print all pending messages, and add them to
+    the list of committed messages. Then, clear the transaction flag.
+ */
+void QQmlJSLogger::commit()
+{
+    Q_ASSERT(m_inTransaction);
+    for (const Message &message : std::as_const(m_pendingMessages))
+        countMessage(message);
+
+    m_committedMessages.append(std::exchange(m_pendingMessages, {}));
+    m_output.flushBuffer();
+    m_inTransaction = false;
+}
+
+/*!
+    \internal
+    Roll back the current transaction and revert the logger to the state before
+    it was started.
+ */
+void QQmlJSLogger::rollback()
+{
+    Q_ASSERT(m_inTransaction);
+    m_pendingMessages.clear();
+    m_output.discardBuffer();
+    m_inTransaction = false;
 }
 
 void QQmlJSLogger::printContext(const QString &overrideFileName,

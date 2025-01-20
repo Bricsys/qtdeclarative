@@ -52,8 +52,12 @@ QQmlJSCompilePass::BlocksAndAnnotations QQmlJSTypePropagator::run(const Function
 
     do {
         // Reset the error if we need to do another pass
-        if (m_state.needsMorePasses)
+        if (m_state.needsMorePasses) {
             m_errors->clear();
+            m_logger->rollback();
+        }
+
+        m_logger->startTransaction();
 
         m_prevStateAnnotations = m_state.annotations;
         m_state = PassState();
@@ -68,6 +72,7 @@ QQmlJSCompilePass::BlocksAndAnnotations QQmlJSTypePropagator::run(const Function
         // This means that we won't start over for the same reason again.
     } while (m_state.needsMorePasses);
 
+    m_logger->commit();
     return { std::move(m_basicBlocks), std::move(m_state.annotations) };
 }
 
