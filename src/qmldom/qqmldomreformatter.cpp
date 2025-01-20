@@ -22,7 +22,7 @@ using namespace AST;
 
 bool ScriptFormatter::preVisit(Node *n)
 {
-    if (CommentedElement *c = comments->commentForNode(n)) {
+    if (const CommentedElement *c = comments->commentForNode(n, CommentAnchor{})) {
         c->writePre(lw);
         postOps[n].append([c, this]() { c->writePost(lw); });
     }
@@ -703,7 +703,7 @@ bool ScriptFormatter::visit(CaseClause *ast)
     out("case"); // ast->caseToken
     lw.lineWriter.ensureSpace();
     accept(ast->expression);
-    out(ast->colonToken);
+    outWithComments(ast->colonToken, ast);
     if (ast->statements)
         lnAcceptIndented(ast->statements);
     return false;
@@ -862,8 +862,10 @@ bool ScriptFormatter::visit(StatementList *ast)
             // If any of those are present they will take care of
             // handling the spacing between the statements so we
             // don't need to push any newline.
-            auto *commentForCurrentStatement = comments->commentForNode(it->statement);
-            auto *commentForNextStatement = comments->commentForNode(it->next->statement);
+            auto *commentForCurrentStatement =
+                    comments->commentForNode(it->statement, CommentAnchor{});
+            auto *commentForNextStatement =
+                    comments->commentForNode(it->next->statement, CommentAnchor{});
 
             if (
                 (commentForCurrentStatement && !commentForCurrentStatement->postComments().empty())

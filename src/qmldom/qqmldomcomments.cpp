@@ -277,23 +277,34 @@ public:
     FileLocationRegion regionName;
 };
 
+class NodeRef
+{
+public:
+    AST::Node *node = nullptr;
+    CommentAnchor commentAnchor;
+};
+
 // internal class to keep a reference either to an AST::Node* or a region of a DomItem and the
 // size of that region
 class ElementRef
 {
 public:
-    ElementRef(AST::Node *node, quint32 size) : element(node), size(size) { }
+    ElementRef(AST::Node *node, quint32 size, CommentAnchor commentAnchor)
+        : element(NodeRef{ node, commentAnchor }), size(size)
+    {
+    }
     ElementRef(const Path &path, FileLocationRegion region, quint32 size)
         : element(RegionRef{ path, region }), size(size)
     {
     }
     operator bool() const
     {
-        return (element.index() == 0 && std::get<0>(element)) || element.index() == 1 || size != 0;
+        return (element.index() == 0 && std::get<0>(element).node) || element.index() == 1
+                || size != 0;
     }
     ElementRef() = default;
 
-    std::variant<AST::Node *, RegionRef> element;
+    std::variant<NodeRef, RegionRef> element;
     quint32 size = 0;
 };
 
@@ -347,16 +358,37 @@ public:
     static const QSet<int> kindsToSkip();
     static bool shouldSkipRegion(const DomItem &item, FileLocationRegion region);
 
+    void addSourceLocations(Node *n, quint32 start, quint32 end, CommentAnchor commentAnchor)
+    {
+        if (!starts.contains(start))
+            starts.insert(start, { n, end - start, commentAnchor });
+        if (!ends.contains(end))
+            ends.insert(end, { n, end - start, commentAnchor });
+    }
+    void addSourceLocations(Node *n)
+    {
+        addSourceLocations(n, n->firstSourceLocation().begin(), n->lastSourceLocation().end(),
+                           CommentAnchor{});
+    }
+    void addSourceLocations(Node *n, const SourceLocation &sourceLocation)
+    {
+        addSourceLocations(n, sourceLocation.begin(), sourceLocation.end(),
+                           CommentAnchor::from(sourceLocation));
+    }
+
     bool preVisit(Node *n) override
     {
         if (!kindsToSkip().contains(n->kind)) {
-            quint32 start = n->firstSourceLocation().begin();
-            quint32 end = n->lastSourceLocation().end();
-            if (!starts.contains(start))
-                starts.insert(start, { n, end - start });
-            if (!ends.contains(end))
-                ends.insert(end, { n, end - start });
+            addSourceLocations(n);
         }
+        return true;
+    }
+
+    using VisitAll::visit;
+    bool visit(CaseClause *caseClause) override
+    {
+        // special case: case clauses can have comments attached to their `:` token
+        addSourceLocations(caseClause, caseClause->colonToken);
         return true;
     }
 
@@ -667,12 +699,8 @@ bool AstComments::iterateDirectSubpaths(const DomItem &self, DirectVisitor visit
 {
     // TODO: QTBUG-123645
     // Revert this commit to reproduce crash with tst_qmldomitem::doNotCrashAtAstComments
-    QList<Comment> pre;
-    QList<Comment> post;
-    for (const auto &commentedElement : commentedElements().values()) {
-        pre.append(commentedElement.preComments());
-        post.append(commentedElement.postComments());
-    }
+    auto [pre, post] = collectPreAndPostComments();
+
     if (!pre.isEmpty())
         self.dvWrapField(visitor, Fields::preComments, pre);
     if (!post.isEmpty())
@@ -730,15 +758,17 @@ void CommentCollector::collectComments(
                 elementToBeLinked.element = RegionRef{ Path(), MainRegion };
                 elementToBeLinked.size = FileLocations::region(m_fileLocations, MainRegion).length;
             } else if (rootNode) {
-                elementToBeLinked.element = rootNode;
+                elementToBeLinked.element = NodeRef{ rootNode, CommentAnchor{} };
                 elementToBeLinked.size = rootNode->lastSourceLocation().end() - rootNode->firstSourceLocation().begin();
             }
         }
 
-        if (const auto *const commentNode = std::get_if<AST::Node *>(&elementToBeLinked.element)) {
-            auto &commentedElement = astComments->commentedElements()[*commentNode];
-            commentedElement.addComment(comment);
-        } else if (const auto * const regionRef = std::get_if<RegionRef>(&elementToBeLinked.element)) {
+        if (const auto *const commentNode = std::get_if<NodeRef>(&elementToBeLinked.element)) {
+            auto commentedElement = astComments->ensureCommentForNode(commentNode->node,
+                                                                      commentNode->commentAnchor);
+            commentedElement->addComment(comment);
+        } else if (const auto *const regionRef =
+                           std::get_if<RegionRef>(&elementToBeLinked.element)) {
             DomItem currentItem = m_rootItem.item().path(regionRef->path);
             MutableDomItem regionComments = currentItem.field(Fields::comments);
             if (auto *regionCommentsPtr = regionComments.mutableAs<RegionComments>()) {

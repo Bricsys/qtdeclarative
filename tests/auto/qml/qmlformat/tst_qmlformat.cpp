@@ -506,6 +506,8 @@ void TestQmlformat::plainJS_data()
             << "noSuperfluousSpaceInsertions.fail_pragma.formatted.js";
     QTest::newRow("fromAsIdentifier") << "fromAsIdentifier.js"
                                       << "fromAsIdentifier.formatted.js";
+    QTest::newRow("caseWithComment") << "caseWithComment.js"
+                                     << "caseWithComment.formatted.js";
 }
 
 void TestQmlformat::plainJS()
