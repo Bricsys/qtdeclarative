@@ -46,6 +46,15 @@ protected:
         if (loc.length != 0)
             out(loc2Str(loc));
     }
+    void outWithComments(const SourceLocation &loc, AST::Node *node)
+    {
+        const CommentedElement *c = comments->commentForNode(node, CommentAnchor::from(loc));
+        if (c)
+            c->writePre(lw, nullptr);
+        out(loc);
+        if (c)
+            c->writePost(lw, nullptr);
+    }
     inline void newLine(quint32 count = 1) { lw.ensureNewline(count); }
 
     inline void accept(AST::Node *node) { AST::Node::accept(node, this); }
