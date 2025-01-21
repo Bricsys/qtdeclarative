@@ -5,7 +5,9 @@
 #include "qquicksidebar_p_p.h"
 #include "qquickfiledialogimpl_p_p.h"
 #include <QtQml/qqmllist.h>
+#if QT_CONFIG(settings)
 #include <QtCore/qsettings.h>
+#endif
 
 #include <QtQuickTemplates2/private/qquickaction_p.h>
 
