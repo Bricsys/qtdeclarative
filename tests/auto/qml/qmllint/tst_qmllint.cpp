@@ -343,6 +343,21 @@ void TestQmllint::oldQmltypes()
                                                       "Did you add all imports and dependencies?")
                      }
             } });
+
+    runTest("oldUnusedQmlTypes.qml",
+            Result { {
+                             Message { QStringLiteral("typeinfo not declared in qmldir file") },
+                             Message {
+                                      QStringLiteral("Found deprecated dependency specifications") },
+                             Message { QStringLiteral(
+                                     "Meta object revision and export version differ.") },
+                             Message { QStringLiteral(
+                                     "Revision 0 corresponds to version 0.0; it should be 1.0.") },
+                      },
+                      {
+                             Message { QStringLiteral("Unused import"), 1, 1, QtInfoMsg
+                      }
+            } });
 }
 
 void TestQmllint::qmltypes_data()

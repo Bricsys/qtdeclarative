@@ -368,7 +368,8 @@ private:
     void processImportWarnings(
             const QString &what, const QList<QQmlJS::DiagnosticMessage> &warnings,
             const QQmlJS::SourceLocation &srcLocation = QQmlJS::SourceLocation());
-    void addImportWithLocation(const QString &name, const QQmlJS::SourceLocation &loc);
+    void addImportWithLocation(
+            const QString &name, const QQmlJS::SourceLocation &loc, bool hadWarnings);
     void populateCurrentScope(QQmlJSScope::ScopeType type, const QString &name,
                               const QQmlJS::SourceLocation &location);
     void enterRootScope(QQmlJSScope::ScopeType type, const QString &name,
