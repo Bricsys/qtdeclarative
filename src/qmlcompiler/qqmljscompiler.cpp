@@ -686,12 +686,8 @@ std::variant<QQmlJSAotFunction, QList<QQmlJS::DiagnosticMessage>> QQmlJSAotCompi
     QQmlJSCompilePass::Function function = initializer.run(
                 context, name, astNode, irBinding, &errors);
 
-    QQmlJSAotFunction aotFunction;
-    if (errors.isEmpty()) {
-        aotFunction = doCompileAndRecordAotStats(
-                context, &function, &errors, name, astNode->firstSourceLocation());
-    }
-
+    const QQmlJSAotFunction aotFunction = doCompileAndRecordAotStats(
+            context, &function, &errors, name, astNode->firstSourceLocation());
 
     if (!errors.isEmpty()) {
         for (auto &error : errors) {
@@ -817,7 +813,9 @@ QQmlJSAotFunction QQmlJSAotCompiler::doCompileAndRecordAotStats(const QV4::Compi
                                                                 QQmlJS::SourceLocation location)
 {
     auto t1 = std::chrono::high_resolution_clock::now();
-    QQmlJSAotFunction result = doCompile(context, function, errors);
+    QQmlJSAotFunction result;
+    if (errors->isEmpty())
+        result = doCompile(context, function, errors);
     auto t2 = std::chrono::high_resolution_clock::now();
 
     if (QQmlJS::QQmlJSAotCompilerStats::recordAotStats()) {
