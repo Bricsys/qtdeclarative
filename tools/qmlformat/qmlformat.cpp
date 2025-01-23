@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
 
     QQmlFormatSettings settings(QLatin1String("qmlformat"));
 
-    const auto options = buildCommandLineOptions(app);
+    const auto &options = buildCommandLineOptions(app);
     if (!options.isValid()) {
         for (const auto &error : options.errors()) {
             qWarning().noquote() << error;
@@ -267,21 +267,13 @@ int main(int argc, char *argv[])
     auto getSettings = [&](const QString &file, const QQmlFormatOptions &options) {
         // Perform formatting inplace if --files option is set.
         const bool hasFiles = !options.files().isEmpty();
-
-        if (options.ignoreSettingsEnabled() || !settings.search(file)) {
-            if (!hasFiles)
-                return options;
-
-            QQmlFormatOptions perFileOptions = options;
-            perFileOptions.setIsInplace(true);
-            return perFileOptions;
-        }
-
         QQmlFormatOptions perFileOptions = options;
         if (hasFiles)
             perFileOptions.setIsInplace(true);
 
-        perFileOptions.applySettings(settings);
+        if (!options.ignoreSettingsEnabled() && settings.search(file))
+            perFileOptions.applySettings(settings);
+
         return perFileOptions;
     };
 
