@@ -86,6 +86,7 @@ private slots:
     void variantListQJsonConversion();
     void attachedObjectOfUnregistered();
     void dropCUOnEngineShutdown();
+    void multiLoadedJavaScriptModule();
 
 public slots:
     QObject *createAQObjectForOwnershipTest ()
@@ -1843,6 +1844,20 @@ void tst_qqmlengine::dropCUOnEngineShutdown()
 
     // And also the CU.
     QVERIFY(QQmlMetaType::obtainCompilationUnit(url).isNull());
+}
+
+void tst_qqmlengine::multiLoadedJavaScriptModule()
+{
+    QQmlEngine e;
+    QQmlComponent c(&e, testFileUrl("multiLoaded.qml"));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+
+    QTest::ignoreMessage(QtCriticalMsg, "In a1 - DATA_IN_A1");
+    QTest::ignoreMessage(QtCriticalMsg, "In B1 DATA_IN_A1");
+    QTest::ignoreMessage(QtCriticalMsg, "In B1 DATA_IN_A1");
+
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
 }
 
 QTEST_MAIN(tst_qqmlengine)

@@ -165,6 +165,11 @@ void QQmlScriptBlob::done()
         m_importCache->populateCache(m_scriptData->typeNameCache.data());
     }
     m_scripts.clear();
+
+    if (auto cu = m_scriptData->compilationUnit()) {
+        cu->qmlType = QQmlMetaType::findCompositeType(finalUrl(), cu, QQmlMetaType::JavaScript);
+        QQmlMetaType::registerInternalCompositeType(cu);
+    }
 }
 
 QString QQmlScriptBlob::stringAt(int index) const
