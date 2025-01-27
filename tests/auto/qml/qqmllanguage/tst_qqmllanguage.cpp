@@ -481,6 +481,7 @@ private slots:
     void asCastTypeResolutionImportOrderBA();
 
     void fromAsIdentifier();
+    void dontAccumulateComplationUnitsOnQJSEngineEvaluate();
 
 private:
     QQmlEngine engine;
@@ -9136,6 +9137,28 @@ void tst_qqmllanguage::fromAsIdentifier()
     QScopedPointer<QObject> o(c.create());
     QVERIFY(o);
     QCOMPARE(o->children().first()->property("from").toInt(), 3);
+}
+
+void tst_qqmllanguage::dontAccumulateComplationUnitsOnQJSEngineEvaluate()
+{
+    {
+        QQmlEngine e;
+        auto *interpreter = e.handle()->jsEngine();
+
+        for (int i = 0; i < 10; i++)
+            interpreter->evaluate("2+2");
+
+        QCOMPARE(e.handle()->compilationUnits().size(), 1);
+    }
+    {
+        QQmlEngine e;
+        auto *interpreter = e.handle()->jsEngine();
+
+        for (int i = 0; i < 10; i++)
+            interpreter->evaluate("2+2", "aaaaaaaa");
+
+        QCOMPARE(e.handle()->compilationUnits().size(), 1);
+    }
 }
 
 QTEST_MAIN(tst_qqmllanguage)

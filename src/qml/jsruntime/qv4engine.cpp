@@ -2123,6 +2123,17 @@ void ExecutionEngine::trimCompilationUnits()
     }
 }
 
+void ExecutionEngine::trimCompilationUnitsForUrl(const QUrl &url)
+{
+    auto it = m_compilationUnits.find(url);
+    while (it != m_compilationUnits.end() && it.key() == url) {
+        if ((*it)->count() == 1)
+            it = m_compilationUnits.erase(it);
+        else
+            ++it;
+    }
+}
+
 template<typename NotFound>
 ExecutionEngine::Module doFindModule(
         const QMultiHash<QUrl, QQmlRefPointer<ExecutableCompilationUnit>> &compilationUnits,
