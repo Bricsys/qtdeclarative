@@ -6,4 +6,8 @@ ApplicationWindow {
         Drawer {}
         property var myS: ShaderEffect {}
     }
+
+    Item {
+        id: bool
+    }
 }

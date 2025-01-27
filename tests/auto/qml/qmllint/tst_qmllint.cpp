@@ -2596,12 +2596,16 @@ void TestQmllint::qdsPlugin_data()
                        Message{ "This type (ApplicationWindow) is not supported in a UI file (.ui.qml)"_L1, 4, 1 },
                        Message{ "This type (ShaderEffect) is not supported in a UI file (.ui.qml)"_L1, 7, 27 },
                        Message{ "This type (Drawer) is not supported in a UI file (.ui.qml)"_L1, 6, 9 },
+                       Message{ "This id (bool) might be ambiguous and is not supported in a UI file (.ui.qml)"_L1, 11, 13 },
                    },
                    {
                        Message{ "This type (Item) is not supported in a UI file (.ui.qml)"_L1 },
 
                    }
                };
+    QTest::addRow("SupportedElements")
+            << u"qdsPlugin/SupportedElements.ui.qml"_s
+            << Result::clean();
 }
 
 void TestQmllint::qdsPlugin()

@@ -26,6 +26,9 @@ static constexpr LoggerWarningId WarnImperativeCodeNotEditableInVisualDesigner{
 static constexpr LoggerWarningId ErrUnsupportedTypeInQmlUi{
     "QtDesignStudio.UnsupportedTypeInQmlUi"
 };
+static constexpr LoggerWarningId ErrInvalidIdeInVisualDesigner{
+    "QtDesignStudio.InvalidIdeInVisualDesigner"
+};
 
 class FunctionCallValidator : public PropertyPass
 {
@@ -231,6 +234,36 @@ void QdsElementValidator::run(const Element &element)
                             element.baseTypeName()),
                     ErrUnsupportedTypeInQmlUi, element.sourceLocation());
         break;
+    }
+    if (QString id = resolveElementToId(element, element); !id.isEmpty()) {
+        static constexpr std::array unsupportedNames = {
+            "action"_L1,     "alias"_L1,    "anchors"_L1,   "as"_L1,          "baseState"_L1,
+            "bool"_L1,       "border"_L1,   "bottom"_L1,    "break"_L1,       "case"_L1,
+            "catch"_L1,      "clip"_L1,     "color"_L1,     "continue"_L1,    "data"_L1,
+            "date"_L1,       "debugger"_L1, "default"_L1,   "delete"_L1,      "do"_L1,
+            "double"_L1,     "else"_L1,     "enabled"_L1,   "enumeration"_L1, "finally"_L1,
+            "flow"_L1,       "focus"_L1,    "font"_L1,      "for"_L1,         "function"_L1,
+            "height"_L1,     "id"_L1,       "if"_L1,        "import"_L1,      "in"_L1,
+            "instanceof"_L1, "int"_L1,      "item"_L1,      "layer"_L1,       "left"_L1,
+            "list"_L1,       "margin"_L1,   "matrix4x4"_L1, "new"_L1,         "opacity"_L1,
+            "padding"_L1,    "parent"_L1,   "point"_L1,     "print"_L1,       "quaternion"_L1,
+            "real"_L1,       "rect"_L1,     "return"_L1,    "right"_L1,       "scale"_L1,
+            "shaderInfo"_L1, "size"_L1,     "source"_L1,    "sprite"_L1,      "spriteSequence"_L1,
+            "state"_L1,      "string"_L1,   "switch"_L1,    "text"_L1,        "texture"_L1,
+            "this"_L1,       "throw"_L1,    "time"_L1,      "top"_L1,         "try"_L1,
+            "typeof"_L1,     "url"_L1,      "var"_L1,       "variant"_L1,     "vector"_L1,
+            "vector2d"_L1,   "vector3d"_L1, "vector4d"_L1,  "visible"_L1,     "void"_L1,
+            "while"_L1,      "width"_L1,    "with"_L1,      "x"_L1,           "y"_L1,
+            "z"_L1,
+        };
+
+        Q_ASSERT(std::is_sorted(unsupportedNames.begin(), unsupportedNames.end()));
+        if (std::binary_search(unsupportedNames.cbegin(), unsupportedNames.cend(), id)) {
+            emitWarning(
+                    u"This id (%1) might be ambiguous and is not supported in a UI file (.ui.qml)."_s
+                            .arg(id),
+                    ErrInvalidIdeInVisualDesigner, element.idSourceLocation());
+        }
     }
 }
 

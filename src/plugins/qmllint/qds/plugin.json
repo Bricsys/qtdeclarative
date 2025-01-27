@@ -24,6 +24,11 @@
             "name": "UnsupportedTypeInQmlUi",
             "settingsName": "UnsupportedTypeInQmlUi",
             "description": "Warn about unsupported types in ui.qml files"
+        },
+        {
+            "name": "InvalidIdeInVisualDesigner",
+            "settingsName": "InvalidIdeInVisualDesigner",
+            "description": "Warn about ambiguous id names in ui.qml files"
         }
     ]
 }
