@@ -15,22 +15,20 @@ using namespace Qt::StringLiterals;
 using namespace QQmlSA;
 
 // note: is a warning, but is prefixed Err to share the name with its QtC codemodel counterpart.
-static constexpr LoggerWarningId ErrFunctionsNotSupportedInQmlUi{
+constexpr LoggerWarningId ErrFunctionsNotSupportedInQmlUi{
     "QtDesignStudio.FunctionsNotSupportedInQmlUi"
 };
-static constexpr LoggerWarningId WarnReferenceToParentItemNotSupportedByVisualDesigner{
+constexpr LoggerWarningId WarnReferenceToParentItemNotSupportedByVisualDesigner{
     "QtDesignStudio.ReferenceToParentItemNotSupportedByVisualDesigner"
 };
-static constexpr LoggerWarningId WarnImperativeCodeNotEditableInVisualDesigner{
+constexpr LoggerWarningId WarnImperativeCodeNotEditableInVisualDesigner{
     "QtDesignStudio.ImperativeCodeNotEditableInVisualDesigner"
 };
-static constexpr LoggerWarningId ErrUnsupportedTypeInQmlUi{
-    "QtDesignStudio.UnsupportedTypeInQmlUi"
-};
-static constexpr LoggerWarningId ErrInvalidIdeInVisualDesigner{
+constexpr LoggerWarningId ErrUnsupportedTypeInQmlUi{ "QtDesignStudio.UnsupportedTypeInQmlUi" };
+constexpr LoggerWarningId ErrInvalidIdeInVisualDesigner{
     "QtDesignStudio.InvalidIdeInVisualDesigner"
 };
-static constexpr LoggerWarningId ErrUnsupportedRootTypeInQmlUi{
+constexpr LoggerWarningId ErrUnsupportedRootTypeInQmlUi{
     "QtDesignStudio.UnsupportedRootTypeInQmlUi"
 };
 
