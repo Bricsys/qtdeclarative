@@ -3068,6 +3068,7 @@ void QQuickPopup::componentComplete()
         d->transitionManager.transitionEnter();
 
     d->complete = true;
+    d->popupItem->setObjectName(QQmlMetaType::prettyTypeName(this));
     d->popupItem->componentComplete();
 
     if (auto currentContentItem = d->popupItem->d_func()->contentItem.data()) {
