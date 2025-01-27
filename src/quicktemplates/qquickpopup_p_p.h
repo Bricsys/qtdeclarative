@@ -200,8 +200,8 @@ public:
     qreal explicitDimmerOpacity = 0;
     qreal prevOpacity = 0;
     qreal prevScale = 0;
-    QString m_title;
-    QQuickPopup::PopupType m_popupType = QQuickPopup::Item;
+    QString title;
+    QQuickPopup::PopupType popupType = QQuickPopup::Item;
 
     friend class QQuickPopupTransitionManager;
 };

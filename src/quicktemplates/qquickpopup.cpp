@@ -1072,8 +1072,8 @@ QQuickPopup::PopupType QQuickPopupPrivate::resolvedPopupType() const
 
     // PopupType::Native is not directly supported by QQuickPopup (only by subclasses).
     // So for that case, we fall back to use PopupType::Window, if supported.
-    if (m_popupType == QQuickPopup::PopupType::Window
-        || m_popupType == QQuickPopup::PopupType::Native) {
+    if (popupType == QQuickPopup::PopupType::Window
+        || popupType == QQuickPopup::PopupType::Native) {
         if (QGuiApplicationPrivate::platformIntegration()->hasCapability(QPlatformIntegration::Capability::MultipleWindows))
             return QQuickPopup::PopupType::Window;
     }
@@ -1112,7 +1112,7 @@ void QQuickPopupPrivate::adjustPopupItemParentAndWindow()
                 popupWindow->resize(initialWidth, initialHeight);
                 popupWindow->setModality(modal ? Qt::ApplicationModal : Qt::NonModal);
                 popupItem->resetTitle();
-                popupWindow->setTitle(m_title);
+                popupWindow->setTitle(title);
             }
             popupItem->setParentItem(popupWindow->contentItem());
             popupItem->forceActiveFocus(Qt::PopupFocusReason);
@@ -1143,7 +1143,7 @@ void QQuickPopupPrivate::adjustPopupItemParentAndWindow()
             }
         }
 
-        popupItem->setTitle(m_title);
+        popupItem->setTitle(title);
     }
     popupItem->setVisible(visible);
 }
@@ -2975,16 +2975,16 @@ void QQuickPopup::resetBottomInset()
 QQuickPopup::PopupType QQuickPopup::popupType() const
 {
     Q_D(const QQuickPopup);
-    return d->m_popupType;
+    return d->popupType;
 }
 
 void QQuickPopup::setPopupType(PopupType popupType)
 {
     Q_D(QQuickPopup);
-    if (d->m_popupType == popupType)
+    if (d->popupType == popupType)
         return;
 
-    d->m_popupType = popupType;
+    d->popupType = popupType;
 
     emit popupTypeChanged();
 }
