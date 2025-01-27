@@ -120,6 +120,7 @@ private Q_SLOTS:
     void modulePrefixes();
     void javaScriptBuiltinFlag();
     void isRoot();
+    void idLocation();
 
 public:
     tst_qqmljsscope()
@@ -1060,6 +1061,16 @@ void tst_qqmljsscope::isRoot()
         QVERIFY(!child->isFileRootComponent());
         QVERIFY(child->property(u"isNotRoot"_s).isValid());
     }
+}
+
+void tst_qqmljsscope::idLocation()
+{
+    auto jsscope = run(u"idSourceLocation.qml"_s, false);
+    const QQmlJS::SourceLocation actual = jsscope->idSourceLocation();
+    QVERIFY(actual.isValid());
+    QCOMPARE(actual.startLine, 7);
+    QCOMPARE(actual.startColumn, 25);
+    QCOMPARE(actual.length, 10);
 }
 
 QTEST_MAIN(tst_qqmljsscope)

@@ -2030,6 +2030,8 @@ void QQmlJSImportVisitor::handleIdDeclaration(QQmlJS::AST::UiScriptBinding *scri
                       statement->expression->firstSourceLocation());
         return QString();
     }();
+    m_currentScope->setIdSourceLocation(combine(scriptBinding->statement->firstSourceLocation(),
+                                                scriptBinding->statement->lastSourceLocation()));
     if (m_scopesById.existsAnywhereInDocument(name)) {
         // ### TODO: find an alternative to breakInhertianceCycles here
         // we shouldn't need to search for the current root component in any case here

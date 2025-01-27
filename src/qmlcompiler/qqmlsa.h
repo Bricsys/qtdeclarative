@@ -233,6 +233,7 @@ public:
     Method::Methods ownMethods() const;
 
     QQmlSA::SourceLocation sourceLocation() const;
+    QQmlSA::SourceLocation idSourceLocation() const;
     QString filePath() const;
 
     bool hasPropertyBindings(const QString &name) const;

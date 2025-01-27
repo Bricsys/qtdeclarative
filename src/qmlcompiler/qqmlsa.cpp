@@ -746,6 +746,15 @@ QQmlSA::SourceLocation Element::sourceLocation() const
 }
 
 /*!
+    Returns the location in the QML code where this Element is assigned its id, if it has one.
+ */
+QQmlSA::SourceLocation Element::idSourceLocation() const
+{
+    return QQmlSA::SourceLocationPrivate::createQQmlSASourceLocation(
+            QQmlJSScope::scope(*this)->idSourceLocation());
+}
+
+/*!
     Returns the file path of the QML code that defines this Element.
  */
 QString Element::filePath() const

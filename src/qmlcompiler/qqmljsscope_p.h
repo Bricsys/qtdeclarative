@@ -462,6 +462,9 @@ public:
     void setSourceLocation(const QQmlJS::SourceLocation &sourceLocation);
     QQmlJS::SourceLocation sourceLocation() const;
 
+    void setIdSourceLocation(const QQmlJS::SourceLocation &sourceLocation);
+    QQmlJS::SourceLocation idSourceLocation() const;
+
     static QQmlJSScope::ConstPtr nonCompositeBaseType(const QQmlJSScope::ConstPtr &type);
 
     static QTypeRevision
@@ -583,6 +586,7 @@ private:
     AccessSemantics m_semantics = AccessSemantics::Reference;
 
     QQmlJS::SourceLocation m_sourceLocation;
+    QQmlJS::SourceLocation m_idSourceLocation;
 
     QString m_moduleName;
 
@@ -646,6 +650,18 @@ inline void QQmlJSScope::setSourceLocation(const QQmlJS::SourceLocation &sourceL
 inline QQmlJS::SourceLocation QQmlJSScope::sourceLocation() const
 {
     return m_sourceLocation;
+}
+
+inline void QQmlJSScope::setIdSourceLocation(const QQmlJS::SourceLocation &sourceLocation)
+{
+    Q_ASSERT(m_scopeType == QQmlSA::ScopeType::QMLScope);
+    m_idSourceLocation = sourceLocation;
+}
+
+inline QQmlJS::SourceLocation QQmlJSScope::idSourceLocation() const
+{
+    Q_ASSERT(m_scopeType == QQmlSA::ScopeType::QMLScope);
+    return m_idSourceLocation;
 }
 
 inline QQmlJSScope::ConstPtr QQmlJSScope::nonCompositeBaseType(const ConstPtr &type)
