@@ -7,6 +7,7 @@
 #include <QtCore/qvarlengtharray.h>
 #include <QtCore/qhash.h>
 #include <QtCore/qset.h>
+#include <QtCore/qspan.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -28,6 +29,9 @@ static constexpr LoggerWarningId ErrUnsupportedTypeInQmlUi{
 };
 static constexpr LoggerWarningId ErrInvalidIdeInVisualDesigner{
     "QtDesignStudio.InvalidIdeInVisualDesigner"
+};
+static constexpr LoggerWarningId ErrUnsupportedRootTypeInQmlUi{
+    "QtDesignStudio.UnsupportedRootTypeInQmlUi"
 };
 
 class FunctionCallValidator : public PropertyPass
@@ -71,7 +75,16 @@ private:
         std::make_pair("QtQml.Models"_L1, "Package"_L1),
         std::make_pair("QtQuick"_L1, "ShaderEffect"_L1),
     };
+    using UnsupportedName = decltype(s_unsupportedElementNames)::value_type;
     std::array<Element, s_unsupportedElementNames.size()> m_unsupportedElements;
+
+    static constexpr std::array s_unsupportedRootNames = {
+        std::make_pair("QtQml.Models"_L1, "ListModel"_L1),
+        std::make_pair("QtQml.Models"_L1, "Package"_L1),
+        std::make_pair("QtQml"_L1, "Timer"_L1),
+    };
+    std::array<Element, s_unsupportedRootNames.size()> m_unsupportedRootElements;
+    Element m_qtObject;
 };
 
 void QdsBindingValidator::onRead(const QQmlSA::Element &element, const QString &propertyName,
@@ -216,25 +229,49 @@ void FunctionCallValidator::onCall(const Element &element, const QString &proper
 
 QdsElementValidator::QdsElementValidator(PassManager *manager) : ElementPass(manager)
 {
-    for (qsizetype i = 0; i < qsizetype(s_unsupportedElementNames.size()); ++i) {
-        if (!manager->hasImportedModule(s_unsupportedElementNames[i].first))
-            continue;
-        m_unsupportedElements[i] = resolveType(s_unsupportedElementNames[i].first,
-                                               s_unsupportedElementNames[i].second);
-    }
+    auto loadTypes = [&manager, this](QSpan<const UnsupportedName> names, QSpan<Element> output) {
+        for (qsizetype i = 0; i < qsizetype(names.size()); ++i) {
+            if (!manager->hasImportedModule(names[i].first))
+                continue;
+            output[i] = resolveType(names[i].first, names[i].second);
+        }
+    };
+    loadTypes(s_unsupportedElementNames, m_unsupportedElements);
+    loadTypes(s_unsupportedRootNames, m_unsupportedRootElements);
+    m_qtObject = resolveType("QtQml"_L1, "QtObject"_L1);
 }
 
 void QdsElementValidator::run(const Element &element)
 {
-    for (const auto &unsupportedElement : m_unsupportedElements) {
-        if (!unsupportedElement || !element.inherits(unsupportedElement))
-            continue;
+    enum WarningType { ForElements, ForRootElements };
+    auto warnIfElementIsUnsupported = [this, &element](WarningType warningType) {
+        QSpan<const Element> unsupportedComponents = warningType == ForElements
+                ? QSpan<const Element>(m_unsupportedElements)
+                : QSpan<const Element>(m_unsupportedRootElements);
+        const QStringView message = warningType == ForElements
+                ? u"This type (%1) is not supported in a UI file (.ui.qml)."
+                : u"This type (%1) is not supported as a root element of a UI file (.ui.qml).";
+        const LoggerWarningId &id = warningType == ForElements ? ErrUnsupportedTypeInQmlUi
+                                                               : ErrUnsupportedRootTypeInQmlUi;
 
-        emitWarning(u"This type (%1) is not supported in a UI file (.ui.qml)."_s.arg(
-                            element.baseTypeName()),
-                    ErrUnsupportedTypeInQmlUi, element.sourceLocation());
-        break;
-    }
+        for (const auto &unsupportedElement : unsupportedComponents) {
+            if (!unsupportedElement || !element.inherits(unsupportedElement))
+                continue;
+
+            emitWarning(message.arg(element.baseTypeName()), id, element.sourceLocation());
+            break;
+        }
+
+        // special case: we don't want to warn on types indirectly inheriting from QtObject, for
+        // example Item.
+        if (warningType == ForRootElements && element.baseType() == m_qtObject)
+            emitWarning(message.arg(element.baseTypeName()), id, element.sourceLocation());
+    };
+
+    if (element.isFileRootComponent())
+        warnIfElementIsUnsupported(ForRootElements);
+    warnIfElementIsUnsupported(ForElements);
+
     if (QString id = resolveElementToId(element, element); !id.isEmpty()) {
         static constexpr std::array unsupportedNames = {
             "action"_L1,     "alias"_L1,    "anchors"_L1,   "as"_L1,          "baseState"_L1,

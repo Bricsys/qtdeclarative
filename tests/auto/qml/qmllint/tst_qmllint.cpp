@@ -2612,6 +2612,22 @@ void TestQmllint::qdsPlugin_data()
     QTest::addRow("SupportedElements")
             << u"qdsPlugin/SupportedElements.ui.qml"_s
             << Result::clean();
+
+    QTest::addRow("UnsupportedRootElement")
+            << u"qdsPlugin/UnsupportedRootElement.ui.qml"_s
+            << Result{ {
+                       Message{
+                               u"This type (QtObject) is not supported as a root element of a UI file (.ui.qml)."_s,
+                               3, 1 },
+               } };
+
+    QTest::addRow("UnsupportedRootElement2")
+            << u"qdsPlugin/UnsupportedRootElement2.ui.qml"_s
+            << Result{ {
+                       Message{
+                               u"This type (ListModel) is not supported as a root element of a UI file (.ui.qml)."_s,
+                               4, 1 },
+               } };
 }
 
 void TestQmllint::qdsPlugin()

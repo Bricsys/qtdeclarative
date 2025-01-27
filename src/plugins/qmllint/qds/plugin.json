@@ -29,6 +29,11 @@
             "name": "InvalidIdeInVisualDesigner",
             "settingsName": "InvalidIdeInVisualDesigner",
             "description": "Warn about ambiguous id names in ui.qml files"
+        },
+        {
+            "name": "UnsupportedRootTypeInQmlUi",
+            "settingsName": "UnsupportedRootTypeInQmlUi",
+            "description": "Warn about unsupported root types in ui.qml files"
         }
     ]
 }
