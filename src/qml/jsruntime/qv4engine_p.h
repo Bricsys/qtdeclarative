@@ -765,8 +765,9 @@ public:
     {
         return m_compilationUnits;
     }
-    void trimCompilationUnits();
 
+    void trimCompilationUnits();
+    void trimCompilationUnitsForUrl(const QUrl &url);
 
     using Module = QQmlRefPointer<ExecutableCompilationUnit>;
 

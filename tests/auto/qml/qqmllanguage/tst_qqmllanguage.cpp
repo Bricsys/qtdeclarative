@@ -510,6 +510,7 @@ private slots:
     void referenceObjectChainReadsBackAsRequiredBasedOnParentSignals();
     void referenceObjectDoesNotLeakAConnectionToTheDestroyedSignalOnANotifyBindable();
     void referenceObjectPrefersBindableConnectionToNotifyConnection();
+    void dontAccumulateComplationUnitsOnQJSEngineEvaluate();
 
 private:
     QQmlEngine engine;
@@ -9645,6 +9646,28 @@ void tst_qqmllanguage::finalProperty()
     const QJSValue f = engine.evaluate(
             "(function final(final) { var a = final; { let final = a; return final; } })(47)"_L1);
     QCOMPARE(f.toInt(), 47);
+}
+
+void tst_qqmllanguage::dontAccumulateComplationUnitsOnQJSEngineEvaluate()
+{
+    {
+        QQmlEngine e;
+        auto *interpreter = e.handle()->jsEngine();
+
+        for (int i = 0; i < 10; i++)
+            interpreter->evaluate("2+2");
+
+        QCOMPARE(e.handle()->compilationUnits().size(), 1);
+    }
+    {
+        QQmlEngine e;
+        auto *interpreter = e.handle()->jsEngine();
+
+        for (int i = 0; i < 10; i++)
+            interpreter->evaluate("2+2", "aaaaaaaa");
+
+        QCOMPARE(e.handle()->compilationUnits().size(), 1);
+    }
 }
 
 QTEST_MAIN(tst_qqmllanguage)
