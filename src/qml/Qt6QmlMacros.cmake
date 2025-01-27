@@ -1594,7 +1594,7 @@ function(_qt_internal_propagate_qmlcache_object_lib
 
     # Qml specific additions.
     target_link_libraries(${resource_target} PRIVATE
-        ${QT_CMAKE_EXPORT_NAMESPACE}::QmlPrivate
+        ${QT_CMAKE_EXPORT_NAMESPACE}::Qml
         ${QT_CMAKE_EXPORT_NAMESPACE}::Core
     )
 
@@ -1718,7 +1718,7 @@ function(_qt_internal_target_enable_qmlcachegen target qmlcachegen)
     # TODO: Probably need to reject ${target} being an object library as unsupported
     target_sources(${target} PRIVATE "${qmlcache_loader_cpp}")
     target_link_libraries(${target} PRIVATE
-        ${QT_CMAKE_EXPORT_NAMESPACE}::QmlPrivate
+        ${QT_CMAKE_EXPORT_NAMESPACE}::Qml
         ${QT_CMAKE_EXPORT_NAMESPACE}::Core
     )
 endfunction()
@@ -3862,7 +3862,7 @@ function(_qt_internal_qml_type_registration target)
     endif()
 
     target_include_directories(${effective_target} PRIVATE
-        $<TARGET_PROPERTY:${QT_CMAKE_EXPORT_NAMESPACE}::QmlPrivate,INTERFACE_INCLUDE_DIRECTORIES>
+        $<TARGET_PROPERTY:${QT_CMAKE_EXPORT_NAMESPACE}::Qml,INTERFACE_INCLUDE_DIRECTORIES>
     )
 endfunction()
 
