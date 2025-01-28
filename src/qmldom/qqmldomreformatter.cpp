@@ -47,10 +47,10 @@ void ScriptFormatter::lnAcceptIndented(Node *node)
 bool ScriptFormatter::acceptBlockOrIndented(Node *ast, bool finishWithSpaceOrNewline)
 {
     if (cast<Block *>(ast)) {
-        out(" ");
+        lw.lineWriter.ensureSpace();
         accept(ast);
         if (finishWithSpaceOrNewline)
-            out(" ");
+            lw.lineWriter.ensureSpace();
         return true;
     } else {
         if (finishWithSpaceOrNewline)
@@ -156,12 +156,15 @@ bool ScriptFormatter::visit(PatternElementList *ast)
 
         if (it->elision)
             accept(it->elision);
-        if (it->elision && it->element)
-            out(", ");
+        if (it->elision && it->element) {
+            out(",");
+            lw.lineWriter.ensureSpace();
+        }
         if (it->element)
             accept(it->element);
         if (it->next) {
-            out(", ");
+            out(",");
+            lw.lineWriter.ensureSpace();
             if (isObjectInitializer)
                 newLine();
         }
@@ -190,10 +193,13 @@ bool ScriptFormatter::visit(AST::PatternProperty *property)
         // https://262.ecma-international.org/7.0/#prod-MethodDefinition
         // https://262.ecma-international.org/7.0/#prod-FunctionDeclaration
         // hence visit(FunctionDeclaration*) is not quite appropriate here
-        if (property->type == PatternProperty::Getter)
-            out("get ");
-        else if (property->type == PatternProperty::Setter)
-            out("set ");
+        if (property->type == PatternProperty::Getter) {
+            out("get");
+            lw.lineWriter.ensureSpace();
+        } else if (property->type == PatternProperty::Setter) {
+            out("set");
+            lw.lineWriter.ensureSpace();
+        }
         FunctionExpression *f = AST::cast<FunctionExpression *>(property->initializer);
         if (f->isGenerator) {
             out("*");
@@ -228,7 +234,8 @@ bool ScriptFormatter::visit(AST::PatternProperty *property)
     const bool bindingIdentifierExist = !property->bindingIdentifier.isEmpty();
     if (property->colonToken.isValid()) {
         // PropertyName[?Yield] : AssignmentExpression[In, ?Yield]
-        out(": ");
+        out(":");
+        lw.lineWriter.ensureSpace();
         useInitializer = true;
         if (bindingIdentifierExist)
             out(property->bindingIdentifier);
@@ -239,7 +246,9 @@ bool ScriptFormatter::visit(AST::PatternProperty *property)
     if (property->initializer) {
         // CoverInitializedName[?Yield]
         if (bindingIdentifierExist) {
-            out(" = ");
+            lw.lineWriter.ensureSpace();
+            out("=");
+            lw.lineWriter.ensureSpace();
             useInitializer = true;
         }
         if (useInitializer)
@@ -314,7 +323,8 @@ bool ScriptFormatter::visit(FieldMemberExpression *ast)
 
 bool ScriptFormatter::visit(NewMemberExpression *ast)
 {
-    out("new "); // ast->newToken
+    out("new"); // ast->newToken
+    lw.lineWriter.ensureSpace();
     accept(ast->base);
     out(ast->lparenToken);
     accept(ast->arguments);
@@ -324,7 +334,8 @@ bool ScriptFormatter::visit(NewMemberExpression *ast)
 
 bool ScriptFormatter::visit(NewExpression *ast)
 {
-    out("new "); // ast->newToken
+    out("new"); // ast->newToken
+    lw.lineWriter.ensureSpace();
     accept(ast->expression);
     return false;
 }
@@ -369,21 +380,24 @@ bool ScriptFormatter::visit(PreDecrementExpression *ast)
 
 bool ScriptFormatter::visit(DeleteExpression *ast)
 {
-    out("delete "); // ast->deleteToken
+    out("delete"); // ast->deleteToken
+    lw.lineWriter.ensureSpace();
     accept(ast->expression);
     return false;
 }
 
 bool ScriptFormatter::visit(VoidExpression *ast)
 {
-    out("void "); // ast->voidToken
+    out("void"); // ast->voidToken
+    lw.lineWriter.ensureSpace();
     accept(ast->expression);
     return false;
 }
 
 bool ScriptFormatter::visit(TypeOfExpression *ast)
 {
-    out("typeof "); // ast->typeofToken
+    out("typeof"); // ast->typeofToken
+    lw.lineWriter.ensureSpace();
     accept(ast->expression);
     return false;
 }
@@ -419,9 +433,9 @@ bool ScriptFormatter::visit(NotExpression *ast)
 bool ScriptFormatter::visit(BinaryExpression *ast)
 {
     accept(ast->left);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     out(ast->operatorToken);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     accept(ast->right);
     return false;
 }
@@ -429,9 +443,13 @@ bool ScriptFormatter::visit(BinaryExpression *ast)
 bool ScriptFormatter::visit(ConditionalExpression *ast)
 {
     accept(ast->expression);
-    out(" ? "); // ast->questionToken
+    lw.lineWriter.ensureSpace();
+    out("?"); // ast->questionToken
+    lw.lineWriter.ensureSpace();
     accept(ast->ok);
-    out(" : "); // ast->colonToken
+    lw.lineWriter.ensureSpace();
+    out(":"); // ast->colonToken
+    lw.lineWriter.ensureSpace();
     accept(ast->ko);
     return false;
 }
@@ -452,7 +470,7 @@ bool ScriptFormatter::visit(Block *ast)
 bool ScriptFormatter::visit(VariableStatement *ast)
 {
     out(ast->declarationKindToken);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     accept(ast->declarations);
     if (addSemicolons())
         out(";");
@@ -467,10 +485,12 @@ bool ScriptFormatter::visit(PatternElement *ast)
     case PatternElement::Binding:
         break;
     case PatternElement::Getter:
-        out("get ");
+        out("get");
+        lw.lineWriter.ensureSpace();
         break;
     case PatternElement::Setter:
-        out("set ");
+        out("set");
+        lw.lineWriter.ensureSpace();
         break;
     case PatternElement::SpreadElement:
         out("...");
@@ -481,8 +501,11 @@ bool ScriptFormatter::visit(PatternElement *ast)
     if (!ast->destructuringPattern())
         out(ast->identifierToken);
     if (ast->initializer) {
-        if (ast->isVariableDeclaration() || ast->type == AST::PatternElement::Binding)
-            out(" = ");
+        if (ast->isVariableDeclaration() || ast->type == AST::PatternElement::Binding) {
+            lw.lineWriter.ensureSpace();
+            out("=");
+            lw.lineWriter.ensureSpace();
+        }
         accept(ast->initializer);
     }
     return false;
@@ -497,7 +520,7 @@ bool ScriptFormatter::visit(EmptyStatement *ast)
 bool ScriptFormatter::visit(IfStatement *ast)
 {
     out(ast->ifToken);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     out(ast->lparenToken);
     preVisit(ast->expression);
     ast->expression->accept0(this);
@@ -507,7 +530,7 @@ bool ScriptFormatter::visit(IfStatement *ast)
     if (ast->ko) {
         out(ast->elseToken);
         if (cast<Block *>(ast->ko) || cast<IfStatement *>(ast->ko)) {
-            out(" ");
+            lw.lineWriter.ensureSpace();
             accept(ast->ko);
         } else {
             lnAcceptIndented(ast->ko);
@@ -521,7 +544,7 @@ bool ScriptFormatter::visit(DoWhileStatement *ast)
     out(ast->doToken);
     acceptBlockOrIndented(ast->statement, true);
     out(ast->whileToken);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     out(ast->lparenToken);
     accept(ast->expression);
     out(ast->rparenToken);
@@ -531,7 +554,7 @@ bool ScriptFormatter::visit(DoWhileStatement *ast)
 bool ScriptFormatter::visit(WhileStatement *ast)
 {
     out(ast->whileToken);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     out(ast->lparenToken);
     accept(ast->expression);
     out(ast->rparenToken);
@@ -542,22 +565,24 @@ bool ScriptFormatter::visit(WhileStatement *ast)
 bool ScriptFormatter::visit(ForStatement *ast)
 {
     out(ast->forToken);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     out(ast->lparenToken);
     if (ast->initialiser) {
         accept(ast->initialiser);
     } else if (ast->declarations) {
         if (auto pe = ast->declarations->declaration) {
             out(pe->declarationKindToken);
-            out(" ");
+            lw.lineWriter.ensureSpace();
         }
         for (VariableDeclarationList *it = ast->declarations; it; it = it->next) {
             accept(it->declaration);
         }
     }
-    out("; "); // ast->firstSemicolonToken
+    out(";"); // ast->firstSemicolonToken
+    lw.lineWriter.ensureSpace();
     accept(ast->condition);
-    out("; "); // ast->secondSemicolonToken
+    out(";"); // ast->secondSemicolonToken
+    lw.lineWriter.ensureSpace();
     accept(ast->expression);
     out(ast->rparenToken);
     acceptBlockOrIndented(ast->statement);
@@ -567,16 +592,16 @@ bool ScriptFormatter::visit(ForStatement *ast)
 bool ScriptFormatter::visit(ForEachStatement *ast)
 {
     out(ast->forToken);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     out(ast->lparenToken);
     if (auto pe = AST::cast<PatternElement *>(ast->lhs)) {
         out(pe->declarationKindToken);
-        out(" ");
+        lw.lineWriter.ensureSpace();
     }
     accept(ast->lhs);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     out(ast->inOfToken);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     accept(ast->expression);
     out(ast->rparenToken);
     acceptBlockOrIndented(ast->statement);
@@ -587,7 +612,7 @@ bool ScriptFormatter::visit(ContinueStatement *ast)
 {
     out(ast->continueToken);
     if (!ast->label.isNull()) {
-        out(" ");
+        lw.lineWriter.ensureSpace();
         out(ast->identifierToken);
     }
     if (addSemicolons())
@@ -599,7 +624,7 @@ bool ScriptFormatter::visit(BreakStatement *ast)
 {
     out(ast->breakToken);
     if (!ast->label.isNull()) {
-        out(" ");
+        lw.lineWriter.ensureSpace();
         out(ast->identifierToken);
     }
     if (addSemicolons())
@@ -612,7 +637,7 @@ bool ScriptFormatter::visit(ReturnStatement *ast)
     out(ast->returnToken);
     if (ast->expression) {
         if (ast->returnToken.length != 0)
-            out(" ");
+            lw.lineWriter.ensureSpace();
         accept(ast->expression);
     }
     if (ast->returnToken.length > 0 && addSemicolons())
@@ -627,7 +652,7 @@ bool ScriptFormatter::visit(YieldExpression *ast)
         out("*");
     if (ast->expression) {
         if (ast->yieldToken.isValid())
-            out(" ");
+            lw.lineWriter.ensureSpace();;
         accept(ast->expression);
     }
     return false;
@@ -637,7 +662,7 @@ bool ScriptFormatter::visit(ThrowStatement *ast)
 {
     out(ast->throwToken);
     if (ast->expression) {
-        out(" ");
+        lw.lineWriter.ensureSpace();
         accept(ast->expression);
     }
     if (addSemicolons())
@@ -648,7 +673,7 @@ bool ScriptFormatter::visit(ThrowStatement *ast)
 bool ScriptFormatter::visit(WithStatement *ast)
 {
     out(ast->withToken);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     out(ast->lparenToken);
     accept(ast->expression);
     out(ast->rparenToken);
@@ -659,11 +684,11 @@ bool ScriptFormatter::visit(WithStatement *ast)
 bool ScriptFormatter::visit(SwitchStatement *ast)
 {
     out(ast->switchToken);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     out(ast->lparenToken);
     accept(ast->expression);
     out(ast->rparenToken);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     accept(ast->block);
     return false;
 }
@@ -688,7 +713,8 @@ bool ScriptFormatter::visit(CaseBlock *ast)
 
 bool ScriptFormatter::visit(CaseClause *ast)
 {
-    out("case "); // ast->caseToken
+    out("case"); // ast->caseToken
+    lw.lineWriter.ensureSpace();
     accept(ast->expression);
     out(ast->colonToken);
     if (ast->statements)
@@ -707,21 +733,23 @@ bool ScriptFormatter::visit(DefaultClause *ast)
 bool ScriptFormatter::visit(LabelledStatement *ast)
 {
     out(ast->identifierToken);
-    out(": "); // ast->colonToken
+    out(":"); // ast->colonToken
+    lw.lineWriter.ensureSpace();
     accept(ast->statement);
     return false;
 }
 
 bool ScriptFormatter::visit(TryStatement *ast)
 {
-    out("try "); // ast->tryToken
+    out("try"); // ast->tryToken
+    lw.lineWriter.ensureSpace();
     accept(ast->statement);
     if (ast->catchExpression) {
-        out(" ");
+        lw.lineWriter.ensureSpace();
         accept(ast->catchExpression);
     }
     if (ast->finallyExpression) {
-        out(" ");
+        lw.lineWriter.ensureSpace();
         accept(ast->finallyExpression);
     }
     return false;
@@ -730,17 +758,19 @@ bool ScriptFormatter::visit(TryStatement *ast)
 bool ScriptFormatter::visit(Catch *ast)
 {
     out(ast->catchToken);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     out(ast->lparenToken);
     out(ast->identifierToken);
-    out(") "); // ast->rparenToken
+    out(")"); // ast->rparenToken
+    lw.lineWriter.ensureSpace();
     accept(ast->statement);
     return false;
 }
 
 bool ScriptFormatter::visit(Finally *ast)
 {
-    out("finally "); // ast->finallyToken
+    out("finally"); // ast->finallyToken
+    lw.lineWriter.ensureSpace();
     accept(ast->statement);
     return false;
 }
@@ -754,9 +784,11 @@ bool ScriptFormatter::visit(FunctionExpression *ast)
 {
     if (!ast->isArrowFunction) {
         if (ast->isGenerator) {
-            out("function* ");
+            out("function*");
+            lw.lineWriter.ensureSpace();
         } else {
-            out("function ");
+            out("function");
+            lw.lineWriter.ensureSpace();
         }
         if (!ast->name.isNull())
             out(ast->identifierToken);
@@ -775,9 +807,11 @@ bool ScriptFormatter::visit(FunctionExpression *ast)
     out(ast->rparenToken);
     if (ast->isArrowFunction && !ast->formals)
         out("()");
-    out(" ");
-    if (ast->isArrowFunction)
-        out("=> ");
+    lw.lineWriter.ensureSpace();
+    if (ast->isArrowFunction) {
+        out("=>");
+        lw.lineWriter.ensureSpace();
+    }
     out(ast->lbraceToken);
     if (ast->lbraceToken.length != 0)
         ++expressionDepth;
@@ -801,8 +835,10 @@ bool ScriptFormatter::visit(FunctionExpression *ast)
 bool ScriptFormatter::visit(Elision *ast)
 {
     for (Elision *it = ast; it; it = it->next) {
-        if (it->next)
-            out(", "); // ast->commaToken
+        if (it->next) {
+            out(","); // ast->commaToken
+            lw.lineWriter.ensureSpace();
+        }
     }
     return false;
 }
@@ -814,7 +850,8 @@ bool ScriptFormatter::visit(ArgumentList *ast)
             out("...");
         accept(it->expression);
         if (it->next) {
-            out(", "); // it->commaToken
+            out(","); // it->commaToken
+            lw.lineWriter.ensureSpace();
         }
     }
     return false;
@@ -861,8 +898,10 @@ bool ScriptFormatter::visit(VariableDeclarationList *ast)
 {
     for (VariableDeclarationList *it = ast; it; it = it->next) {
         accept(it->declaration);
-        if (it->next)
-            out(", "); // it->commaToken
+        if (it->next) {
+            out(","); // it->commaToken
+            lw.lineWriter.ensureSpace();
+        }
     }
     return false;
 }
@@ -885,8 +924,10 @@ bool ScriptFormatter::visit(FormalParameterList *ast)
             out(id);
         if (it->element->bindingTarget)
             accept(it->element->bindingTarget);
-        if (it->next)
-            out(", ");
+        if (it->next) {
+            out(",");
+            lw.lineWriter.ensureSpace();
+        }
     }
     return false;
 }
@@ -905,7 +946,8 @@ bool ScriptFormatter::visit(ComputedPropertyName *)
 bool ScriptFormatter::visit(Expression *el)
 {
     accept(el->left);
-    out(", ");
+    out(",");
+    lw.lineWriter.ensureSpace();
     accept(el->right);
     return false;
 }
@@ -921,18 +963,23 @@ bool ScriptFormatter::visit(ClassDeclaration *ast)
 {
     preVisit(ast);
     out(ast->classToken);
-    out(" ");
+    lw.lineWriter.ensureSpace();
     out(ast->name);
     if (ast->heritage) {
-        out(" extends ");
+        lw.lineWriter.ensureSpace();
+        out("extends");
+        lw.lineWriter.ensureSpace();
         accept(ast->heritage);
     }
-    out(" {");
+    lw.lineWriter.ensureSpace();
+    out("{");
     int baseIndent = lw.increaseIndent();
     for (ClassElementList *it = ast->elements; it; it = it->next) {
         lw.newline();
-        if (it->isStatic)
-            out("static ");
+        if (it->isStatic) {
+            out("static");
+            lw.lineWriter.ensureSpace();
+        }
         accept(it->property);
         lw.newline();
     }
@@ -945,7 +992,7 @@ bool ScriptFormatter::visit(ClassDeclaration *ast)
 bool ScriptFormatter::visit(AST::ImportDeclaration *ast)
 {
     out(ast->importToken);
-    lw.space();
+    lw.ensureSpace();
     if (!ast->moduleSpecifier.isNull()) {
         out(ast->moduleSpecifierToken);
     }
@@ -956,9 +1003,9 @@ bool ScriptFormatter::visit(AST::ImportSpecifier *ast)
 {
     if (!ast->identifier.isNull()) {
         out(ast->identifierToken);
-        lw.space();
+        lw.ensureSpace();
         out("as");
-        lw.space();
+        lw.ensureSpace();
     }
     out(ast->importedBindingToken);
     return true;
@@ -967,9 +1014,9 @@ bool ScriptFormatter::visit(AST::ImportSpecifier *ast)
 bool ScriptFormatter::visit(AST::NameSpaceImport *ast)
 {
     out(ast->starToken);
-    lw.space();
+    lw.ensureSpace();
     out("as");
-    lw.space();
+    lw.ensureSpace();
     out(ast->importedBindingToken);
     return true;
 }
@@ -980,7 +1027,7 @@ bool ScriptFormatter::visit(AST::ImportsList *ast)
         accept(it->importSpecifier);
         if (it->next) {
             out(",");
-            lw.space();
+            lw.ensureSpace();
         }
     }
     return false;
@@ -989,7 +1036,7 @@ bool ScriptFormatter::visit(AST::NamedImports *ast)
 {
     out(ast->leftBraceToken);
     if (ast->importsList) {
-        lw.space();
+        lw.ensureSpace();
     }
     return true;
 }
@@ -1000,7 +1047,7 @@ bool ScriptFormatter::visit(AST::ImportClause *ast)
         out(ast->importedDefaultBindingToken);
         if (ast->nameSpaceImport || ast->namedImports) {
             out(",");
-            lw.space();
+            lw.ensureSpace();
         }
     }
     return true;
@@ -1009,10 +1056,10 @@ bool ScriptFormatter::visit(AST::ImportClause *ast)
 bool ScriptFormatter::visit(AST::ExportDeclaration *ast)
 {
     out(ast->exportToken);
-    lw.space();
+    lw.ensureSpace();
     if (ast->exportDefault) {
         out("default");
-        lw.space();
+        lw.ensureSpace();
     }
     if (ast->exportsAll()) {
         out("*");
@@ -1024,7 +1071,7 @@ bool ScriptFormatter::visit(AST::ExportClause *ast)
 {
     out(ast->leftBraceToken);
     if (ast->exportsList) {
-        lw.space();
+        lw.ensureSpace();
     }
     return true;
 }
@@ -1033,9 +1080,9 @@ bool ScriptFormatter::visit(AST::ExportSpecifier *ast)
 {
     out(ast->identifier);
     if (ast->exportedIdentifierToken.isValid()) {
-        lw.space();
+        lw.ensureSpace();
         out("as");
-        lw.space();
+        lw.ensureSpace();
         out(ast->exportedIdentifier);
     }
     return true;
@@ -1047,7 +1094,7 @@ bool ScriptFormatter::visit(AST::ExportsList *ast)
         accept(it->exportSpecifier);
         if (it->next) {
             out(",");
-            lw.space();
+            lw.ensureSpace();
         }
     }
     return false;
@@ -1055,9 +1102,9 @@ bool ScriptFormatter::visit(AST::ExportsList *ast)
 
 bool ScriptFormatter::visit(AST::FromClause *ast)
 {
-    lw.space();
+    lw.ensureSpace();
     out(ast->fromToken);
-    lw.space();
+    lw.ensureSpace();
     out(ast->moduleSpecifierToken);
     return true;
 }
@@ -1104,7 +1151,7 @@ void ScriptFormatter::endVisit(AST::ExportDeclaration *ast)
 void ScriptFormatter::endVisit(AST::ExportClause *ast)
 {
     if (ast->exportsList) {
-        lw.space();
+        lw.ensureSpace();
     }
     out(ast->rightBraceToken);
 }
@@ -1112,7 +1159,7 @@ void ScriptFormatter::endVisit(AST::ExportClause *ast)
 void ScriptFormatter::endVisit(AST::NamedImports *ast)
 {
     if (ast->importsList) {
-        lw.space();
+        lw.ensureSpace();
     }
     out(ast->rightBraceToken);
 }
