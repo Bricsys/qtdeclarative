@@ -1,5 +1,5 @@
 // Copyright (C) 2021 The Qt Company Ltd.
-// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial
 
 #include "qqmljstyperesolver_p.h"
 
@@ -647,10 +647,7 @@ QQmlJSScope::ConstPtr QQmlJSTypeResolver::merge(const QQmlJSScope::ConstPtr &a,
         return intType();
     if (canConvert(boolType(), uintType()))
         return uintType();
-    if (canConvert(intType(), stringType()))
-        return stringType();
-    if (canConvert(uintType(), stringType()))
-        return stringType();
+
     if (isPrimitive(a) && isPrimitive(b))
         return jsPrimitiveType();
 

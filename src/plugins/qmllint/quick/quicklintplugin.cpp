@@ -1,5 +1,5 @@
 // Copyright (C) 2022 The Qt Company Ltd.
-// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial
 
 #include "quicklintplugin.h"
 
@@ -761,11 +761,13 @@ void PropertyChangesValidatorPass::run(const QQmlSA::Element &element)
         return;
 
     QString targetId = u"<id>"_s;
-    const QString targetBinding = sourceCode(target->sourceLocation());
+    const auto targetLocation = target->sourceLocation();
+    const QString targetBinding = sourceCode(targetLocation);
     const QQmlSA::Element targetElement = resolveIdToElement(targetBinding, element);
     if (!targetElement.isNull())
         targetId = targetBinding;
 
+    bool hadCustomParsedBindings = false;
     for (auto it = bindings.begin(), end = bindings.end(); it != end; ++it) {
         const QString name = it->propertyName();
         if (element->hasProperty(name))
@@ -783,11 +785,18 @@ void PropertyChangesValidatorPass::run(const QQmlSA::Element &element)
         if (binding.length() > 16)
             binding = binding.left(13) + "..."_L1;
 
+        hadCustomParsedBindings = true;
         emitWarning(
                 "Property \"%1\" is custom-parsed in PropertyChanges. "
                 "You should phrase this binding as \"%2.%1: %3\""_L1
                     .arg(name, targetId, binding),
                 quickPropertyChangesParsed, bindingLocation);
+    }
+
+    if (hadCustomParsedBindings && !targetElement.isNull()) {
+        emitWarning("You should remove any bindings on the \"target\" property and avoid "
+                    "custom-parsed bindings in PropertyChanges.",
+                    quickPropertyChangesParsed, targetLocation);
     }
 }
 

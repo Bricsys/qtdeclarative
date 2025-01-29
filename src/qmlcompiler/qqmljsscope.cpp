@@ -1,5 +1,5 @@
 // Copyright (C) 2019 The Qt Company Ltd.
-// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial
 
 #include "qqmljsscope_p.h"
 #include "qqmljstypereader_p.h"
@@ -502,24 +502,26 @@ QTypeRevision QQmlJSScope::resolveType(
         }
     }
 
-    for (auto it = self->m_methods.begin(), end = self->m_methods.end(); it != end; ++it) {
-        const QString returnTypeName = it->returnTypeName();
-        if (!it->returnType() && !returnTypeName.isEmpty()) {
-            const auto returnType = findType(returnTypeName, context, usedTypes);
-            it->setReturnType(returnType.scope);
+    const auto resolveParameter = [&](QQmlJSMetaParameter &parameter) {
+        if (const QString typeName = parameter.typeName();
+            !parameter.type() && !typeName.isEmpty()) {
+            const auto type = findType(typeName, context, usedTypes);
+            if (type.scope && type.scope->isReferenceType())
+                parameter.setIsPointer(true);
+            parameter.setType({ (type.scope && parameter.isList())
+                                        ? type.scope->listType()
+                                        : type.scope });
         }
+    };
+
+    for (auto it = self->m_methods.begin(), end = self->m_methods.end(); it != end; ++it) {
+        auto returnValue = it->returnValue();
+        resolveParameter(returnValue);
+        it->setReturnValue(returnValue);
 
         auto parameters = it->parameters();
-        for (int i = 0, length = parameters.size(); i < length; ++i) {
-            auto &parameter = parameters[i];
-            if (const QString typeName = parameter.typeName();
-                !parameter.type() && !typeName.isEmpty()) {
-                const auto type = findType(typeName, context, usedTypes);
-                if (type.scope && type.scope->isReferenceType())
-                    parameter.setIsPointer(true);
-                parameter.setType({ type.scope });
-            }
-        }
+        for (int i = 0, length = parameters.size(); i < length; ++i)
+            resolveParameter(parameters[i]);
 
         it->setParameters(parameters);
     }

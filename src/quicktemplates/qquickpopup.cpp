@@ -556,7 +556,7 @@ bool QQuickPopupPrivate::prepareEnterTransition()
         }
         if (dim)
             createOverlay();
-        showOverlay();
+        showDimmer();
         emit q->aboutToShow();
         visible = true;
         transitionState = EnterTransition;
@@ -593,7 +593,7 @@ bool QQuickPopupPrivate::prepareExitTransition()
         if (focus)
             popupItem->setFocus(false, Qt::PopupFocusReason);
         transitionState = ExitTransition;
-        hideOverlay();
+        hideDimmer();
         emit q->aboutToHide();
         emit q->openedChanged();
     }
@@ -881,7 +881,7 @@ void QQuickPopupPrivate::createOverlay()
 
     if (!dimmer)
         dimmer = createDimmer(component, q, overlay);
-    resizeOverlay();
+    resizeDimmer();
 }
 
 void QQuickPopupPrivate::destroyDimmer()
@@ -914,21 +914,21 @@ void QQuickPopupPrivate::updateContentPalettes(const QPalette& parentPalette)
     QQuickItemPrivate::get(popupItem)->updateChildrenPalettes(parentPalette);
 }
 
-void QQuickPopupPrivate::showOverlay()
+void QQuickPopupPrivate::showDimmer()
 {
     // use QQmlProperty instead of QQuickItem::setOpacity() to trigger QML Behaviors
     if (dim && dimmer)
         QQmlProperty::write(dimmer, QStringLiteral("opacity"), 1.0);
 }
 
-void QQuickPopupPrivate::hideOverlay()
+void QQuickPopupPrivate::hideDimmer()
 {
     // use QQmlProperty instead of QQuickItem::setOpacity() to trigger QML Behaviors
     if (dim && dimmer)
         QQmlProperty::write(dimmer, QStringLiteral("opacity"), 0.0);
 }
 
-void QQuickPopupPrivate::resizeOverlay()
+void QQuickPopupPrivate::resizeDimmer()
 {
     if (!dimmer)
         return;

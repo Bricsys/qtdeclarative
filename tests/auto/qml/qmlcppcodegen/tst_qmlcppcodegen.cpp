@@ -4,6 +4,7 @@
 #include <data/cppbaseclass.h>
 #include <data/enumproblems.h>
 #include <data/objectwithmethod.h>
+#include <data/resettable.h>
 
 #include <QtQml/private/qqmlengine_p.h>
 #include <QtQml/private/qqmlpropertycachecreator_p.h>
@@ -28,6 +29,7 @@ private slots:
     void initTestCase();
 
     void simpleBinding();
+    void cppMethodListReturnType();
     void cppValueTypeList();
     void anchorsFill();
     void signalHandler();
@@ -76,6 +78,7 @@ private slots:
     void shifts();
     void valueTypeProperty();
     void propertyOfParent();
+    void reduceWithNullThis();
     void readEnumFromInstance();
     void accessModelMethodFromOutSide();
     void functionArguments();
@@ -110,7 +113,13 @@ private slots:
     void unknownAttached();
     void variantlist();
     void popContextAfterRet();
+    void renameAdjust();
+
+    void resettableProperty();
+    void resettableProperty_data();
+
     void revisions();
+    void scopeIdLookup();
     void invisibleBase();
     void notEqualsInt();
     void infinities();
@@ -158,6 +167,7 @@ private slots:
     void callWithSpread();
     void nullComparison();
     void consoleObject();
+    void consoleTrace();
     void multiForeign();
     void namespaceWithEnum();
     void enumProblems();
@@ -210,6 +220,17 @@ void tst_QmlCppCodegen::simpleBinding()
         QCOMPARE(base->cppProp.value(), 9);
         QCOMPARE(base->cppProp2.value(), 18);
     }
+}
+
+void tst_QmlCppCodegen::cppMethodListReturnType()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, QUrl(u"qrc:/qt/qml/TestTypes/CppMethodListReturnType.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+
+    QCOMPARE(o->property("list").toList()[2].toInt(), 2);
 }
 
 void tst_QmlCppCodegen::cppValueTypeList()
@@ -1152,6 +1173,18 @@ void tst_QmlCppCodegen::propertyOfParent()
     }
 }
 
+void tst_QmlCppCodegen::reduceWithNullThis()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, QUrl(u"qrc:/qt/qml/TestTypes/reduceWithNullThis.qml"_s));
+    QVERIFY2(component.isReady(), component.errorString().toUtf8());
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(!object.isNull());
+
+    QCOMPARE(object->property("preferredHeight").toDouble(), 28.0);
+    QCOMPARE(object->property("preferredHeight2").toDouble(), 28.0);
+}
+
 void tst_QmlCppCodegen::readEnumFromInstance()
 {
     QQmlEngine engine;
@@ -1697,6 +1730,7 @@ void tst_QmlCppCodegen::urlString()
     QCOMPARE(qvariant_cast<QUrl>(rootObject->property("c")), QUrl(u"http://dddddd.com"_s));
     QCOMPARE(qvariant_cast<QUrl>(rootObject->property("d")), QUrl(u"http://aaaaaa.com"_s));
     QCOMPARE(qvariant_cast<QUrl>(rootObject->property("e")), QUrl(u"http://a112233.de"_s));
+    QCOMPARE(rootObject->objectName(), QLatin1String("http://dddddd.com"));
 }
 
 
@@ -1926,6 +1960,62 @@ void tst_QmlCppCodegen::popContextAfterRet()
     QCOMPARE(o->objectName(), u"backgroundImage"_s);
 }
 
+void tst_QmlCppCodegen::renameAdjust()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, QUrl(u"qrc:/qt/qml/TestTypes/renameAdjust.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+
+    QTest::ignoreMessage(QtDebugMsg, "success");
+    QTest::ignoreMessage(QtCriticalMsg, "failed 10 11");
+
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(o);
+}
+
+void tst_QmlCppCodegen::resettableProperty()
+{
+    QFETCH(QString, url);
+    QQmlEngine engine;
+    QQmlComponent c(&engine, QUrl(url));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+
+    QTest::ignoreMessage(
+            QtWarningMsg, qPrintable(url + u":10:5: Unable to assign [undefined] to double"_s));
+
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(o);
+
+    QCOMPARE(o->property("value").toDouble(), 999);
+    QMetaObject::invokeMethod(o.data(), "doReset");
+    QCOMPARE(o->property("value").toDouble(), 0);
+
+    o->setProperty("value", double(82));
+    QCOMPARE(o->property("value").toDouble(), 82);
+    QMetaObject::invokeMethod(o.data(), "doReset2");
+    QCOMPARE(o->property("value").toDouble(), 0);
+
+    QTest::ignoreMessage(
+            QtWarningMsg, qPrintable(url + u":18: Error: Cannot assign [undefined] to double"_s));
+    QCOMPARE(o->property("notResettable").toDouble(), 10);
+    QMetaObject::invokeMethod(o.data(), "doNotReset");
+    QCOMPARE(o->property("notResettable").toDouble(), 10);
+    QCOMPARE(o->property("notResettable2").toDouble(), 0); // not NaN
+
+    o->setObjectName(u"namename"_s);
+    QTest::ignoreMessage(
+            QtWarningMsg, qPrintable(url + u":22: Error: Cannot assign [undefined] to QString"_s));
+    QMetaObject::invokeMethod(o.data(), "aaa");
+    QCOMPARE(o->objectName(), u"namename"_s);
+}
+
+void tst_QmlCppCodegen::resettableProperty_data()
+{
+    QTest::addColumn<QString>("url");
+    QTest::addRow("object lookups") << u"qrc:/qt/qml/TestTypes/resettable.qml"_s;
+    QTest::addRow("fallback lookups") << u"qrc:/qt/qml/TestTypes/fallbackresettable.qml"_s;
+}
+
 void tst_QmlCppCodegen::revisions()
 {
     QQmlEngine engine;
@@ -1936,6 +2026,16 @@ void tst_QmlCppCodegen::revisions()
 
     QCOMPARE(o->property("delayed").toBool(), true);
     QCOMPARE(o->property("gotten").toInt(), 5);
+}
+
+void tst_QmlCppCodegen::scopeIdLookup()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, QUrl(u"qrc:/qt/qml/TestTypes/scopeIdLookup.qml"_s));
+    QVERIFY2(!component.isError(), component.errorString().toUtf8());
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(!object.isNull());
+    QCOMPARE(object->property("objectName").toString(), u"outer"_s);
 }
 
 void tst_QmlCppCodegen::invisibleBase()
@@ -3100,6 +3200,32 @@ void tst_QmlCppCodegen::consoleObject()
     const auto guard = qScopeGuard([oldHandler]() { qInstallMessageHandler(oldHandler); });
     QScopedPointer<QObject> p(c.create());
     QVERIFY(!p.isNull());
+}
+
+void tst_QmlCppCodegen::consoleTrace()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, QUrl(u"qrc:/qt/qml/TestTypes/consoleTrace.qml"_s));
+    QVERIFY2(!component.isError(), component.errorString().toUtf8());
+
+#if !defined(QT_NO_DEBUG) || defined(QT_TEST_FORCE_INTERPRETER)
+    // All line numbers in debug mode or when interpreting
+
+    QTest::ignoreMessage(QtDebugMsg, R"(c (qrc:/qt/qml/TestTypes/consoleTrace.qml:6)
+b (qrc:/qt/qml/TestTypes/consoleTrace.qml:5)
+a (qrc:/qt/qml/TestTypes/consoleTrace.qml:4)
+expression for onCompleted (qrc:/qt/qml/TestTypes/consoleTrace.qml:7))");
+#else
+    // Only top-most line number otherwise
+
+    QTest::ignoreMessage(QtDebugMsg, R"(c (qrc:/qt/qml/TestTypes/consoleTrace.qml:6)
+b (qrc:/qt/qml/TestTypes/consoleTrace.qml)
+a (qrc:/qt/qml/TestTypes/consoleTrace.qml)
+expression for onCompleted (qrc:/qt/qml/TestTypes/consoleTrace.qml))");
+#endif
+
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(!object.isNull());
 }
 
 void tst_QmlCppCodegen::multiForeign()

@@ -424,6 +424,8 @@ private slots:
     void objectInQmlListAndGc();
     void deepAliasOnICOrReadonly();
 
+    void writeNumberToEnumAlias();
+
 private:
     QQmlEngine engine;
     QStringList defaultImportPathList;
@@ -6785,6 +6787,7 @@ void tst_qqmllanguage::bareInlineComponent()
     QVERIFY(tab1Found);
 }
 
+#if QT_CONFIG(qml_debug)
 struct DummyDebugger : public QV4::Debugging::Debugger
 {
     bool pauseAtNextOpportunity() const final { return false; }
@@ -6793,6 +6796,9 @@ struct DummyDebugger : public QV4::Debugging::Debugger
     void leavingFunction(const QV4::ReturnedValue &) final { }
     void aboutToThrow() final { }
 };
+#else
+using DummyDebugger = QV4::Debugging::Debugger; // it's already dummy
+#endif
 
 void tst_qqmllanguage::hangOnWarning()
 {
@@ -8137,6 +8143,17 @@ void tst_qqmllanguage::deepAliasOnICOrReadonly()
     QVERIFY(c2.errorString().contains(
             QLatin1String(
                     "Invalid property assignment: \"readonlyRectX\" is a read-only property")));
+}
+
+void tst_qqmllanguage::writeNumberToEnumAlias()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl("aliasWriter.qml"));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+
+    QCOMPARE(o->property("strokeStyle").toInt(), 1);
 }
 
 QTEST_MAIN(tst_qqmllanguage)

@@ -154,7 +154,7 @@ QObject *QQmlObjectCreator::create(int subComponentIndex, QObject *parent, QQmlI
     } else {
         Q_ASSERT(subComponentIndex >= 0);
         if (flags & CreationFlags::InlineComponent) {
-            if (compilationUnit->unitData()->flags & QV4::CompiledData::Unit::ComponentsBound
+            if (compilationUnit->componentsAreBound()
                     && compilationUnit != parentContext->typeCompilationUnit()) {
                 recordError({}, tr("Cannot instantiate bound inline component in different file"));
                 phase = ObjectsCreated;
@@ -164,7 +164,7 @@ QObject *QQmlObjectCreator::create(int subComponentIndex, QObject *parent, QQmlI
             isComponentRoot = true;
         } else {
             Q_ASSERT(flags & CreationFlags::NormalObject);
-            if (compilationUnit->unitData()->flags & QV4::CompiledData::Unit::ComponentsBound
+            if (compilationUnit->componentsAreBound()
                     && sharedState->creationContext != parentContext) {
                 recordError({}, tr("Cannot instantiate bound component "
                                    "outside its creation context"));
@@ -313,7 +313,10 @@ void QQmlObjectCreator::setPropertyValue(const QQmlPropertyData *property, const
     QMetaType propertyType = property->propType();
 
     if (property->isEnum()) {
-        if (binding->hasFlag(QV4::CompiledData::Binding::IsResolvedEnum)) {
+        if (binding->hasFlag(QV4::CompiledData::Binding::IsResolvedEnum) ||
+                // TODO: For historical reasons you can assign any number to an enum property alias
+                //       This can be fixed with an opt-out mechanism, for example a pragma.
+                (property->isAlias() && binding->isNumberBinding())) {
             propertyType = QMetaType::fromType<int>();
         } else {
             // ### This should be resolved earlier at compile time and the binding value should be changed accordingly.
