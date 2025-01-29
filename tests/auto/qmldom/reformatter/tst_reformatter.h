@@ -227,6 +227,10 @@ private slots:
                 << "nonInitializedPropertyInComponent.qml"
                 << "nonInitializedPropertyInComponent.formatted.qml"
                 << defaultOptions;
+        QTest::newRow("fromAsIdentifier")
+                << "fromAsIdentifier.qml"
+                << "fromAsIdentifier.formatted.qml"
+                << defaultOptions;
     }
 
     void lineByLineReformatter()

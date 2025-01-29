@@ -444,6 +444,10 @@ void TestQmlformat::testFormat_data()
             << "nonInitializedPropertyInComponent.qml"
             << "nonInitializedPropertyInComponent.formatted.qml"
             << QStringList{} << RunOption::OnCopy;
+    QTest::newRow("fromAsIdentifier")
+            << "fromAsIdentifier.qml"
+            << "fromAsIdentifier.formatted.qml"
+            << QStringList{} << RunOption::OnCopy;
 }
 
 void TestQmlformat::testFormat()
@@ -504,6 +508,8 @@ void TestQmlformat::plainJS_data()
     QTest::newRow("noSuperfluousSpaceInsertions.fail_pragma")
             << "noSuperfluousSpaceInsertions.fail_pragma.js"
             << "noSuperfluousSpaceInsertions.fail_pragma.formatted.js";
+    QTest::newRow("fromAsIdentifier") << "fromAsIdentifier.js"
+                                      << "fromAsIdentifier.formatted.js";
 }
 
 void TestQmlformat::plainJS()
