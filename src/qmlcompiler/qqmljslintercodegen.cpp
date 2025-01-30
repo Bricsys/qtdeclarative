@@ -90,6 +90,10 @@ void QQmlJSLinterCodegen::analyzeFunction(QQmlJSCompilePass::Function *function)
     QQmlJSTypePropagator propagator(
             m_unitGenerator, &m_typeResolver, m_logger, {}, {}, m_passManager);
     auto [basicBlocks, annotations] = propagator.run(function);
+
+    if (m_logger->isCategoryIgnored(qmlCompiler))
+        return;
+
     if (!m_logger->currentFunctionHasCompileError()) {
         QQmlJSShadowCheck shadowCheck(
                 m_unitGenerator, &m_typeResolver, m_logger, basicBlocks, annotations);

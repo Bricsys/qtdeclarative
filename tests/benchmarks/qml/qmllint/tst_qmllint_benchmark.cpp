@@ -12,7 +12,7 @@ class tst_qmllint_benchmark : public QObject
 {
     Q_OBJECT
 
-    enum PluginSelection { NoPlugins, AllPlugins, OnlyQdsLintPlugin };
+    enum PluginSelection { NoPlugins, AllPlugins, OnlyQdsLintPlugin, CompilerWarnings };
     void runOnFile(const QString &fileName, PluginSelection allowedPlugins);
 
 private slots:
@@ -25,6 +25,9 @@ private slots:
 
     void onlyQdsLintPlugin_data();
     void onlyQdsLintPlugin();
+
+    void compilerWarnings_data();
+    void compilerWarnings();
 
 private:
     const QString m_baseDir = QLatin1String(SRCDIR) + QLatin1String("/data/");
@@ -43,6 +46,14 @@ void tst_qmllint_benchmark::runOnFile(const QString &fileName, PluginSelection a
 
     QList<QQmlJS::LoggerCategory> categories = QQmlJSLogger::defaultCategories();
     switch (allowedPlugins) {
+    case CompilerWarnings:
+        for (auto &category : categories) {
+            if (category.id() == qmlCompiler) {
+                category.setIgnored(false);
+                category.setLevel(QtWarningMsg);
+            }
+        }
+        Q_FALLTHROUGH(); // disable the plugins, concentrate on the compiler warnings
     case NoPlugins:
         for (QQmlJSLinter::Plugin &plugin : linter.plugins())
             plugin.setEnabled(false);
@@ -120,6 +131,21 @@ void tst_qmllint_benchmark::onlyQdsLintPlugin()
     QFETCH(QLatin1String, fileName);
 
     runOnFile(fileName, OnlyQdsLintPlugin);
+}
+
+void tst_qmllint_benchmark::compilerWarnings_data()
+{
+    QTest::addColumn<QLatin1String>("fileName");
+
+    for (const auto &file : m_files)
+        QTest::addRow("%s", file.data()) << file;
+}
+
+void tst_qmllint_benchmark::compilerWarnings()
+{
+    QFETCH(QLatin1String, fileName);
+
+    runOnFile(fileName, CompilerWarnings);
 }
 
 QTEST_MAIN(tst_qmllint_benchmark)
