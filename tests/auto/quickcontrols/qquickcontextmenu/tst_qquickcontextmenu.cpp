@@ -11,6 +11,7 @@
 #include <QtQuickTestUtils/private/visualtestutils_p.h>
 #include <QtQuickControlsTestUtils/private/qtest_quickcontrols_p.h>
 #include <QtQuickTemplates2/private/qquickmenu_p.h>
+#include <QtQuickTemplates2/private/qquickmenuitem_p_p.h>
 
 using namespace QQuickVisualTestUtils;
 
@@ -35,6 +36,7 @@ private slots:
     void createOnRequested();
     void drawerShouldntPreventOpening();
     void explicitMenuPreventsBuiltInMenu();
+    void menuItemShouldntTriggerOnRelease();
 
 private:
     bool contextMenuTriggeredOnRelease = false;
@@ -292,6 +294,60 @@ void tst_QQuickContextMenu::explicitMenuPreventsBuiltInMenu()
     QCOMPARE(textArea->findChild<QQuickMenu *>(), nullptr);
     QTRY_VERIFY(windowMenu->isOpened());
     QCOMPARE(tapHandlerTappedSpy.count(), 1);
+}
+
+void tst_QQuickContextMenu::menuItemShouldntTriggerOnRelease() // QTBUG-133302
+{
+    QQuickApplicationHelper helper(this, "windowedContextMenuOnControl.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    window->show();
+    QVERIFY(QTest::qWaitForWindowExposed(window));
+
+    auto *tomatoItem = window->findChild<QQuickItem *>("tomato");
+    QVERIFY(tomatoItem);
+    QSignalSpy triggeredSpy(window, SIGNAL(triggered(QObject *)));
+    QVERIFY(triggeredSpy.isValid());
+
+    const QPoint &tomatoCenter = mapCenterToWindow(tomatoItem);
+    QTest::mousePress(window, Qt::RightButton, Qt::NoModifier, tomatoCenter);
+    auto *menu = window->findChild<QQuickMenu *>();
+    QQuickMenuItem *firstMenuItem = nullptr;
+    QQuickMenuItemPrivate *firstMenuItemPriv = nullptr;
+    if (!contextMenuTriggeredOnRelease) {
+        QVERIFY(menu);
+        QTRY_VERIFY(menu->isOpened());
+        firstMenuItem = qobject_cast<QQuickMenuItem *>(menu->itemAt(0));
+        QVERIFY(firstMenuItem);
+        // The mouse press event alone must not highlight the menu item under the mouse.
+        // (A mouse move could do that, while holding the button; or, another mouse press/release pair afterwards.)
+        QCOMPARE(firstMenuItem->isHighlighted(), false);
+        firstMenuItemPriv = static_cast<QQuickMenuItemPrivate *>(QQuickMenuItemPrivate::get(firstMenuItem));
+        QVERIFY(firstMenuItemPriv);
+    } else {
+        // It's triggered on press, so it shouldn't exist yet.
+        QVERIFY(!menu);
+    }
+
+    // After release, the menu should still be open, and no triggered() signal received
+    // (because the user did not intentionally drag over an item and release).
+    QTest::mouseRelease(window, Qt::RightButton, Qt::NoModifier, tomatoCenter);
+    if (contextMenuTriggeredOnRelease) {
+        menu = window->findChild<QQuickMenu *>();
+        QVERIFY(menu);
+        QTRY_VERIFY(menu->isOpened());
+        firstMenuItem = qobject_cast<QQuickMenuItem *>(menu->itemAt(0));
+        QVERIFY(firstMenuItem);
+        firstMenuItemPriv = static_cast<QQuickMenuItemPrivate *>(QQuickMenuItemPrivate::get(firstMenuItem));
+    } else {
+        QVERIFY(menu->isOpened());
+    }
+    // Implementation detail: in the failure case, QQuickMenuPrivate::handleReleaseWithoutGrab
+    // calls menuItem->animateClick(). We now avoid that if the menu item was not already highlighted.
+    QCOMPARE(firstMenuItemPriv->animateTimer, 0); // timer not started
+    // menu item still not highlighted
+    QCOMPARE(firstMenuItem->isHighlighted(), false);
+    QCOMPARE(triggeredSpy.size(), 0);
 }
 
 QTEST_QUICKCONTROLS_MAIN(tst_QQuickContextMenu)

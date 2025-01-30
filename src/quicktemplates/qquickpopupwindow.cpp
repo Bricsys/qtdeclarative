@@ -294,8 +294,10 @@ bool QQuickPopupWindowPrivate::filterPopupSpecialCases(QEvent *event)
        // To support opening a Menu on press (e.g on a MenuBarItem), followed by
        // a drag and release on a MenuItem inside the Menu, we ask the Menu to
        // perform a click on the active MenuItem, if any.
-        if (QQuickMenu *targetMenu = qobject_cast<QQuickMenu *>(targetPopup))
+        if (QQuickMenu *targetMenu = qobject_cast<QQuickMenu *>(targetPopup)) {
+            qCDebug(lcPopupWindow) << "forwarding" << pe << "to popup menu:" << targetMenu;
             QQuickMenuPrivate::get(targetMenu)->handleReleaseWithoutGrab(pe->point(0));
+        }
     }
 
     return false;

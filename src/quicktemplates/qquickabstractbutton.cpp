@@ -1137,10 +1137,12 @@ void QQuickAbstractButton::animateClick()
         forceActiveFocus(Qt::MouseFocusReason);
 
     // If the timer was already running, kill it so we can restart it.
-    if (d->animateTimer != 0)
+    if (d->animateTimer != 0) {
         killTimer(d->animateTimer);
-    else
+        d->animateTimer = 0;
+    } else {
         d->handlePress(QPointF(d->width / 2, d->height / 2), 0);
+    }
 
     d->animateTimer = startTimer(100);
 }
@@ -1250,6 +1252,7 @@ void QQuickAbstractButton::timerEvent(QTimerEvent *event)
         if (setFocusOnRelease && focusPolicy() & Qt::ClickFocus)
             forceActiveFocus(Qt::MouseFocusReason);
         d->handleRelease(QPointF(d->width / 2, d->height / 2), 0);
+        killTimer(d->animateTimer);
         d->animateTimer = 0;
     }
 }
