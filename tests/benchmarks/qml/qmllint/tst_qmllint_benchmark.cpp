@@ -4,6 +4,7 @@
 #include <QtTest/QtTest>
 #include <QtCore/qobject.h>
 #include <QtCore/QLibraryInfo>
+#include <QtCore/qdirlisting.h>
 #include <QtQmlCompiler/private/qqmljslinter_p.h>
 
 using namespace Qt::StringLiterals;
@@ -12,6 +13,17 @@ class tst_qmllint_benchmark : public QObject
 {
     Q_OBJECT
 
+public:
+    // See also printEnvironment.sh for the environment variables.
+    tst_qmllint_benchmark(QObject *parent = nullptr)
+        : QObject(parent),
+          m_importPath(qEnvironmentVariable("TST_QMLLINT_BENCHMARK_IMPORT_PATH")
+                               .split(QDir::listSeparator())),
+          m_qdsProjectsToLint(qEnvironmentVariable("TST_QMLLINT_BENCHMARK_PROJECTS")
+                                      .split(QDir::listSeparator())),
+          m_useHeuristics(qEnvironmentVariableIsSet("TST_QMLLINT_BENCHMARK_IMPORT_PATH_HEURISTICS"))
+    {
+    }
     enum PluginSelection { NoPlugins, AllPlugins, OnlyQdsLintPlugin, CompilerWarnings };
     void runOnFile(const QString &fileName, PluginSelection allowedPlugins);
 
@@ -37,11 +49,60 @@ private:
         "longQmlFile.ui.qml"_L1,
         "deeplyNested.ui.qml"_L1,
     };
+
+    // import path to current qt version, and to QDS specific QML modules
+    const QStringList m_importPath;
+
+    // recommendations:
+    //  * industrial-automation-hid/Development/responsive-scada
+    //  * qtdesign-studio/examples/MaterialBundleDemo
+    //  * qtdesign-studio/examples/EosADAS
+    //  * qtdesign-studio/examples/OutrunHVAC
+    //  * qtdesign-studio/examples/DesignEffectsDemo
+    const QStringList m_qdsProjectsToLint;
+    bool m_useHeuristics = false;
 };
+
+static bool hasQmlProjectFile(const QString &dir)
+{
+    const auto listing = QDirListing(dir, QStringList{ "*.qmlproject"_L1 });
+    return listing.cbegin() != listing.cend();
+}
+
+static QStringList extraImportsForQdsProjects(const QString &fileName)
+{
+    QStringList imports;
+
+    // heuristics to find the extra import paths, shipped with the QDS demos/examples
+    int maxDepth = 5;
+    QString projectPath(QDir::cleanPath(fileName + "/.."));
+    while (projectPath.contains(u'/') && !hasQmlProjectFile(projectPath)) {
+        projectPath.chop(projectPath.size() - projectPath.lastIndexOf(u'/'));
+        if (--maxDepth == 0)
+            return imports;
+    }
+    if (projectPath.isEmpty())
+        return imports;
+
+    // over-approximation where the import paths are set, to avoid parsing the content from
+    // .qmlproject to find which import paths are set.
+    imports.append(projectPath);
+    imports.append(QDir::cleanPath(projectPath + "/imports"));
+    imports.append(QDir::cleanPath(projectPath + "/asset_imports"));
+    imports.append(QDir::cleanPath(projectPath + "/backend"));
+    imports.append(QDir::cleanPath(projectPath + "/content"));
+
+    return imports;
+}
 
 void tst_qmllint_benchmark::runOnFile(const QString &fileName, PluginSelection allowedPlugins)
 {
-    QStringList imports = QLibraryInfo::paths(QLibraryInfo::QmlImportsPath);
+    QStringList imports = m_importPath;
+    imports.append(QLibraryInfo::paths(QLibraryInfo::QmlImportsPath));
+
+    if (m_useHeuristics && allowedPlugins == OnlyQdsLintPlugin)
+        imports += extraImportsForQdsProjects(fileName);
+
     QQmlJSLinter linter(imports);
 
     QList<QQmlJS::LoggerCategory> categories = QQmlJSLogger::defaultCategories();
@@ -78,13 +139,20 @@ void tst_qmllint_benchmark::runOnFile(const QString &fileName, PluginSelection a
     }
 
     const QString content = [&fileName, this]() {
-        QFile file(m_baseDir + fileName);
+        QFile file(fileName.startsWith(u'/') ? fileName : m_baseDir + fileName);
         [&file]() { QVERIFY(file.open(QFile::ReadOnly | QFile::Text)); }();
         return file.readAll();
     }();
 
     QBENCHMARK {
         linter.lintFile(fileName, &content, true, nullptr, imports, {}, {}, categories);
+    }
+    // make sure that all imports are available, otherwise we end up benchmarking less relevant
+    // parts of the execution.
+    if (const QQmlJSLogger *logger = linter.logger()) {
+        logger->iterateAllMessages([](const Message &message) {
+            QVERIFY(!message.message.contains("Failed to import"_L1));
+        });
     }
 }
 
@@ -120,15 +188,23 @@ void tst_qmllint_benchmark::noPlugins()
 
 void tst_qmllint_benchmark::onlyQdsLintPlugin_data()
 {
-    QTest::addColumn<QLatin1String>("fileName");
+    QTest::addColumn<QString>("fileName");
+
+    for (const auto &dir : m_qdsProjectsToLint) {
+        for (const auto &dirEntry :
+             QDirListing(dir, QStringList{ "*.ui.qml"_L1 }, QDirListing::IteratorFlag::Recursive)) {
+            const QString path = dirEntry.absoluteFilePath();
+            QTest::addRow("%s", path.toUtf8().constData()) << path;
+        }
+    }
 
     for (const auto &file : m_files)
-        QTest::addRow("%s", file.data()) << file;
+        QTest::addRow("%s", file.data()) << file.toString();
 }
 
 void tst_qmllint_benchmark::onlyQdsLintPlugin()
 {
-    QFETCH(QLatin1String, fileName);
+    QFETCH(QString, fileName);
 
     runOnFile(fileName, OnlyQdsLintPlugin);
 }
