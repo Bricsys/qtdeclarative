@@ -1084,7 +1084,9 @@ bool QQuickMenuPrivate::handleReleaseWithoutGrab(const QEventPoint &eventPoint)
         return false;
 
     const QPointF listPos = list->mapFromScene(scenePos);
-    if (auto *menuItem = qobject_cast<QQuickMenuItem *>(list->itemAt(listPos.x(), listPos.y()))) {
+
+    auto *menuItem = qobject_cast<QQuickMenuItem *>(list->itemAt(listPos.x(), listPos.y()));
+    if (menuItem && menuItem->isHighlighted()) {
         menuItem->animateClick();
         return true;
     }
