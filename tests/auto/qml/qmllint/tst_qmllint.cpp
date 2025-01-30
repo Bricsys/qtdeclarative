@@ -793,6 +793,9 @@ void TestQmllint::dirtyQmlCode_data()
                         } },
                         {},
                         { Message { QStringLiteral("stringy.") } } };
+    QTest::newRow("id_in_value_type")
+            << QStringLiteral("idInValueType.qml")
+            << Result{ { Message{ "id declarations are only allowed in objects" } } };
     QTest::newRow("Invalid_id_expression")
             << QStringLiteral("invalidId1.qml")
             << Result { { Message { QStringLiteral("Failed to parse id") } } };

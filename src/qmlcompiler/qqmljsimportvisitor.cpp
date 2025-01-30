@@ -2007,6 +2007,11 @@ bool QQmlJSImportVisitor::isImportPrefix(QString prefix) const
 
 void QQmlJSImportVisitor::handleIdDeclaration(QQmlJS::AST::UiScriptBinding *scriptBinding)
 {
+    if (m_currentScope->scopeType() != QQmlJSScope::ScopeType::QMLScope) {
+        m_logger->log(u"id declarations are only allowed in objects"_s, qmlSyntax,
+                      scriptBinding->statement->firstSourceLocation());
+        return;
+    }
     const auto *statement = cast<ExpressionStatement *>(scriptBinding->statement);
     if (!statement) {
         m_logger->log(u"id must be followed by an identifier"_s, qmlSyntax,
