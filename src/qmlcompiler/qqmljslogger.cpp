@@ -242,7 +242,7 @@ void QQmlJSLogger::log(
 {
     Q_ASSERT(m_categoryLevels.contains(diagMsg.id.toString()));
 
-    if (isCategoryIgnored(diagMsg.id))
+    if (isCategoryIgnored(diagMsg.id) || isDisabled())
         return;
 
     // Note: assume \a type is the type we should prefer for logging
@@ -308,7 +308,7 @@ void QQmlJSLogger::processMessages(const QList<QQmlJS::DiagnosticMessage> &messa
                                    QQmlJS::LoggerWarningId id,
                                    const QQmlJS::SourceLocation &sourceLocation)
 {
-    if (messages.isEmpty() || isCategoryIgnored(id))
+    if (messages.isEmpty() || isCategoryIgnored(id) || isDisabled())
         return;
 
     m_output.write(QStringLiteral("---\n"));

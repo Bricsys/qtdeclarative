@@ -244,6 +244,18 @@ public:
     void setSilent(bool silent) { m_output.setSilent(silent); }
     bool isSilent() const { return m_output.isSilent(); }
 
+    /*!
+    \internal
+    The logger is disabled when warnings are not relevant, for example when the import visitor runs
+    on a dependency of a linted file. In that case, the warnings should not be created, and
+    expensive QQmlJSUtils::didYouMean call can be saved.
+
+    setSilent() has a different behavior: a silent logger can still be used to process messages as
+    JSON, for example, while a disabled logger won't contain any message.
+    */
+    void setIsDisabled(bool isDisabled) { m_isDisabled = isDisabled; }
+    bool isDisabled() const { return m_isDisabled; }
+
     void setCode(const QString &code) { m_code = code; }
     QString code() const { return m_code; }
 
@@ -308,6 +320,7 @@ private:
     bool m_inTransaction = false;
     bool m_hasCompileError = false;
     bool m_hasPendingCompileError = false;
+    bool m_isDisabled = false;
 
     QtMsgType m_compileErrorLevel = QtWarningMsg;
 };

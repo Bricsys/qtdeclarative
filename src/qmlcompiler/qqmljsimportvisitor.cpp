@@ -963,7 +963,7 @@ void QQmlJSImportVisitor::processPropertyBindings()
     for (auto it = m_propertyBindings.constBegin(); it != m_propertyBindings.constEnd(); ++it) {
         QQmlJSScope::Ptr scope = it.key();
         for (auto &[visibilityScope, location, name] : it.value()) {
-            if (!scope->hasProperty(name)) {
+            if (!scope->hasProperty(name) && !m_logger->isDisabled()) {
                 // These warnings do not apply for custom parsers and their children and need to be
                 // handled on a case by case basis
 
@@ -1228,7 +1228,8 @@ void QQmlJSImportVisitor::breakInheritanceCycles(const QQmlJSScope::Ptr &origina
             const QString name = scope->baseTypeName();
             if (!error.isEmpty()) {
                 m_logger->log(error, qmlImport, scope->sourceLocation(), true, true);
-            } else if (!name.isEmpty() && !m_unresolvedTypes.hasSeen(scope)) {
+            } else if (!name.isEmpty() && !m_unresolvedTypes.hasSeen(scope)
+                       && !m_logger->isDisabled()) {
                 m_logger->log(
                         name + ' '_L1 + wasNotFound + ' '_L1 + didYouAddAllImports,
                         qmlImport, scope->sourceLocation(), true, true,
