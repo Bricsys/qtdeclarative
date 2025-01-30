@@ -32,6 +32,7 @@ private slots:
     void idOnMenu();
     void createOnRequested_data();
     void createOnRequested();
+    void drawerShouldntPreventOpening();
 
 private:
     bool contextMenuTriggeredOnRelease = false;
@@ -249,6 +250,22 @@ void tst_QQuickContextMenu::createOnRequested()
     QVERIFY(menu);
     QTRY_VERIFY(menu->isOpened());
     QCOMPARE(window.rootObject()->property("pressPos").toPoint(), tomatoCenter);
+}
+
+// Drawer shouldn't prevent right clicks from opening ContextMenu: QTBUG-132765.
+void tst_QQuickContextMenu::drawerShouldntPreventOpening()
+{
+    QQuickApplicationHelper helper(this, "drawer.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    window->show();
+    QVERIFY(QTest::qWaitForWindowExposed(window));
+
+    const QPoint &windowCenter = mapCenterToWindow(window->contentItem());
+    QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, windowCenter);
+    auto *menu = window->findChild<QQuickMenu *>();
+    QVERIFY(menu);
+    QTRY_VERIFY(menu->isOpened());
 }
 
 QTEST_QUICKCONTROLS_MAIN(tst_QQuickContextMenu)

@@ -62,6 +62,8 @@ private slots:
     void closePolicy();
     void closePolicy_grabberInside_data();
     void closePolicy_grabberInside();
+    void closeOnRightClickOutside_data();
+    void closeOnRightClickOutside();
     void activeFocusOnClose1();
     void activeFocusOnClose2();
     void activeFocusOnClose3();
@@ -340,7 +342,7 @@ void tst_QQuickPopup::overlay()
     popup->setModal(modal);
     popup->setClosePolicy(QQuickPopup::CloseOnReleaseOutside);
 
-    // mouse
+    // mouse (Qt::LeftButton)
     popup->open();
     QVERIFY(popup->isVisible());
     QVERIFY(overlay->isVisible());
@@ -360,6 +362,42 @@ void tst_QQuickPopup::overlay()
 
     QTRY_VERIFY(!popup->isVisible());
     QVERIFY(!overlay->isVisible());
+
+    // mouse (Qt::RightButton)
+    popup->open();
+    QVERIFY(popup->isVisible());
+    QVERIFY(overlay->isVisible());
+    QTRY_VERIFY(popup->isOpened());
+
+    QTest::mousePress(window, Qt::RightButton, Qt::NoModifier, QPoint(1, 1));
+    // To fix QTBUG-132765 and ensure that ContextMenu works when a Drawer
+    // exists in a scene (even if it's not visible), we had to stop filtering
+    // right mouse button events in Overlay.
+    QCOMPARE(overlayPressedSignal.size(), overlayPressCount);
+    QCOMPARE(overlayReleasedSignal.size(), overlayReleaseCount);
+    QCOMPARE(overlayAttachedPressedSignal.size(), overlayPressCount);
+    QCOMPARE(overlayAttachedReleasedSignal.size(), overlayReleaseCount);
+
+    QTest::mouseRelease(window, Qt::RightButton, Qt::NoModifier, QPoint(1, 1));
+    QCOMPARE(overlayPressedSignal.size(), overlayPressCount);
+    QCOMPARE(overlayReleasedSignal.size(), overlayReleaseCount);
+    QCOMPARE(overlayAttachedPressedSignal.size(), overlayPressCount);
+    QCOMPARE(overlayAttachedReleasedSignal.size(), overlayReleaseCount);
+
+    if (modal) {
+        QTRY_VERIFY(!popup->isVisible());
+        QVERIFY(!overlay->isVisible());
+    } else {
+        // We're not filtering due to needing to let ContextMenu handle right
+        // clicks, so we rely on regular event handling. However, since we
+        // never accept the press, we never get sent the release, and so we
+        // aren't able to close. For modal popups this passes because
+        // QQuickPopupPrivate::handlePress calls blockInput, which returns true
+        // if it's modal, resulting in accepting the press and hence getting
+        // the release. This is a known limitation documented for closePolicy.
+        QVERIFY(popup->isOpened());
+        QVERIFY(overlay->isVisible());
+    }
 
     // touch
     popup->open();
@@ -694,6 +732,35 @@ void tst_QQuickPopup::closePolicy_grabberInside()
     QVERIFY(popup->isOpened());
     QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, QPoint(1, 1));
     QVERIFY(popup->isOpened());
+}
+
+void tst_QQuickPopup::closeOnRightClickOutside_data()
+{
+    QTest::addColumn<QQuickPopup::PopupType>("popupType");
+
+    QTest::newRow("Item") << QQuickPopup::Item;
+    if (popupWindowsSupported)
+        QTest::newRow("Window") << QQuickPopup::Window;
+}
+
+void tst_QQuickPopup::closeOnRightClickOutside()
+{
+    QFETCH(QQuickPopup::PopupType, popupType);
+
+    QQuickControlsApplicationHelper helper(this, QStringLiteral("simplepopup.qml"));
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    window->show();
+
+    auto *popup = window->findChild<QQuickPopup *>();
+    QVERIFY(popup);
+    popup->setPopupType(popupType);
+    popup->open();
+    QTRY_VERIFY(popup->isOpened());
+
+    QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier,
+        QPoint(window->width() - 1, window->height() - 1));
+    QTRY_VERIFY(!popup->isVisible());
 }
 
 void tst_QQuickPopup::activeFocusOnClose1()
