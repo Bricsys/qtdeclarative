@@ -1214,29 +1214,36 @@ QQmlTypeLoader::QQmlTypeLoader(QQmlEngine *engine)
     // 5. $QML2_IMPORT_PATH
     // 6. $QML_IMPORT_PATH
     // 7. QLibraryInfo::QmlImportsPath
+    //
+    // ... unless we're a plugin application. Then we don't pick up any special paths
+    // from environment variables or bundles and we also don't add the application dir path.
 
     const auto paths = QLibraryInfo::paths(QLibraryInfo::QmlImportsPath);
     for (const auto &installImportsPath: paths)
         addImportPath(installImportsPath);
 
-    auto addEnvImportPath = [this](const char *var) {
-        if (Q_UNLIKELY(!qEnvironmentVariableIsEmpty(var))) {
+    const bool isPluginApplication = QCoreApplication::testAttribute(Qt::AA_PluginApplication);
+
+    auto addEnvImportPath = [this, isPluginApplication](const char *var) {
+        if (Q_UNLIKELY(!isPluginApplication && !qEnvironmentVariableIsEmpty(var))) {
             const QStringList paths = parseEnvPath(qEnvironmentVariable(var));
             for (int ii = paths.size() - 1; ii >= 0; --ii)
                 addImportPath(paths.at(ii));
         }
     };
 
-           // env import paths
+    // env import paths
     addEnvImportPath("QML_IMPORT_PATH");
     addEnvImportPath("QML2_IMPORT_PATH");
 
     addImportPath(QStringLiteral("qrc:/qt/qml"));
     addImportPath(QStringLiteral("qrc:/qt-project.org/imports"));
-    addImportPath(QCoreApplication::applicationDirPath());
 
-    auto addEnvPluginPath = [this](const char *var) {
-        if (Q_UNLIKELY(!qEnvironmentVariableIsEmpty(var))) {
+    if (!isPluginApplication)
+        addImportPath(QCoreApplication::applicationDirPath());
+
+    auto addEnvPluginPath = [this, isPluginApplication](const char *var) {
+        if (Q_UNLIKELY(!isPluginApplication && !qEnvironmentVariableIsEmpty(var))) {
             const QStringList paths = parseEnvPath(qEnvironmentVariable(var));
             for (int ii = paths.size() - 1; ii >= 0; --ii)
                 addPluginPath(paths.at(ii));
@@ -1251,14 +1258,16 @@ QQmlTypeLoader::QQmlTypeLoader(QQmlEngine *engine)
     // Add the main bundle's Resources/qml directory as an import path, so that QML modules are
     // found successfully when running the app from its build dir.
     // This is where macdeployqt and our CMake deployment logic puts Qt and user qmldir files.
-    if (CFBundleRef bundleRef = CFBundleGetMainBundle()) {
-        if (QCFType<CFURLRef> urlRef = CFBundleCopyResourceURL(
-                    bundleRef,
-                    QCFString(QLatin1String("qml")), 0, 0)) {
-            if (QCFType<CFURLRef> absoluteUrlRef = CFURLCopyAbsoluteURL(urlRef)) {
-                if (QCFString path = CFURLCopyFileSystemPath(absoluteUrlRef, kCFURLPOSIXPathStyle)) {
-                    if (QFile::exists(path)) {
-                        addImportPath(QDir(path).canonicalPath());
+    if (!isPluginApplication) {
+        if (CFBundleRef bundleRef = CFBundleGetMainBundle()) {
+            if (QCFType<CFURLRef> urlRef = CFBundleCopyResourceURL(
+                        bundleRef, QCFString(QLatin1String("qml")), 0, 0)) {
+                if (QCFType<CFURLRef> absoluteUrlRef = CFURLCopyAbsoluteURL(urlRef)) {
+                    if (QCFString path = CFURLCopyFileSystemPath(
+                                absoluteUrlRef, kCFURLPOSIXPathStyle)) {
+                        if (QFile::exists(path)) {
+                            addImportPath(QDir(path).canonicalPath());
+                        }
                     }
                 }
             }
