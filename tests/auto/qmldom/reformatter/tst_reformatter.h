@@ -223,6 +223,10 @@ private slots:
                     << QStringLiteral(u"linebreakBinaryOp.qml")
                     << QStringLiteral(u"linebreakBinaryOpReformattedWidth60.qml") << lwOptions;
         }
+        QTest::newRow("nonInitializedPropertyInComponent")
+                << "nonInitializedPropertyInComponent.qml"
+                << "nonInitializedPropertyInComponent.formatted.qml"
+                << defaultOptions;
     }
 
     void lineByLineReformatter()

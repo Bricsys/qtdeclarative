@@ -479,8 +479,11 @@ void FormatPartialStatus::handleTokens()
                 enter(StateType::PropertyName);
                 break;
             default:
-                if (Token::lexKindIsIdentifier(kind) && tokenText(currentToken) == u"list") {
+                bool kindIsIdentifier = Token::lexKindIsIdentifier(kind);
+                if (kindIsIdentifier && tokenText(currentToken) == u"list") {
                     enter(StateType::PropertyListOpen);
+                } else if (kindIsIdentifier) {
+                    enter(StateType::PropertyName);
                 } else {
                     leave(true);
                     continue;

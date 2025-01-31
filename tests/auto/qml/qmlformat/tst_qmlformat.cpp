@@ -440,6 +440,10 @@ void TestQmlformat::testFormat_data()
             << "noSuperfluousSpaceInsertions.fail_parameters.qml"
             << "noSuperfluousSpaceInsertions.fail_parameters.formatted.qml"
             << QStringList{} << RunOption::OnCopy;
+    QTest::newRow("nonInitializedPropertyInComponent")
+            << "nonInitializedPropertyInComponent.qml"
+            << "nonInitializedPropertyInComponent.formatted.qml"
+            << QStringList{} << RunOption::OnCopy;
 }
 
 void TestQmlformat::testFormat()
