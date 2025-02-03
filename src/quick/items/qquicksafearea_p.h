@@ -35,6 +35,7 @@ class Q_QUICK_EXPORT QQuickSafeArea : public QObject, public QQuickItemChangeLis
     Q_PROPERTY(QMarginsF additionalMargins READ additionalMargins WRITE setAdditionalMargins NOTIFY additionalMarginsChanged FINAL)
 
     QML_NAMED_ELEMENT(SafeArea)
+    QML_ADDED_IN_VERSION(6, 9)
     QML_ATTACHED(QQuickSafeArea)
     QML_UNCREATABLE("SafeArea can only be used via the attached property.")
 
