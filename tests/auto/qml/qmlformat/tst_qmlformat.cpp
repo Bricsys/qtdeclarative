@@ -77,6 +77,8 @@ private Q_SLOTS:
     void settingsFromFileOrCommandLine_data();
     void settingsFromFileOrCommandLine();
 
+    void multipleSettingsFiles();
+
 private:
     QString readTestFile(const QString &path);
     //TODO(QTBUG-117849) refactor this helper function
@@ -834,6 +836,32 @@ void TestQmlformat::settingsFromFileOrCommandLine_data()
         QTest::newRow("clOverridesIndentWidth")
                 << testFile("iniFiles/dummySettingsFile.ini")
                 << QStringList{ m_qmlformatPath, "--indent-width", "20" } << options;
+        options.setIndentWidth(4000);
+        // In settings file, indentwidth is set to 4000, and nothing overrides it.
+        // 4000 should be the final value
+        QTest::newRow("iniFileIndentWidth") << testFile("iniFiles/dummySettingsFile.ini")
+                                            << QStringList{ m_qmlformatPath } << options;
+        options.setMaxColumnWidth(100);
+        // In settings file, maxcolumnwidth is set to -1, but cli overrides it 100.
+        // 100 should be the final value
+        QTest::newRow("clOverridesColumnWidth")
+                << testFile("iniFiles/dummySettingsFile.ini")
+                << QStringList{ m_qmlformatPath, "-W", "100" } << options;
+    }
+    {
+        QQmlFormatOptions options;
+        // settings file sets all bools excepts Tabs to true.
+        options.setTabsEnabled(false);
+        options.setNormalizeEnabled(true);
+        options.setObjectsSpacing(true);
+        options.setFunctionsSpacing(true);
+        QTest::newRow("iniFileSetsBools") << testFile("iniFiles/toggledBools.ini")
+                                          << QStringList{ m_qmlformatPath } << options;
+
+        // cli overrides the Tabs option to true
+        options.setTabsEnabled(true);
+        QTest::newRow("cliOverridesTabs") << testFile("iniFiles/toggledBools.ini")
+                                          << QStringList{ m_qmlformatPath, "--tabs" } << options;
     }
 }
 
@@ -864,6 +892,42 @@ void TestQmlformat::settingsFromFileOrCommandLine()
     };
 
     verify();
+}
+
+/*
+* Create a temporary directory with the following structure
+|--dir1
+|  |--.qmlformat.ini
+|  |-- test1.qml
+|--dir2
+|  |-- test2.qml
+
+* test2.qml should differ from the test2.qml options on indentwidth, because test1 gets it from
+* its settings file.
+*/
+void TestQmlformat::multipleSettingsFiles()
+{
+    QTemporaryDir tempDir;
+    QTemporaryDir dir1(tempDir.path() + "/dir1");
+    QTemporaryDir dir2(tempDir.path() + "/dir2");
+    const QString qmlformat1Ini = dir1.path() + "/.qmlformat.ini";
+    const QString test1Qml = dir1.path() + "/test.qml";
+    const QString test2Qml = dir2.path() + "/test.qml";
+
+    QFile::copy(testFile("iniFiles/dummySettingsFile.ini"), qmlformat1Ini);
+    QQmlFormatSettings settings("qmlformat");
+    QQmlFormatOptions options =
+            QQmlFormatOptions::buildCommandLineOptions(QStringList{ m_qmlformatPath });
+    auto test1Options = options.optionsForFile(test1Qml, &settings);
+    auto test2Options = options.optionsForFile(test2Qml, &settings);
+
+    QCOMPARE(test1Options.tabsEnabled(), test2Options.tabsEnabled());
+    QCOMPARE_NE(test1Options.indentWidth(), test2Options.indentWidth());
+    QCOMPARE(test1Options.maxColumnWidth(), test2Options.maxColumnWidth());
+    QCOMPARE(test1Options.normalizeEnabled(), test2Options.normalizeEnabled());
+    QCOMPARE(test1Options.newline(), test2Options.newline());
+    QCOMPARE(test1Options.objectsSpacing(), test2Options.objectsSpacing());
+    QCOMPARE(test1Options.functionsSpacing(), test2Options.functionsSpacing());
 }
 
 QString TestQmlformat::runQmlformat(const QString &fileToFormat, QStringList args,

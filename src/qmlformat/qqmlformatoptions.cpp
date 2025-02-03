@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
 #include "qqmlformatoptions_p.h"
+#include "qqmlformatsettings_p.h"
 
 #if QT_CONFIG(commandlineparser)
 #  include <QCommandLineParser>
@@ -69,32 +70,41 @@ QQmlFormatOptionLineEndings QQmlFormatOptions::parseEndings(const QString &endin
 
 void QQmlFormatOptions::applySettings(const QQmlFormatSettings &settings)
 {
-    // Allow for tab settings to be overwritten by the command line
-    if (!indentWidthSet()) {
-        if (settings.isSet(QQmlFormatSettings::s_indentWidthSetting))
-            setIndentWidth(settings.value(QQmlFormatSettings::s_indentWidthSetting).toInt());
-        if (settings.isSet(QQmlFormatSettings::s_useTabsSetting))
-            setTabsEnabled(settings.value(QQmlFormatSettings::s_useTabsSetting).toBool());
+    // If the options is already set by commandline, don't override it with the values in the .ini
+    // file.
+    if (!isMarked(Settings::IndentWidth)
+        && settings.isSet(QQmlFormatSettings::s_indentWidthSetting)) {
+        setIndentWidth(settings.value(QQmlFormatSettings::s_indentWidthSetting).toInt());
     }
 
-    // if not set by command line, allow for max column width to be set by settings
-    if (m_options.maxLineLength == -1) {
-        if (settings.isSet(QQmlFormatSettings::s_maxColumnWidthSetting))
-            setMaxColumnWidth(settings.value(QQmlFormatSettings::s_maxColumnWidthSetting).toInt());
+    if (!isMarked(Settings::UseTabs) && settings.isSet(QQmlFormatSettings::s_useTabsSetting)) {
+        setTabsEnabled(settings.value(QQmlFormatSettings::s_useTabsSetting).toBool());
     }
 
-    if (settings.isSet(QQmlFormatSettings::s_normalizeSetting))
+    if (!isMarked(Settings::MaxColumnWidth)
+        && settings.isSet(QQmlFormatSettings::s_maxColumnWidthSetting)) {
+        setMaxColumnWidth(settings.value(QQmlFormatSettings::s_maxColumnWidthSetting).toInt());
+    }
+
+    if (!isMarked(Settings::NormalizeOrder)
+        && settings.isSet(QQmlFormatSettings::s_normalizeSetting)) {
         setNormalizeEnabled(settings.value(QQmlFormatSettings::s_normalizeSetting).toBool());
+    }
 
-    if (settings.isSet(QQmlFormatSettings::s_newlineSetting))
+    if (!isMarked(Settings::NewlineType) && settings.isSet(QQmlFormatSettings::s_newlineSetting)) {
         setNewline(QQmlFormatOptions::parseEndings(
                 settings.value(QQmlFormatSettings::s_newlineSetting).toString()));
+    }
 
-    if (settings.isSet(QQmlFormatSettings::s_objectsSpacingSetting))
+    if (!isMarked(Settings::ObjectsSpacing)
+        && settings.isSet(QQmlFormatSettings::s_objectsSpacingSetting)) {
         setObjectsSpacing(settings.value(QQmlFormatSettings::s_objectsSpacingSetting).toBool());
+    }
 
-    if (settings.isSet(QQmlFormatSettings::s_functionsSpacingSetting))
+    if (!isMarked(Settings::FunctionsSpacing)
+        && settings.isSet(QQmlFormatSettings::s_functionsSpacingSetting)) {
         setFunctionsSpacing(settings.value(QQmlFormatSettings::s_functionsSpacingSetting).toBool());
+    }
 }
 
 QQmlFormatOptions QQmlFormatOptions::buildCommandLineOptions(const QStringList &args)
@@ -198,15 +208,33 @@ QQmlFormatOptions QQmlFormatOptions::buildCommandLineOptions(const QStringList &
     options.setIsVerbose(parser.isSet("verbose"_L1));
     options.setIsInplace(parser.isSet("inplace"_L1));
     options.setForceEnabled(parser.isSet("force"_L1));
-    options.setTabsEnabled(parser.isSet("tabs"_L1));
     options.setIgnoreSettingsEnabled(parser.isSet("ignore-settings"_L1));
-    options.setNormalizeEnabled(parser.isSet("normalize"_L1));
-    options.setObjectsSpacing(parser.isSet("objects-spacing"_L1));
-    options.setFunctionsSpacing(parser.isSet("functions-spacing"_L1));
 
-    options.setIndentWidth(indentWidth);
-    options.setIndentWidthSet(parser.isSet("indent-width"_L1));
-    options.setNewline(QQmlFormatOptions::parseEndings(parser.value("newline"_L1))); // TODO
+    if (parser.isSet("tabs"_L1)) {
+        options.mark(Settings::UseTabs);
+        options.setTabsEnabled(true);
+    }
+    if (parser.isSet("normalize"_L1)) {
+        options.mark(Settings::NormalizeOrder);
+        options.setNormalizeEnabled(true);
+    }
+    if (parser.isSet("objects-spacing"_L1)) {
+        options.mark(Settings::ObjectsSpacing);
+        options.setObjectsSpacing(true);
+    }
+    if (parser.isSet("functions-spacing"_L1)) {
+        options.mark(Settings::FunctionsSpacing);
+        options.setFunctionsSpacing(true);
+    }
+    if (parser.isSet("indent-width"_L1)) {
+        options.mark(Settings::IndentWidth);
+        options.setIndentWidth(indentWidth);
+    }
+
+    if (parser.isSet("newline"_L1)) {
+        options.mark(Settings::NewlineType);
+        options.setNewline(QQmlFormatOptions::parseEndings(parser.value("newline"_L1)));
+    }
     options.setFiles(files);
     options.setArguments(parser.positionalArguments());
 
@@ -217,6 +245,7 @@ QQmlFormatOptions QQmlFormatOptions::buildCommandLineOptions(const QStringList &
             options.addError("Error: Invalid value passed to -W. Must be an integer >= -1"_L1);
             return options;
         }
+        options.mark(Settings::MaxColumnWidth);
         options.setMaxColumnWidth(maxColumnWidth);
     }
 #endif

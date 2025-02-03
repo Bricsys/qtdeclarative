@@ -22,6 +22,7 @@
 #include <QtQmlToolingSettings/private/qqmltoolingsettings_p.h>
 
 #include "qqmlformatsettings_p.h"
+#include <bitset>
 
 QT_BEGIN_NAMESPACE
 
@@ -120,6 +121,27 @@ public:
     static QQmlFormatOptions buildCommandLineOptions(const QStringList &args);
     QQmlFormatOptions optionsForFile(const QString &fileName, QQmlFormatSettings *settings) const;
 
+    // Set of options that can be also passed by settings file.
+    // We need to know if the option was set by command line
+    enum Settings {
+        UseTabs = 0,
+        IndentWidth,
+        MaxColumnWidth,
+        NormalizeOrder,
+        NewlineType,
+        ObjectsSpacing,
+        FunctionsSpacing,
+        SortImports,
+        SettingsCount
+    };
+
+private:
+    // Command line options have the precedence over the values in the .ini file.
+    // Mark them if they are set by command line then don't override the options
+    // with the values in the .ini file.
+    void mark(Settings setting) { m_settingBits.set(setting, true); }
+    bool isMarked(Settings setting) const { return m_settingBits.test(setting); }
+
 private:
     QQmlJS::Dom::LineWriterOptions m_options;
 
@@ -135,6 +157,7 @@ private:
     bool m_ignoreSettings = false;
     bool m_writeDefaultSettings = false;
     bool m_indentWidthSet = false;
+    std::bitset<SettingsCount> m_settingBits;
 };
 
 QT_END_NAMESPACE
