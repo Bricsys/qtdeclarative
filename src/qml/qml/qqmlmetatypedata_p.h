@@ -53,7 +53,6 @@ struct QQmlMetaTypeData
     using CompositeTypes = QHash<const QtPrivate::QMetaTypeInterface *,
                                  QQmlRefPointer<QV4::CompiledData::CompilationUnit>>;
     CompositeTypes compositeTypes;
-    QHash<QUrl, QQmlType> inlineComponentTypes;
 
     struct VersionedUri {
         VersionedUri() = default;
