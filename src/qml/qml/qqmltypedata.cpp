@@ -532,7 +532,7 @@ void QQmlTypeData::done()
     }
 
     {
-        QQmlType type = QQmlMetaType::qmlType(finalUrl(), true);
+        QQmlType type = QQmlMetaType::qmlType(finalUrl());
         if (m_compiledData && m_compiledData->unitData()->flags & QV4::CompiledData::Unit::IsSingleton) {
             if (!type.isValid()) {
                 QQmlError error;
