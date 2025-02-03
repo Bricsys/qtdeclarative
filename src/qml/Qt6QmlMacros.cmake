@@ -903,6 +903,15 @@ Check https://doc.qt.io/qt-6/qt-cmake-policy-qtp0001.html for policy details."
     # special (and is not a real resource file)
     set_property(TARGET ${target} APPEND PROPERTY _qt_qml_meta_qrc_files "${dir_map_qrc}")
 
+    set(do_qml_aotstats OFF)
+    if(NOT DEFINED QT_QML_GENERATE_AOTSTATS OR QT_QML_GENERATE_AOTSTATS)
+        if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
+            set(do_qml_aotstats ON)
+        else()
+            message(WARNING "aotstats is not supported on CMake versions < 3.19")
+        endif()
+    endif()
+
     set(cache_target)
     qt6_target_qml_sources(${target}
         __QT_INTERNAL_FORCE_DEFER_QMLDIR
@@ -1082,7 +1091,7 @@ Check https://doc.qt.io/qt-6/qt-cmake-policy-qtp0001.html for policy details."
         endif()
     endif()
 
-    if("${CMAKE_VERSION}" VERSION_GREATER_EQUAL "3.19.0")
+    if(do_qml_aotstats)
         set_property(GLOBAL APPEND PROPERTY _qt_qml_aotstats_module_targets ${target})
         set_target_properties(${target} PROPERTIES
             QT_QML_MODULE_RCC_QMLCACHE_PATH "${CMAKE_CURRENT_BINARY_DIR}/.rcc/qmlcache"
@@ -1093,13 +1102,6 @@ Check https://doc.qt.io/qt-6/qt-cmake-policy-qtp0001.html for policy details."
             set_property(GLOBAL PROPERTY _qt_internal_deferred_aotstats_setup TRUE)
             cmake_language(EVAL CODE "cmake_language(DEFER DIRECTORY \"${CMAKE_BINARY_DIR}\" "
                 "CALL _qt_internal_deferred_aotstats_setup)")
-        endif()
-    else()
-        if(NOT TARGET all_aotstats)
-            add_custom_target(
-                all_aotstats
-                ${CMAKE_COMMAND} -E echo "aotstats is not supported on CMake versions < 3.19"
-            )
         endif()
     endif()
 endfunction()
@@ -3025,11 +3027,17 @@ function(qt6_target_qml_sources target)
             "$<${have_direct_calls}:--direct-calls>"
             "$<${have_arguments}:${arguments}>"
             ${qrc_resource_args}
+        )
+
+        if(do_qml_aotstats)
             # The --only-bytecode argument is mutually exclusive with aotstats and can
             # be added after qt_add_qml_module. Conditionally add aotstats flags via genex.
-            "$<$<NOT:$<IN_LIST:--only-bytecode,${arguments}>>:--dump-aot-stats>"
-            "$<$<NOT:$<IN_LIST:--only-bytecode,${arguments}>>:--module-id=${uri}(${target})>"
-        )
+            set(aotstats_args
+                "$<$<NOT:$<IN_LIST:--only-bytecode,${arguments}>>:--dump-aot-stats>"
+                "$<$<NOT:$<IN_LIST:--only-bytecode,${arguments}>>:--module-id=${uri}(${target})>"
+            )
+            list(APPEND cachegen_args ${aotstats_args})
+        endif()
 
         # For direct evaluation in if() below
         get_target_property(cachegen_prop ${target} QT_QMLCACHEGEN_EXECUTABLE)
@@ -3345,7 +3353,7 @@ function(qt6_target_qml_sources target)
             endif()
 
             set(aotstats_file "")
-            if("${qml_file_src}" MATCHES ".+\\.qml")
+            if(do_qml_aotstats AND "${qml_file_src}" MATCHES ".+\\.qml")
                 set(aotstats_file "${compiled_file}.aotstats")
                 list(APPEND aotstats_files ${aotstats_file})
             endif()
@@ -3398,7 +3406,7 @@ function(qt6_target_qml_sources target)
         endif()
     endforeach()
 
-    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
+    if(do_qml_aotstats)
         set_property(TARGET ${target} APPEND PROPERTY
             QT_QML_MODULE_AOTSTATS_FILES ${aotstats_files})
     endif()
