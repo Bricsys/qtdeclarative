@@ -55,28 +55,51 @@ void QQmlListReferencePrivate::release()
 \class QQmlListReference
 \since 5.0
 \inmodule QtQml
-\brief The QQmlListReference class allows the manipulation of QQmlListProperty properties.
+\brief The QQmlListReference class allows the manipulation of \l QQmlListProperty properties.
 
 QQmlListReference allows C++ programs to read from, and assign values to a QML list property in a
-simple and type-safe way.  A QQmlListReference can be created by passing an object and property
-name or through a QQmlProperty instance.  These two are equivalent:
+simple and type-safe way. The main advantage over using \l QQmlListProperty itself is its type
+erasure: QQmlListReference is not a template, but can be used for QQmlListProperties of any type.
+Furthermore it watches the owner object for deletion and does not allow the \l QQmlListProperty
+to be accessed anymore if its owner has been deleted.
+
+You can create a QQmlListReference from either an object and a property name or from a QVariant.
+These two are equivalent:
 
 \code
 QQmlListReference ref1(object, "children");
 
-QQmlProperty ref2(object, "children");
-QQmlListReference ref2 = qvariant_cast<QQmlListReference>(ref2.read());
+const QVariant var = object->property("children");
+QQmlListReference ref2(var);
 \endcode
 
-Not all QML list properties support all operations.  A set of methods, canAppend(), canAt(), canClear() and
-canCount() allow programs to query whether an operation is supported on a given property.
+Not all QQmlListReferences support all operations. Methods like canAppend(),
+canAt(), canClear(), and canCount() allow programs to query whether an
+operation is supported on a given property. The availability of the methods
+depends on the methods implemented by the underlying \l QQmlListProperty. When
+constructing a \l QQmlListProperty by manually passing the accessor
+functions you can restrict access to the list by passing nullptr to some of them.
+QQmlListReference will recognize those and report them as unavailable.
 
-QML list properties are type-safe.  Only QObject's that derive from the correct base class can be assigned to
-the list.  The listElementType() method can be used to query the QMetaObject of the QObject type supported.
-Attempting to add objects of the incorrect type to a list property will fail.
+\l{QQmlListReference}s are type-safe.  Only \l{QObject}s that derive of the
+correct base class can be added to the list. The listElementType() method can be
+used to query the \l QMetaObject of the \l QObject type that can be added.
+Attempting to add objects of an incorrect type to a list property will fail.
 
-Like with normal lists, when accessing a list element by index, it is the callers responsibility to ensure
-that it does not request an out of range element using the count() method before calling at().
+Like with other lists, when accessing a list element by index, it is the
+callers responsibility to ensure that it does not request an out of range
+element. Use the count() method before calling at() to this effect.
+*/
+
+/*!
+\fn bool QQmlListReference::operator==(const QQmlListReference &other) const
+
+Compares this QQmlListReference to \a other, and returns \c true if they are
+equal. The two are only considered equal if one was created from the other
+via copy assignment or copy construction.
+
+\note Independently created references to the same object are not considered
+to be equal.
 */
 
 /*!
@@ -336,7 +359,7 @@ bool QQmlListReference::append(QObject *object) const
 }
 
 /*!
-Returns the list element at \a index, or 0 if the operation failed.
+Returns the list element at \a index, or \nullptr if the operation failed.
 
 \sa canAt()
 */
@@ -362,7 +385,7 @@ bool QQmlListReference::clear() const
 }
 
 /*!
-Returns the number of objects in the list, or 0 if the operation failed.
+Returns the number of items in the list, or 0 if the operation failed.
 */
 qsizetype QQmlListReference::count() const
 {
@@ -374,7 +397,7 @@ qsizetype QQmlListReference::count() const
 /*!
 \fn qsizetype QQmlListReference::size() const
 \since 6.2
-Returns the number of objects in the list, or 0 if the operation failed.
+Returns the number of items in the list, or 0 if the operation failed.
 */
 
 /*!
@@ -447,7 +470,10 @@ Q_PROPERTY(QQmlListProperty<Fruit> fruit READ fruit)
 QML list properties are type-safe - in this case \c {Fruit} is a QObject type that
 \c {Apple}, \c {Orange} and \c {Banana} all derive from.
 
-\sa {Chapter 5: Using List Property Types}
+You can use \l{QQmlListReference} to manipulate a QQmlListProperty from C++ using
+a slightly more ergonomic API, at the cost of some overhead.
+
+\sa {Chapter 5: Using List Property Types}, QQmlListReference
 */
 
 /*!
@@ -666,17 +692,6 @@ A \l{QQmlListProperty(QObject *object, QList<T *> *list)}{QQmlListProperty const
 uses this field to store the pointer to the list itself, as it cannot directly
 access the list contents from the owner.
 
-*/
-
-/*!
-\fn bool QQmlListReference::operator==(const QQmlListReference &other) const
-
-Compares this QQmlListReference to \a other, and returns \c true if they are
-equal. The two are only considered equal if one was created from the other
-via copy assignment or copy construction.
-
-\note Independently created references to the same object are not considered
-to be equal.
 */
 
 QT_END_NAMESPACE
