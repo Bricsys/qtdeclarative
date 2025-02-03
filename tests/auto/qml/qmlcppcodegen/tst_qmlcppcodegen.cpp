@@ -3239,6 +3239,42 @@ void tst_QmlCppCodegen::listConversion()
     QCOMPARE(nulls.count(&nulls), 2);
     QCOMPARE(nulls.at(&nulls, 0), nullptr);
     QCOMPARE(nulls.at(&nulls, 1), nullptr);
+
+    QObject *src = o->property("src").value<QObject *>();
+    QVERIFY(src);
+
+    QCOMPARE(src->property("numbers").value<QList<int>>(), (QList<int>{1, 2}));
+
+    QQmlListProperty<QObject> srcObjects
+            = src->property("objects").value<QQmlListProperty<QObject>>();
+    QVERIFY(srcObjects.object != objects.object);
+    const QObjectList oldObjects = objects.toList<QObjectList>();
+    QCOMPARE(srcObjects.toList<QObjectList>(), oldObjects);
+
+    QQmlListProperty<QQmlBind> srcBindings
+            = src->property("bindings").value<QQmlListProperty<QQmlBind>>();
+    QVERIFY(srcBindings.object != bindings.object);
+    const QObjectList oldBindings = bindings.toList<QObjectList>();
+    QCOMPARE(srcBindings.toList<QObjectList>(), oldBindings);
+
+    QMetaObject::invokeMethod(o.data(), "shuffle");
+
+    QCOMPARE(o->property("numbers").value<QList<int>>(), (QList<int>{1, 3}));
+
+    // List properties stay intact
+    QCOMPARE(objects.count(&objects), 2);
+    QCOMPARE(objects.at(&objects, 1), o.data());
+    QCOMPARE(bindings.count(&bindings), 2);
+    QCOMPARE(bindings.at(&bindings, 1), nullptr);
+    QCOMPARE(objectsFromBindings.count(&objectsFromBindings), 2);
+    QCOMPARE(objectsFromBindings.at(&objectsFromBindings, 1), o.data());
+    QCOMPARE(nulls.count(&nulls), 2);
+    QCOMPARE(nulls.at(&nulls, 1), nullptr);
+
+    // Changes did not propagate back to the source
+    QCOMPARE(src->property("numbers").value<QList<int>>(), (QList<int>{1, 2}));
+    QCOMPARE(srcObjects.toList<QObjectList>(), oldObjects);
+    QCOMPARE(srcBindings.toList<QObjectList>(), oldBindings);
 }
 
 void tst_QmlCppCodegen::listIndices()
