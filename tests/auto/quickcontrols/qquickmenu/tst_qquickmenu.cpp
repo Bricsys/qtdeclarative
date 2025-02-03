@@ -288,11 +288,10 @@ void tst_QQuickMenu::mouse()
     QTRY_VERIFY(menu->isOpened());
 
     // Ensure that we have enough space to click outside of the menu.
-    QVERIFY(window->width() > menu->contentItem()->width());
-    QVERIFY(window->height() > menu->contentItem()->height());
+    QVERIFY(window->width() > menu->width());
+    QVERIFY(window->height() > menu->height());
     QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
-                      QPoint(menu->contentItem()->x() + menu->contentItem()->width() + 1,
-                             menu->contentItem()->y() + menu->contentItem()->height() + 1));
+        QPoint(menu->x() + menu->width() + 1, menu->y() + menu->height() + 1));
     QTRY_COMPARE(visibleSpy.size(), 3);
     QVERIFY(!menu->isVisible());
     if (menuPrivate->usePopupWindow())
