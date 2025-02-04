@@ -293,6 +293,7 @@ set(qml_files
     typePropagationLoop.qml
     typePropertyClash.qml
     typedArray.qml
+    unclearComponentBoundaries.qml
     undefinedResets.qml
     undefinedToDouble.qml
     unknownAttached.qml

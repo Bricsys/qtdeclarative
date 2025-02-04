@@ -256,6 +256,7 @@ private slots:
     void typePropagationLoop();
     void typePropertyClash();
     void typedArray();
+    void unclearComponentBoundaries();
     void undefinedResets();
     void undefinedToDouble();
     void unknownAttached();
@@ -5196,6 +5197,19 @@ void tst_QmlCppCodegen::typedArray()
     method.invoke(
                 o.data(), Q_RETURN_ARG(int, result), Q_ARG(QString, QStringLiteral("aaaaaaaaaaa")));
     QCOMPARE(result, 20);
+}
+
+void tst_QmlCppCodegen::unclearComponentBoundaries()
+{
+    QQmlEngine engine;
+    QQmlComponent component(
+                &engine, QUrl(u"qrc:/qt/qml/TestTypes/unclearComponentBoundaries.qml"_s));
+
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+    QScopedPointer<QObject> rootObject(component.create());
+    QVERIFY(rootObject);
+
+    QCOMPARE(rootObject->objectName(), u"outer"_s);
 }
 
 void tst_QmlCppCodegen::undefinedResets()
