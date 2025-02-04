@@ -53,7 +53,7 @@ struct QQuickContextMenuForeign
     QML_NAMED_ELEMENT(ContextMenu)
     QML_FOREIGN(QQuickContextMenu)
     QML_UNCREATABLE("")
-    QML_ADDED_IN_VERSION(6, 8)
+    QML_ADDED_IN_VERSION(6, 9)
 };
 
 QT_END_NAMESPACE
