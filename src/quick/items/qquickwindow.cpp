@@ -1658,9 +1658,11 @@ void QQuickWindowPrivate::maybeSynthesizeContextMenuEvent(QMouseEvent *event)
     // See comment in QQuickWindow::event; we need to follow that pattern here,
     // otherwise the context menu event will be sent before the press (since
     // QQuickWindow::mousePressEvent returns early if windowEventDispatch is true).
-    // If we don't do this, the incorrect order will cause the the menu to
+    // If we don't do this, the incorrect order will cause the menu to
     // immediately close when the press is delivered.
-    if (windowEventDispatch)
+    // Also, don't send QContextMenuEvent if a menu has already been opened while
+    // handling a QMouseEvent in which the right button was pressed or released.
+    if (windowEventDispatch || !rmbContextMenuEventEnabled)
         return;
 
     QWindowPrivate::maybeSynthesizeContextMenuEvent(event);

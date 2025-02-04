@@ -56,6 +56,12 @@ Q_STATIC_LOGGING_CATEGORY(lcContextMenu, "qt.quick.controls.contextmenu")
 
     The example in the \l {Sharing context menus} section works because the
     \c Menu is defined separately from its assignment.
+
+    \section1 Interaction with other menus
+
+    If a \c Menu is opened via e.g. a \l TapHandler or other means, ContextMenu
+    will not open at the same time. This allows legacy applications that were
+    written before ContextMenu was introduced to continue working as expected.
 */
 
 /*!

@@ -1724,6 +1724,12 @@ void QQuickMenu::setVisible(bool visible)
         qmlWarning(this) << "cannot show menu: parent is null";
         return;
     }
+    if (visible) {
+        // If a right mouse button event opens a menu, don't synthesize QContextMenuEvent
+        // (avoid opening redundant menus, e.g. in parent items).
+        Q_ASSERT(window());
+        QQuickWindowPrivate::get(window())->rmbContextMenuEventEnabled = false;
+    }
 
     if (visible && ((d->useNativeMenu() && !d->maybeNativeHandle())
             || (!d->useNativeMenu() && d->maybeNativeHandle()))) {
