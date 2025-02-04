@@ -750,7 +750,7 @@ void ScanFunctions::calcEscapingVariables()
     for (Context *c : std::as_const(m->contextMap)) {
         if (c->contextType != ContextType::ESModule)
             continue;
-        for (const auto &entry: c->exportEntries) {
+        for (const auto &entry: std::as_const(c->exportEntries)) {
             auto mIt = c->members.constFind(entry.localName);
             if (mIt != c->members.constEnd())
                 mIt->canEscape = true;
