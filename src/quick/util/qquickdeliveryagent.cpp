@@ -2023,6 +2023,10 @@ void QQuickDeliveryAgentPrivate::deliverPointerEvent(QPointerEvent *event)
 
     if (event->isBeginEvent()) {
         ensureDeviceConnected(event->pointingDevice());
+        if (event->type() == QEvent::MouseButtonPress && rootItem->window()
+            && static_cast<QSinglePointEvent *>(event)->button() == Qt::RightButton) {
+            QQuickWindowPrivate::get(rootItem->window())->rmbContextMenuEventEnabled = true;
+        }
         if (!deliverPressOrReleaseEvent(event))
             event->setAccepted(false);
     }

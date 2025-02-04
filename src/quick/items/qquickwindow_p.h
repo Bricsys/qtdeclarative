@@ -279,6 +279,7 @@ public:
     uint updatesEnabled : 1;
     bool pendingFontUpdate = false;
     bool windowEventDispatch = false;
+    bool rmbContextMenuEventEnabled = false; // true after right-mouse press, false when menu opened
     QPointer<QQuickPalette> windowPaletteRef;
 
 private:

@@ -6,6 +6,7 @@
 #include <QtTest/qsignalspy.h>
 #include <QtTest/qtest.h>
 #include <QtQuick/qquickview.h>
+#include <QtQuick/private/qquicktaphandler_p.h>
 #include <QtQuickTestUtils/private/viewtestutils_p.h>
 #include <QtQuickTestUtils/private/visualtestutils_p.h>
 #include <QtQuickControlsTestUtils/private/qtest_quickcontrols_p.h>
@@ -33,6 +34,7 @@ private slots:
     void createOnRequested_data();
     void createOnRequested();
     void drawerShouldntPreventOpening();
+    void explicitMenuPreventsBuiltInMenu();
 
 private:
     bool contextMenuTriggeredOnRelease = false;
@@ -266,6 +268,30 @@ void tst_QQuickContextMenu::drawerShouldntPreventOpening()
     auto *menu = window->findChild<QQuickMenu *>();
     QVERIFY(menu);
     QTRY_VERIFY(menu->isOpened());
+}
+
+void tst_QQuickContextMenu::explicitMenuPreventsBuiltInMenu()
+{
+    QQuickApplicationHelper helper(this, "tapHandlerMenuOverride.qml");
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickWindow *window = helper.window;
+    window->show();
+    QVERIFY(QTest::qWaitForWindowExposed(window));
+
+    auto *textArea = window->findChild<QQuickItem *>("textArea");
+    QVERIFY(textArea);
+    auto *tapHandler = window->findChild<QQuickTapHandler *>();
+    QVERIFY(tapHandler);
+    const QSignalSpy tapHandlerTappedSpy(tapHandler, &QQuickTapHandler::tapped);
+    auto *windowMenu = window->findChild<QQuickMenu *>("windowMenu");
+    QVERIFY(windowMenu);
+
+    const QPoint &windowCenter = mapCenterToWindow(window->contentItem());
+    QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, windowCenter);
+    // The menu that has opened is the window's menu; TextArea's built-in menu has not been instantiated
+    QCOMPARE(textArea->findChild<QQuickMenu *>(), nullptr);
+    QTRY_VERIFY(windowMenu->isOpened());
+    QCOMPARE(tapHandlerTappedSpy.count(), 1);
 }
 
 QTEST_QUICKCONTROLS_MAIN(tst_QQuickContextMenu)
