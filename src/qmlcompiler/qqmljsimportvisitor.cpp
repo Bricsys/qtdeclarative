@@ -636,16 +636,16 @@ void QQmlJSImportVisitor::processDefaultProperties()
                           qmlUnresolvedType, it.value().constFirst()->sourceLocation());
         };
 
-        const auto wrapInImplicitComponent = [&]() {
-            // Since we don't know the property type, we need to assume it's QQmlComponent and that
+        const auto assignToUnknownProperty = [&]() {
+            // We don't know the property type. It could be QQmlComponent, which would mean that
             // IDs from the inner scopes are inaccessible.
             for (const QQmlJSScope::Ptr &scope : std::as_const(*it))
-                scope->setIsWrappedInImplicitComponent(true);
+                scope->setAssignedToUnknownProperty(true);
         };
 
         if (propType.isNull()) {
             handleUnresolvedDefaultProperty(propType);
-            wrapInImplicitComponent();
+            assignToUnknownProperty();
             continue;
         }
 
@@ -658,7 +658,7 @@ void QQmlJSImportVisitor::processDefaultProperties()
         }
 
         if (!checkTypeResolved(propType, handleUnresolvedDefaultProperty)) {
-            wrapInImplicitComponent();
+            assignToUnknownProperty();
             continue;
         }
 
@@ -765,11 +765,15 @@ void QQmlJSImportVisitor::processPropertyBindingObjects()
         const QString propertyName = objectBinding.name;
         QQmlJSScope::Ptr childScope = objectBinding.childScope;
 
+        const auto assignToUnknownProperty = [&]() {
+            // We don't know the property type. It could be QQmlComponent which would mean
+            // that IDs from the child scope are inaccessible outside of it.
+            childScope->setAssignedToUnknownProperty(true);
+        };
+
         // guarantees property lookup
         if (!checkTypeResolved(objectBinding.scope)) {
-            // Since we don't know the property type we need to assume that it's QQmlComponent and
-            // that IDs from the child scope are inaccessible outside of it.
-            childScope->setIsWrappedInImplicitComponent(true);
+            assignToUnknownProperty();
             continue;
         }
 
@@ -788,21 +792,15 @@ void QQmlJSImportVisitor::processPropertyBindingObjects()
                           qmlUnresolvedType, objectBinding.location);
         };
 
-        const auto wrapInImplicitComponent = [&]() {
-            // Since we don't know the property type we need to assume that it's QQmlComponent and
-            // that IDs from the child scope are inaccessible outside of it.
-            childScope->setIsWrappedInImplicitComponent(true);
-        };
-
         if (property.type().isNull()) {
-            wrapInImplicitComponent();
+            assignToUnknownProperty();
             handleUnresolvedProperty(property.type());
             continue;
         }
 
         // guarantee that canAssign() can be called
         if (!checkTypeResolved(property.type(), handleUnresolvedProperty)) {
-            wrapInImplicitComponent();
+            assignToUnknownProperty();
             continue;
         } else if (!checkTypeResolved(childScope)) {
             continue;
@@ -879,8 +877,9 @@ void QQmlJSImportVisitor::checkRequiredProperties()
 
     for (const auto &defScope : m_objectDefinitionScopes) {
         if (defScope->isFileRootComponent() || defScope->isInlineComponent()
-            || defScope->isComponentRootElement())
+                || defScope->componentRootStatus() != QQmlJSScope::IsComponentRoot::No) {
             continue;
+        }
 
         QVector<QQmlJSScope::ConstPtr> scopesToSearch;
         for (QQmlJSScope::ConstPtr scope = defScope; scope; scope = scope->baseType()) {

@@ -987,6 +987,22 @@ QQmlJSScope::ConstPtr QQmlJSTypeResolver::resolveParentProperty(
 
 /*!
  * \internal
+ * We can generally determine the relevant component boundaries for each scope. However,
+ * if the scope or any of its parents is assigned to a property of which we cannot see the
+ * type, we don't know whether the type of that property happens to be Component. In that
+ * case, we can't say.
+ */
+bool QQmlJSTypeResolver::canFindComponentBoundaries(const QQmlJSScope::ConstPtr &scope) const
+{
+    for (QQmlJSScope::ConstPtr parent = scope; parent; parent = parent->parentScope()) {
+        if (parent->isAssignedToUnknownProperty())
+            return false;
+    }
+    return true;
+}
+
+/*!
+ * \internal
  *
  * Retrieves the type of whatever \a name signifies in the given \a scope.
  * \a name can be an ID, a property of the scope, a singleton, an attachment,
@@ -1019,6 +1035,9 @@ QQmlJSScope::ConstPtr QQmlJSTypeResolver::scopedType(
         const QQmlJSScope::ConstPtr &scope, const QString &name,
         QQmlJSScopesByIdOptions options) const
 {
+    if (!canFindComponentBoundaries(scope))
+        return {};
+
     if (QQmlJSScope::ConstPtr identified = m_objectsById.scope(name, scope, options))
         return identified;
 
@@ -1078,6 +1097,9 @@ QQmlJSRegisterContent QQmlJSTypeResolver::scopedType(QQmlJSRegisterContent scope
                                                      QQmlJSScopesByIdOptions options) const
 {
     const QQmlJSScope::ConstPtr contained = scope.containedType();
+    if (!canFindComponentBoundaries(contained))
+        return {};
+
     if (QQmlJSScope::ConstPtr identified = m_objectsById.scope(name, contained, options)) {
         return m_pool->createType(
                 identified, lookupIndex, QQmlJSRegisterContent::ObjectById, scope);
