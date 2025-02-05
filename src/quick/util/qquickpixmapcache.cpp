@@ -2086,4 +2086,5 @@ QT_END_NAMESPACE
 
 #include <qquickpixmapcache.moc>
 
+#include "moc_qquickpixmap_p.cpp"
 #include "moc_qquickpixmapcache_p.cpp"
