@@ -2,15 +2,12 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 package com.example.qtquickview_kotlin
 
-import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.ViewGroup
 import android.widget.CompoundButton
 import android.widget.FrameLayout
-import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import com.example.qtquickview_kotlin.databinding.ActivityMainBinding
 import org.qtproject.example.qtquickview.QmlModule.Main
@@ -78,47 +75,8 @@ class MainActivity : AppCompatActivity(), QtQmlStatusChangeListener {
 
         m_binding.changeQmlColorButton.setOnClickListener { onClickListener() }
         m_binding.rotateQmlGridButton.setOnClickListener { rotateQmlGrid() }
-
-        // Check target device orientation on launch
-        handleOrientationChanges()
     }
     //! [onCreate]
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        handleOrientationChanges()
-    }
-
-    private fun handleOrientationChanges() {
-        // When specific target device display configurations (listed in AndroidManifest.xml
-        // android:configChanges) change, get display metrics and make needed changes to UI
-        val displayMetrics = DisplayMetrics()
-        windowManager.defaultDisplay.getMetrics(displayMetrics)
-        val firstQmlFrameLayoutParams = m_binding.firstQmlFrame.layoutParams
-        val secondQmlFrameLayoutParams = m_binding.secondQmlFrame.layoutParams
-        val linearLayoutParams = m_binding.kotlinRelative.layoutParams
-
-        if (displayMetrics.heightPixels > displayMetrics.widthPixels) {
-            m_binding.mainLinear.orientation = LinearLayout.VERTICAL
-            firstQmlFrameLayoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
-            firstQmlFrameLayoutParams.height = 0
-            secondQmlFrameLayoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
-            secondQmlFrameLayoutParams.height = 0
-            linearLayoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
-            linearLayoutParams.height = 0
-        } else {
-            m_binding.mainLinear.orientation = LinearLayout.HORIZONTAL
-            firstQmlFrameLayoutParams.width = 0
-            firstQmlFrameLayoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
-            secondQmlFrameLayoutParams.width = 0
-            secondQmlFrameLayoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
-            linearLayoutParams.width = 0
-            linearLayoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT
-        }
-        m_binding.firstQmlFrame.layoutParams = firstQmlFrameLayoutParams
-        m_binding.secondQmlFrame.layoutParams = secondQmlFrameLayoutParams
-        m_binding.kotlinRelative.layoutParams = linearLayoutParams
-    }
 
     //! [onClickListener]
     private fun onClickListener() {
@@ -162,9 +120,6 @@ class MainActivity : AppCompatActivity(), QtQmlStatusChangeListener {
     //! [onStatusChanged]
     override fun onStatusChanged(status: QtQmlStatus?, content: QtQuickViewContent?) {
         Log.v(TAG, "Status of QtQuickView: $status")
-
-        val qmlStatus = (resources.getString(R.string.qml_view_status)
-                + m_statusNames[status])
 
         // Show current QML View status in a textview
         m_binding.qmlStatusText.text = getString(R.string.qml_view_status, m_statusNames[status])
