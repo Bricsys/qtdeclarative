@@ -1165,3 +1165,6 @@ QRhiRenderTarget *QQuickRhiItemRenderer::renderTarget() const
  */
 
 QT_END_NAMESPACE
+
+#include "moc_qquickrhiitem.cpp"
+#include "moc_qquickrhiitem_p.cpp"

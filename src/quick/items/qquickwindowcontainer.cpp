@@ -604,3 +604,5 @@ bool QQuickWindowContainerPrivate::transformChanged(QQuickItem *transformedItem)
 }
 
 QT_END_NAMESPACE
+
+#include "moc_qquickwindowcontainer_p.cpp"

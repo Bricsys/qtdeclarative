@@ -189,3 +189,5 @@ QList<QFontVariableAxis> QQuickFontInfo::variableAxes() const
 }
 
 QT_END_NAMESPACE
+
+#include "moc_qquickfontinfo_p.cpp"
