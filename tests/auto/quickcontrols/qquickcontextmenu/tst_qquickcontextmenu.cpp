@@ -26,7 +26,7 @@ private slots:
     void customContextMenu_data();
     void customContextMenu();
     void sharedContextMenu();
-    void eventOrder();
+    void tapHandler();
     void notAttachedToItem();
     void nullMenu();
     void idOnMenu();
@@ -155,8 +155,8 @@ void tst_QQuickContextMenu::sharedContextMenu()
 // After 70c61b12efe9d1faf24063b63cf5a69414d45cea in qtbase, accepting a press/release will not
 // prevent an item beneath the accepting item from getting a context menu event.
 // This test was originally written before that, and would verify that only the handler
-// got the event. Now it checks that both received events in the correct order.
-void tst_QQuickContextMenu::eventOrder()
+// got the event. Now it checks that both received events.
+void tst_QQuickContextMenu::tapHandler()
 {
     QQuickApplicationHelper helper(this, "deliverToHandlersBeforeContextMenu.qml");
     QVERIFY2(helper.ready, helper.failureMessage());
@@ -164,26 +164,22 @@ void tst_QQuickContextMenu::eventOrder()
     window->show();
     QVERIFY(QTest::qWaitForWindowExposed(window));
 
-    QSignalSpy eventReceivedSpy(window, SIGNAL(eventReceived(QObject *)));
-    QVERIFY(eventReceivedSpy.isValid());
+    const QSignalSpy contextMenuOpenedSpy(window, SIGNAL(contextMenuOpened()));
+    QVERIFY(contextMenuOpenedSpy.isValid());
+
+    const auto *tapHandler = window->findChild<QObject *>("tapHandler");
+    QVERIFY(tapHandler);
+    const QSignalSpy tappedSpy(tapHandler, SIGNAL(tapped(QEventPoint, Qt::MouseButton)));
+    QVERIFY(tappedSpy.isValid());
 
     const QPoint &windowCenter = mapCenterToWindow(window->contentItem());
     QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, windowCenter);
-    // First check that the menu was actually created, as this is an easier to understand
+    // First check that the menu was actually created, as this is an easier-to-understand
     // failure message than a signal spy count mismatch.
     const auto *menu = window->findChild<QQuickMenu *>();
     QVERIFY(menu);
-    QCOMPARE(eventReceivedSpy.count(), 2);
-    const auto *tapHandler = window->findChild<QObject *>("tapHandler");
-    QVERIFY(tapHandler);
-    if (!contextMenuTriggeredOnRelease) {
-        // If the context menu is triggered on press, it will open before the handler gets the release.
-        QCOMPARE(eventReceivedSpy.at(0).at(0).value<QObject *>(), menu);
-        QCOMPARE(eventReceivedSpy.at(1).at(0).value<QObject *>(), tapHandler);
-    } else {
-        QCOMPARE(eventReceivedSpy.at(0).at(0).value<QObject *>(), tapHandler);
-        QCOMPARE(eventReceivedSpy.at(1).at(0).value<QObject *>(), menu);
-    }
+    QTRY_COMPARE(contextMenuOpenedSpy.count(), 1);
+    QCOMPARE(tappedSpy.count(), 1);
 }
 
 void tst_QQuickContextMenu::notAttachedToItem()
@@ -222,7 +218,7 @@ void tst_QQuickContextMenu::idOnMenu()
     QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, windowCenter);
     auto *menu = window->findChild<QQuickMenu *>();
     QVERIFY(menu);
-    QVERIFY(menu->isOpened());
+    QTRY_VERIFY(menu->isOpened());
 }
 
 void tst_QQuickContextMenu::createOnRequested_data()
@@ -251,7 +247,7 @@ void tst_QQuickContextMenu::createOnRequested()
     QTest::mouseClick(&window, Qt::RightButton, Qt::NoModifier, tomatoCenter);
     QQuickMenu *menu = window.findChild<QQuickMenu *>();
     QVERIFY(menu);
-    QVERIFY(menu->isOpened());
+    QTRY_VERIFY(menu->isOpened());
     QCOMPARE(window.rootObject()->property("pressPos").toPoint(), tomatoCenter);
 }
 

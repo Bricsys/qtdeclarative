@@ -13,11 +13,7 @@ Item {
         id: button
         objectName: "tomato"
         text: "tomato"
-        background: Rectangle {
-            implicitWidth: 100
-            implicitHeight: 40
-            color: "tomato"
-        }
+
         ContextMenu.onRequested: position => {
             root.pressPos = position
             const menu = buttonMenu.createObject(button)
