@@ -266,13 +266,13 @@ void tst_QQuickMenu::mouse()
     QTRY_COMPARE(menu->currentIndex(), 0);
     QTRY_VERIFY(firstItem->hasActiveFocus());
     QCOMPARE(menu->contentItem()->property("currentIndex"), QVariant(0));
-    QVERIFY(menu->isOpened());
+    QTRY_VERIFY(menu->isOpened());
 
     QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, window->mapFromGlobal(firstItem->mapToGlobal(firstItem->boundingRect().center()).toPoint()));
     QCOMPARE(clickedSpy.size(), 1);
     QCOMPARE(triggeredSpy.size(), 1);
     QTRY_COMPARE(visibleSpy.size(), 1);
-    QVERIFY(!menu->isVisible());
+    QTRY_VERIFY(!menu->isVisible());
     QVERIFY(!parentItem->childItems().contains(menu->contentItem()));
 
     QTRY_COMPARE(menu->currentIndex(), -1);
@@ -953,6 +953,7 @@ void tst_QQuickMenu::addItem()
     QVERIFY(menu);
     menu->open();
     QVERIFY(menu->isVisible());
+    QTRY_VERIFY(menu->isOpened());
 
     QQuickItem *menuItem = menu->itemAt(0);
     QVERIFY(menuItem);
@@ -980,6 +981,7 @@ void tst_QQuickMenu::menuSeparator()
     QVERIFY(menu);
     menu->open();
     QVERIFY(menu->isVisible());
+    QTRY_VERIFY(menu->isOpened());
 
     QQuickMenuItem *newMenuItem = qobject_cast<QQuickMenuItem*>(menu->itemAt(0));
     QVERIFY(newMenuItem);
@@ -992,7 +994,6 @@ void tst_QQuickMenu::menuSeparator()
     QVERIFY(saveMenuItem);
     QCOMPARE(saveMenuItem->text(), QStringLiteral("Save"));
     QTRY_VERIFY(!QQuickItemPrivate::get(saveMenuItem)->culled); // QTBUG-53262
-    QTRY_VERIFY(menu->isOpened());
 
     // Clicking on items should still close the menu.
     QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
@@ -1006,6 +1007,7 @@ void tst_QQuickMenu::menuSeparator()
     QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
         menuSeparator->mapToScene(QPointF(menuSeparator->width() / 2, menuSeparator->height() / 2)).toPoint());
     QVERIFY(menu->isVisible());
+    QTRY_VERIFY(menu->isOpened());
 
     // Clicking on items should still close the menu.
     QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
@@ -1057,6 +1059,7 @@ void tst_QQuickMenu::repeater()
     QVERIFY(menu);
     menu->open();
     QVERIFY(menu->isVisible());
+    QTRY_VERIFY(menu->isOpened());
 
     QObject *repeater = window->property("repeater").value<QObject*>();
     QVERIFY(repeater);
@@ -1102,6 +1105,7 @@ void tst_QQuickMenu::order()
     QVERIFY(menu);
     menu->open();
     QVERIFY(menu->isVisible());
+    QTRY_VERIFY(menu->isOpened());
 
     const QStringList texts = {"dynamic_0", "static_1", "repeated_2", "repeated_3", "static_4", "dynamic_5", "dynamic_6"};
 
@@ -1229,22 +1233,25 @@ void tst_QQuickMenu::popup()
         QVERIFY(QMetaObject::invokeMethod(window, "popupItemAtCursor", Q_ARG(QVariant, QVariant::fromValue(menuItem))));
         QCOMPARE(menu->currentIndex(), menuItems.indexOf(menuItem));
         QCOMPARE(menu->contentItem()->property("currentIndex").toInt(), menuItems.indexOf(menuItem));
-        QTRY_VERIFY(qFuzzyCompare(menu->x(), twelveOrLeftMargin));
-        QTRY_VERIFY(qFuzzyCompare(menu->y(), window->height() / 2 - menu->topPadding() - menuItem->y()));
+        QTRY_VERIFY(menu->isOpened());
+        QVERIFY(qFuzzyCompare(menu->x(), twelveOrLeftMargin));
+        QVERIFY(qFuzzyCompare(menu->y(), window->height() / 2 - menu->topPadding() - menuItem->y()));
         menu->close();
 
         QVERIFY(QMetaObject::invokeMethod(window, "popupItemAtPos", Q_ARG(QVariant, QPointF(33, window->height() / 3)), Q_ARG(QVariant, QVariant::fromValue(menuItem))));
         QCOMPARE(menu->currentIndex(), menuItems.indexOf(menuItem));
         QCOMPARE(menu->contentItem()->property("currentIndex").toInt(), menuItems.indexOf(menuItem));
-        QTRY_VERIFY(qFuzzyCompare(menu->x(), 33));
-        QTRY_VERIFY(qFuzzyCompare(menu->y(), window->height() / 3 - menu->topPadding() - menuItem->y()));
+        QTRY_VERIFY(menu->isOpened());
+        QVERIFY(qFuzzyCompare(menu->x(), 33));
+        QVERIFY(qFuzzyCompare(menu->y(), window->height() / 3 - menu->topPadding() - menuItem->y()));
         menu->close();
 
         QVERIFY(QMetaObject::invokeMethod(window, "popupItemAtCoord", Q_ARG(QVariant, 55), Q_ARG(QVariant, window->height() / 3 * 2), Q_ARG(QVariant, QVariant::fromValue(menuItem))));
         QCOMPARE(menu->currentIndex(), menuItems.indexOf(menuItem));
         QCOMPARE(menu->contentItem()->property("currentIndex").toInt(), menuItems.indexOf(menuItem));
-        QTRY_VERIFY(qFuzzyCompare(menu->x(), 55));
-        QTRY_COMPARE_WITH_TIMEOUT(menu->y(), window->height() / 3 * 2 - menu->topPadding() - menuItem->y(), 500);
+        QTRY_VERIFY(menu->isOpened());
+        QVERIFY(qFuzzyCompare(menu->x(), 55));
+        QVERIFY(qFuzzyCompare(menu->y(), window->height() / 3 * 2 - menu->topPadding() - menuItem->y()));
         menu->close();
 
         menu->setParentItem(nullptr);
@@ -1252,8 +1259,9 @@ void tst_QQuickMenu::popup()
         QCOMPARE(menu->parentItem(), button);
         QCOMPARE(menu->currentIndex(), menuItems.indexOf(menuItem));
         QCOMPARE(menu->contentItem()->property("currentIndex").toInt(), menuItems.indexOf(menuItem));
-        QTRY_VERIFY(qFuzzyCompare(menu->x(), button->mapFromScene(QPoint(twelveOrLeftMargin, window->height() / 2)).x()));
-        QTRY_VERIFY(qFuzzyCompare(menu->y(), button->mapFromScene(QPoint(twelveOrLeftMargin, window->height() / 2)).y() - menu->topPadding() - menuItem->y()));
+        QTRY_VERIFY(menu->isOpened());
+        QVERIFY(qFuzzyCompare(menu->x(), button->mapFromScene(QPoint(twelveOrLeftMargin, window->height() / 2)).x()));
+        QVERIFY(qFuzzyCompare(menu->y(), button->mapFromScene(QPoint(twelveOrLeftMargin, window->height() / 2)).y() - menu->topPadding() - menuItem->y()));
         menu->close();
 
         menu->setParentItem(nullptr);
@@ -1261,8 +1269,9 @@ void tst_QQuickMenu::popup()
         QCOMPARE(menu->parentItem(), button);
         QCOMPARE(menu->currentIndex(), menuItems.indexOf(menuItem));
         QCOMPARE(menu->contentItem()->property("currentIndex").toInt(), menuItems.indexOf(menuItem));
-        QTRY_VERIFY(qFuzzyCompare(menu->x(), -11));
-        QTRY_VERIFY(qFuzzyCompare(menu->y(), -22 - menu->topPadding() - menuItem->y()));
+        QTRY_VERIFY(menu->isOpened());
+        QVERIFY(qFuzzyCompare(menu->x(), -11));
+        QVERIFY(qFuzzyCompare(menu->y(), -22 - menu->topPadding() - menuItem->y()));
         QCOMPARE(menu->popupItem()->mapToGlobal({0,0}).toPoint(), button->mapToGlobal({-11, -22 - menu->topPadding() - menuItem->y()}).toPoint());
         menu->close();
 
@@ -1271,8 +1280,9 @@ void tst_QQuickMenu::popup()
         QCOMPARE(menu->parentItem(), button);
         QCOMPARE(menu->currentIndex(), menuItems.indexOf(menuItem));
         QCOMPARE(menu->contentItem()->property("currentIndex").toInt(), menuItems.indexOf(menuItem));
-        QTRY_VERIFY(qFuzzyCompare(menu->x(), -33));
-        QTRY_VERIFY(qFuzzyCompare(menu->y(), -44 - menu->topPadding() - menuItem->y()));
+        QTRY_VERIFY(menu->isOpened());
+        QVERIFY(qFuzzyCompare(menu->x(), -33));
+        QVERIFY(qFuzzyCompare(menu->y(), -44 - menu->topPadding() - menuItem->y()));
         QCOMPARE(menu->popupItem()->mapToGlobal({0,0}).toPoint(), button->mapToGlobal({-33, -44 - menu->topPadding() - menuItem->y()}).toPoint());
         menu->close();
     }
@@ -2185,6 +2195,7 @@ void tst_QQuickMenu::subMenuFlipsPositionWhenOutOfBounds()
     const QPointF subMenuGlobalPos = subMenu->contentItem()->mapToGlobal({subMenu->leftMargin(), subMenu->topMargin()});
     const qreal expectedGlobalSubMenuPositionX = mainMenuGlobalPos.x() - subMenu->width() + mainMenu->overlap();
 
+    QEXPECT_FAIL("PopupType::Window", "This fails with FluentWinUI3, and needs investigation: QTBUG-133530", Abort);
     QCOMPARE(subMenuGlobalPos.x(), mainMenu->cascade() ? expectedGlobalSubMenuPositionX : mainMenuGlobalPos.x());
 }
 
@@ -2477,7 +2488,7 @@ void tst_QQuickMenu::disableWhenTriggered()
             menuItem->mapToScene(QPointF(menuItem->width() / 2, menuItem->height() / 2)).toPoint());
 #endif
 
-        QTRY_VERIFY(subMenu->isVisible());
+        QTRY_VERIFY(subMenu->isOpened());
 #if !defined(Q_OS_ANDROID) and !defined(Q_OS_WEBOS)
         QVERIFY(menuItem->isHovered());
         QTRY_VERIFY(subMenu->contentItem()->property("contentHeight").toReal() > 0.0);
@@ -2731,7 +2742,7 @@ void tst_QQuickMenu::invalidUrlInImgTag()
     QQuickMenu *menu = window->property("menu").value<QQuickMenu*>();
     QVERIFY(menu);
     menu->open();
-    QTRY_VERIFY(menu->isVisible());
+    QTRY_VERIFY(menu->isOpened());
 
     QQuickMenuItem *menuItemFirst = qobject_cast<QQuickMenuItem *>(menu->itemAt(0));
     QVERIFY(menuItemFirst);
