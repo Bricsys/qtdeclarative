@@ -32,10 +32,10 @@ public class MainActivity extends AppCompatActivity implements QtQmlStatusChange
     private static final String TAG = "myTag";
     private final Colors m_colors = new Colors();
     private final Map<QtQmlStatus, String> m_statusNames = new HashMap<QtQmlStatus, String>()  {{
-        put(QtQmlStatus.READY, " READY");
-        put(QtQmlStatus.LOADING, " LOADING");
-        put(QtQmlStatus.ERROR, " ERROR");
-        put(QtQmlStatus.NULL, " NULL");
+        put(QtQmlStatus.READY, "READY");
+        put(QtQmlStatus.LOADING, "LOADING");
+        put(QtQmlStatus.ERROR, "ERROR");
+        put(QtQmlStatus.NULL, "NULL");
     }};
     private int m_qmlButtonSignalListenerId;
     private LinearLayout m_mainLinear;
