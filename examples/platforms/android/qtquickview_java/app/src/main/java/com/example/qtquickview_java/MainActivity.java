@@ -2,18 +2,14 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 package com.example.qtquickview_java;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
-import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import org.qtproject.qt.android.QtQmlStatus;
@@ -38,11 +34,6 @@ public class MainActivity extends AppCompatActivity implements QtQmlStatusChange
         put(QtQmlStatus.NULL, " NULL");
     }};
     private int m_qmlButtonSignalListenerId;
-    private LinearLayout m_mainLinear;
-
-    private FrameLayout m_firstQmlFrameLayout;
-    private FrameLayout m_secondQmlFrameLayout;
-
     //! [qmlContent]
     private final Main m_firstQmlContent = new Main();
     private final Second m_secondQmlContent = new Second();
@@ -59,7 +50,6 @@ public class MainActivity extends AppCompatActivity implements QtQmlStatusChange
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        m_mainLinear = findViewById(R.id.mainLinear);
         m_qmlViewBackgroundText = findViewById(R.id.qmlViewBackgroundText);
         m_qmlStatus = findViewById(R.id.qmlStatusText);
         m_androidControlsLayout = findViewById(R.id.javaRelative);
@@ -80,9 +70,9 @@ public class MainActivity extends AppCompatActivity implements QtQmlStatusChange
         //! [layoutParams]
         final ViewGroup.LayoutParams params = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        m_firstQmlFrameLayout = findViewById(R.id.firstQmlFrame);
+        FrameLayout m_firstQmlFrameLayout = findViewById(R.id.firstQmlFrame);
         m_firstQmlFrameLayout.addView(m_firstQuickView, params);
-        m_secondQmlFrameLayout = findViewById(R.id.secondQmlFrame);
+        FrameLayout m_secondQmlFrameLayout = findViewById(R.id.secondQmlFrame);
         m_secondQmlFrameLayout.addView(m_secondQuickView, params);
         //! [layoutParams]
         //! [loadContent]
@@ -94,49 +84,8 @@ public class MainActivity extends AppCompatActivity implements QtQmlStatusChange
         m_changeColorButton.setOnClickListener(view -> onClickListener());
         Button m_rotateQmlGridButton = findViewById(R.id.rotateQmlGridButton);
         m_rotateQmlGridButton.setOnClickListener(view -> rotateQmlGrid());
-
-        // Check target device orientation on launch
-        handleOrientationChanges();
     }
     //! [onCreate]
-
-    @Override
-    public void onConfigurationChanged(@NonNull Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        handleOrientationChanges();
-    }
-
-    private void handleOrientationChanges() {
-        // When specific target device display configurations (listed in AndroidManifest.xml
-        // android:configChanges) change, get display metrics and make needed changes to UI
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        ViewGroup.LayoutParams firstQmlFrameLayoutParams = m_firstQmlFrameLayout.getLayoutParams();
-        ViewGroup.LayoutParams secondQmlFrameLayoutParams =
-                m_secondQmlFrameLayout.getLayoutParams();
-        ViewGroup.LayoutParams linearLayoutParams = m_androidControlsLayout.getLayoutParams();
-
-        if (displayMetrics.heightPixels > displayMetrics.widthPixels) {
-            m_mainLinear.setOrientation(LinearLayout.VERTICAL);
-            firstQmlFrameLayoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
-            firstQmlFrameLayoutParams.height = 0;
-            secondQmlFrameLayoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
-            secondQmlFrameLayoutParams.height = 0;
-            linearLayoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
-            linearLayoutParams.height = 0;
-        } else {
-            m_mainLinear.setOrientation(LinearLayout.HORIZONTAL);
-            firstQmlFrameLayoutParams.width = 0;
-            firstQmlFrameLayoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
-            secondQmlFrameLayoutParams.width = 0;
-            secondQmlFrameLayoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
-            linearLayoutParams.width = 0;
-            linearLayoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
-        }
-        m_firstQmlFrameLayout.setLayoutParams(firstQmlFrameLayoutParams);
-        m_secondQmlFrameLayout.setLayoutParams(secondQmlFrameLayoutParams);
-        m_androidControlsLayout.setLayoutParams(linearLayoutParams);
-    }
 
     //! [onClickListener]
     public void onClickListener() {

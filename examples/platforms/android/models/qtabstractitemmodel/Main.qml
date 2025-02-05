@@ -35,7 +35,7 @@ Rectangle {
 
 //! [2]
         delegate: Rectangle {
-            implicitWidth: tableView.width / 10
+            implicitWidth: (tableView.height > tableView.width) ? tableView.width / 10 : tableView.height / 5
             implicitHeight: implicitWidth
 
             required property var model
