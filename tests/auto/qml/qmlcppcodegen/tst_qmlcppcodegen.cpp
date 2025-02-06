@@ -738,6 +738,10 @@ void tst_QmlCppCodegen::asCast()
     QCOMPARE(qvariant_cast<QObject *>(root->property("undefinedAsItem")), nullptr);
     QCOMPARE(qvariant_cast<QObject *>(root->property("undefinedAsRectangle")), nullptr);
     QCOMPARE(qvariant_cast<QObject *>(root->property("undefinedAsDummy")), nullptr);
+
+    QCOMPARE(root->property("stringAsString"), u"a"_s);
+    QCOMPARE(root->property("urlAsUrl"), QUrl(u"http://example.com"_s));
+    QCOMPARE(root->property("dateAsDate"), QDateTime(QDate(1996, 3, 3), QTime()));
 }
 
 void tst_QmlCppCodegen::attachedBaseEnum()

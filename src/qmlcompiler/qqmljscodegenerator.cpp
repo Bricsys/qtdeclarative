@@ -3147,9 +3147,13 @@ void QQmlJSCodeGenerator::generate_As(int lhs)
     // If the originalType output is a conversion, we're supposed to check for the contained
     // type and if it doesn't match, set the result to null or undefined.
     const QQmlJSRegisterContent originalContent = originalType(outputContent);
-    const QQmlJSScope::ConstPtr target = originalContent.containedType()->isReferenceType()
-            ? originalContent.containedType()
-            : m_typeResolver->extractNonVoidFromOptionalType(originalContent).containedType();
+    QQmlJSScope::ConstPtr target;
+    if (originalContent.containedType()->isReferenceType())
+        target = originalContent.containedType();
+    else if (originalContent.isConversion())
+        target = m_typeResolver->extractNonVoidFromOptionalType(originalContent).containedType();
+    else if (originalContent.variant() == QQmlJSRegisterContent::Cast)
+        target = originalContent.containedType();
 
     if (!target) {
         reject(u"type assertion to unknown type"_s);
