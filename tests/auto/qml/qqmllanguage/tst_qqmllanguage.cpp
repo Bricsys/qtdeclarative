@@ -5738,6 +5738,37 @@ void tst_qqmllanguage::instanceof_data()
     QTest::newRow("customMouseAreaInstance instanceof QuickImport.MouseArea")
         << testFileUrl("instanceof_qtquick_composite_qualified.qml")
         << QVariant(true);
+
+    QTest::newRow("string instanceof QmlImport.string")
+        << testFileUrl("instanceof_qtqml_qualified.qml")
+        << QVariant(true);
+    QTest::newRow("string instanceof QmlImport.url")
+        << testFileUrl("instanceof_qtqml_qualified.qml")
+        << QVariant(false);
+    QTest::newRow("string instanceof QmlImport.date")
+        << testFileUrl("instanceof_qtqml_qualified.qml")
+        << QVariant(false);
+
+    QTest::newRow("url instanceof QmlImport.string")
+        << testFileUrl("instanceof_qtqml_qualified.qml")
+        << QVariant(false);
+    QTest::newRow("url instanceof QmlImport.url")
+        << testFileUrl("instanceof_qtqml_qualified.qml")
+        << QVariant(true);
+    QTest::newRow("url instanceof QmlImport.date")
+        << testFileUrl("instanceof_qtqml_qualified.qml")
+        << QVariant(false);
+
+    QTest::newRow("date instanceof QmlImport.string")
+        << testFileUrl("instanceof_qtqml_qualified.qml")
+        << QVariant(false);
+    QTest::newRow("date instanceof QmlImport.url")
+        << testFileUrl("instanceof_qtqml_qualified.qml")
+        << QVariant(false);
+    QTest::newRow("date instanceof QmlImport.date")
+        << testFileUrl("instanceof_qtqml_qualified.qml")
+        << QVariant(true);
+
 }
 
 void tst_qqmllanguage::instanceof()
@@ -5752,17 +5783,15 @@ void tst_qqmllanguage::instanceof()
     QScopedPointer<QObject> o(component.create());
     QVERIFY(o != nullptr);
 
-    QQmlExpression expr(engine.contextForObject(o.data()), nullptr, QString::fromLatin1(QTest::currentDataTag()));
+    QQmlExpression expr(
+                engine.contextForObject(o.data()), nullptr,
+                QString::fromLatin1(QTest::currentDataTag()));
     QVariant ret = expr.evaluate();
 
     if (expectedValue.typeId() == QMetaType::Bool) {
         // no error expected
         QVERIFY2(!expr.hasError(), qPrintable(expr.error().description()));
-        bool returnValue = ret.toBool();
-
-        if (QTest::currentDataTag() == QLatin1String("customRectangleWithPropInstance instanceof CustomRectangle") ||
-            QTest::currentDataTag() == QLatin1String("customRectangleWithPropInstance instanceof CustomImport.CustomRectangle"))
-        QCOMPARE(returnValue, expectedValue.toBool());
+        QCOMPARE(ret.toBool(), expectedValue.toBool());
     } else {
         QVERIFY(expr.hasError());
         QCOMPARE(expr.error().description(), expectedValue.toString());

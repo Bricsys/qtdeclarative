@@ -11,11 +11,14 @@
 #include <private/qqmltypedata_p.h>
 #include <private/qqmlvaluetypewrapper_p.h>
 
+#include <private/qv4dateobject_p.h>
 #include <private/qv4identifiertable_p.h>
 #include <private/qv4lookup_p.h>
 #include <private/qv4objectproto_p.h>
 #include <private/qv4qobjectwrapper_p.h>
 #include <private/qv4symbol_p.h>
+#include <private/qv4urlobject_p.h>
+#include <private/qv4variantobject_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -558,7 +561,13 @@ ReturnedValue QQmlTypeWrapper::virtualInstanceOf(const Object *typeObject, const
                     valueWrapper->metaObject(), type.metaObjectForValueType());
         }
 
-        switch (type.typeId().id()) {
+        const QMetaType typeId = type.typeId();
+        if (const VariantObject *variantObject = var.as<VariantObject>()) {
+            if (variantObject->d()->data().metaType() == typeId)
+                return true;
+        }
+
+        switch (typeId.id()) {
         case QMetaType::Void:
             return var.isUndefined();
         case QMetaType::QVariant:
@@ -571,6 +580,18 @@ ReturnedValue QQmlTypeWrapper::virtualInstanceOf(const Object *typeObject, const
             return var.isString();
         case QMetaType::Bool:
             return var.isBoolean();
+        case QMetaType::QUrl:
+            if (var.as<UrlObject>())
+                return true;
+            break;
+        case QMetaType::QDate:
+        case QMetaType::QTime:
+        case QMetaType::QDateTime:
+            if (var.as<DateObject>())
+                return true;
+            break;
+        default:
+            break;
         }
 
         return false;

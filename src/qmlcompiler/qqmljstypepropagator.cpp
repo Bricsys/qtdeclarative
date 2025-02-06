@@ -2597,22 +2597,15 @@ void QQmlJSTypePropagator::generate_As(int lhs)
             output = m_pool->clone(input);
         else
             output = m_pool->castTo(input, outContained);
+    } else if (m_typeResolver->inherits(inContained, outContained)) {
+        // A "slicing" cannot result in void
+        output = m_pool->castTo(input, outContained);
     } else {
-        if (!m_typeResolver->canAddressValueTypes()) {
-            addError(u"invalid cast from %1 to %2. You can only cast object types."_s.arg(
-                    input.descriptiveName(), m_state.accumulatorIn().descriptiveName()));
-        }
-
-        if (m_typeResolver->inherits(inContained, outContained)) {
-            // A "slicing" cannot result in void
-            output = m_pool->castTo(input, outContained);
-        } else {
-            // A value type cast can result in either the type or undefined.
-            // Using convert() retains the variant of the input type.
-            output = m_typeResolver->merge(
-                    m_pool->castTo(input, outContained),
-                    m_pool->castTo(input, m_typeResolver->voidType()));
-        }
+        // A value type cast can result in either the type or undefined.
+        // Using convert() retains the variant of the input type.
+        output = m_typeResolver->merge(
+                m_pool->castTo(input, outContained),
+                m_pool->castTo(input, m_typeResolver->voidType()));
     }
 
     addReadRegister(lhs);
