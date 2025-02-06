@@ -235,9 +235,14 @@ function(qt6_add_qml_module target)
         ENABLE_TYPE_COMPILER
 
         # Used to mark modules as having static side effects (i.e. if they install an image provider)
+        # The main effect is that we don't warn about such modules being unused. This is also
+        # applied to the builtins since we never want to warn about them being unused.
         __QT_INTERNAL_STATIC_MODULE
-        # Used to mark modules as being a system module that provides all builtins
+
+        # Used to mark modules as being a system module that provides all builtins.
+        # This also includes the JavaScript root object as denoted by a jsroot.qmltypes file.
         __QT_INTERNAL_SYSTEM_MODULE
+
         # Give the resource for the qmldir a unique name; TODO: Remove once we can
         __QT_INTERNAL_DISAMBIGUATE_QMLDIR_RESOURCE
     )
