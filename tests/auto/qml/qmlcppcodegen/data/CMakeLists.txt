@@ -218,6 +218,7 @@ set(qml_files
     multipleCtors.qml
     namespaceWithEnum.qml
     noBindingLoop.qml
+    noBuiltinsImport.qml
     noQQmlData.qml
     nonNotifyable.qml
     noscope.qml

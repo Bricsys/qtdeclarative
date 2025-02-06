@@ -184,6 +184,7 @@ private slots:
     void multiLookup();
     void multipleCtors();
     void namespaceWithEnum();
+    void noBuiltinsImport();
     void noQQmlData();
     void nonNotifyable();
     void notEqualsInt();
@@ -3651,6 +3652,17 @@ void tst_QmlCppCodegen::namespaceWithEnum()
     QScopedPointer<QObject> o(c.create());
     QVERIFY(!o.isNull());
     QCOMPARE(o->property("i").toInt(), 2);
+}
+
+void tst_QmlCppCodegen::noBuiltinsImport()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, QUrl(u"qrc:/qt/qml/TestTypes/noBuiltinsImport.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+
+    QCOMPARE(o->property("textureSize").value<QSizeF>(), QSizeF(1024, 1024));
 }
 
 void tst_QmlCppCodegen::noQQmlData()
