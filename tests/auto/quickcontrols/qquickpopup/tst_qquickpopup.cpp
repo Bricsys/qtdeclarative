@@ -3014,6 +3014,7 @@ void tst_QQuickPopup::popupWindowFocus()
     QTRY_COMPARE(textField2->text(), "t");
     popup->close();
     QTRY_VERIFY(!popup->isOpened());
+    QTRY_VERIFY(!popup->isVisible());
     QVERIFY(QGuiApplication::focusObject() == textField1);
     QCOMPARE(QGuiApplicationPrivate::popupCount(), 0);
 
@@ -3030,6 +3031,7 @@ void tst_QQuickPopup::popupWindowFocus()
     QTRY_COMPARE(textField1->text(), "qt");
     popup->close();
     QTRY_VERIFY(!popup->isOpened());
+    QTRY_VERIFY(!popup->isVisible());
 }
 
 void tst_QQuickPopup::popupTypeChangeFromWindowToItem()
