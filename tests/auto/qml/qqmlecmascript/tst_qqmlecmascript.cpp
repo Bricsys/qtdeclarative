@@ -6072,7 +6072,6 @@ void tst_qqmlecmascript::readonlyDeclaration()
 Q_DECLARE_METATYPE(QList<int>)
 Q_DECLARE_METATYPE(QList<qreal>)
 Q_DECLARE_METATYPE(QList<bool>)
-Q_DECLARE_METATYPE(QList<QString>)
 Q_DECLARE_METATYPE(QList<QUrl>)
 void tst_qqmlecmascript::sequenceConversionRead()
 {
