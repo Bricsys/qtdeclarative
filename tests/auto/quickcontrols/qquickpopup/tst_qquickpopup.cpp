@@ -3015,6 +3015,7 @@ void tst_QQuickPopup::popupWindowFocus()
     QTRY_COMPARE(textField2->text(), "t");
     popup->close();
     QTRY_VERIFY(!popup->isOpened());
+    QTRY_VERIFY(!popup->isVisible());
     QVERIFY(QGuiApplication::focusObject() == textField1);
     QCOMPARE(QGuiApplicationPrivate::popupCount(), 0);
 
@@ -3031,6 +3032,7 @@ void tst_QQuickPopup::popupWindowFocus()
     QTRY_COMPARE(textField1->text(), "qt");
     popup->close();
     QTRY_VERIFY(!popup->isOpened());
+    QTRY_VERIFY(!popup->isVisible());
 }
 
 void tst_QQuickPopup::popupTypeChangeFromWindowToItem()
@@ -3239,6 +3241,7 @@ void tst_QQuickPopup::popupWindowWithPaddingFromSafeArea()
     QTRY_VERIFY(dialog->isOpened());
 
     QQuickPopupPrivate* popupPrivate = QQuickPopupPrivate::get(dialog);
+    const auto windowInsets = popupPrivate->windowInsets();
 
     QTRY_VERIFY(popupPrivate->popupWindow);
     auto *popupWindow = popupPrivate->popupWindow;
@@ -3247,8 +3250,8 @@ void tst_QQuickPopup::popupWindowWithPaddingFromSafeArea()
 
     // Verify that the binding on topPadding didn't cause
     // a change in geometry after the popup window was shown.
-    QCOMPARE(popupWindow->width(), dialogWidth);
-    QCOMPARE(popupWindow->height(), dialogHeight);
+    QCOMPARE(popupWindow->width(), dialogWidth + windowInsets.left() + windowInsets.right());
+    QCOMPARE(popupWindow->height(), dialogHeight + windowInsets.top() + windowInsets.bottom());
     QCOMPARE(dialog->width(), dialogWidth);
     QCOMPARE(dialog->height(), dialogHeight);
 }
