@@ -1001,7 +1001,7 @@ Element GenericPass::resolveBuiltinType(QAnyStringView typeName) const
     auto scope = typeImporter->builtinInternalNames().type(typeNameString).scope;
     if (!scope) {
         // and qml names (e.g. for bool) - builtinImportHelper is private, so we can't do it in one call
-        auto builtins = typeImporter->importBuiltins();
+        auto builtins = typeImporter->importHardCodedBuiltins();
         scope = builtins.type(typeNameString).scope;
     }
     return QQmlJSScope::createQQmlSAElement(scope);

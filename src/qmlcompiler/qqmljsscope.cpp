@@ -695,8 +695,10 @@ void QQmlJSScope::resolveList(const QQmlJSScope::Ptr &self, const QQmlJSScope::C
     const QQmlJSImportedScope element = {self, QTypeRevision()};
     const QQmlJSImportedScope array = {arrayType, QTypeRevision()};
     QQmlJS::ContextualTypes contextualTypes(
-                QQmlJS::ContextualTypes::INTERNAL, { { self->internalName(), element }, },
-                arrayType);
+            QQmlJS::ContextualTypes::INTERNAL,
+            { { self->internalName(), element }, },
+            { { self, self->internalName() }, },
+            arrayType);
     QQmlJSScope::resolveTypes(listType, contextualTypes);
 
     Q_ASSERT(listType->valueType() == self);

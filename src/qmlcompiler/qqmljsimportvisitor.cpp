@@ -131,7 +131,7 @@ QQmlJSImportVisitor::QQmlJSImportVisitor(
       m_logger(logger),
       m_rootScopeImports(
               QQmlJS::ContextualTypes(
-                      QQmlJS::ContextualTypes::QML, {},
+                      QQmlJS::ContextualTypes::QML, {}, {},
                       importer->builtinInternalNames().contextualTypes().arrayType()),
               {})
 {
@@ -411,7 +411,7 @@ void QQmlJSImportVisitor::processImportWarnings(
 void QQmlJSImportVisitor::importBaseModules()
 {
     Q_ASSERT(m_rootScopeImports.isEmpty());
-    m_rootScopeImports = m_importer->importBuiltins();
+    m_rootScopeImports = m_importer->importHardCodedBuiltins();
 
     const QQmlJS::SourceLocation invalidLoc;
     const auto types = m_rootScopeImports.types();
