@@ -2704,8 +2704,10 @@ void TestQmllint::importRelScript()
     QProcess proc;
     proc.start(m_qmllintPath, { QStringLiteral(TST_QMLLINT_IMPORT_REL_SCRIPT_ARGS) });
     QVERIFY(proc.waitForFinished());
-    QVERIFY(proc.readAllStandardOutput().isEmpty());
-    QVERIFY(proc.readAllStandardError().isEmpty());
+    const QByteArray output = proc.readAllStandardOutput();
+    QVERIFY2(output.isEmpty(), output.constData());
+    const QByteArray errors = proc.readAllStandardError();
+    QVERIFY2(errors.isEmpty(), errors.constData());
 }
 #endif
 
