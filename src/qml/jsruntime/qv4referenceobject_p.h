@@ -99,7 +99,7 @@ DECLARE_HEAP_OBJECT(ReferenceObject, Object) {
             // Nonetheless this seems to be the only place where we have
             // this kind of need, and thus go for the simpler solution,
             // which can be changed later if the need arise.
-            onDelete = new QMetaObject::Connection(QObject::connect(obj, &QObject::destroyed, [this](){ setDirty(true); }));
+            new(onDelete) QMetaObject::Connection(QObject::connect(obj, &QObject::destroyed, [this](){ setDirty(true); }));
         };
 
         auto connectToBindable = [this](QObject* obj, int property, QQmlEngine* engine) {
@@ -107,7 +107,7 @@ DECLARE_HEAP_OBJECT(ReferenceObject, Object) {
             Q_ASSERT(engine);
 
             bindableNotifier = new QPropertyNotifier(obj->metaObject()->property(property).bindable(obj).addNotifier([this](){ setDirty(true); }));
-            onDelete = new QMetaObject::Connection(QObject::connect(obj, &QObject::destroyed, [this](){ setDirty(true); }));
+            new(onDelete) QMetaObject::Connection(QObject::connect(obj, &QObject::destroyed, [this](){ setDirty(true); }));
         };
 
         setObject(object);
@@ -208,16 +208,18 @@ DECLARE_HEAP_OBJECT(ReferenceObject, Object) {
     }
 
     void destroy() {
+        // If we are connected we must have connected to the destroyed
+        // signal too, and we should clean it up.
+        if (isConnected()) {
+            QObject::disconnect(*reinterpret_cast<QMetaObject::Connection*>(&onDelete));
+            std::destroy_at(reinterpret_cast<QMetaObject::Connection*>(&onDelete));
+        }
+
         if (referenceEndpoint)
             delete referenceEndpoint;
 
         if (bindableNotifier)
             delete bindableNotifier;
-
-        if (onDelete) {
-            QObject::disconnect(*onDelete);
-            delete onDelete;
-        }
     }
 
     private:
@@ -238,7 +240,13 @@ DECLARE_HEAP_OBJECT(ReferenceObject, Object) {
         quint8 m_flags;
         ReferenceObjectEndpoint* referenceEndpoint;
         QPropertyNotifier* bindableNotifier;
-        QMetaObject::Connection* onDelete;
+        // We need to store an handle if we connect to the destroyed
+        // signal so that we can disconnect from it. To avoid yet
+        // another allocation, considering that
+        // QMetaObject::Connection is not trivial, we store it in
+        // block memory.
+        alignas(alignof(QMetaObject::Connection))
+        std::byte onDelete[sizeof(QMetaObject::Connection)];
     };
 
     Q_DECLARE_OPERATORS_FOR_FLAGS(ReferenceObject::Flags)
