@@ -237,5 +237,3 @@ std::shared_ptr<OwningItem> Node::doCopy(const DomItem &) const
 } // namespace Dom
 } // namespace QQmlJS
 QT_END_NAMESPACE
-
-#include "moc_qqmldomfilelocations_p.cpp"
