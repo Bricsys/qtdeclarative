@@ -683,27 +683,35 @@ void tst_QQuickMenu::mnemonics()
     keySim.press(Qt::Key_Alt);
     menu->open();
     QTRY_VERIFY(menu->isOpened());
+    QVERIFY(QQuickTest::qWaitForPolish(window));
 
     QSignalSpy actionSpy(action, &QQuickAction::triggered);
     QVERIFY(actionSpy.isValid());
     keySim.click(Qt::Key_A); // "&Action"
-    QCOMPARE(actionSpy.size(), 1);
+    QTRY_COMPARE(actionSpy.size(), 1);
+    QTRY_COMPARE(QQuickMenuPrivate::get(menu)->transitionState, QQuickPopupPrivate::NoTransition);
 
     menu->open();
-    QTRY_VERIFY(menu->isOpened());
+    QTRY_VERIFY(!QQuickMenuPrivate::get(menu)->transitionManager.isRunning());
+    QVERIFY(menu->isOpened());
+    QVERIFY(QQuickTest::qWaitForPolish(window));
 
     QSignalSpy menuItemSpy(menuItem, &QQuickMenuItem::triggered);
     QVERIFY(menuItemSpy.isValid());
     keySim.click(Qt::Key_I); // "Menu &Item"
     keySim.release(Qt::Key_Alt);
     QCOMPARE(menuItemSpy.size(), 1);
+    QTRY_COMPARE(QQuickMenuPrivate::get(menu)->transitionState, QQuickPopupPrivate::NoTransition);
 
     keySim.press(Qt::Key_Alt);
     menu->open();
+    QTRY_VERIFY(!QQuickMenuPrivate::get(menu)->transitionManager.isRunning());
     QTRY_VERIFY(menu->isOpened());
+    QVERIFY(QQuickTest::qWaitForPolish(window));
 
     keySim.click(Qt::Key_M); // "Sub &Menu"
     QTRY_VERIFY(subMenu->isOpened());
+    QVERIFY(QQuickTest::qWaitForPolish(window));
 
     QSignalSpy subMenuItemSpy(subMenuItem, &QQuickMenuItem::triggered);
     QVERIFY(subMenuItemSpy.isValid());
