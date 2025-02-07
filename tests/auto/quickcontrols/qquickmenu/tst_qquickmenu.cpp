@@ -1175,11 +1175,10 @@ void tst_QQuickMenu::popup()
     const qreal elevenOrLeftMargin = qMax(qreal(11), menu->leftMargin());
     const qreal twentyTwoOrTopMargin = qMax(qreal(22), menu->topMargin());
     // If the Menu has large margins, it may be moved to stay within them.
-    // QTBUG-75503: QTRY_COMPARE doesn't use qFuzzyCompare() in all cases,
-    // meaning a lot of these comparisons could trigger a 10 second wait;
-    // use QTRY_VERIFY and qFuzzyCompare instead.
-    QTRY_VERIFY(qFuzzyCompare(menu->x(), elevenOrLeftMargin));
-    QTRY_VERIFY(qFuzzyCompare(menu->y(), twentyTwoOrTopMargin));
+    static QString errorStringXPos("The menu's x position was %1 and differed too much from %2");
+    static QString errorStringYPos("The menu's y position was %1 and differed too much from %2");
+    QTRY_VERIFY2(qAbs(menu->x() - elevenOrLeftMargin) <= 0.5, qPrintable(errorStringXPos.arg(menu->x()).arg(elevenOrLeftMargin)));
+    QTRY_VERIFY2(qAbs(menu->y() - twentyTwoOrTopMargin) <= 0.5, qPrintable(errorStringYPos.arg(menu->y()).arg(twentyTwoOrTopMargin)));
     menu->close();
 
     QVERIFY(QMetaObject::invokeMethod(window, "popupAtPos", Q_ARG(QVariant, QPointF(33, 44))));
@@ -1203,8 +1202,10 @@ void tst_QQuickMenu::popup()
     QCOMPARE(menu->parentItem(), button);
     QCOMPARE(menu->currentIndex(), -1);
     QCOMPARE(menu->contentItem()->property("currentIndex").toInt(), -1);
-    QTRY_VERIFY(qFuzzyCompare(menu->x(), button->mapFromScene(QPointF(elevenOrLeftMargin, twentyTwoOrTopMargin)).x()));
-    QTRY_VERIFY(qFuzzyCompare(menu->y(), button->mapFromScene(QPointF(elevenOrLeftMargin, twentyTwoOrTopMargin)).y()));
+    QTRY_VERIFY2(qAbs(menu->x() - button->mapFromScene(QPointF(elevenOrLeftMargin, twentyTwoOrTopMargin)).x()) <= 0.5,
+        qPrintable(errorStringXPos.arg(menu->x()).arg(button->mapFromScene(QPointF(elevenOrLeftMargin, twentyTwoOrTopMargin)).x())));
+    QTRY_VERIFY2(qAbs(menu->y() - button->mapFromScene(QPointF(elevenOrLeftMargin, twentyTwoOrTopMargin)).y()) <= 0.5,
+        qPrintable(errorStringYPos.arg(menu->y()).arg(button->mapFromScene(QPointF(elevenOrLeftMargin, twentyTwoOrTopMargin)).y())));
     menu->close();
 
     menu->setParentItem(nullptr);
@@ -1228,6 +1229,7 @@ void tst_QQuickMenu::popup()
     QTRY_VERIFY(qFuzzyCompare(menu->y(), -44));
     QCOMPARE(menu->popupItem()->mapToGlobal({0,0}).toPoint(), button->mapToGlobal({-33, -44}).toPoint());
     menu->close();
+    QTRY_VERIFY(!menu->isVisible());
 
     const qreal twelveOrLeftMargin = qMax(qreal(12), menu->leftMargin());
     cursorPos = window->mapToGlobal(QPoint(twelveOrLeftMargin, window->height() / 2));
@@ -1242,9 +1244,10 @@ void tst_QQuickMenu::popup()
         QCOMPARE(menu->currentIndex(), menuItems.indexOf(menuItem));
         QCOMPARE(menu->contentItem()->property("currentIndex").toInt(), menuItems.indexOf(menuItem));
         QTRY_VERIFY(menu->isOpened());
-        QVERIFY(qFuzzyCompare(menu->x(), twelveOrLeftMargin));
-        QVERIFY(qFuzzyCompare(menu->y(), window->height() / 2 - menu->topPadding() - menuItem->y()));
+        QTRY_VERIFY2(qAbs(menu->x() - twelveOrLeftMargin) <= 0.5, qPrintable(errorStringXPos.arg(menu->x()).arg(twelveOrLeftMargin)));
+        QTRY_VERIFY(qFuzzyCompare(menu->y(), window->height() / 2 - menu->topPadding() - menuItem->y()));
         menu->close();
+        QTRY_VERIFY(!menu->isVisible());
 
         QVERIFY(QMetaObject::invokeMethod(window, "popupItemAtPos", Q_ARG(QVariant, QPointF(33, window->height() / 3)), Q_ARG(QVariant, QVariant::fromValue(menuItem))));
         QCOMPARE(menu->currentIndex(), menuItems.indexOf(menuItem));
@@ -1253,6 +1256,7 @@ void tst_QQuickMenu::popup()
         QVERIFY(qFuzzyCompare(menu->x(), 33));
         QVERIFY(qFuzzyCompare(menu->y(), window->height() / 3 - menu->topPadding() - menuItem->y()));
         menu->close();
+        QTRY_VERIFY(!menu->isVisible());
 
         QVERIFY(QMetaObject::invokeMethod(window, "popupItemAtCoord", Q_ARG(QVariant, 55), Q_ARG(QVariant, window->height() / 3 * 2), Q_ARG(QVariant, QVariant::fromValue(menuItem))));
         QCOMPARE(menu->currentIndex(), menuItems.indexOf(menuItem));
@@ -1261,6 +1265,7 @@ void tst_QQuickMenu::popup()
         QVERIFY(qFuzzyCompare(menu->x(), 55));
         QVERIFY(qFuzzyCompare(menu->y(), window->height() / 3 * 2 - menu->topPadding() - menuItem->y()));
         menu->close();
+        QTRY_VERIFY(!menu->isVisible());
 
         menu->setParentItem(nullptr);
         QVERIFY(QMetaObject::invokeMethod(window, "popupItemAtParentCursor", Q_ARG(QVariant, QVariant::fromValue(button)), Q_ARG(QVariant, QVariant::fromValue(menuItem))));
@@ -1268,9 +1273,11 @@ void tst_QQuickMenu::popup()
         QCOMPARE(menu->currentIndex(), menuItems.indexOf(menuItem));
         QCOMPARE(menu->contentItem()->property("currentIndex").toInt(), menuItems.indexOf(menuItem));
         QTRY_VERIFY(menu->isOpened());
-        QVERIFY(qFuzzyCompare(menu->x(), button->mapFromScene(QPoint(twelveOrLeftMargin, window->height() / 2)).x()));
-        QVERIFY(qFuzzyCompare(menu->y(), button->mapFromScene(QPoint(twelveOrLeftMargin, window->height() / 2)).y() - menu->topPadding() - menuItem->y()));
+        QTRY_VERIFY2(qAbs(menu->x() - button->mapFromScene(QPoint(twelveOrLeftMargin, window->height() / 2)).x()) <= 0.5,
+            qPrintable(errorStringXPos.arg(menu->x()).arg(button->mapFromScene(QPoint(twelveOrLeftMargin, window->height() / 2)).x())));
+        QTRY_VERIFY(qFuzzyCompare(menu->y(), button->mapFromScene(QPoint(twelveOrLeftMargin, window->height() / 2)).y() - menu->topPadding() - menuItem->y()));
         menu->close();
+        QTRY_VERIFY(!menu->isVisible());
 
         menu->setParentItem(nullptr);
         QVERIFY(QMetaObject::invokeMethod(window, "popupItemAtParentPos", Q_ARG(QVariant, QVariant::fromValue(button)), Q_ARG(QVariant, QPointF(-11, -22)), Q_ARG(QVariant, QVariant::fromValue(menuItem))));
@@ -1282,6 +1289,7 @@ void tst_QQuickMenu::popup()
         QVERIFY(qFuzzyCompare(menu->y(), -22 - menu->topPadding() - menuItem->y()));
         QCOMPARE(menu->popupItem()->mapToGlobal({0,0}).toPoint(), button->mapToGlobal({-11, -22 - menu->topPadding() - menuItem->y()}).toPoint());
         menu->close();
+        QTRY_VERIFY(!menu->isVisible());
 
         menu->setParentItem(nullptr);
         QVERIFY(QMetaObject::invokeMethod(window, "popupItemAtParentCoord", Q_ARG(QVariant, QVariant::fromValue(button)), Q_ARG(QVariant, -33), Q_ARG(QVariant, -44), Q_ARG(QVariant, QVariant::fromValue(menuItem))));
@@ -1293,6 +1301,7 @@ void tst_QQuickMenu::popup()
         QVERIFY(qFuzzyCompare(menu->y(), -44 - menu->topPadding() - menuItem->y()));
         QCOMPARE(menu->popupItem()->mapToGlobal({0,0}).toPoint(), button->mapToGlobal({-33, -44 - menu->topPadding() - menuItem->y()}).toPoint());
         menu->close();
+        QTRY_VERIFY(!menu->isVisible());
     }
 
     QCursor::setPos(oldCursorPos);
