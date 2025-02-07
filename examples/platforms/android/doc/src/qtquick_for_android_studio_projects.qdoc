@@ -26,7 +26,7 @@
 
     \if defined(onlinedocs)
         \tab {onCreate}{tab-java}{Java}{checked}
-        \tab {onCreate}{tab-kotlin}{Kotlin}
+        \tab {onCreate}{tab-kotlin}{Kotlin}{}
         \tabcontent {tab-java}
     \else
         For a Java-based project:
@@ -60,7 +60,7 @@
 
     \if defined(onlinedocs)
         \tab {m_qtQuickView}{tab-java}{Java}{checked}
-        \tab {m_qtQuickView}{tab-kotlin}{Kotlin}
+        \tab {m_qtQuickView}{tab-kotlin}{Kotlin}{}
         \tabcontent {tab-java}
     \else
         For a Java-based project:
@@ -87,7 +87,7 @@
 
     \if defined(onlinedocs)
         \tab {layoutParams}{tab-java}{Java}{checked}
-        \tab {layoutParams}{tab-kotlin}{Kotlin}
+        \tab {layoutParams}{tab-kotlin}{Kotlin}{}
         \tabcontent {tab-java}
     \else
         For a Java-based project:
@@ -114,7 +114,7 @@
 
     \if defined(onlinedocs)
         \tab {qmlContent}{tab-java}{Java}{checked}
-        \tab {qmlContent}{tab-kotlin}{Kotlin}
+        \tab {qmlContent}{tab-kotlin}{Kotlin}{}
         \tabcontent {tab-java}
     \else
         For a Java-based project:
@@ -140,7 +140,7 @@
 
     \if defined(onlinedocs)
         \tab {loadContent}{tab-java}{Java}{checked}
-        \tab {loadContent}{tab-kotlin}{Kotlin}
+        \tab {loadContent}{tab-kotlin}{Kotlin}{}
         \tabcontent {tab-java}
     \else
         For a Java-based project:
@@ -170,7 +170,7 @@
 
     \if defined(onlinedocs)
         \tab {listener}{tab-java}{Java}{checked}
-        \tab {listener}{tab-kotlin}{Kotlin}
+        \tab {listener}{tab-kotlin}{Kotlin}{}
         \tabcontent {tab-java}
     \else
         For a Java-based project:
@@ -205,7 +205,7 @@
 
     \if defined(onlinedocs)
         \tab {onStatusChanged}{tab-java}{Java}{checked}
-        \tab {onStatusChanged}{tab-kotlin}{Kotlin}
+        \tab {onStatusChanged}{tab-kotlin}{Kotlin}{}
         \tabcontent {tab-java}
     \else
         For a Java-based project:
@@ -232,7 +232,7 @@
 
     \if defined(onlinedocs)
         \tab {setStatusChangeListener}{tab-java}{Java}{checked}
-        \tab {setStatusChangeListener}{tab-kotlin}{Kotlin}
+        \tab {setStatusChangeListener}{tab-kotlin}{Kotlin}{}
         \tabcontent {tab-java}
     \else
         For a Java-based project:
@@ -270,7 +270,7 @@
 
     \if defined(onlinedocs)
         \tab {onClickListener}{tab-java}{Java}{checked}
-        \tab {onClickListener}{tab-kotlin}{Kotlin}
+        \tab {onClickListener}{tab-kotlin}{Kotlin}{}
         \tabcontent {tab-java}
     \else
         For a Java-based project:
@@ -307,7 +307,7 @@
 
     \if defined(onlinedocs)
         \tab {gridRotate}{tab-java}{Java}{checked}
-        \tab {gridRotate}{tab-kotlin}{Kotlin}
+        \tab {gridRotate}{tab-kotlin}{Kotlin}{}
         \tabcontent {tab-java}
     \else
         For a Java-based project:
@@ -343,7 +343,7 @@
 
     \if defined(onlinedocs)
         \tab {signal_listener}{tab-java}{Java}{checked}
-        \tab {signal_listener}{tab-kotlin}{Kotlin}
+        \tab {signal_listener}{tab-kotlin}{Kotlin}{}
         \tabcontent {tab-java}
     \else
         For a Java-based project:
@@ -376,7 +376,7 @@
 
     \if defined(onlinedocs)
         \tab {qml_signal_listener}{tab-java}{Java}{checked}
-        \tab {qml_signal_listener}{tab-kotlin}{Kotlin}
+        \tab {qml_signal_listener}{tab-kotlin}{Kotlin}{}
         \tabcontent {tab-java}
     \else
         For a Java-based project:
