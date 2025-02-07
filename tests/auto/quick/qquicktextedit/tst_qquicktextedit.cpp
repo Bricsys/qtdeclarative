@@ -4284,8 +4284,8 @@ void tst_qquicktextedit::preeditCursorRectangle()
     QQuickTextEdit *edit = qobject_cast<QQuickTextEdit *>(window.rootObject());
     QVERIFY(edit);
 
+    QTRY_VERIFY(edit->findChild<QQuickItem *>("cursor") != nullptr);
     QQuickItem *cursor = edit->findChild<QQuickItem *>("cursor");
-    QVERIFY(cursor);
 
     QSignalSpy editSpy(edit, SIGNAL(cursorRectangleChanged()));
     QSignalSpy panelSpy(qGuiApp->inputMethod(), SIGNAL(cursorRectangleChanged()));
