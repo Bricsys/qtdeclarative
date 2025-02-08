@@ -117,6 +117,8 @@ public:
     void addError(const QString &newError) { m_errors.append(newError); };
 
     void applySettings(const QQmlFormatSettings &settings);
+    static QQmlFormatOptions buildCommandLineOptions(const QStringList &args);
+    QQmlFormatOptions optionsForFile(const QString &fileName, QQmlFormatSettings *settings) const;
 
 private:
     QQmlJS::Dom::LineWriterOptions m_options;

@@ -14,6 +14,7 @@
 #include <QtQmlDom/private/qqmldomoutwriter_p.h>
 #include <QtQmlDom/private/qqmldomtop_p.h>
 #include <QtQmlToolingSettings/private/qqmltoolingsettings_p.h>
+#include <QtQmlFormat/private/qqmlformatoptions_p.h>
 
 using namespace QQmlJS::Dom;
 
@@ -72,6 +73,9 @@ private Q_SLOTS:
 
     void commandLineOptions_data();
     void commandLineOptions();
+
+    void settingsFromFileOrCommandLine_data();
+    void settingsFromFileOrCommandLine();
 
 private:
     QString readTestFile(const QString &path);
@@ -811,6 +815,52 @@ void TestQmlformat::writeDefaults()
         QCOMPARE(settings.value("ObjectSpacing").toBool(), false);
         QCOMPARE(settings.value("FunctionsSpacing").toBool(), false);
         QCOMPARE(settings.value("SortImports").toBool(), false);
+    };
+
+    verify();
+}
+
+void TestQmlformat::settingsFromFileOrCommandLine_data()
+{
+    QTest::addColumn<QString>("qmlformatIniPath");
+    QTest::addColumn<QStringList>("qmlformatInitOptions");
+    QTest::addColumn<QQmlFormatOptions>("expectedOptions");
+
+    {
+        QQmlFormatOptions options;
+        options.setIndentWidth(20);
+        // In settings file, indentwidth is set to 4000, while cli overrides it to 20
+        // 20 should be the final value
+        QTest::newRow("clOverridesIndentWidth")
+                << testFile("iniFiles/dummySettingsFile.ini")
+                << QStringList{ m_qmlformatPath, "--indent-width", "20" } << options;
+    }
+}
+
+void TestQmlformat::settingsFromFileOrCommandLine()
+{
+    QFETCH(QString, qmlformatIniPath);
+    QFETCH(QStringList, qmlformatInitOptions);
+    QFETCH(QQmlFormatOptions, expectedOptions);
+
+    auto verify = [&]() {
+        QTemporaryDir tempDir;
+        const QString qmlformatIni = tempDir.path() + QDir::separator() + ".qmlformat.ini";
+        const QString dummyQmlFile = tempDir.path() + QDir::separator() + "test.qml";
+
+        QFile::copy(qmlformatIniPath, qmlformatIni);
+        QQmlFormatSettings settings("qmlformat");
+        QQmlFormatOptions options =
+                QQmlFormatOptions::buildCommandLineOptions(qmlformatInitOptions);
+        auto overridenOptions = options.optionsForFile(dummyQmlFile, &settings);
+
+        QCOMPARE(overridenOptions.tabsEnabled(), expectedOptions.tabsEnabled());
+        QCOMPARE(overridenOptions.indentWidth(), expectedOptions.indentWidth());
+        QCOMPARE(overridenOptions.maxColumnWidth(), expectedOptions.maxColumnWidth());
+        QCOMPARE(overridenOptions.normalizeEnabled(), expectedOptions.normalizeEnabled());
+        QCOMPARE(overridenOptions.newline(), expectedOptions.newline());
+        QCOMPARE(overridenOptions.objectsSpacing(), expectedOptions.objectsSpacing());
+        QCOMPARE(overridenOptions.functionsSpacing(), expectedOptions.functionsSpacing());
     };
 
     verify();
