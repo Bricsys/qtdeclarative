@@ -13,6 +13,7 @@
 #include <QtQmlDom/private/qqmldomlinewriter_p.h>
 #include <QtQmlDom/private/qqmldomoutwriter_p.h>
 #include <QtQmlDom/private/qqmldomtop_p.h>
+#include <QtQmlToolingSettings/private/qqmltoolingsettings_p.h>
 
 using namespace QQmlJS::Dom;
 
@@ -67,6 +68,7 @@ private Q_SLOTS:
     void plainJS();
 
     void ecmascriptModule();
+    void writeDefaults();
 
     void commandLineOptions_data();
     void commandLineOptions();
@@ -781,6 +783,34 @@ void TestQmlformat::commandLineOptions()
             QCOMPARE(process.exitCode(), 0);
         else
             QCOMPARE_NE(process.exitCode(), 0);
+    };
+
+    verify();
+}
+
+void TestQmlformat::writeDefaults()
+{
+    auto verify = [&]() {
+        QTemporaryDir tempDir;
+        const QString qmlformatIni = tempDir.path() + QDir::separator() + ".qmlformat.ini";
+
+        QProcess process;
+        process.setWorkingDirectory(tempDir.path());
+        process.start(m_qmlformatPath, QStringList{ "--write-defaults" });
+        QVERIFY(process.waitForFinished());
+        QCOMPARE(process.exitStatus(), QProcess::NormalExit);
+
+        QQmlToolingSettings settings("qmlformat");
+        QVERIFY(settings.search(qmlformatIni));
+
+        QCOMPARE(settings.value("UseTabs").toBool(), false);
+        QCOMPARE(settings.value("IndentWidth").toInt(), 4);
+        QCOMPARE(settings.value("MaxColumnWidth").toInt(), -1);
+        QCOMPARE(settings.value("NormalizeOrder").toBool(), false);
+        QCOMPARE(settings.value("NewlineType").toString(), "native");
+        QCOMPARE(settings.value("ObjectSpacing").toBool(), false);
+        QCOMPARE(settings.value("FunctionsSpacing").toBool(), false);
+        QCOMPARE(settings.value("SortImports").toBool(), false);
     };
 
     verify();

@@ -5,11 +5,11 @@
 
 QQmlFormatSettings::QQmlFormatSettings(const QString &toolName) : QQmlToolingSettings(toolName)
 {
-    addOption(s_useTabsSetting);
+    addOption(s_useTabsSetting, false);
     addOption(s_indentWidthSetting, 4);
-    addOption(s_maxColumnWidthSetting);
-    addOption(s_normalizeSetting);
+    addOption(s_maxColumnWidthSetting, -1);
+    addOption(s_normalizeSetting, false);
     addOption(s_newlineSetting, QStringLiteral("native"));
-    addOption(s_objectsSpacingSetting);
-    addOption(s_functionsSpacingSetting);
+    addOption(s_objectsSpacingSetting, false);
+    addOption(s_functionsSpacingSetting, false);
 }
