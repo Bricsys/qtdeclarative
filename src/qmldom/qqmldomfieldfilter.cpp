@@ -203,7 +203,6 @@ FieldFilter FieldFilter::compareNoCommentsFilter()
 
 void FieldFilter::setFiltred()
 {
-    auto types = domTypeToStringMap();
     QSet<QString> filtredFieldStrs;
     QSet<QString> filtredTypeStrs;
     static QHash<QString, DomType> fieldToId = []() {
@@ -224,7 +223,8 @@ void FieldFilter::setFiltred()
             filtredTypeStrs.insert(it.key());
             ++it;
         }
-        for (auto f : map.values(QString()))
+        const auto &fieldKeys = map.values(QString());
+        for (const auto &f : fieldKeys)
             filtredFieldStrs.insert(f);
     };
     addFilteredOfMap(m_fieldFilterAdd);
@@ -233,11 +233,11 @@ void FieldFilter::setFiltred()
     if (m_fieldFilterRemove.values(QString()).contains(QString()))
         m_filtredDefault = false;
     m_filtredFields.clear();
-    for (auto s : filtredFieldStrs)
+    for (const auto &s : filtredFieldStrs)
         if (!s.isEmpty())
             m_filtredFields.insert(qHash(QStringView(s)));
     m_filtredTypes.clear();
-    for (auto s : filtredTypeStrs) {
+    for (const auto &s : filtredTypeStrs) {
         if (s.isEmpty())
             continue;
         if (fieldToId.contains(s)) {
