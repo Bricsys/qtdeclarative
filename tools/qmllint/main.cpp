@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 All warnings can be set to three levels:
     disable - Fully disables the warning.
     info - Displays the warning but does not influence the return code.
-    warning - Displays the warning and leads to a non-zero exit code if encountered.
+    warning - Displays the warning and leads to a non-zero exit code if more warnings than max-warnings occur.
     error - Displays the warning as error and leads to a non-zero exit code if encountered.
 )"));
 
