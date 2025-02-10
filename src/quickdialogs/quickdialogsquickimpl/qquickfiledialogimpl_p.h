@@ -157,7 +157,7 @@ Q_SIGNALS:
     void fileNameLabelChanged();
     void fileNameTextFieldChanged();
     void overwriteConfirmationDialogChanged();
-    void sideBarChanged();
+    Q_REVISION(6, 9) void sideBarChanged();
 
 private:
     Q_DISABLE_COPY(QQuickFileDialogImplAttached)

@@ -28,13 +28,13 @@ class QQuickSideBarPrivate;
 class Q_QUICKDIALOGS2QUICKIMPL_EXPORT QQuickSideBar : public QQuickContainer
 {
     Q_OBJECT
-    Q_PROPERTY(QQuickDialog *dialog READ dialog WRITE setDialog NOTIFY dialogChanged)
-    Q_PROPERTY(QList<QStandardPaths::StandardLocation> folderPaths READ folderPaths WRITE setFolderPaths NOTIFY folderPathsChanged)
-    Q_PROPERTY(QList<QStandardPaths::StandardLocation> effectiveFolderPaths READ effectiveFolderPaths NOTIFY effectiveFolderPathsChanged)
-    Q_PROPERTY(QList<QUrl> favoritePaths READ favoritePaths NOTIFY favoritePathsChanged)
-    Q_PROPERTY(QQmlComponent *buttonDelegate READ buttonDelegate WRITE setButtonDelegate NOTIFY buttonDelegateChanged)
-    Q_PROPERTY(QQmlComponent *separatorDelegate READ separatorDelegate WRITE setSeparatorDelegate NOTIFY separatorDelegateChanged)
-    Q_PROPERTY(QQmlComponent *addFavoriteDelegate READ addFavoriteDelegate WRITE setAddFavoriteDelegate NOTIFY addFavoriteDelegateChanged)
+    Q_PROPERTY(QQuickDialog *dialog READ dialog WRITE setDialog NOTIFY dialogChanged FINAL)
+    Q_PROPERTY(QList<QStandardPaths::StandardLocation> folderPaths READ folderPaths WRITE setFolderPaths NOTIFY folderPathsChanged FINAL)
+    Q_PROPERTY(QList<QStandardPaths::StandardLocation> effectiveFolderPaths READ effectiveFolderPaths NOTIFY effectiveFolderPathsChanged FINAL)
+    Q_PROPERTY(QList<QUrl> favoritePaths READ favoritePaths NOTIFY favoritePathsChanged FINAL)
+    Q_PROPERTY(QQmlComponent *buttonDelegate READ buttonDelegate WRITE setButtonDelegate NOTIFY buttonDelegateChanged FINAL)
+    Q_PROPERTY(QQmlComponent *separatorDelegate READ separatorDelegate WRITE setSeparatorDelegate NOTIFY separatorDelegateChanged FINAL)
+    Q_PROPERTY(QQmlComponent *addFavoriteDelegate READ addFavoriteDelegate WRITE setAddFavoriteDelegate NOTIFY addFavoriteDelegateChanged FINAL)
     QML_NAMED_ELEMENT(SideBar)
     QML_ADDED_IN_VERSION(6, 9)
 
