@@ -184,7 +184,7 @@ FieldFilter FieldFilter::compareNoCommentsFilter()
     QMultiMap<QString, QString> fieldFilterAdd {};
     QMultiMap<QString, QString> fieldFilterRemove{
         { QString(), QLatin1String("propertyInfos") },
-        { QLatin1String("FileLocations"), QLatin1String("regions") },
+        { QLatin1String("FileLocationsInfo"), QLatin1String("regions") },
         { QLatin1String("Reference"), QLatin1String("get") },
         { QLatin1String("QmlComponent"), QLatin1String("ids") },
         { QLatin1String("QmlObject"), QLatin1String("prototypes") },
