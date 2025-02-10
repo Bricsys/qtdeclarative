@@ -754,32 +754,29 @@ void TestQmlformat::testFilesOption()
 
 void TestQmlformat::commandLineOptions_data()
 {
-    QTest::addColumn<QString>("file");
     QTest::addColumn<QStringList>("args");
     QTest::addColumn<QString>("expectedErrorMessage");
 
     QTest::newRow("columnWidthError")
-            << testFile("Annotations.qml") << QStringList{ "-W", "-11111" }
+            << QStringList{ "-W", "-11111" }
             << "Error: Invalid value passed to -W. Must be an integer >= -1\n";
     QTest::newRow("columnWidthNoError")
-            << testFile("Annotations.qml") << QStringList{ "-W", "80" } << "";
+            << QStringList{ "-W", "80" } << "";
     QTest::newRow("indentWidthError")
-            << testFile("Annotations.qml") << QStringList{ "--indent-width", "expect integer" }
+            << QStringList{ "--indent-width", "expect integer" }
             << "Error: Invalid value passed to -w\n";
     QTest::newRow("indentWidthNoError")
-            << testFile("Annotations.qml") << QStringList{ "--indent-width", "4" } << "";
+            << QStringList{ "--indent-width", "4" } << "";
 }
 
 void TestQmlformat::commandLineOptions()
 {
-    QFETCH(QString, file);
     QFETCH(QStringList, args);
     QFETCH(QString, expectedErrorMessage);
 
     auto verify = [&]() {
         QTemporaryDir tempDir;
         const QString tempFile = tempDir.path() + QDir::separator() + "test_0.qml";
-        QFile::copy(file, tempFile);
 
         QProcess process;
         process.setStandardOutputFile(tempFile);
