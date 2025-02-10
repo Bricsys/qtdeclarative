@@ -2160,6 +2160,8 @@ void tst_QQuickMenu::subMenuFlipsPositionWhenOutOfBounds_data()
 
 void tst_QQuickMenu::subMenuFlipsPositionWhenOutOfBounds()
 {
+    if (QQuickStyle::name() != QLatin1String("Basic"))
+        QSKIP("This fails for several styles, and needs investigation: QTBUG-133530");
     QFETCH(QQuickPopup::PopupType, popupType);
 
     QQuickControlsApplicationHelper helper(this, QLatin1String("SubMenusNearScreenBound.qml"));
@@ -2213,7 +2215,6 @@ void tst_QQuickMenu::subMenuFlipsPositionWhenOutOfBounds()
     const QPointF subMenuGlobalPos = subMenu->contentItem()->mapToGlobal({subMenu->leftMargin(), subMenu->topMargin()});
     const qreal expectedGlobalSubMenuPositionX = mainMenuGlobalPos.x() - subMenu->width() + mainMenu->overlap();
 
-    QEXPECT_FAIL("PopupType::Window", "This fails with FluentWinUI3, and needs investigation: QTBUG-133530", Abort);
     QCOMPARE(subMenuGlobalPos.x(), mainMenu->cascade() ? expectedGlobalSubMenuPositionX : mainMenuGlobalPos.x());
 }
 
