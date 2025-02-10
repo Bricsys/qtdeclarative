@@ -690,8 +690,7 @@ void TestQmlformat::testFilesOption_data()
     QTest::addColumn<QString>("containerFile");
     QTest::addColumn<QStringList>("individualFiles");
 
-    QTest::newRow("initial") << "fileListToFormat"
-            << QStringList{"valid1.qml", "invalidEntry:cannot be parsed", "valid2.qml"};
+    QTest::newRow("initial") << "fileListToFormat" << QStringList{ "valid1.qml", "valid2.qml" };
 }
 
 void TestQmlformat::testFilesOption()
@@ -757,16 +756,33 @@ void TestQmlformat::commandLineOptions_data()
     QTest::addColumn<QStringList>("args");
     QTest::addColumn<QString>("expectedErrorMessage");
 
+    const QString dummy = testFile("dummy.qml");
+    const QString empty = testFile("empty");
     QTest::newRow("columnWidthError")
-            << QStringList{ "-W", "-11111" }
+            << QStringList{ dummy, "-W", "-11111" }
             << "Error: Invalid value passed to -W. Must be an integer >= -1\n";
     QTest::newRow("columnWidthNoError")
-            << QStringList{ "-W", "80" } << "";
+            << QStringList{ dummy, "-W", "80" } << "";
     QTest::newRow("indentWidthError")
-            << QStringList{ "--indent-width", "expect integer" }
+            << QStringList{ dummy, "--indent-width", "expect integer" }
             << "Error: Invalid value passed to -w\n";
     QTest::newRow("indentWidthNoError")
-            << QStringList{ "--indent-width", "4" } << "";
+            << QStringList{ dummy, "--indent-width", "4" } << "";
+    QTest::newRow("noInputFiles.qml")
+            << QStringList{} << "Error: Expected at least one input file.\n";
+    QTest::newRow("fOptionFileDoesNotExist")
+            << QStringList{ "-F", "nope" }
+            << "Error: Could not open file \"nope\" for option -F.\n";
+    QTest::newRow("fOptionFileIsEmpty")
+            << QStringList{ "-F", empty }
+            << "Error: File \"" + empty + "\" for option -F is empty.\n";
+    QTest::newRow("fOptionFileContainsNope")
+            << QStringList{ "-F", testFile("filesToFormatNope") }
+            << "Error: Entry \"nope\" of file \"" + testFile("filesToFormatNope")
+                    + "\" passed to option -F could not be found.\n";
+    QTest::newRow("positionalArgumentDoesNotExist")
+            << QStringList{ "nope" }
+            << "Error: Could not find file \"nope\".\n";
 }
 
 void TestQmlformat::commandLineOptions()
@@ -888,10 +904,13 @@ void TestQmlformat::settingsFromFileOrCommandLine()
 
         QFile::copy(qmlformatIniPath, qmlformatIni);
         QQmlFormatSettings settings("qmlformat");
-        QQmlFormatOptions options =
-                QQmlFormatOptions::buildCommandLineOptions(qmlformatInitOptions);
+        QStringList cmdlineOptions;
         if ((qstrcmp(QTest::currentDataTag(), "settingOnFilesOption") == 0))
-            options.setFiles(QStringList() << dummyQmlFile);
+            cmdlineOptions = qmlformatInitOptions << "-F" << dummyQmlFile;
+        else
+            cmdlineOptions = QStringList(dummyQmlFile) << qmlformatInitOptions;
+
+        QQmlFormatOptions options = QQmlFormatOptions::buildCommandLineOptions(cmdlineOptions);
         auto overridenOptions = options.optionsForFile(dummyQmlFile, &settings);
 
         QCOMPARE(overridenOptions.tabsEnabled(), expectedOptions.tabsEnabled());
