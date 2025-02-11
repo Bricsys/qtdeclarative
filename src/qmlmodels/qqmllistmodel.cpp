@@ -1930,7 +1930,7 @@ void DynamicRoleModelNodeMetaObject::propertyWritten(int index)
 /*!
     \qmltype ListModel
     \nativetype QQmlListModel
-    \inherits AbstractListModel
+    //! \inherits AbstractListModel
     \inqmlmodule QtQml.Models
     \ingroup qtquick-models
     \brief Defines a free-form list data source.
