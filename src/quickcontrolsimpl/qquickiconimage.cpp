@@ -45,11 +45,13 @@ void QQuickIconImage::load()
     const qreal dpr = d->calculateDevicePixelRatio();
 
     if (const auto *entry = QIconLoaderEngine::entryForSize(d->icon, size * dpr, qCeil(dpr))) {
+        // First, try to load an icon from the theme (index.theme).
         QQmlContext *context = qmlContext(this);
         const QUrl entryUrl = QUrl::fromLocalFile(entry->filename);
         d->url = context ? context->resolvedUrl(entryUrl) : entryUrl;
         d->isThemeIcon = true;
     } else if (d->source.isEmpty()) {
+        // Then, try loading it through a platform icon engine.
         std::unique_ptr<QIconEngine> iconEngine(QIconLoader::instance()->iconEngine(d->icon.iconName));
         if (iconEngine && !iconEngine->isNull()) {
             // ### TODO that's the best we can do for now to select different pixmaps based on the
@@ -57,9 +59,11 @@ void QQuickIconImage::load()
             // uses it without adding more properties that are then synced up with the control.
             const QIcon::Mode mode = isEnabled() ? QIcon::Normal : QIcon::Disabled;
             const QImage image = iconEngine->scaledPixmap(size, mode, QIcon::Off, dpr).toImage();
+            d->devicePixelRatio = image.devicePixelRatio();
             d->setImage(image);
         }
     } else {
+        // Either we failed to load a named icon or the source was set instead; use that.
         d->url = d->source;
         d->isThemeIcon = false;
     }
