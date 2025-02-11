@@ -700,7 +700,6 @@ void TestQmlformat::testFilesOption()
 
     // Create a temporary directory
     QTemporaryDir tempDir;
-    tempDir.setAutoRemove(false);
     QStringList actualFormattedFilesPath;
 
     // Iterate through files in the source directory and copy them to the temporary directory
@@ -709,27 +708,24 @@ void TestQmlformat::testFilesOption()
     // Create a file that contains the list of files to be formatted
     const QString tempFilePath = tempDir.path() + QDir::separator() + containerFile;
     QFile container(tempFilePath);
-    if (container.open(QIODevice::Text | QIODevice::WriteOnly)) {
-        QTextStream out(&container);
+    QVERIFY2(container.open(QIODevice::Text | QIODevice::WriteOnly),
+             "Cannot create temp test file");
 
-        for (const auto &file : individualFiles) {
-            QString destinationFilePath = tempDir.path() + QDir::separator() + file;
-            if (QFile::copy(sourceDir + QDir::separator() + file, destinationFilePath))
-                actualFormattedFilesPath << destinationFilePath;
-            out << destinationFilePath << "\n";
-        }
-
-        container.close();
-    } else {
-        QFAIL("Cannot create temp test file\n");
-        return;
+    QTextStream out(&container);
+    for (const auto &file : individualFiles) {
+        QString destinationFilePath = tempDir.path() + QDir::separator() + file;
+        if (QFile::copy(sourceDir + QDir::separator() + file, destinationFilePath))
+            actualFormattedFilesPath << destinationFilePath;
+        out << destinationFilePath << "\n";
     }
+    container.close();
 
     {
         QProcess process;
         process.start(m_qmlformatPath, QStringList{"-F", tempFilePath});
         QVERIFY(process.waitForFinished());
         QCOMPARE(process.exitStatus(), QProcess::NormalExit);
+        QCOMPARE(process.exitCode(), 0);
     }
 
     const auto readFile = [](const QString &filePath){
@@ -742,7 +738,7 @@ void TestQmlformat::testFilesOption()
         return file.readAll();
     };
 
-    for (const auto &filePath : actualFormattedFilesPath) {
+    for (const auto &filePath : std::as_const(actualFormattedFilesPath)) {
         auto expectedFormattedFile = QFileInfo(filePath).fileName();
         const auto expectedFormattedFilePath = sourceDir + QDir::separator() +
             expectedFormattedFile.replace(".qml", ".formatted.qml");
