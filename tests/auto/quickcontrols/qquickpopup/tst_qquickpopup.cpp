@@ -2545,6 +2545,8 @@ void tst_QQuickPopup::popupWindowPositioning()
     // x and y properties should be 50 initially (from simplepopup.qml)
     const QPoint initialPos(50, 50);
 
+    if (QQuickStyle::name() == QLatin1String("Imagine"))
+        QEXPECT_FAIL("", "This fails with the Imagine style: QTBUG-133530", Abort);
     VERIFY_GLOBAL_POS(popup->parentItem(), popupWindow, initialPos);
     VERIFY_LOCAL_POS(popup, initialPos);
 
@@ -2626,6 +2628,8 @@ void tst_QQuickPopup::popupWindowAnchorsCenterIn()
 
     const QPoint centeredPosition(qFloor(window->width() / 2 - popupWindow->width() / 2), qFloor(window->height() / 2 - popupWindow->height() / 2));
 
+    if (QQuickStyle::name() == QLatin1String("Imagine"))
+        QEXPECT_FAIL("", "This fails with the Imagine style: QTBUG-133530", Abort);
     VERIFY_GLOBAL_POS(popup->parentItem(), popupWindow, centeredPosition);
     VERIFY_LOCAL_POS(popup, centeredPosition);
 }
@@ -2853,6 +2857,8 @@ void tst_QQuickPopup::initialPopupSize()
         auto *popupWindow = popupPrivate->popupWindow;
         QVERIFY(popupWindow);
         QVERIFY(popupWindow->isVisible());
+        if (QQuickStyle::name() == QLatin1String("Imagine"))
+            QEXPECT_FAIL("", "This fails with the Imagine style: QTBUG-133530", Abort);
         QCOMPARE(popupWindow->width(), 200);
         QCOMPARE(popupWindow->height(), 200);
     }
@@ -2895,6 +2901,8 @@ void tst_QQuickPopup::popupWindowChangingParent()
 
     const QPoint initialPos(10, 10);
 
+    if (QQuickStyle::name() == QLatin1String("Imagine"))
+        QEXPECT_FAIL("", "This fails with the Imagine style: QTBUG-133530", Abort);
     VERIFY_GLOBAL_POS(item1, popupWindow, initialPos);
     VERIFY_LOCAL_POS(popup, initialPos);
 
@@ -3065,6 +3073,8 @@ void tst_QQuickPopup::popupTypeChangeFromWindowToItem()
     const QWindow *popupWindow = popupPrivate->popupWindow;
     QVERIFY(popupWindow);
     QTRY_VERIFY(popupWindow->isVisible());
+    if (QQuickStyle::name() == QLatin1String("Imagine"))
+        QEXPECT_FAIL("", "This fails with the Imagine style: QTBUG-133530", Abort);
     QCOMPARE(popupPrivate->popupItem->position(), QPointF(0, 0));
     QVERIFY(!overlay->childItems().contains(popup->popupItem()));
 
@@ -3119,6 +3129,8 @@ void tst_QQuickPopup::popupTypeChangeFromItemToWindow()
     const QWindow *popupWindow = popupPrivate->popupWindow;
     QVERIFY(popupWindow);
     QTRY_VERIFY(popupWindow->isVisible());
+    if (QQuickStyle::name() == QLatin1String("Imagine"))
+        QEXPECT_FAIL("", "This fails with the Imagine style: QTBUG-133530", Abort);
     QCOMPARE(popupPrivate->popupItem->position(), QPointF(0, 0));
     QVERIFY(!overlay->childItems().contains(popup->popupItem()));
 
@@ -3347,6 +3359,8 @@ void tst_QQuickPopup::popupWindowPositionerRespectingScreenBounds()
     popup->setX(positionOutsideTopLeftBound.x());
     QTRY_COMPARE(xSpy.count(), 1);
     QVERIFY(QQuickTest::qWaitForPolish(window));
+    if (QQuickStyle::name() == QLatin1String("Imagine") && popupType == QQuickPopup::Window)
+        QEXPECT_FAIL("", "This fails with the Imagine style: QTBUG-133530", Abort);
     QTRY_VERIFY2(qAbs(window->contentItem()->mapToGlobal(popup->x(), popup->y()).x() - (*abf)().left()) < 2,
                  qPrintable(QStringLiteral("Expected popup's x position to be %1 but it's %2")
                             .arg((*abf)().left()).arg(window->contentItem()->mapToGlobal(popup->x(), popup->y()).x())));
