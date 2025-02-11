@@ -34,6 +34,7 @@
 #include <QtQuickTemplates2/private/qquickmenuitem_p.h>
 #include <QtQuickTemplates2/private/qquickmenuseparator_p.h>
 #include <QtQuickTemplates2/private/qquicknativemenuitem_p.h>
+#include <QtQuickTemplates2/private/qquickpopupitem_p_p.h>
 #include <QtQuickTemplates2/private/qquickpopupwindow_p_p.h>
 
 using namespace QQuickVisualTestUtils;
@@ -2161,8 +2162,6 @@ void tst_QQuickMenu::subMenuFlipsPositionWhenOutOfBounds_data()
 
 void tst_QQuickMenu::subMenuFlipsPositionWhenOutOfBounds()
 {
-    if (QQuickStyle::name() != QLatin1String("Basic"))
-        QSKIP("This fails for several styles, and needs investigation: QTBUG-133530");
     QFETCH(QQuickPopup::PopupType, popupType);
 
     QQuickControlsApplicationHelper helper(this, QLatin1String("SubMenusNearScreenBound.qml"));
@@ -2183,16 +2182,16 @@ void tst_QQuickMenu::subMenuFlipsPositionWhenOutOfBounds()
     mainMenu->open();
     QTRY_VERIFY(mainMenu->isOpened());
 
-    const auto *mainMenu_d = QQuickPopupPrivate::get(mainMenu);
+    const QQuickPopupPrivate *mainMenu_d = QQuickPopupPrivate::get(mainMenu);
     QVERIFY(mainMenu_d);
 
     if (mainMenu_d->usePopupWindow()) {
         SKIP_IF_NO_WINDOW_ACTIVATION;
-        QVERIFY(QTest::qWaitForWindowActive(mainMenu->contentItem()->window()));
-        QCOMPARE(mainMenu->contentItem()->window(), mainMenu_d->popupWindow);
+        QVERIFY(QTest::qWaitForWindowActive(mainMenu_d->popupItem->window()));
+        QCOMPARE(mainMenu_d->popupItem->window(), mainMenu_d->popupWindow);
     }
 
-    QVERIFY(QQuickTest::qWaitForPolish(mainMenu->contentItem()->window()));
+    QVERIFY(QQuickTest::qWaitForPolish(mainMenu_d->popupItem->window()));
 
     for (int i = 0; i < mainMenu->count(); ++i) {
         QTest::keyClick(window, Qt::Key_Down);
@@ -2207,15 +2206,17 @@ void tst_QQuickMenu::subMenuFlipsPositionWhenOutOfBounds()
 
     if (subMenu_d->usePopupWindow()) {
         SKIP_IF_NO_WINDOW_ACTIVATION;
-        QVERIFY(QTest::qWaitForWindowActive(subMenu->contentItem()->window()));
-        QCOMPARE(subMenu->contentItem()->window(), subMenu_d->popupWindow);
-        QVERIFY(QQuickTest::qWaitForPolish(subMenu->contentItem()->window()));
+        QVERIFY(QTest::qWaitForWindowActive(subMenu_d->popupItem->window()));
+        QCOMPARE(subMenu_d->popupItem->window(), subMenu_d->popupWindow);
+        QVERIFY(QQuickTest::qWaitForPolish(subMenu_d->popupItem->window()));
     }
 
-    const QPointF mainMenuGlobalPos = mainMenu->contentItem()->mapToGlobal({mainMenu->leftMargin(), mainMenu->topMargin()});
-    const QPointF subMenuGlobalPos = subMenu->contentItem()->mapToGlobal({subMenu->leftMargin(), subMenu->topMargin()});
-    const qreal expectedGlobalSubMenuPositionX = mainMenuGlobalPos.x() - subMenu->width() + mainMenu->overlap();
+    const QPointF mainMenuGlobalPos = mainMenu_d->popupItem->mapToGlobal({mainMenu->leftMargin(), mainMenu->topMargin()});
+    const QPointF subMenuGlobalPos = subMenu_d->popupItem->mapToGlobal({subMenu->leftMargin(), subMenu->topMargin()});
+    const qreal expectedGlobalSubMenuPositionX = qFloor(mainMenuGlobalPos.x()) - subMenu->width() + mainMenu->overlap() * mainMenu->scale();
 
+    if (popupType == QQuickPopup::Item && !qFuzzyCompare(mainMenu->scale(), 1.0))
+        QEXPECT_FAIL(nullptr, "Item based menu flipping doesn't properly work when the parent menu's scale isn't 1.0", TestFailMode::Continue);
     QCOMPARE(subMenuGlobalPos.x(), mainMenu->cascade() ? expectedGlobalSubMenuPositionX : mainMenuGlobalPos.x());
 }
 
