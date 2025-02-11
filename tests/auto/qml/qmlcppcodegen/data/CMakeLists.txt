@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 add_subdirectory(Confused)
+add_subdirectory(WithSubDir)
 
 set(cpp_sources
     ambiguous.h
@@ -216,6 +217,7 @@ set(qml_files
     methods.qml
     modulePrefix.qml
     moveRegVoid.qml
+    multiRedirect.qml
     multiforeign.qml
     multipleCtors.qml
     namespaceWithEnum.qml
