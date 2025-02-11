@@ -367,5 +367,3 @@ namespace QV4 {
 } // namespace QV4
 
 QT_END_NAMESPACE
-
-#include "moc_qv4variantassociationobject_p.cpp"
