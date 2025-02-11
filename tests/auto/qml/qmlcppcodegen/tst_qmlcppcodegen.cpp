@@ -187,6 +187,7 @@ private slots:
     void multiDirectory();
     void multiForeign();
     void multiLookup();
+    void multiRedirect();
     void multipleCtors();
     void namespaceWithEnum();
     void noBuiltinsImport();
@@ -3766,6 +3767,18 @@ void tst_QmlCppCodegen::multiLookup()
     QScopedPointer<QObject> object(component.create());
     QVERIFY(!object.isNull());
     QCOMPARE(quitSpy.size(), 1);
+}
+
+void tst_QmlCppCodegen::multiRedirect()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, QUrl(u"qrc:/qt/qml/TestTypes/multiRedirect.qml"_s));
+    QVERIFY2(!component.isError(), qPrintable(component.errorString()));
+
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(!object.isNull());
+
+    QCOMPARE(object->objectName(), u"green"_s);
 }
 
 void tst_QmlCppCodegen::multipleCtors()

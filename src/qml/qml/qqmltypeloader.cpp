@@ -579,7 +579,8 @@ bool QQmlTypeLoader::Blob::updateQmldir(const QQmlRefPointer<QQmlQmldirData> &da
     typeLoader()->setQmldirContent(qmldirIdentifier, data->content());
 
     const QTypeRevision version = m_importCache->updateQmldirContent(
-            typeLoader(), import->uri, import->qualifier, qmldirIdentifier, qmldirUrl, errors);
+            typeLoader(), import->uri, import->version, import->qualifier, qmldirIdentifier,
+            qmldirUrl, errors);
     if (!version.isValid())
         return false;
 
