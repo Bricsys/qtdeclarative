@@ -49,6 +49,7 @@ qt_add_qml_module(
     [NO_CACHEGEN]
     [NO_RESOURCE_TARGET_PATH]
     [NO_IMPORT_SCAN]
+    [DISCARD_QML_CONTENTS]
     [ENABLE_TYPE_COMPILER]
     [TYPE_COMPILER_NAMESPACE namespace]
     [QMLTC_EXPORT_DIRECTIVE export_macro]
@@ -739,6 +740,17 @@ disabled by providing the \c{NO_IMPORT_SCAN} option. Doing so means the project
 takes on the responsibility of ensuring all required plugins are instantiated
 and linked for static builds. For non-static builds the project must manually
 work out and deploy all QML modules used by an executable target.
+
+\section2 DISCARD_QML_CONTENTS
+
+\target DISCARD_QML_CONTENTS
+By default, QML and JS source file contents are included in the target's resource system.
+Use \c DISCARD_QML_CONTENTS to remove these contents and reduce the binary size.
+
+\note If you omit the source code from the binary, the QML engine has to
+rely on the compilation units created by \l{qmlcachegen} or \l{qmlsc}.
+Those are tied to the specific version of Qt they were built with. If you change
+the version of Qt your application uses, they can't be loaded anymore.
 
 \section2 Arguments for qmltc
 

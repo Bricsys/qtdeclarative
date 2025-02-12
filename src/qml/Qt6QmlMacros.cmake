@@ -232,6 +232,7 @@ function(qt6_add_qml_module target)
         NO_CACHEGEN
         NO_RESOURCE_TARGET_PATH
         NO_IMPORT_SCAN
+        DISCARD_QML_CONTENTS
         ENABLE_TYPE_COMPILER
 
         # Used to mark modules as having static side effects (i.e. if they install an image provider)
@@ -748,6 +749,7 @@ Check https://doc.qt.io/qt-6/qt-cmake-policy-qtp0001.html for policy details."
         QT_QML_MODULE_NO_PLUGIN "${arg_NO_PLUGIN}"
         QT_QML_MODULE_NO_PLUGIN_OPTIONAL "${arg_NO_PLUGIN_OPTIONAL}"
         QT_QML_MODULE_NO_IMPORT_SCAN "${arg_NO_IMPORT_SCAN}"
+        QT_QML_MODULE_DISCARD_QML_CONTENTS "${arg_DISCARD_QML_CONTENTS}"
         _qt_qml_module_follow_foreign_versioning "${arg_FOLLOW_FOREIGN_VERSIONING}"
         QT_QML_MODULE_URI "${arg_URI}"
         QT_QML_MODULE_TARGET_PATH "${arg_TARGET_PATH}"
@@ -2923,6 +2925,7 @@ function(qt6_target_qml_sources target)
     get_target_property(no_cachegen            ${target} QT_QML_MODULE_NO_CACHEGEN)
     get_target_property(no_qmldir              ${target} QT_QML_MODULE_NO_GENERATE_QMLDIR)
     get_target_property(no_extra_qmldirs       ${target} QT_QML_MODULE_NO_GENERATE_EXTRA_QMLDIRS)
+    get_target_property(discard_qml_contents   ${target} QT_QML_MODULE_DISCARD_QML_CONTENTS)
     get_target_property(resource_prefix        ${target} QT_QML_MODULE_RESOURCE_PREFIX)
     get_target_property(qml_module_version     ${target} QT_QML_MODULE_VERSION)
     get_target_property(past_major_versions    ${target} QT_QML_MODULE_PAST_MAJOR_VERSIONS)
@@ -3496,21 +3499,43 @@ function(qt6_target_qml_sources target)
     if(NOT counter)
         set(counter 0)
     endif()
-    set(resource_name ${target}_raw_qml_${counter})
-    set(resource_targets)
-    qt6_add_resources(${target} ${resource_name}
-        PREFIX ${arg_PREFIX}
-        FILES ${arg_QML_FILES} ${arg_RESOURCES}
-        OUTPUT_TARGETS resource_targets
-    )
-    list(APPEND output_targets ${resource_targets})
 
+    set(qml_resource_name ${target}_raw_qml_${counter})
+    set(qml_resource_targets)
+    set(qml_resource_options)
+    if(discard_qml_contents)
+        list(APPEND qml_resource_options DISCARD_FILE_CONTENTS)
+    endif()
+    qt6_add_resources(${target} ${qml_resource_name}
+        PREFIX ${arg_PREFIX}
+        FILES ${arg_QML_FILES}
+        OUTPUT_TARGETS qml_resource_targets
+        ${qml_resource_options}
+    )
+    list(APPEND output_targets ${qml_resource_targets})
     # Save the resource name in a property so we can reference it later in a qml plugin
     # constructor, to avoid discarding the resource if it's in a static library.
     __qt_internal_sanitize_resource_name(
-        sanitized_resource_name "${resource_name}")
-    set_property(TARGET ${target}
-        APPEND PROPERTY _qt_qml_module_sanitized_resource_names "${sanitized_resource_name}")
+        sanitized_qml_resource_name "${qml_resource_name}")
+    set_property(TARGET ${target} APPEND PROPERTY
+        _qt_qml_module_sanitized_resource_names "${sanitized_qml_resource_name}")
+
+    if(arg_RESOURCES)
+        set(resources_resource_name ${target}_raw_res_${counter})
+        set(resources_resource_targets)
+        qt6_add_resources(${target} ${resources_resource_name}
+            PREFIX ${arg_PREFIX}
+            FILES ${arg_RESOURCES}
+            OUTPUT_TARGETS resources_resource_targets
+        )
+        list(APPEND output_targets ${resources_resource_targets})
+        # Save the resource name in a property so we can reference it later in a qml plugin
+        # constructor, to avoid discarding the resource if it's in a static library.
+        __qt_internal_sanitize_resource_name(
+            sanitized_resources_resource_name "${resources_resource_name}")
+        set_property(TARGET ${target} APPEND PROPERTY
+            _qt_qml_module_sanitized_resource_names "${sanitized_resources_resource_name}")
+    endif()
 
     if(extra_qmldirs AND NOT no_extra_qmldirs)
         list(REMOVE_DUPLICATES extra_qmldirs)
@@ -3534,7 +3559,7 @@ Check https://doc.qt.io/qt-6/qt-cmake-policy-qtp0004.html for policy details."
             endforeach()
 
             set(extra_qmldirs_targets)
-            qt6_add_resources(${target} "${resource_name}_extra_qmldirs"
+            qt6_add_resources(${target} "${qml_resource_name}_extra_qmldirs"
                 PREFIX ${arg_PREFIX}
                 FILES ${extra_qmldirs}
                 BASE ${output_dir}
@@ -3547,10 +3572,9 @@ Check https://doc.qt.io/qt-6/qt-cmake-policy-qtp0004.html for policy details."
             # Save the resource name in a property so we can reference it later in a qml plugin
             # constructor, to avoid discarding the resource if it's in a static library.
             __qt_internal_sanitize_resource_name(
-                sanitized_extra_qmldirs_resource_name "${resource_name}_extra_qmldirs")
-            set_property(TARGET ${target}
-                APPEND PROPERTY _qt_qml_module_sanitized_resource_names
-                "${sanitized_extra_qmldirs_resource_name}")
+                sanitized_extra_qmldirs_resource_name "${qml_resource_name}_extra_qmldirs")
+            set_property(TARGET ${target} APPEND PROPERTY
+                _qt_qml_module_sanitized_resource_names "${sanitized_extra_qmldirs_resource_name}")
         endif()
     endif()
 
