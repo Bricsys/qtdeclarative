@@ -48,3 +48,9 @@ qt_internal_extend_target(qml_tool CONDITION QT_FEATURE_qml_debug
     DEFINES
         QT_QML_DEBUG_NO_WARNING
 )
+# Very hacky fix to ensure qml_tool_autogen doesn't lose dependencies
+# on Qml_sync_headers.
+# See QTBUG-133725
+get_target_property(the_libs qml_tool LINK_LIBRARIES)
+list(REMOVE_DUPLICATES the_libs)
+set_target_properties(qml_tool PROPERTIES LINK_LIBRARIES "${the_libs}")
