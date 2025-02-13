@@ -171,13 +171,13 @@ class MainActivity : AppCompatActivity(), QtQmlStatusChangeListener {
 
         updateColorDisplay()
 
-        if (content == m_mainQmlContent) {
+        if (content == m_firstQmlContent) {
             // Connect signal listener to "onClicked" signal from main.qml
             // addSignalListener returns int which can be used later to identify the listener
             //! [qml signal listener]
             if (status == QtQmlStatus.READY && m_binding.disconnectQmlListenerSwitch.isChecked) {
                 m_qmlButtonSignalListenerId =
-                    m_mainQmlContent.connectOnClickedListener { _: String, _: Void? ->
+                    m_firstQmlContent.connectOnClickedListener { _: String, _: Void? ->
                         Log.i(TAG, "QML button clicked")
                         m_binding.kotlinRelative.setBackgroundColor(
                             Color.parseColor(
