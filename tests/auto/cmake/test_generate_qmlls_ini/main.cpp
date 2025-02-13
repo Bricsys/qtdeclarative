@@ -36,9 +36,9 @@ void tst_generate_qmlls_ini::qmllsIniAreCorrect()
 
     const QString qmllsIniTemplate = uR"([General]
 buildDir="%1"
-no-cmake-calls=false
-docDir=%2
-importPaths="%3"
+no-cmake-calls=%2
+docDir=%3
+importPaths="%4"
 )"_s;
 
     const QString &docPath = QLibraryInfo::path(QLibraryInfo::DocumentationPath);
@@ -54,7 +54,7 @@ importPaths="%3"
                  qmllsIniTemplate.arg(build.absolutePath()
                                               .append(QDir::listSeparator())
                                               .append(secondFolder.absolutePath()),
-                                      docPath, defaultImportPath));
+                                      "false"_L1, docPath, defaultImportPath));
     }
 
     {
@@ -67,7 +67,7 @@ importPaths="%3"
             QVERIFY(file.open(QFile::ReadOnly | QFile::Text));
             const auto fileContent = QString::fromUtf8(file.readAll());
             QCOMPARE(fileContent,
-                     qmllsIniTemplate.arg(buildSubfolder.absolutePath(), docPath,
+                     qmllsIniTemplate.arg(buildSubfolder.absolutePath(), "false"_L1, docPath,
                                           defaultImportPath));
         }
     }
@@ -82,7 +82,8 @@ importPaths="%3"
             QVERIFY(file.open(QFile::ReadOnly | QFile::Text));
             const auto fileContent = QString::fromUtf8(file.readAll());
             QCOMPARE(fileContent,
-                     qmllsIniTemplate.arg(build.absolutePath(), docPath, defaultImportPath));
+                     qmllsIniTemplate.arg(build.absolutePath(), "false"_L1, docPath,
+                                          defaultImportPath));
         }
     }
     {
@@ -97,7 +98,8 @@ importPaths="%3"
             QVERIFY(file.open(QFile::ReadOnly | QFile::Text));
             const auto fileContent = QString::fromUtf8(file.readAll());
             QCOMPARE(fileContent,
-                     qmllsIniTemplate.arg(build.absolutePath(), docPath, defaultImportPath));
+                     qmllsIniTemplate.arg(build.absolutePath(), "false"_L1, docPath,
+                                          defaultImportPath));
         }
     }
     {
@@ -111,7 +113,7 @@ importPaths="%3"
             const auto fileContent = QString::fromUtf8(file.readAll());
             QCOMPARE(fileContent,
                      qmllsIniTemplate.arg(build.absoluteFilePath(u"ModuleWithDependency"_s),
-                                          docPath,
+                                          "false"_L1, docPath,
                                           build.absoluteFilePath(u"Dependency"_s)
                                                   + QDir::listSeparator() + defaultImportPath));
         }
@@ -125,10 +127,22 @@ importPaths="%3"
             QVERIFY(file.open(QFile::ReadOnly | QFile::Text));
             const auto fileContent = QString::fromUtf8(file.readAll());
             QCOMPARE(fileContent,
-                     qmllsIniTemplate.arg(build.absolutePath(),
-                                          docPath,
-                                          uR"(\"hello\"\"world\")"_s
-                                                  + QDir::listSeparator() + defaultImportPath));
+                     qmllsIniTemplate.arg(build.absolutePath(), "false"_L1, docPath,
+                                          uR"(\"hello\"\"world\")"_s + QDir::listSeparator()
+                                                  + defaultImportPath));
+        }
+    }
+    {
+        QDir withoutCMakeBuilds = source;
+        QVERIFY(withoutCMakeBuilds.cd(u"WithoutCMakeBuilds"_s));
+        {
+            auto file = QFile(withoutCMakeBuilds.absoluteFilePath(qmllsIniName));
+            QVERIFY(file.exists());
+            QVERIFY(file.open(QFile::ReadOnly | QFile::Text));
+            const auto fileContent = QString::fromUtf8(file.readAll());
+            QCOMPARE(fileContent,
+                     qmllsIniTemplate.arg(build.absolutePath(), "true"_L1, docPath,
+                                          defaultImportPath));
         }
     }
 }

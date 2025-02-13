@@ -1264,12 +1264,18 @@ function(_populate_qmlls_ini_file target qmlls_ini_file concatenated_build_dirs 
     string(REPLACE "\"" "\\\"" concatenated_build_dirs "${concatenated_build_dirs}")
     string(REPLACE "\"" "\\\"" import_paths "${import_paths}")
 
+    if(QT_QML_GENERATE_QMLLS_INI_NO_CMAKE_CALLS)
+        set(no_cmake_calls "true")
+    else()
+        set(no_cmake_calls "false")
+    endif()
+
     add_custom_command(
         OUTPUT
             ${qmlls_ini_file}
         COMMAND ${CMAKE_COMMAND} -E echo "[General]" > ${qmlls_ini_file}
         COMMAND ${CMAKE_COMMAND} -E echo "buildDir=\"${concatenated_build_dirs}\"" >> ${qmlls_ini_file}
-        COMMAND ${CMAKE_COMMAND} -E echo "no-cmake-calls=false" >> ${qmlls_ini_file}
+        COMMAND ${CMAKE_COMMAND} -E echo "no-cmake-calls=${no_cmake_calls}" >> ${qmlls_ini_file}
         COMMAND ${CMAKE_COMMAND} -E echo_append "docDir=" >> ${qmlls_ini_file}
         COMMAND
             ${tool_wrapper}
