@@ -79,6 +79,9 @@ types. It automatically rebuilds CMake QML modules to provide
 accurate and up-to-date warnings and completion items for C++
 defined QML types.
 
+You can
+\l{Disabling automatic CMake builds}{disable this feature}.
+
 \section2 Documentation Hints
 
 \QMLLS includes a documentation hints feature that
@@ -86,9 +89,6 @@ provides programmers with quick access to Qt’s documentation
 by hovering over a keyword. In order to use this feature, your
 Qt kit should contain the Qt documentation and your project
 should be built with \l{QT_QML_GENERATE_QMLLS_INI} variable.
-
-You can
-\l{Disabling automatic CMake builds}{disable this feature}.
 
 \section1 Setting up the \QMLLS in Your Editor
 
