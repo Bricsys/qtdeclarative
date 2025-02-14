@@ -768,6 +768,30 @@ private slots:
         QCOMPARE(formattedCode, expectedFormattedCode);
     }
 
+    void comments_data()
+    {
+        QTest::addColumn<QString>("codeToBeFormatted");
+        QTest::addColumn<QString>("expectedFormattedCode");
+
+        QTest::newRow("MultipleCommentsAtTheEnd") << QStringLiteral(u"a=1/*a*/ //abc\n/*b*/")
+                                                  << QStringLiteral(u"a = 1/*a*/ //abc\n/*b*/");
+
+        QTest::newRow("emptyClassBody") << QStringLiteral(u"/*1*/class/*2*/ A/*3*/{/*4*/}/*5*/")
+                                        << QStringLiteral(u"/*1*/class /*2*/ A/*3*/ {/*4*/}/*5*/");
+        QTest::newRow("classBody")
+                << QStringLiteral(u"/*1*/class/*2*/ A/*3*/{/*4*/constructor(){}/*5*/}/*6*/")
+                << QStringLiteral(u"/*1*/class /*2*/ A/*3*/ {/*4*/\nconstructor(){}/*5*/\n}/*6*/");
+    }
+
+    void comments()
+    {
+        QFETCH(QString, codeToBeFormatted);
+        QFETCH(QString, expectedFormattedCode);
+
+        QString formattedCode = formatJSCode(codeToBeFormatted);
+        QCOMPARE(formattedCode, expectedFormattedCode);
+    }
+
 private:
 };
 
