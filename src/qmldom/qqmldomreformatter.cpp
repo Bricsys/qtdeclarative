@@ -208,6 +208,7 @@ bool ScriptFormatter::visit(AST::PatternProperty *property)
         out(f->lparenToken);
         accept(f->formals);
         out(f->rparenToken);
+        lw.lineWriter.ensureSpace();
         out(f->lbraceToken);
         const bool scoped = f->lbraceToken.isValid();
         if (scoped)

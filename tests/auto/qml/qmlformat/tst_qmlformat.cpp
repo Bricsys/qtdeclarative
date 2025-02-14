@@ -548,8 +548,6 @@ void TestQmlformat::plainJS()
 
     QVERIFY(wasSuccessful && !output.isEmpty());
 
-    // TODO(QTBUG-119404)
-    QEXPECT_FAIL("classConstructor", "see QTBUG-119404", Abort);
     // TODO(QTBUG-119770)
     QEXPECT_FAIL("legacyDirectivesWithComments", "see QTBUG-119770", Abort);
     QEXPECT_FAIL("noSuperfluousSpaceInsertions.fail_pragma",
