@@ -2522,6 +2522,7 @@ public:
 // attributes
     PatternElement *element = nullptr;
     FormalParameterList *next;
+    SourceLocation commaToken;
 };
 
 class QML_PARSER_EXPORT ClassExpression : public ExpressionNode

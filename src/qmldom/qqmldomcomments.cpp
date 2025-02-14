@@ -402,6 +402,33 @@ public:
         return true;
     }
 
+    bool visit(FormalParameterList *list) override
+    {
+        if (!list->commaToken.isValid())
+            return true;
+
+        // Comments are first attached to some previous element, if possible. Therefore, attach
+        // comments in FormalParameterList to comments so that they don't "jump over commas" during
+        // formatting.
+        addSourceLocations(list, list->commaToken);
+        return true;
+    }
+
+    bool visit(FunctionExpression *fExpr) override
+    {
+        addSourceLocations(fExpr, fExpr->identifierToken);
+        addSourceLocations(fExpr, fExpr->lparenToken);
+        addSourceLocations(fExpr, fExpr->rparenToken);
+        addSourceLocations(fExpr, fExpr->lbraceToken);
+        addSourceLocations(fExpr, fExpr->rbraceToken);
+        return true;
+    }
+
+    bool visit(FunctionDeclaration *fExpr) override
+    {
+        return visit(static_cast<FunctionExpression *>(fExpr));
+    }
+
     QMap<qsizetype, ElementRef> starts;
     QMap<qsizetype, ElementRef> ends;
 };
@@ -671,6 +698,10 @@ private:
             return;
         } else {
             --preStart;
+        }
+        if (m_endElement == m_ranges.ends.end()) {
+            m_commentedElement = preStart.value();
+            return;
         }
         // we are inside a node, actually inside both n1 and n2 (which might be the same)
         // add to pre of the smallest between n1 and n2.
