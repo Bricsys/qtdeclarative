@@ -371,6 +371,8 @@ public:
     }
     void addSourceLocations(Node *n, const SourceLocation &sourceLocation)
     {
+        if (!sourceLocation.isValid())
+            return;
         addSourceLocations(n, sourceLocation.begin(), sourceLocation.end(),
                            CommentAnchor::from(sourceLocation));
     }
@@ -388,6 +390,15 @@ public:
     {
         // special case: case clauses can have comments attached to their `:` token
         addSourceLocations(caseClause, caseClause->colonToken);
+        return true;
+    }
+
+    bool visit(ClassDeclaration *classDeclaration) override
+    {
+        // special case: class declarations can have comments attached to their `identifier` token
+        addSourceLocations(classDeclaration, classDeclaration->identifierToken);
+        addSourceLocations(classDeclaration, classDeclaration->lbraceToken);
+        addSourceLocations(classDeclaration, classDeclaration->rbraceToken);
         return true;
     }
 
