@@ -46,12 +46,18 @@ protected:
         if (loc.length != 0)
             out(loc2Str(loc));
     }
-    void outWithComments(const SourceLocation &loc, AST::Node *node)
+    enum CommentOption { NoSpace, SpaceBeforePostComment, OnlyComments };
+    void outWithComments(const SourceLocation &loc, AST::Node *node, CommentOption option = NoSpace)
     {
+        if (!loc.isValid())
+            return;
         const CommentedElement *c = comments->commentForNode(node, CommentAnchor::from(loc));
         if (c)
             c->writePre(lw, nullptr);
-        out(loc);
+        if (option != OnlyComments)
+            out(loc);
+        if (option == SpaceBeforePostComment)
+            lw.ensureSpace();
         if (c)
             c->writePost(lw, nullptr);
     }

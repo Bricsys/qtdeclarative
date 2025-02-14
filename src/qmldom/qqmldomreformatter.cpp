@@ -777,29 +777,25 @@ bool ScriptFormatter::visit(FunctionExpression *ast)
             out("function");
             lw.lineWriter.ensureSpace();
         }
-        if (!ast->name.isNull())
-            out(ast->identifierToken);
+        outWithComments(ast->identifierToken, ast);
     }
-    out(ast->lparenToken);
-    const bool needParentheses = ast->formals
-            && (ast->formals->next
-                || (ast->formals->element && ast->formals->element->bindingTarget));
-    if (ast->isArrowFunction && needParentheses)
-        out("(");
+
+    const bool removeParentheses = ast->isArrowFunction && ast->formals && !ast->formals->next
+            && (ast->formals->element && !ast->formals->element->bindingTarget);
+
+    // note: qmlformat removes the parentheses for "(x) => x". In that case, we still need
+    // to print potential comments attached to `(` or `)` via `OnlyComments` option.
+    outWithComments(ast->lparenToken, ast, removeParentheses ? OnlyComments : NoSpace);
     int baseIndent = lw.increaseIndent(1);
     accept(ast->formals);
     lw.decreaseIndent(1, baseIndent);
-    if (ast->isArrowFunction && needParentheses)
-        out(")");
-    out(ast->rparenToken);
-    if (ast->isArrowFunction && !ast->formals)
-        out("()");
+    outWithComments(ast->rparenToken, ast, removeParentheses ? OnlyComments : NoSpace);
     lw.lineWriter.ensureSpace();
     if (ast->isArrowFunction) {
         out("=>");
         lw.lineWriter.ensureSpace();
     }
-    out(ast->lbraceToken);
+    outWithComments(ast->lbraceToken, ast);
     if (ast->lbraceToken.length != 0)
         ++expressionDepth;
     if (ast->body) {
@@ -815,7 +811,7 @@ bool ScriptFormatter::visit(FunctionExpression *ast)
     }
     if (ast->lbraceToken.length != 0)
         --expressionDepth;
-    out(ast->rbraceToken);
+    outWithComments(ast->rbraceToken, ast);
     return false;
 }
 
@@ -908,15 +904,8 @@ bool ScriptFormatter::visit(CaseClauses *ast)
 bool ScriptFormatter::visit(FormalParameterList *ast)
 {
     for (FormalParameterList *it = ast; it; it = it->next) {
-        // compare FormalParameterList::finish
-        if (auto id = it->element->bindingIdentifier.toString(); !id.isEmpty())
-            out(id);
-        if (it->element->bindingTarget)
-            accept(it->element->bindingTarget);
-        if (it->next) {
-            out(",");
-            lw.lineWriter.ensureSpace();
-        }
+        accept(it->element);
+        outWithComments(it->commaToken, it, SpaceBeforePostComment);
     }
     return false;
 }
