@@ -964,10 +964,9 @@ bool ScriptFormatter::visit(ExpressionStatement *el)
 // Return false because we want to omit default function calls in accept0 implementation.
 bool ScriptFormatter::visit(ClassDeclaration *ast)
 {
-    preVisit(ast);
     out(ast->classToken);
     lw.lineWriter.ensureSpace();
-    out(ast->name);
+    outWithComments(ast->identifierToken, ast);
     if (ast->heritage) {
         lw.lineWriter.ensureSpace();
         out("extends");
@@ -975,7 +974,7 @@ bool ScriptFormatter::visit(ClassDeclaration *ast)
         accept(ast->heritage);
     }
     lw.lineWriter.ensureSpace();
-    out("{");
+    outWithComments(ast->lbraceToken, ast);
     int baseIndent = lw.increaseIndent();
     for (ClassElementList *it = ast->elements; it; it = it->next) {
         lw.newline();
@@ -987,8 +986,7 @@ bool ScriptFormatter::visit(ClassDeclaration *ast)
         lw.newline();
     }
     lw.decreaseIndent(1, baseIndent);
-    out("}");
-    postVisit(ast);
+    outWithComments(ast->rbraceToken, ast);
     return false;
 }
 
