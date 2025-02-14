@@ -108,6 +108,7 @@ private slots:
     void equalityTestsWithNullOrUndefined();
     void equalityVarAndNonStorable();
     void equalityVarAndStorable();
+    void equalityVarWithOutConversion();
     void equalsUndefined();
     void evadingAmbiguity();
     void exceptionFromInner();
@@ -1899,6 +1900,20 @@ void tst_QmlCppCodegen::equalityVarAndStorable()
 
     QTest::ignoreMessage(QtCriticalMsg, "failed 10 11");
     QMetaObject::invokeMethod(p.data(), "verify", 11);
+}
+
+void tst_QmlCppCodegen::equalityVarWithOutConversion()
+{
+    QQmlEngine engine;
+    QUrl url(u"qrc:/qt/qml/TestTypes/equalityVarWithOutConversion.qml"_s);
+    QQmlComponent component(&engine, url);
+    QVERIFY2(!component.isError(), component.errorString().toUtf8());
+    QScopedPointer<QObject> o(component.create());
+    QVERIFY(!o.isNull());
+
+    auto ss = o->property("ss").value<QQmlScriptString>();
+    QQmlExpression expr(ss);
+    expr.evaluate();
 }
 
 void tst_QmlCppCodegen::equalsUndefined()

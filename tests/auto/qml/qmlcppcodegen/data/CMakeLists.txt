@@ -23,6 +23,7 @@ set(cpp_sources
     person.cpp person.h
     qmlusing.h
     resettable.h
+    scriptstringholder.h
     sequenceToIterable.h
     sequencetypeexample.cpp sequencetypeexample.h
     state.h
@@ -150,6 +151,7 @@ set(qml_files
     equalityQUrl.qml
     equalityTestsWithNullOrUndefined.qml
     equalityVarAndNonStorable.qml
+    equalityVarWithOutConversion.qml
     equalsUndefined.qml
     exceptionFromInner.qml
     excessiveParameters.qml
