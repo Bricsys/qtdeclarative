@@ -1218,6 +1218,8 @@ void tst_QQuickMenu::popup()
     // to the center of the window.
     QTRY_VERIFY(qFuzzyCompare(menu->x(), -11));
     QTRY_VERIFY(qFuzzyCompare(menu->y(), -22));
+    if ((QQuickStyle::name() == QLatin1String("iOS")))
+        QEXPECT_FAIL("", "This fails with the iOS style: QTBUG-133530", Abort);
     QCOMPARE(menu->popupItem()->mapToGlobal({0,0}).toPoint(), button->mapToGlobal({-11, -22}).toPoint());
     menu->close();
 
