@@ -507,8 +507,9 @@ QML list properties are type-safe - in this case \c {Fruit} is a QObject type th
 \deprecated
 
 Convenience constructor for making a QQmlListProperty value from an existing
-QList \a list.  The \a list reference must remain valid for as long as \a object
-exists.  \a object must be provided.
+QList \a list. The \a object owning the list and the \a list itself must be
+provided and kept alive as long as you are holding a QQmlListProperty referring
+to them.
 
 This constructor synthesizes the removeLast() and replace() methods
 introduced in Qt 5.15, using count(), at(), clear(), and append(). This is slow.
@@ -521,8 +522,9 @@ provide these methods.
 \since 5.15
 
 Convenience constructor for making a QQmlListProperty value from an existing
-QList \a list. The \a list reference must remain valid for as long as \a object
-exists. \a object must be provided.
+QList \a list. The \a object owning the list and the \a list itself must be
+provided and kept alive as long as you are holding a QQmlListProperty referring
+to them.
 
 This is the easiest and safest way to provide a QQmlListProperty backed by a QList
 and should be used in most cases. A typical invocation looks like this:
@@ -537,7 +539,7 @@ and should be used in most cases. A typical invocation looks like this:
 Construct a readonly QQmlListProperty from a set of operation functions
 \a count and \a at. An opaque \a data handle may be passed which can be
 accessed from within the operation functions.  The list property
-remains valid while \a object exists.
+remains valid while the \a object owning the list property exists.
 */
 
 /*!
@@ -548,7 +550,7 @@ remains valid while \a object exists.
 Construct a QQmlListProperty from a set of operation functions \a append,
 \a count, \a at, and \a clear.  An opaque \a data handle may be passed which
 can be accessed from within the operation functions.  The list property
-remains valid while \a object exists.
+remains valid while the \a object owning the list property exists.
 
 Null pointers can be passed for any function. If any null pointers are passed in, the list
 will be neither designable nor alterable by the debugger. It is recommended to provide valid
@@ -569,7 +571,8 @@ you should explicitly provide these methods.
 Construct a QQmlListProperty from a set of operation functions \a append,
 \a count, \a at, \a clear, \a replace, and \removeLast. An opaque \a data handle
 may be passed which can be accessed from within the operation functions. The
-list property remains valid while \a object exists.
+list property remains valid while the \a object owning the list property
+exists.
 
 Null pointers can be passed for any function, causing the respective function to
 be synthesized using the others, if possible. QQmlListProperty can synthesize
