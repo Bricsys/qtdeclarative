@@ -58,6 +58,7 @@ set(reused_dir_targets
     draganddrop_shared
     testbed_shared
     itemswitcher_shared
+    neumorphicpanel_shared
 )
 
 foreach(target IN LISTS reused_dir_targets)
