@@ -39,6 +39,8 @@
     of Qt Quick into your Android app, making it possible to use various Qt Quick
     APIs in Android apps.
 
+    \note Methods in this class are assumed thread-safe unless otherwise specified.
+
     A typical use of the class:
 
     \code
