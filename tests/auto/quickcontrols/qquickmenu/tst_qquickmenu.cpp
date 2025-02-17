@@ -3387,6 +3387,7 @@ void tst_QQuickMenu::resetCurrentIndexUponPopup()
 
     QQuickApplicationWindow *window = helper.appWindow;
     centerOnScreen(window);
+    moveMouseAway(window);
     window->show();
     window->requestActivate();
     QVERIFY(QTest::qWaitForWindowActive(window));
@@ -3399,7 +3400,7 @@ void tst_QQuickMenu::resetCurrentIndexUponPopup()
     QCOMPARE(menu->currentIndex(), -1);
     QCOMPARE(menu->contentItem()->property("currentIndex"), QVariant(-1));
 
-    menu->popup();
+    menu->popup({0, 0}, nullptr);
     QTRY_VERIFY(menu->isOpened());
     QCOMPARE(menu->currentIndex(), -1);
     QCOMPARE(menu->contentItem()->property("currentIndex"), QVariant(-1));
@@ -3411,7 +3412,7 @@ void tst_QQuickMenu::resetCurrentIndexUponPopup()
     menu->close();
     QTRY_VERIFY(!menu->isVisible());
 
-    menu->popup();
+    menu->popup({0, 0}, nullptr);
     QTRY_VERIFY(menu->isOpened());
     QCOMPARE(menu->currentIndex(), -1);
     QCOMPARE(menu->contentItem()->property("currentIndex"), QVariant(-1));
