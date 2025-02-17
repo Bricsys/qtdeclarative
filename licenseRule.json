@@ -13,7 +13,7 @@
                                  ".gitignore", ".gitattributes", "Makefile",
                                  ".conf", ".yml", ".cfg", ".yaml",
                                  ".tag", ".dynlist", "cmake.in", "Info.plist", ".prf",
-                                 ".gradle", ".in", ".gitmodules"],
+                                 ".gradle", ".in", ".gitmodules", ".gitreview"],
         "location" : {
             "" : {
                 "comment" : "File with other endings also belong to the build system file type",
