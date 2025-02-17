@@ -523,6 +523,11 @@ provide these methods.
 Convenience constructor for making a QQmlListProperty value from an existing
 QList \a list. The \a list reference must remain valid for as long as \a object
 exists. \a object must be provided.
+
+This is the easiest and safest way to provide a QQmlListProperty backed by a QList
+and should be used in most cases. A typical invocation looks like this:
+
+\snippet tutorials/extending-qml/chapter5-listproperties/piechart.cpp 0
 */
 
 /*!
