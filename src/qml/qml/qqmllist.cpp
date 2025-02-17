@@ -643,6 +643,29 @@ Remove the last element from the list \a property.
 */
 
 /*!
+\variable QQmlListProperty::object
+\brief This field holds the \e owner of the QQmlListProperty
+
+When manually implementing the accessor methods, you may need to use this field
+for retrieving the content of the manipulated list.
+*/
+
+/*!
+\variable QQmlListProperty::data
+\brief This field can hold an arbitrary data pointer
+
+If you manually implement the accessor methods and need to store custom data,
+you can pass an arbitrary pointer to the QQmlListProperty constructor and
+retrieve it from the \e data field when accessing the same QQmlListProperty
+later.
+
+A \l{QQmlListProperty(QObject *object, QList<T *> *list)}{QQmlListProperty constructed from a QList pointer}
+uses this field to store the pointer to the list itself, as it cannot directly
+access the list contents from the owner.
+
+*/
+
+/*!
 \fn bool QQmlListReference::operator==(const QQmlListReference &other) const
 
 Compares this QQmlListReference to \a other, and returns \c true if they are
