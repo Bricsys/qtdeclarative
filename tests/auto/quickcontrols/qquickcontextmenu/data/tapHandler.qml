@@ -26,8 +26,7 @@ ApplicationWindow {
     TapHandler {
         objectName: "tapHandler"
         acceptedButtons: Qt.RightButton
-        // Ensure that it grabs mouse on press, as the default gesture policy results in a passive grab,
-        // which would allow the ContextMenu to receive the context menu event.
+        // Ensure that it grabs mouse on press, as the default gesture policy results in a passive grab.
         gesturePolicy: TapHandler.WithinBounds
     }
 }
