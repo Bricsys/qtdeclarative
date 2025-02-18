@@ -3153,10 +3153,14 @@ void tst_QQuickPopup::resetHoveredStateForItemsWithinPopup()
     controlsPopup->open();
     QTRY_VERIFY(controlsPopup->isOpened());
 
-    QTest::mouseMove(window, QPoint(window->width() / 2, window->height() / 2));
+    QPoint moveStart(window->width() / 2, window->height() / 2);
+    QPoint moveEnd(moveStart.x() + 1 , moveStart.y() + 1);
+    QTest::mouseMove(window, moveStart);
+    QTest::mouseMove(window, moveEnd);
 
     auto *controlItem = qobject_cast<QQuickControl *>(controlsPopup->contentItem()->childItems().at(0));
     QVERIFY(controlItem);
+
     // Check hover enabled for the control item within the popup
     QTRY_VERIFY(controlItem->isHovered());
 
@@ -3166,6 +3170,17 @@ void tst_QQuickPopup::resetHoveredStateForItemsWithinPopup()
 
     // Control item hovered shall be disabled once we open the modal popup
     QTRY_VERIFY(!controlItem->isHovered());
+
+    blockInputPopup->close();
+    QTRY_VERIFY(!blockInputPopup->isOpened());
+    QTRY_VERIFY(!blockInputPopup->isVisible());
+
+    // Control item hovered is re-enabled after the modal popup is closed
+    QTRY_VERIFY(controlItem->isHovered());
+
+    controlsPopup->close();
+    QTRY_VERIFY(!controlsPopup->isOpened());
+    QTRY_VERIFY(!controlsPopup->isVisible());
 }
 
 void tst_QQuickPopup::noInfiniteRecursionOnParentWindowDestruction()
