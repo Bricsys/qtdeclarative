@@ -163,7 +163,7 @@ void tst_QQuickContextMenu::sharedContextMenu()
 // got the event. Now it checks that both received events.
 void tst_QQuickContextMenu::tapHandler()
 {
-    QQuickApplicationHelper helper(this, "deliverToHandlersBeforeContextMenu.qml");
+    QQuickApplicationHelper helper(this, "tapHandler.qml");
     QVERIFY2(helper.ready, helper.failureMessage());
     QQuickWindow *window = helper.window;
     window->show();
