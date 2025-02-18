@@ -29,3 +29,6 @@ offscreen # QTBUG-128321
 
 [focusMultiplePopup]
 linux # QTBUG-133530
+
+[resetHoveredStateForItemsWithinPopup]
+linux # QTBUG-133530
