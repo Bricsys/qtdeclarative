@@ -384,9 +384,8 @@ struct Q_QML_EXPORT QObjectMethod : public QV4::FunctionObject
     QV4::ReturnedValue method_toString(QV4::ExecutionEngine *engine, QObject *o) const;
     QV4::ReturnedValue method_destroy(
             QV4::ExecutionEngine *ctx, QObject *o, const Value *args, int argc) const;
-    void method_destroy(
-            QV4::ExecutionEngine *engine, QObject *o,
-            void **argv, const QMetaType *types, int argc) const;
+    bool method_destroy(
+            QV4::ExecutionEngine *engine, QObject *o, int delay) const;
 
     static ReturnedValue virtualCall(
             const FunctionObject *, const Value *thisObject, const Value *argv, int argc);

@@ -1805,7 +1805,14 @@ QMetaType AOTCompiledContext::lookupResultMetaType(uint index) const
     case QV4::Lookup::Call::GetterQObjectMethod:
     case QV4::Lookup::Call::GetterQObjectMethodFallback:
     case QV4::Lookup::Call::ContextGetterScopeObjectMethod:
-        return lookup->qobjectMethodLookup.propertyData->propType();
+        switch (lookup->qobjectMethodLookup.method->index) {
+        case QV4::QObjectMethod::DestroyMethod:
+            return QMetaType::fromType<void>();
+        case QV4::QObjectMethod::ToStringMethod:
+            return QMetaType::fromType<QString>();
+        default:
+            return lookup->qobjectMethodLookup.propertyData->propType();
+        }
     default:
         break;
     }
@@ -2055,14 +2062,38 @@ static bool callQObjectMethod(
         QV4::ExecutionEngine *engine, QV4::Lookup *lookup,
         QObject *thisObject, void **args, int argc)
 {
-    Q_ALLOCA_VAR(QMetaType, types, (argc + 1) * sizeof(QMetaType));
-    const QMetaMethod method = lookup->qobjectMethodLookup.propertyData->metaMethod();
-    Q_ASSERT(argc == method.parameterCount());
-    types[0] = method.returnMetaType();
-    for (int i = 0; i < argc; ++i)
-        types[i + 1] = method.parameterMetaType(i);
+    Q_ASSERT(!lookup->asVariant);
 
-    return callQObjectMethodWithTypes(engine, lookup, thisObject, args, types, argc);
+    Q_ALLOCA_VAR(QMetaType, types, (argc + 1) * sizeof(QMetaType));
+    if (const QQmlPropertyData *propertyData = lookup->qobjectMethodLookup.propertyData) {
+        const QMetaMethod method = propertyData->metaMethod();
+        Q_ASSERT(argc == method.parameterCount());
+        types[0] = method.returnMetaType();
+        for (int i = 0; i < argc; ++i)
+            types[i + 1] = method.parameterMetaType(i);
+
+        return callQObjectMethodWithTypes(engine, lookup, thisObject, args, types, argc);
+    }
+
+    QV4::Scope scope(engine);
+    QV4::Scoped<QV4::QObjectMethod> method(scope, lookup->qobjectMethodLookup.method);
+    Q_ASSERT(method);
+    switch (method->methodIndex()) {
+    case QV4::QObjectMethod::DestroyMethod:
+        return method->method_destroy(
+                engine, thisObject, argc > 0 ?  *static_cast<int *>(args[1]) : 0);
+    case QV4::QObjectMethod::ToStringMethod: {
+        QString result = QV4::QObjectWrapper::objectToString(
+                engine, thisObject ? thisObject->metaObject() : method->d()->metaObject(),
+                thisObject);
+        if (void *returnValue = args[0])
+            *static_cast<QString *>(returnValue) = std::move(result);
+        return true;
+    }
+    default:
+        break;
+    }
+    return false;
 }
 
 static bool callArrowFunction(
@@ -2188,6 +2219,21 @@ static MatchScore resolveQObjectMethodOverload(
     return NoMatch;
 }
 
+static bool tryEnsureMethodsCache(QV4::QObjectMethod *method, QObject *object)
+{
+    QV4::Heap::QObjectMethod *d = method->d();
+    switch (method->methodIndex()) {
+    case QV4::QObjectMethod::DestroyMethod:
+    case QV4::QObjectMethod::ToStringMethod:
+        return false;
+    default:
+        break;
+    }
+
+    d->ensureMethodsCache(object->metaObject());
+    return true;
+}
+
 void AOTCompiledContext::initCallQmlContextPropertyLookup(uint index, int relativeMethodIndex) const
 {
     if (engine->hasError()) {
@@ -2202,9 +2248,10 @@ void AOTCompiledContext::initCallQmlContextPropertyLookup(uint index, int relati
                 scope, lookup->contextGetter(scope.engine, thisObject));
     if (auto *method = function->as<QV4::QObjectMethod>()) {
         Q_ASSERT(lookup->call == QV4::Lookup::Call::ContextGetterScopeObjectMethod);
-        method->d()->ensureMethodsCache(qmlScopeObject->metaObject());
-        const auto match = resolveQObjectMethodOverload(method, lookup, relativeMethodIndex);
-        Q_ASSERT(match == ExactMatch);
+        if (tryEnsureMethodsCache(method, qmlScopeObject)) {
+            const auto match = resolveQObjectMethodOverload(method, lookup, relativeMethodIndex);
+            Q_ASSERT(match == ExactMatch);
+        }
         return;
     }
 
@@ -2328,7 +2375,7 @@ void AOTCompiledContext::initCallObjectPropertyLookupAsVariant(uint index, QObje
     QV4::ScopedValue thisObject(scope, QV4::QObjectWrapper::wrap(scope.engine, object));
     QV4::ScopedFunctionObject function(scope, lookup->getter(scope.engine, thisObject));
     if (auto *method = function->as<QV4::QObjectMethod>()) {
-        method->d()->ensureMethodsCache(object->metaObject());
+        tryEnsureMethodsCache(method, object);
         lookup->asVariant = true;
         return;
     }
@@ -2357,9 +2404,10 @@ void AOTCompiledContext::initCallObjectPropertyLookup(
     QV4::ScopedValue thisObject(scope, QV4::QObjectWrapper::wrap(scope.engine, object));
     QV4::ScopedFunctionObject function(scope, lookup->getter(scope.engine, thisObject));
     if (auto *method = function->as<QV4::QObjectMethod>()) {
-        method->d()->ensureMethodsCache(object->metaObject());
-        const auto match = resolveQObjectMethodOverload(method, lookup, relativeMethodIndex);
-        Q_ASSERT(match == ExactMatch);
+        if (tryEnsureMethodsCache(method, object)) {
+            const auto match = resolveQObjectMethodOverload(method, lookup, relativeMethodIndex);
+            Q_ASSERT(match == ExactMatch);
+        }
         return;
     }
 

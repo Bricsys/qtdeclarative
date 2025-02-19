@@ -133,6 +133,7 @@ set(qml_files
     dateConversions.qml
     deadShoeSize.qml
     deadStoreLoop.qml
+    destroyAndToString.qml
     detachOnAssignment.qml
     dialog.qml
     dialogButtonBox.qml

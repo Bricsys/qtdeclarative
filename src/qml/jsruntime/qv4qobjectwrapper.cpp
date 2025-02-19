@@ -2925,22 +2925,26 @@ ReturnedValue QObjectMethod::method_toString(ExecutionEngine *engine, QObject *o
 ReturnedValue QObjectMethod::method_destroy(
         ExecutionEngine *engine, QObject *o, const Value *args, int argc) const
 {
+    method_destroy(engine, o, argc > 0 ? args[0].toInt32() : 0);
+    return Encode::undefined();
+}
+
+bool QObjectMethod::method_destroy(ExecutionEngine *engine, QObject *o, int delay) const
+{
     if (!o)
-        return Encode::undefined();
+        return true;
 
-    if (QQmlData::keepAliveDuringGarbageCollection(o))
-        return engine->throwError(QStringLiteral("Invalid attempt to destroy() an indestructible object"));
-
-    int delay = 0;
-    if (argc > 0)
-        delay = args[0].toUInt32();
+    if (QQmlData::keepAliveDuringGarbageCollection(o)) {
+        engine->throwError(QStringLiteral("Invalid attempt to destroy() an indestructible object"));
+        return false;
+    }
 
     if (delay > 0)
-        QTimer::singleShot(delay, o, SLOT(deleteLater()));
+        QTimer::singleShot(delay, o, &QObject::deleteLater);
     else
         o->deleteLater();
 
-    return Encode::undefined();
+    return true;
 }
 
 ReturnedValue QObjectMethod::virtualCall(

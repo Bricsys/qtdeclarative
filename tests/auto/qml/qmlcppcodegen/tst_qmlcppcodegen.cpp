@@ -92,6 +92,7 @@ private slots:
     void dateConstruction();
     void dateConversions();
     void deadShoeSize();
+    void destroyAndToString();
     void detachOnAssignment();
     void dialogButtonBox();
     void enumConversion();
@@ -1591,6 +1592,73 @@ void tst_QmlCppCodegen::deadShoeSize()
     QScopedPointer<QObject> o(c.create());
     QVERIFY(o);
     QCOMPARE(o->property("shoeSize").toInt(), 0);
+}
+
+void tst_QmlCppCodegen::destroyAndToString()
+{
+    QQmlEngine engine;
+    const QString url = u"qrc:/qt/qml/TestTypes/destroyAndToString.qml"_s;
+    QQmlComponent c(&engine, QUrl(url));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(o);
+
+    const QString objectName = u"me, myself, and I"_s;
+    QCOMPARE(o->objectName(), objectName);
+
+    auto verifyName = [&](const char *property, const QString &name) {
+        const QRegularExpression regexp(u"^QObject[^(]*\\(0x[0-9a-f]+, \"%1\"\\)$"_s.arg(name));
+        const QString value = o->property(property).toString();
+        const auto match = regexp.match(value);
+        QVERIFY2(match.hasMatch(), qPrintable(value + u" does not match " + regexp.pattern()));
+    };
+
+    verifyName("stringed", objectName);
+    verifyName("selfStringed", objectName);
+    verifyName("immediateShadowableStringed", u"immediateShadowable"_s);
+    verifyName("delayedShadowableStringed", u"delayedShadowable"_s);
+
+    QVERIFY(o->property("delayedShadowable").value<QObject *>());
+    QVERIFY(o->property("immediateShadowable").value<QObject *>());
+    QVERIFY(o->property("delayedDestroyable").value<QObject *>());
+    QVERIFY(o->property("immediateDestroyable").value<QObject *>());
+    QVERIFY(o->property("scopedImmediateDestroyable").value<QObject *>());
+    QVERIFY(o->property("scopedDelayedDestroyable").value<QObject *>());
+
+    QMetaObject::invokeMethod(o.data(), "explode");
+
+    QVERIFY(o->property("delayedShadowable").value<QObject *>());
+    QVERIFY(o->property("delayedDestroyable").value<QObject *>());
+    QVERIFY(o->property("scopedDelayedDestroyable").value<QObject *>());
+
+    QTest::ignoreMessage(
+                QtWarningMsg,
+                qPrintable(url + u":36: TypeError: Cannot call method 'toString' of null"));
+    QTest::ignoreMessage(
+                QtWarningMsg,
+                qPrintable(url + u":37: TypeError: Cannot call method 'toString' of null"));
+
+    QTRY_VERIFY(!o->property("immediateShadowable").value<QObject *>());
+    QTRY_VERIFY(!o->property("immediateDestroyable").value<QObject *>());
+    QTRY_VERIFY(!o->property("scopedImmediateDestroyable").value<QObject *>());
+    QTRY_VERIFY(!o->property("delayedShadowable").value<QObject *>());
+    QTRY_VERIFY(!o->property("delayedDestroyable").value<QObject *>());
+    QTRY_VERIFY(!o->property("scopedDelayedDestroyable").value<QObject *>());
+
+    verifyName("stringed", objectName);
+    verifyName("selfStringed", objectName);
+
+    // Since the bindings threw errors, the values were not changed
+    verifyName("immediateShadowableStringed", u"immediateShadowable"_s);
+    verifyName("delayedShadowableStringed", u"delayedShadowable"_s);
+
+    QVERIFY(o->property("overrides").value<QObject *>() != nullptr);
+    QString result;
+    QMetaObject::invokeMethod(o.data(), "callOverridden", Q_RETURN_ARG(QString, result));
+    QCOMPARE(result, u"yes"_s);
+
+    QCOMPARE(o->objectName(), objectName);
+    QTRY_COMPARE(o->property("overrides").value<QObject *>(), nullptr);
 }
 
 void tst_QmlCppCodegen::detachOnAssignment()
