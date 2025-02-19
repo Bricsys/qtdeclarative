@@ -4403,10 +4403,6 @@ function(qt6_generate_deploy_qml_app_script)
     set(single_value_options
         TARGET
         OUTPUT_SCRIPT
-
-        # TODO: For backward compatibility / transitional use only,
-        # remove at some point
-        FILENAME_VARIABLE
     )
     set(qt_deploy_runtime_dependencies_options
         # These options are forwarded as is to qt_deploy_runtime_dependencies.
@@ -4429,22 +4425,6 @@ function(qt6_generate_deploy_qml_app_script)
     endif()
     if(NOT arg_TARGET)
         message(FATAL_ERROR "TARGET must be specified")
-    endif()
-
-    # TODO: Remove when FILENAME_VARIABLE is fully removed
-    # Handle the slow deprecation of FILENAME_VARIABLE
-    if(arg_FILENAME_VARIABLE)
-        if(arg_OUTPUT_SCRIPT AND NOT arg_FILENAME_VARIABLE STREQUAL arg_OUTPUT_SCRIPT)
-            message(FATAL_ERROR
-                "Both FILENAME_VARIABLE and OUTPUT_SCRIPT were given and were different. "
-                "Only one of the two should be used."
-            )
-        endif()
-        message(AUTHOR_WARNING
-            "The FILENAME_VARIABLE keyword is deprecated and will be removed soon. "
-            "Please use OUTPUT_SCRIPT instead.")
-        set(arg_OUTPUT_SCRIPT "${arg_FILENAME_VARIABLE}")
-        unset(arg_FILENAME_VARIABLE)
     endif()
 
     if(NOT arg_OUTPUT_SCRIPT)
