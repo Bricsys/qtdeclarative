@@ -315,7 +315,7 @@ ReturnedValue QQmlContextWrapper::getPropertyAndBase(const QQmlContextWrapper *r
                 if (base)
                     *base = wrapper;
 
-                if (lookup && propertyData) {
+                if (lookup) {
                     QQmlData *ddata = QQmlData::get(scopeObject, false);
                     if (ddata && ddata->propertyCache) {
                         ScopedValue val(
@@ -355,31 +355,29 @@ ReturnedValue QQmlContextWrapper::getPropertyAndBase(const QQmlContextWrapper *r
                 if (base)
                     *base = wrapper;
 
-                if (propertyData) {
-                    if (lookup) {
-                        QQmlData *ddata = QQmlData::get(contextObject, false);
-                        if (ddata && ddata->propertyCache && lookup->call != contextGetterCall) {
-                            ScopedValue val(
-                                        scope,
-                                        base ? *base : Value::fromReturnedValue(
-                                                   QV4::QObjectWrapper::wrap(v4, contextObject)));
-                            if (QObjectMethod *method = result->as<QObjectMethod>()) {
-                                setupQObjectMethodLookup(
-                                            lookup, ddata, propertyData, val->objectValue(),
-                                            method->d());
-                                if (contextGetterCall == Lookup::Call::ContextGetterScopeObjectProperty)
-                                    lookup->call = Lookup::Call::ContextGetterScopeObjectMethod;
-                                else
-                                    lookup->call = Lookup::Call::ContextGetterContextObjectMethod;
-                            } else {
-                                setupQObjectLookup(
-                                            lookup, ddata, propertyData, val->objectValue());
-                                lookup->call = contextGetterCall;
-                            }
+                if (lookup) {
+                    QQmlData *ddata = QQmlData::get(contextObject, false);
+                    if (ddata && ddata->propertyCache && lookup->call != contextGetterCall) {
+                        ScopedValue val(
+                                    scope,
+                                    base ? *base : Value::fromReturnedValue(
+                                               QV4::QObjectWrapper::wrap(v4, contextObject)));
+                        if (QObjectMethod *method = result->as<QObjectMethod>()) {
+                            setupQObjectMethodLookup(
+                                        lookup, ddata, propertyData, val->objectValue(),
+                                        method->d());
+                            if (contextGetterCall == Lookup::Call::ContextGetterScopeObjectProperty)
+                                lookup->call = Lookup::Call::ContextGetterScopeObjectMethod;
+                            else
+                                lookup->call = Lookup::Call::ContextGetterContextObjectMethod;
+                        } else {
+                            setupQObjectLookup(
+                                        lookup, ddata, propertyData, val->objectValue());
+                            lookup->call = contextGetterCall;
                         }
-                    } else if (originalLookup) {
-                        originalLookup->call = Lookup::Call::ContextGetterInParentContextHierarchy;
                     }
+                } else if (originalLookup) {
+                    originalLookup->call = Lookup::Call::ContextGetterInParentContextHierarchy;
                 }
 
                 return result->asReturnedValue();
