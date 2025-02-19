@@ -526,6 +526,16 @@ qt_internal_extend_target(Quick CONDITION MSVC
         _CRT_SECURE_NO_WARNINGS
 )
 
+# work around a likely compiler error: QTBUG-133494
+if(MSVC)
+    set_target_properties(Quick PROPERTIES
+        INTERPROCEDURAL_OPTIMIZATION OFF
+        INTERPROCEDURAL_OPTIMIZATION_RELEASE OFF
+        INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO OFF
+        INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL OFF
+    )
+endif()
+
 #### Keys ignored in scope 5:.:.:quick.pro:solaris-cc_x_:
 # QMAKE_CXXFLAGS_RELEASE = "--O2"
 
