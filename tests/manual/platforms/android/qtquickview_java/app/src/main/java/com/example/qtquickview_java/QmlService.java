@@ -23,7 +23,9 @@ import android.widget.TextView;
 import java.util.Random;
 import java.util.function.Consumer;
 
+import org.qtproject.qt.android.QtQmlStatusChangeListener;
 import org.qtproject.qt.android.QtQuickView;
+import org.qtproject.qt.android.QtQuickViewContent;
 import org.qtproject.qt.android.QtQmlStatus;
 import org.qtproject.example.qtquickview_service.Qml_floating_view.Main;
 import org.qtproject.example.qtquickview_service.Qml_floating_view.Second;
@@ -77,25 +79,32 @@ public class QmlService extends Service
             // Get the available geometry, and split it between the Android and QML UIs
             layoutParams.gravity = Gravity.END | Gravity.TOP;
             m_serviceView = addQuickView(qmlViewSize, layoutParams);
-            m_serviceViewContent.setStatusChangeListener((qtQmlStatus -> {
-                if (qtQmlStatus == QtQmlStatus.READY)
-                    m_qmlSignalListenerId = m_serviceViewContent.connectOnClickedListener(
-                            this::onQmlChangeColorButtonClicked);
-                m_qmlStatusTextView.setText(String.format(
-                        "%s %s", getResources().getString(R.string.qml_view_status), qtQmlStatus));
-            }));
+            m_serviceViewContent.setStatusChangeListener(new QtQmlStatusChangeListener() {
+                @Override
+                public void onStatusChanged(QtQmlStatus qtQmlStatus) {
+                    if (qtQmlStatus == QtQmlStatus.READY)
+                        m_qmlSignalListenerId = m_serviceViewContent.connectOnClickedListener(
+                                QmlService.this::onQmlChangeColorButtonClicked);
+                    m_qmlStatusTextView.setText(String.format(
+                            "%s %s", getResources().getString(R.string.qml_view_status), qtQmlStatus));
+                }
+            });
             m_serviceView.loadContent(m_serviceViewContent);
 
             layoutParams.gravity = Gravity.END | Gravity.BOTTOM;
             m_serviceView2 = addQuickView(qmlViewSize, layoutParams);
-            m_secondServiceViewContent.setStatusChangeListener((qtQmlStatus -> {
-                if (qtQmlStatus == QtQmlStatus.READY)
-                    m_qmlSignalListenerId2 = m_secondServiceViewContent.connectOnClickedListener(
-                            this::onQmlChangeColorButtonClicked);
-                m_qmlStatusTextView2.setText(
-                        String.format("%s %s", getResources().getString(R.string.qml_view_status_2),
-                                      qtQmlStatus));
-            }));
+
+            m_secondServiceViewContent.setStatusChangeListener(new QtQmlStatusChangeListener() {
+                @Override
+                public void onStatusChanged(QtQmlStatus qtQmlStatus) {
+                    if (qtQmlStatus == QtQmlStatus.READY)
+                        m_qmlSignalListenerId2 = m_secondServiceViewContent.connectOnClickedListener(
+                                QmlService.this::onQmlChangeColorButtonClicked);
+                    m_qmlStatusTextView2.setText(
+                            String.format("%s %s", getResources().getString(R.string.qml_view_status_2),
+                                    qtQmlStatus));
+                }
+            });
             m_serviceView2.loadContent(m_secondServiceViewContent);
 
             m_mainView = addMainView(new Size(size.getWidth() / 2, size.getHeight()));
