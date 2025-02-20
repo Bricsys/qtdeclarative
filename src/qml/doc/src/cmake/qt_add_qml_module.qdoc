@@ -430,6 +430,13 @@ manage different versions of your QML modules.
 
 \section2 Adding sources and resources to the module
 
+\note A QML module is a logically grouped, self-contained unit of functionality.
+All files that make up the module should reside in the same directory as the CMakeLists.txt
+defining the module or in one of its subdirectories.
+If a specific functionality is required in multiple modules, consider encapsulating it within
+a separate module. This module can then be imported into other modules, promoting code reuse
+and maintainability.
+
 \c SOURCES specifies a list of non-QML sources to be added to the backing
 target. It is provided as a convenience and is equivalent to adding the sources
 to the backing target with the built-in \c{target_sources()} CMake command.
@@ -510,6 +517,7 @@ past major versions.
 
 \section2 Declaring module dependencies
 
+\target IMPORTS
 \c IMPORTS provides a list of other QML modules that this module imports. Each
 module listed here will be added as an \c{import} entry in the generated
 \l{Module Definition qmldir Files}{qmldir} file. If a QML file imports
