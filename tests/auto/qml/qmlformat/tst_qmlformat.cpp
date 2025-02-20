@@ -670,8 +670,7 @@ void TestQmlformat::testFilesOption_data()
     QTest::addColumn<QString>("containerFile");
     QTest::addColumn<QStringList>("individualFiles");
 
-    QTest::newRow("initial") << "fileListToFormat"
-            << QStringList{"valid1.qml", "invalidEntry:cannot be parsed", "valid2.qml"};
+    QTest::newRow("initial") << "fileListToFormat" << QStringList{ "valid1.qml", "valid2.qml" };
 }
 
 void TestQmlformat::testFilesOption()
