@@ -559,10 +559,10 @@ QPainterPath QQuickPath::createShapePath(const QPointF &startPoint, const QPoint
     }
     scalePath(path, d->scale);
 
-    // Note: Length of paths inside ShapePath is not used, so currently
-    // length is always 0. This avoids potentially heavy path.length()
-    //pathLength = path.length();
+    // Note: ShapePaths do not employ the QQuickPathPrivate caching (pathLength and _pointCache),
+    // but may utilize the QPainterPath caching in case of trimming
     pathLength = 0;
+    path.setCachingEnabled(true);
 
     return path;
 }
@@ -995,8 +995,8 @@ QPointF QQuickPath::backwardsPointAt(const QPainterPath &path, const qreal &path
 QPointF QQuickPath::pointAtPercent(qreal t) const
 {
     Q_D(const QQuickPath);
-    if (d->isShapePath)                     // this since ShapePath does not calculate the length at all,
-        return d->_path.pointAtPercent(t);  // in order to be faster.
+    if (d->isShapePath)
+        return d->_path.pointAtPercent(t); // ShapePath has QPainterPath computation caching
 
     if (d->_pointCache.isEmpty()) {
         createPointCache();

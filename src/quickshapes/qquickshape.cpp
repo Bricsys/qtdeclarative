@@ -91,7 +91,8 @@ QQuickShapeStrokeFillParams::QQuickShapeStrokeFillParams()
       strokeStyle(QQuickShapePath::SolidLine),
       dashOffset(0),
       fillGradient(nullptr),
-      fillItem(nullptr)
+      fillItem(nullptr),
+      trim(nullptr)
 {
     dashPattern << 4 << 2; // 4 * strokeWidth dash followed by 2 * strokeWidth space
 }
@@ -526,6 +527,40 @@ void QQuickShapePath::setFillItem(QQuickItem *fillItem)
     }
 }
 
+/*!
+    \qmlpropertygroup QtQuick.Shapes::ShapePath::trim
+    \qmlproperty real QtQuick.Shapes::ShapePath::trim.start
+    \qmlproperty real QtQuick.Shapes::ShapePath::trim.stop
+    \qmlproperty real QtQuick.Shapes::ShapePath::trim.offset
+    \since 6.10
+
+    Specifies the section of this path that will be displayed.
+
+    The section is defined by the path length fractions \c start and \c stop. By default, \c start
+    is 0 (denoting the start of the path) and \c stop is 1 (denoting the end of the path), so the
+    entire path is displayed.
+
+    The value of \c offset is added to \c start and \c stop. If that causes over- or underrun of the
+    [0, 1] range, the values will be wrapped around, as will the resulting path section. The
+    effective range of \c offset is between -1 and 1. The default value is 0.
+*/
+
+QQuickShapeTrim *QQuickShapePath::trim()
+{
+    Q_D(QQuickShapePath);
+    if (!d->sfp.trim) {
+        d->sfp.trim = new QQuickShapeTrim;
+        QQml_setParent_noEvent(d->sfp.trim, this);
+    }
+    return d->sfp.trim;
+}
+
+bool QQuickShapePath::hasTrim() const
+{
+    Q_D(const QQuickShapePath);
+    return d->sfp.trim != nullptr;
+}
+
 void QQuickShapePathPrivate::_q_fillItemDestroyed()
 {
     Q_Q(QQuickShapePath);
@@ -631,6 +666,69 @@ void QQuickShapePath::setFillTransform(const QMatrix4x4 &matrix)
         d->dirty |= QQuickShapePathPrivate::DirtyFillTransform;
         emit fillTransformChanged();
         emit shapePathChanged();
+    }
+}
+
+
+QQuickShapeTrim::QQuickShapeTrim(QObject *parent)
+    : QObject(parent)
+{
+}
+
+qreal QQuickShapeTrim::start() const
+{
+    return m_start;
+}
+
+void QQuickShapeTrim::setStart(qreal t)
+{
+    if (t == m_start)
+        return;
+    m_start = t;
+    QQuickShapePath *shapePath = qobject_cast<QQuickShapePath *>(parent());
+    if (shapePath) {
+        QQuickShapePathPrivate *d = QQuickShapePathPrivate::get(shapePath);
+        d->dirty |= QQuickShapePathPrivate::DirtyTrim;
+        emit startChanged();
+        emit shapePath->shapePathChanged();
+    }
+}
+
+qreal QQuickShapeTrim::end() const
+{
+    return m_end;
+}
+
+void QQuickShapeTrim::setEnd(qreal t)
+{
+    if (t == m_end)
+        return;
+    m_end = t;
+    QQuickShapePath *shapePath = qobject_cast<QQuickShapePath *>(parent());
+    if (shapePath) {
+        QQuickShapePathPrivate *d = QQuickShapePathPrivate::get(shapePath);
+        d->dirty |= QQuickShapePathPrivate::DirtyTrim;
+        emit endChanged();
+        emit shapePath->shapePathChanged();
+    }
+}
+
+qreal QQuickShapeTrim::offset() const
+{
+    return m_offset;
+}
+
+void QQuickShapeTrim::setOffset(qreal t)
+{
+    if (t == m_offset)
+        return;
+    m_offset = t;
+    QQuickShapePath *shapePath = qobject_cast<QQuickShapePath *>(parent());
+    if (shapePath) {
+        QQuickShapePathPrivate *d = QQuickShapePathPrivate::get(shapePath);
+        d->dirty |= QQuickShapePathPrivate::DirtyTrim;
+        emit offsetChanged();
+        emit shapePath->shapePathChanged();
     }
 }
 
@@ -1443,7 +1541,7 @@ void QQuickShapePrivate::sync()
         int &dirty(QQuickShapePathPrivate::get(p)->dirty);
         totalDirty |= dirty;
 
-        if (dirty & QQuickShapePathPrivate::DirtyPath) {
+        if (dirty & (QQuickShapePathPrivate::DirtyPath | QQuickShapePathPrivate::DirtyTrim)) {
             qCDebug(lcShapeSync) << "  - DirtyPath";
             renderer->setPath(i, p);
         }

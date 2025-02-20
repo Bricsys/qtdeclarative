@@ -151,13 +151,6 @@ void QQuickShapeCurveRenderer::beginSync(int totalCount, bool *countChanged)
     m_paths.resize(totalCount);
 }
 
-void QQuickShapeCurveRenderer::setPath(int index, const QQuickPath *path)
-{
-    constexpr QQuickShapePath::PathHints noHints;
-    const auto *shapePath = qobject_cast<const QQuickShapePath *>(path);
-    setPath(index, path->path(), shapePath ? shapePath->pathHints() : noHints);
-}
-
 void QQuickShapeCurveRenderer::setPath(int index, const QPainterPath &path, QQuickShapePath::PathHints pathHints)
 {
     auto &pathData = m_paths[index];
