@@ -507,6 +507,8 @@ private slots:
     void referenceToSingletonReadsBackOnlyWhenRequired();
     void referenceToBindableReadsBackOnlyWhenRequired();
     void referenceObjectChainReadsBackAsRequiredBasedOnParentSignals();
+    void referenceObjectDoesNotLeakAConnectionToTheDestroyedSignalOnANotifyBindable();
+    void referenceObjectPrefersBindableConnectionToNotifyConnection();
 
 private:
     QQmlEngine engine;
@@ -9559,6 +9561,30 @@ void tst_qqmllanguage::referenceObjectChainReadsBackAsRequiredBasedOnParentSigna
     auto inner = readCounter->getInner();
 
     QCOMPARE(inner.timesRead, 4);
+}
+
+void tst_qqmllanguage::referenceObjectDoesNotLeakAConnectionToTheDestroyedSignalOnANotifyBindable() {
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl("referenceObjectDoesNotLeakAConnectionToTheDestroyedSignalOnANotifyBindable.qml"));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+
+    auto *readCounter = qobject_cast<ReadCounter *>(o.data());
+    QVERIFY(readCounter);
+
+    QCOMPARE(readCounter->destroyedConnections, 1);
+}
+
+void tst_qqmllanguage::referenceObjectPrefersBindableConnectionToNotifyConnection() {
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl("referenceObjectPrefersBindableConnectionToNotifyConnection.qml"));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+
+    auto *readCounter = qobject_cast<ReadCounter *>(o.data());
+    QVERIFY(readCounter);
+
+    QCOMPARE(readCounter->notifyBindableSignalConnections, 0);
 }
 
 QTEST_MAIN(tst_qqmllanguage)

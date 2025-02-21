@@ -3188,6 +3188,7 @@ class ReadCounter : public QObject {
     Q_PROPERTY(ValueTypeWithEnum1 valueType READ getValueType WRITE setValueType NOTIFY valueTypeChanged)
     Q_PROPERTY(QStringList bindable READ getBindable WRITE default BINDABLE bindableProperty FINAL)
     Q_PROPERTY(ReadCounterInner inner READ getInner WRITE setInner NOTIFY innerChanged)
+    Q_PROPERTY(QStringList notifyBindable READ default WRITE default BINDABLE notifyBindableProperty NOTIFY notifyBindableChanged)
 
 public:
     ReadCounter(QObject* parent = nullptr)
@@ -3226,11 +3227,31 @@ public:
     }
     void setInner(const ReadCounterInner& l) { m_inner = l; emit innerChanged(); }
 
+    QBindable<QStringList> notifyBindableProperty() { return QBindable<QStringList>(&m_notifyBindable); }
+
+    std::size_t destroyedConnections = 0;
+    std::size_t notifyBindableSignalConnections = 0;
+
+    void connectNotify(const QMetaMethod& signal) override {
+        if (signal == QMetaMethod::fromSignal(&ReadCounter::destroyed))
+            ++destroyedConnections;
+        if (signal == QMetaMethod::fromSignal(&ReadCounter::notifyBindableChanged))
+            ++notifyBindableSignalConnections;
+    }
+
+    void disconnectNotify(const QMetaMethod& signal) override {
+        if (signal == QMetaMethod::fromSignal(&ReadCounter::destroyed))
+            --destroyedConnections;
+        if (signal == QMetaMethod::fromSignal(&ReadCounter::notifyBindableChanged))
+            --notifyBindableSignalConnections;
+    }
+
 signals:
     void stringListChanged();
     void dateTimeChanged();
     void valueTypeChanged();
     void innerChanged();
+    void notifyBindableChanged();
 
 private:
     QStringList m_stringList;
@@ -3238,6 +3259,7 @@ private:
     ValueTypeWithEnum1 m_valueType;
     QProperty<QStringList> m_bindable;
     ReadCounterInner m_inner{};
+    QProperty<QStringList> m_notifyBindable;
 };
 
 #endif // TESTTYPES_H

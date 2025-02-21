@@ -56,6 +56,9 @@ DECLARE_HEAP_OBJECT(ReferenceObject, Object) {
             Q_ASSERT(obj);
             Q_ASSERT(engine);
 
+            Q_ASSERT(!referenceEndpoint);
+            Q_ASSERT(!bindableNotifier);
+
             referenceEndpoint = new ReferenceObjectEndpoint(this);
             referenceEndpoint->connect(
                 obj,
@@ -106,6 +109,9 @@ DECLARE_HEAP_OBJECT(ReferenceObject, Object) {
             Q_ASSERT(obj);
             Q_ASSERT(engine);
 
+            Q_ASSERT(!referenceEndpoint);
+            Q_ASSERT(!bindableNotifier);
+
             bindableNotifier = new QPropertyNotifier(obj->metaObject()->property(property).bindable(obj).addNotifier([this](){ setDirty(true); }));
             new(onDelete) QMetaObject::Connection(QObject::connect(obj, &QObject::destroyed, [this](){ setDirty(true); }));
         };
@@ -135,11 +141,10 @@ DECLARE_HEAP_OBJECT(ReferenceObject, Object) {
             auto wrapper = static_cast<QV4::Heap::QObjectWrapper*>(object);
             QObject* obj = wrapper->object();
 
-            if (obj->metaObject()->property(property).hasNotifySignal() && internalClass->engine->qmlEngine())
-                connectToNotifySignal(obj, property, internalClass->engine->qmlEngine());
-
             if (obj->metaObject()->property(property).isBindable() && internalClass->engine->qmlEngine())
                 connectToBindable(obj, property, internalClass->engine->qmlEngine());
+            else if (obj->metaObject()->property(property).hasNotifySignal() && internalClass->engine->qmlEngine())
+                connectToNotifySignal(obj, property, internalClass->engine->qmlEngine());
         }
 
         if (object && object->internalClass->vtable->type == Managed::Type_QMLTypeWrapper) {
@@ -149,11 +154,10 @@ DECLARE_HEAP_OBJECT(ReferenceObject, Object) {
             Scoped<QV4::QQmlTypeWrapper> scopedWrapper(scope, wrapper);
             QObject* obj = scopedWrapper->object();
 
-            if (obj->metaObject()->property(property).hasNotifySignal() && internalClass->engine->qmlEngine())
-                connectToNotifySignal(obj, property, internalClass->engine->qmlEngine());
-
             if (obj->metaObject()->property(property).isBindable() && internalClass->engine->qmlEngine())
                 connectToBindable(obj, property, internalClass->engine->qmlEngine());
+            else if (obj->metaObject()->property(property).hasNotifySignal() && internalClass->engine->qmlEngine())
+                connectToNotifySignal(obj, property, internalClass->engine->qmlEngine());
         }
 
         // If we could not connect to anything we don't have a way to
@@ -208,9 +212,9 @@ DECLARE_HEAP_OBJECT(ReferenceObject, Object) {
     }
 
     void destroy() {
-        // If we are connected we must have connected to the destroyed
-        // signal too, and we should clean it up.
-        if (isConnected()) {
+        // If we allocated any connection then we must have connected
+        // to the destroyed signal too, and we should clean it up.
+        if (referenceEndpoint || bindableNotifier) {
             QObject::disconnect(*reinterpret_cast<QMetaObject::Connection*>(&onDelete));
             std::destroy_at(reinterpret_cast<QMetaObject::Connection*>(&onDelete));
         }

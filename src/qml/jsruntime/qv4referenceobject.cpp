@@ -293,6 +293,10 @@ DEFINE_OBJECT_VTABLE(QV4::ReferenceObject);
   A ReferenceObject can take advantage of this to reduce the number of reads
   that are required when dealing with a \c{QObject}'s property provening data.
 
+  When a property has a \tt{NOTIFY} signal and is a \tt{BINDABLE} at
+  the same time, we only need to use one such connection.
+  Currently, the \tt{BINDABLE} subscription will take predecedence.
+
   ReferenceObjects that are part of a \l{Reference object chains}{chain}, will
   traverse the chain up until a QOjbect holding root is found, and connect based
   on that object.
