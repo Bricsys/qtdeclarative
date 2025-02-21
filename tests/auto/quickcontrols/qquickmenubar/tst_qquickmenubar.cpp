@@ -1587,8 +1587,6 @@ static bool pixelsCloseEnough(int lhs, int rhs)
 
 void tst_qquickmenubar::menuPosition()
 {
-    if (QQuickStyle::name() != QLatin1String("Basic"))
-        QSKIP("This fails when run with certain styles: QTBUG-133530");
     QFETCH(QQuickPopup::PopupType, popupType);
     // A Menu.qml will typically have a background with a drop-shadow. And to make
     // room for this shadow, the Menu itself is made bigger by using Control.insets.
