@@ -2872,6 +2872,29 @@ set(timestamp_file \"${generated_copy_files_info_path_timestamp}\")
     _qt_internal_assign_to_internal_targets_folder("${copy_files_target}")
 endfunction()
 
+function(_qt_internal_ensure_tooling_target tooling_target)
+    if(TARGET ${tooling_target})
+        return()
+    endif()
+
+    set(no_value_options "")
+    set(single_value_options DEPENDENT_TARGET)
+    set(multi_value_options "")
+    cmake_parse_arguments(PARSE_ARGV 1 arg
+        "${no_value_options}" "${single_value_options}" "${multi_value_options}"
+    )
+    if(arg_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "Unexpected arguments: ${arg_UNPARSED_ARGUMENTS}")
+    endif()
+
+    add_library(${tooling_target} INTERFACE)
+    if(DEFINED arg_DEPENDENT_TARGET)
+        add_dependencies(${arg_DEPENDENT_TARGET} ${tooling_target})
+    endif()
+    set_target_properties(${tooling_target} PROPERTIES QT_EXCLUDE_FROM_TRANSLATION ON)
+    _qt_internal_assign_to_internal_targets_folder(${tooling_target})
+endfunction()
+
 function(qt6_target_qml_sources target)
 
     get_target_property(uri        ${target} QT_QML_MODULE_URI)
@@ -3442,6 +3465,7 @@ function(qt6_target_qml_sources target)
                     ${generated_sources_other_scope}
             )
             add_dependencies(${target} ${target}_tooling)
+            _qt_internal_assign_to_internal_targets_folder(${target}_tooling)
         else()
             # We could be called multiple times and a custom target can only
             # have file-level dependencies added at the time the target is
@@ -3449,17 +3473,35 @@ function(qt6_target_qml_sources target)
             # private sources to those and have the library act as a build
             # system target from CMake 3.19 onward, and we can add the sources
             # progressively over multiple calls.
-            if(NOT TARGET ${target}_tooling)
-                add_library(${target}_tooling INTERFACE)
-                add_dependencies(${target} ${target}_tooling)
-                set_target_properties(${target}_tooling PROPERTIES QT_EXCLUDE_FROM_TRANSLATION ON)
+            set(tooling_target "${target}_tooling")
+            _qt_internal_ensure_tooling_target("${tooling_target}" DEPENDENT_TARGET "${target}")
+
+            # If the tooling target was created in another directory scope, we must create another
+            # interface library in this directory scope to drive the custom target. A dependency
+            # from ${target} to this new interface library doesn't seem necessary.
+            get_target_property(tooling_target_source_dir ${tooling_target} SOURCE_DIR)
+            if(NOT tooling_target_source_dir STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+                # Unfortunately, this doesn't work for Xcode nor Unix Makefiles.
+                if(NOT CMAKE_GENERATOR MATCHES "^(Ninja|Visual Studio)")
+                    message(FATAL_ERROR
+                        "When using the '${CMAKE_GENERATOR}' generator, this function "
+                        "must be called in the directory scope where '${target}' is defined."
+                    )
+                endif()
+
+                get_target_property(counter ${target} QT_QML_MODULE_RAW_QML_SETS)
+                if(NOT counter)
+                    set(counter 0)
+                endif()
+                set(tooling_target "${target}_tooling_${counter}")
+                _qt_internal_ensure_tooling_target("${tooling_target}")
             endif()
-            target_sources(${target}_tooling PRIVATE
+
+            target_sources(${tooling_target} PRIVATE
                 ${copied_files}
                 ${generated_sources_other_scope}
             )
         endif()
-        _qt_internal_assign_to_internal_targets_folder(${target}_tooling)
     endif()
 
     _qt_internal_qml_copy_files_to_build_dir("${target}"
