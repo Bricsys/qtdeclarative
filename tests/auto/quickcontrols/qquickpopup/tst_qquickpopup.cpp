@@ -757,6 +757,8 @@ void tst_QQuickPopup::closeOnRightClickOutside()
     popup->setPopupType(popupType);
     popup->open();
     QTRY_VERIFY(popup->isOpened());
+    // wait for QQuickPopupPositioner::reposition
+    QTRY_COMPARE(popup->position(), QPointF(50, 50));
 
     QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier,
         QPoint(window->width() - 1, window->height() - 1));
