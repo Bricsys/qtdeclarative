@@ -154,6 +154,8 @@ void QQuickPopupWindowPrivate::setVisible(bool visible)
     // Pointer press and release events should also be filtered by the top-most popup window, and only be delivered to other windows in rare cases.
     if (visible && visibleChanged && QGuiApplicationPrivate::popupCount() == 1 && !s_popupGrabOk) {
         QWindow *win = m_popup->window();
+        if (QGuiApplication::platformName() == QStringLiteral("offscreen"))
+            return; // workaround for QTBUG-134009
         s_popupGrabOk = win->setKeyboardGrabEnabled(true);
         if (s_popupGrabOk) {
             s_popupGrabOk = win->setMouseGrabEnabled(true);
