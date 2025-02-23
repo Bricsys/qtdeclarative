@@ -789,6 +789,10 @@ QMimeData *QQuickDragAttachedPrivate::createMimeData() const
                     mimeData->setUrls(urls);
             }
             break;
+        case QMetaType::QColor:
+            if (mimeType == u"application/x-color"_s)
+                mimeData->setColorData(value);
+            break;
         case QMetaType::QImage:
             if (const QByteArray mimeTypeUtf8 = mimeType.toUtf8();
                 QImageWriter::supportedMimeTypes().contains(mimeTypeUtf8)) {
