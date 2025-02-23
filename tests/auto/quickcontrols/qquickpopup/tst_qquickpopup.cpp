@@ -1830,17 +1830,16 @@ void tst_QQuickPopup::tabFence()
     QQuickButton *dialogButton2 = window->property("dialogButton2").value<QQuickButton*>();
     QVERIFY(dialogButton2);
 
-    // Dialog is not tab fenced by default
     outsideButton1->forceActiveFocus();
     QVERIFY(outsideButton1->hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Tab);
     QVERIFY(outsideButton2->hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Tab);
-    if (QQuickStyle::name() == QLatin1String("Material"))
-        QEXPECT_FAIL("", "This fails with the Material style: QTBUG-133530", Abort);
-    QVERIFY(dialogButton1->hasActiveFocus());
+
+    // Individual styles may set modal: true
+    QVERIFY((popup->isModal() ? outsideButton1 : dialogButton1)->QQuickItem::hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(dialogButton2->hasActiveFocus());
+    QVERIFY((popup->isModal() ? outsideButton2 : dialogButton2)->QQuickItem::hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Tab);
     QVERIFY(outsideButton1->hasActiveFocus());
 
