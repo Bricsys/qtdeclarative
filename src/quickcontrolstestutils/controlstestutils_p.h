@@ -94,7 +94,7 @@ namespace QQuickControlsTestUtils
         }
 
     private:
-        Qt::ColorScheme m_colorScheme = Qt::ColorScheme::Unknown;
+        Qt::ColorScheme m_colorScheme = QGuiApplication::styleHints()->colorScheme();
     };
 }
 
