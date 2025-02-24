@@ -7,6 +7,77 @@
 #include <QtQuickTemplates2/private/qquickheaderview_p_p.h>
 #include <QtQuickTemplates2/private/qquicktableviewdelegate_p_p.h>
 
+/*!
+    \qmltype HorizontalHeaderViewDelegate
+    \inherits TableViewDelegate
+    \inqmlmodule QtQuick.Controls
+    \since 6.10
+    \ingroup qtquickcontrols-delegates
+
+    \image qtquickcontrols-headerviewdelegate.png
+
+    The HorizontalHeaderViewDelegate serves as the default delegate
+    automatically assigned to the \l HorizontalHeaderView's
+    \l {HorizontalHeaderView::delegate} {delegate property}.
+    This delegate handles rendering every header cell using the
+    application's predefined style specifications.
+
+    HorizontalHeaderViewDelegate inherits TableViewDelegate, which means
+    that it's composed of two items:
+    a \l[QML]{Control::}{background} and
+    a \l [QML]{Control::}{contentItem}.
+
+    \sa {Customizing HeaderViewDelegate}, {HorizontalHeaderView}
+*/
+
+/*!
+    \qmltype VerticalHeaderViewDelegate
+    \inherits TableViewDelegate
+    \inqmlmodule QtQuick.Controls
+    \since 6.10
+    \ingroup qtquickcontrols-delegates
+
+    \image qtquickcontrols-headerviewdelegate.png
+
+     The VerticalHeaderViewDelegate serves as the default delegate
+     automatically assigned to the \l VerticalHeaderView's
+     \l {VerticalHeaderView::delegate} {delegate property}.
+     This delegate handles rendering every header cell using the
+     application's predefined style specifications.
+
+     VerticalHeaderViewDelegate inherits TableViewDelegate, which means
+     that it's composed of two items:
+     a \l[QML]{Control::}{background} and
+     a \l [QML]{Control::}{contentItem}.
+
+     \sa {Customizing HeaderViewDelegate}, {VerticalHeaderView}
+*/
+
+/*!
+    \qmlproperty HeaderView QtQuick.Controls::HorizontalHeaderViewDelegate::headerView
+
+    This property points to the \l HorizontalHeaderView that contains the delegate item.
+*/
+
+/*!
+    \qmlproperty HeaderView QtQuick.Controls::VerticalHeaderViewDelegate::headerView
+
+    This property points to the \l VerticalHeaderView that contains the delegate item.
+*/
+
+/*!
+    \qmlproperty Qt::Orientations QtQuick.Controls::HorizontalHeaderViewDelegate::orientation
+
+    This property has the same value of the headerView's orientation.
+*/
+
+/*!
+    \qmlproperty Qt::Orientations QtQuick.Controls::VerticalHeaderViewDelegate::orientation
+
+    This property has the same value of the headerView's orientation.
+*/
+
+
 QT_BEGIN_NAMESPACE
 
 class QQuickHeaderViewDelegatePrivate : public QQuickTableViewDelegatePrivate
