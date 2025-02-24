@@ -135,12 +135,13 @@ public:
     bool notify(const QQmlAdaptorModel &model, const QList<QQmlDelegateModelItem *> &items, int index, int count, const QVector<int> &) const override
     {
         for (auto modelItem : items) {
-            const int modelItemIndex = modelItem->index;
+            const int modelItemIndex = modelItem->modelIndex();
             if (modelItemIndex < index || modelItemIndex >= index + count)
                 continue;
 
             auto objectModelItem = static_cast<QQmlDMObjectData *>(modelItem);
-            QObject *updatedModelData = qvariant_cast<QObject *>(model.list.at(objectModelItem->index));
+            QObject *updatedModelData = qvariant_cast<QObject *>(
+                    model.list.at(objectModelItem->modelIndex()));
             objectModelItem->setModelData(updatedModelData);
         }
         return true;

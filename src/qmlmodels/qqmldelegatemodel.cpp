@@ -600,7 +600,7 @@ QQmlDelegateModel::ReleaseFlags QQmlDelegateModelPrivate::release(QObject *objec
     if (reusableFlag == QQmlInstanceModel::Reusable) {
         removeCacheItem(cacheItem);
         m_reusableItemsPool.insertItem(cacheItem);
-        emit q_func()->itemPooled(cacheItem->index, cacheItem->object);
+        emit q_func()->itemPooled(cacheItem->modelIndex(), cacheItem->object);
         return QQmlInstanceModel::Pooled;
     }
 
@@ -2411,15 +2411,6 @@ QQmlDelegateModelItem::QQmlDelegateModelItem(
         int modelIndex, int row, int column)
     : v4(metaType->v4Engine)
     , metaType(metaType)
-    , contextData(nullptr)
-    , object(nullptr)
-    , attached(nullptr)
-    , incubationTask(nullptr)
-    , delegate(nullptr)
-    , poolTime(0)
-    , objectRef(0)
-    , scriptRef(0)
-    , groups(0)
     , index(modelIndex)
     , row(row)
     , column(column)

@@ -169,9 +169,10 @@ public:
 
         const QQmlAdaptorModel *const model
                 = static_cast<QQmlDMAbstractItemModelData *>(o->d()->item)->type()->model;
-        if (o->d()->item->index >= 0) {
+        if (o->d()->item->modelIndex() >= 0) {
             if (const QAbstractItemModel *const aim = model->aim())
-                RETURN_RESULT(QV4::Encode(aim->hasChildren(aim->index(o->d()->item->index, 0, model->rootIndex))));
+                RETURN_RESULT(QV4::Encode(aim->hasChildren(
+                        aim->index(o->d()->item->modelIndex(), 0, model->rootIndex))));
         }
         RETURN_RESULT(QV4::Encode(false));
     }

@@ -105,7 +105,7 @@ QV4::ReturnedValue QQmlDMAbstractItemModelData::get_property(const QV4::Function
     const qsizetype propertyId = static_cast<const QV4::IndexedBuiltinFunction *>(b)->d()->index;
 
     QQmlDMAbstractItemModelData *modelData = static_cast<QQmlDMAbstractItemModelData *>(o->d()->item);
-    if (o->d()->item->index == -1) {
+    if (o->d()->item->modelIndex() == -1) {
         if (!modelData->m_cachedData.isEmpty())
             return scope.engine->fromVariant(modelData->m_cachedData.at(propertyId));
     } else if (*modelData->m_type->model) {
@@ -126,7 +126,7 @@ QV4::ReturnedValue QQmlDMAbstractItemModelData::set_property(const QV4::Function
 
     const qsizetype propertyId = static_cast<const QV4::IndexedBuiltinFunction *>(b)->d()->index;
 
-    if (o->d()->item->index == -1) {
+    if (o->d()->item->modelIndex() == -1) {
         QQmlDMAbstractItemModelData *modelData = static_cast<QQmlDMAbstractItemModelData *>(o->d()->item);
         if (!modelData->m_cachedData.isEmpty()) {
             if (modelData->m_cachedData.size() > 1) {

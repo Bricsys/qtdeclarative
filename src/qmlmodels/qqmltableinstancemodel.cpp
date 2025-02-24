@@ -149,7 +149,7 @@ QObject *QQmlTableInstanceModel::object(int index, QQmlIncubator::IncubationMode
         // refs at this point. So we delete the model item.
         Q_ASSERT(!modelItem->isObjectReferenced());
         Q_ASSERT(!modelItem->isReferenced());
-        m_modelItems.remove(modelItem->index);
+        m_modelItems.remove(modelItem->modelIndex());
         delete modelItem;
         return nullptr;
     }
@@ -165,8 +165,8 @@ QQmlInstanceModel::ReleaseFlags QQmlTableInstanceModel::release(QObject *object,
     auto modelItem = qvariant_cast<QQmlDelegateModelItem *>(object->property(kModelItemTag));
     Q_ASSERT(modelItem);
     // Ensure that the object was incubated by this QQmlTableInstanceModel
-    Q_ASSERT(m_modelItems.contains(modelItem->index));
-    Q_ASSERT(m_modelItems[modelItem->index]->object == object);
+    Q_ASSERT(m_modelItems.contains(modelItem->modelIndex()));
+    Q_ASSERT(m_modelItems[modelItem->modelIndex()]->object == object);
 
     if (!modelItem->releaseObject())
         return QQmlDelegateModel::Referenced;
@@ -182,11 +182,11 @@ QQmlInstanceModel::ReleaseFlags QQmlTableInstanceModel::release(QObject *object,
     }
 
     // The item is not referenced by anyone
-    m_modelItems.remove(modelItem->index);
+    m_modelItems.remove(modelItem->modelIndex());
 
     if (reusable == Reusable) {
         m_reusableItemsPool.insertItem(modelItem);
-        emit itemPooled(modelItem->index, modelItem->object);
+        emit itemPooled(modelItem->modelIndex(), modelItem->object);
         return QQmlInstanceModel::Pooled;
     }
 
@@ -217,10 +217,10 @@ void QQmlTableInstanceModel::dispose(QObject *object)
     Q_ASSERT(!modelItem->isObjectReferenced());
     Q_ASSERT(!modelItem->isReferenced());
     // Ensure that the object was incubated by this QQmlTableInstanceModel
-    Q_ASSERT(m_modelItems.contains(modelItem->index));
-    Q_ASSERT(m_modelItems[modelItem->index]->object == object);
+    Q_ASSERT(m_modelItems.contains(modelItem->modelIndex()));
+    Q_ASSERT(m_modelItems[modelItem->modelIndex()]->object == object);
 
-    m_modelItems.remove(modelItem->index);
+    m_modelItems.remove(modelItem->modelIndex());
 
     emit destroyingItem(object);
     delete object;
@@ -341,7 +341,7 @@ void QQmlTableInstanceModel::incubatorStatusChanged(QQmlTableInstanceModelIncuba
         // now in the map, it will be returned directly.
         Q_ASSERT(modelItem->object);
         modelItem->scriptRef++;
-        emit createdItem(modelItem->index, modelItem->object);
+        emit createdItem(modelItem->modelIndex(), modelItem->object);
         modelItem->scriptRef--;
     } else if (status == QQmlIncubator::Error) {
         qWarning() << "Error incubating delegate:" << incubationTask->errors();
@@ -352,7 +352,7 @@ void QQmlTableInstanceModel::incubatorStatusChanged(QQmlTableInstanceModelIncuba
         // reference to the incubated object. So just delete the model item.
         // Note that being here means that the object was incubated _async_
         // (otherwise modelItem->isReferenced() would be true).
-        m_modelItems.remove(modelItem->index);
+        m_modelItems.remove(modelItem->modelIndex());
 
         if (modelItem->object) {
             modelItem->scriptRef++;
@@ -508,7 +508,7 @@ void QQmlTableInstanceModelIncubationTask::setInitialState(QObject *object)
 {
     initializeRequiredProperties(modelItemToIncubate, object);
     modelItemToIncubate->object = object;
-    emit tableInstanceModel->initItem(modelItemToIncubate->index, object);
+    emit tableInstanceModel->initItem(modelItemToIncubate->modelIndex(), object);
 
     if (!QQmlIncubatorPrivate::get(this)->requiredProperties()->empty()) {
         modelItemToIncubate->object = nullptr;

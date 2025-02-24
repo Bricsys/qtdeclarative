@@ -117,18 +117,17 @@ public:
     static QV4::ReturnedValue set_member(QQmlDelegateModelItem *thisItem, uint flag, const QV4::Value &arg);
     static QV4::ReturnedValue get_index(QQmlDelegateModelItem *thisItem, uint flag, const QV4::Value &arg);
 
-    QV4::ExecutionEngine *v4;
-    QQmlRefPointer<QQmlDelegateModelItemMetaType> const metaType;
+    QV4::ExecutionEngine *v4 = nullptr;
+    QQmlRefPointer<QQmlDelegateModelItemMetaType> metaType;
     QQmlRefPointer<QQmlContextData> contextData;
     QPointer<QObject> object;
     QPointer<QQmlDelegateModelAttached> attached;
-    QQDMIncubationTask *incubationTask;
-    QQmlComponent *delegate;
-    int poolTime;
-    int objectRef;
-    int scriptRef;
-    int groups;
-    int index;
+    QQDMIncubationTask *incubationTask = nullptr;
+    QQmlComponent *delegate = nullptr;
+    int poolTime = 0;
+    int objectRef = 0;
+    int scriptRef = 0;
+    int groups = 0;
 
 Q_SIGNALS:
     void modelIndexChanged();
@@ -137,8 +136,10 @@ Q_SIGNALS:
 
 protected:
     void objectDestroyed(QObject *);
-    int row;
-    int column;
+
+    int index = -1;
+    int row = -1;
+    int column = -1;
 };
 
 namespace QV4 {
