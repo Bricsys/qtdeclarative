@@ -14,11 +14,13 @@ GadgetModel::GadgetModel(QObject* parent)
 
 int GadgetModel::rowCount(const QModelIndex& parent) const
 {
+    Q_UNUSED(parent);
     return m_gadgets.size();
 }
 
 QVariant GadgetModel::data(const QModelIndex& index, int role) const
 {
+    Q_UNUSED(role);
     if (!checkIndex(index, CheckIndexOption::IndexIsValid))
         return {};
 
