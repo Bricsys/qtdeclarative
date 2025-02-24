@@ -29,8 +29,6 @@ class QQmlJSImportVisitor;
 
 namespace QQmlSA {
 
-enum class AccessSemantics { Reference, Value, None, Sequence };
-
 enum class Flag {
     Creatable = 0x1,
     Composite = 0x2,
