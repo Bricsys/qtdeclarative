@@ -869,7 +869,7 @@ bool QQmlObjectCreator::setPropertyBinding(const QQmlPropertyData *bindingProper
             // we ignore them for profiling, because it doesn't interact well with the logic anyway
             // can't use sharedState->allParserStatusCallbacks, we haven't reserved space TODO: could we?
             if (!sharedState->attachedObjectParserStatusCallbacks)
-                sharedState->attachedObjectParserStatusCallbacks = std::make_unique<std::vector<QQmlParserStatus *>>();
+                sharedState->attachedObjectParserStatusCallbacks = std::make_unique<std::deque<QQmlParserStatus *>>();
             sharedState->attachedObjectParserStatusCallbacks->push_back(parserStatus);
             parserStatus->d = &sharedState->attachedObjectParserStatusCallbacks->back();
         }
