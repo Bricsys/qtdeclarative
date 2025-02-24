@@ -616,7 +616,7 @@ void QQmlDelegateModelPrivate::destroyCacheItem(QQmlDelegateModelItem *cacheItem
         releaseIncubator(cacheItem->incubationTask);
         cacheItem->incubationTask = nullptr;
     }
-    cacheItem->Dispose();
+    cacheItem->dispose();
 }
 
 /*
@@ -2400,7 +2400,7 @@ DEFINE_OBJECT_VTABLE(QQmlDelegateModelItemObject);
 
 void QV4::Heap::QQmlDelegateModelItemObject::destroy()
 {
-    item->Dispose();
+    item->dispose();
     Object::destroy();
 }
 
@@ -2450,7 +2450,7 @@ QQmlDelegateModelItem::~QQmlDelegateModelItem()
     }
 }
 
-void QQmlDelegateModelItem::Dispose()
+void QQmlDelegateModelItem::dispose()
 {
     --scriptRef;
     if (isReferenced())

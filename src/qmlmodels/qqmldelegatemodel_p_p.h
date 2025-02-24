@@ -90,7 +90,7 @@ public:
                 || ((groups & Compositor::UnresolvedFlag) && (groups & Compositor::GroupMask));
     }
 
-    void Dispose();
+    void dispose();
 
     QObject *modelObject() { return this; }
 
