@@ -393,7 +393,7 @@ void tst_QQuickFolderDialogImpl::changeFolderViaEnter()
     QQuickFileDialogDelegate *subDir1Delegate = nullptr;
     QTRY_VERIFY(findViewDelegateItem(folderDialogListView, 0, subDir1Delegate));
     COMPARE_URL(subDir1Delegate->file(), QUrl::fromLocalFile(tempSubDir1.path()));
-    QVERIFY(subDir1Delegate->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(subDir1Delegate);
 
     // Select the delegate by pressing enter.
     const FolderDialogSignalHelper signalHelper(dialogHelper);

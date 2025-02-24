@@ -786,27 +786,27 @@ void tst_QQuickPopup::activeFocusOnClose1()
     focusedPopup->open();
     QVERIFY(focusedPopup->isVisible());
     QTRY_VERIFY(focusedPopup->isOpened());
-    QVERIFY(focusedPopup->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(focusedPopup);
 
     nonFocusedPopup->open();
     QVERIFY(nonFocusedPopup->isVisible());
     QTRY_VERIFY(nonFocusedPopup->isOpened());
-    QVERIFY(focusedPopup->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(focusedPopup);
 
     nonFocusedPopup->close();
     QTRY_VERIFY(!nonFocusedPopup->isVisible());
-    QVERIFY(focusedPopup->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(focusedPopup);
 
     // QTBUG-66113: force active focus on a popup that did not request focus
     nonFocusedPopup->open();
     nonFocusedPopup->forceActiveFocus();
     QVERIFY(nonFocusedPopup->isVisible());
     QTRY_VERIFY(nonFocusedPopup->isOpened());
-    QVERIFY(nonFocusedPopup->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(nonFocusedPopup);
 
     nonFocusedPopup->close();
     QTRY_VERIFY(!nonFocusedPopup->isVisible());
-    QVERIFY(focusedPopup->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(focusedPopup);
 }
 
 void tst_QQuickPopup::activeFocusOnClose2()
@@ -835,19 +835,19 @@ void tst_QQuickPopup::activeFocusOnClose2()
     popup1->open();
     QVERIFY(popup1->isVisible());
     QTRY_VERIFY(popup1->isOpened());
-    QVERIFY(popup1->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(popup1);
 
     popup2->open();
     QVERIFY(popup2->isVisible());
     QTRY_VERIFY(popup2->isOpened());
-    QVERIFY(popup2->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(popup2);
 
     // Causes popup1.contentItem.forceActiveFocus() to be called, then closes popup2.
     QTRY_VERIFY(closePopup2Button->width() > 0);
     QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
         closePopup2Button->mapToScene(QPointF(closePopup2Button->width() / 2, closePopup2Button->height() / 2)).toPoint());
     QTRY_VERIFY(!popup2->isVisible());
-    QVERIFY(popup1->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(popup1);
 }
 
 void tst_QQuickPopup::activeFocusOnClose3()
@@ -871,7 +871,7 @@ void tst_QQuickPopup::activeFocusOnClose3()
 
     popup1->open();
     QVERIFY(popup1->isVisible());
-    QTRY_VERIFY(popup1->hasActiveFocus());
+    QTRY_VERIFY_ACTIVE_FOCUS(popup1);
 
     popup2->open();
     popup1->close();
@@ -882,7 +882,7 @@ void tst_QQuickPopup::activeFocusOnClose3()
 
     QVERIFY(!popup1->isVisible());
     QTRY_VERIFY(popup2->isVisible());
-    QTRY_VERIFY(popup2->hasActiveFocus());
+    QTRY_VERIFY_ACTIVE_FOCUS(popup2);
 }
 
 void tst_QQuickPopup::activeFocusOnClosingSeveralPopups()
@@ -909,10 +909,10 @@ void tst_QQuickPopup::activeFocusOnClosingSeveralPopups()
     QCOMPARE(button->hasActiveFocus(), true);
     popup1->open();
     QTRY_VERIFY(popup1->isOpened());
-    QVERIFY(popup1->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(popup1);
     popup2->open();
     QTRY_VERIFY(popup2->isOpened());
-    QVERIFY(popup2->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(popup2);
     QTRY_COMPARE(button->hasActiveFocus(), false);
     // close the unfocused popup first
     popup1->close();
@@ -923,10 +923,10 @@ void tst_QQuickPopup::activeFocusOnClosingSeveralPopups()
 
     popup1->open();
     QTRY_VERIFY(popup1->isOpened());
-    QVERIFY(popup1->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(popup1);
     popup2->open();
     QTRY_VERIFY(popup2->isOpened());
-    QVERIFY(popup2->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(popup2);
     QTRY_COMPARE(button->hasActiveFocus(), false);
     // close the focused popup first
     popup2->close();
@@ -963,7 +963,7 @@ void tst_QQuickPopup::activeFocusAfterExit()
 
     popup1->open();
     QVERIFY(popup1->isVisible());
-    QTRY_VERIFY(popup1->hasActiveFocus());
+    QTRY_VERIFY_ACTIVE_FOCUS(popup1);
 
     popup2->open();
     QVERIFY(popup2->isVisible());
@@ -971,20 +971,20 @@ void tst_QQuickPopup::activeFocusAfterExit()
 
     popup3->open();
     QVERIFY(popup3->isVisible());
-    QTRY_VERIFY(popup3->hasActiveFocus());
+    QTRY_VERIFY_ACTIVE_FOCUS(popup3);
 
     popup3->close();
     closedSpy3.wait();
     QVERIFY(!popup3->isVisible());
     QTRY_VERIFY(!popup3->hasActiveFocus());
     QTRY_VERIFY(!popup2->hasActiveFocus());
-    QTRY_VERIFY(popup1->hasActiveFocus());
+    QTRY_VERIFY_ACTIVE_FOCUS(popup1);
 
     popup2->close();
     closedSpy2.wait();
     QVERIFY(!popup2->isVisible());
     QTRY_VERIFY(!popup2->hasActiveFocus());
-    QTRY_VERIFY(popup1->hasActiveFocus());
+    QTRY_VERIFY_ACTIVE_FOCUS(popup1);
 }
 
 void tst_QQuickPopup::activeFocusOnDelayedEnter()
@@ -1010,7 +1010,7 @@ void tst_QQuickPopup::activeFocusOnDelayedEnter()
     popup1->open();
     popup2->open();
     openedSpy.wait();
-    QTRY_VERIFY(popup2->hasActiveFocus());
+    QTRY_VERIFY_ACTIVE_FOCUS(popup2);
 }
 
 // Test that a popup (popup1) with a lower stacking order than another popup (popup2) gets
@@ -1076,12 +1076,12 @@ void tst_QQuickPopup::activeFocusItemAfterWindowInactive()
 
     popup->open();
     QTRY_VERIFY(popup->isOpened());
-    QVERIFY(popup->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(popup);
     QVERIFY(!button->hasActiveFocus());
 
     popup->close();
     QTRY_VERIFY(!popup->isVisible());
-    QVERIFY(button->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(button);
     QCOMPARE(window->activeFocusItem(), button);
 
     popup->open();
@@ -1632,7 +1632,7 @@ void tst_QQuickPopup::closeOnEscapeWithVisiblePopup()
     QVERIFY(popup);
     QTRY_VERIFY(popup->isOpened());
 
-    QTRY_VERIFY(popup->hasActiveFocus());
+    QTRY_VERIFY_ACTIVE_FOCUS(popup);
     QTest::keyClick(window, Qt::Key_Escape);
     QTRY_VERIFY(!popup->isVisible());
 }
@@ -1913,9 +1913,9 @@ void tst_QQuickPopup::tabFence()
     drawer->setModal(false);
 
     outsideButton1->forceActiveFocus(Qt::TabFocusReason);
-    QVERIFY(outsideButton1->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(outsideButton1);
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(outsideButton2->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(outsideButton2);
     QTest::keyClick(window, Qt::Key_Tab);
     QVERIFY(drawerButton1->QQuickItem::hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Tab);
@@ -1924,17 +1924,17 @@ void tst_QQuickPopup::tabFence()
     // tab key should give focus to the outside buttons
     // and not to the dialog
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(outsideButton1->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(outsideButton1);
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(outsideButton2->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(outsideButton2);
 
     drawer->setModal(true);
 
     // When modal, focus loops between the two external buttons
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(outsideButton1->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(outsideButton1);
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(outsideButton2->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(outsideButton2);
 
     // For the dialog the focus should loop inside
     // no matter the modality
@@ -1945,24 +1945,24 @@ void tst_QQuickPopup::tabFence()
 
     dialog->setModal(false);
     dialogButton1->forceActiveFocus(Qt::TabFocusReason);
-    QVERIFY(dialogButton1->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(dialogButton1);
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(dialogButton2->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(dialogButton2);
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(dialogButton1->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(dialogButton1);
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(dialogButton2->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(dialogButton2);
 
 
     dialog->setModal(true);
     dialogButton1->forceActiveFocus(Qt::TabFocusReason);
-    QVERIFY(dialogButton1->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(dialogButton1);
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(dialogButton2->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(dialogButton2);
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(dialogButton1->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(dialogButton1);
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(dialogButton2->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(dialogButton2);
 }
 
 void tst_QQuickPopup::invisibleToolTipOpen()
@@ -3095,7 +3095,7 @@ void tst_QQuickPopup::popupWindowFocus()
     QVERIFY(QQuickTest::qWaitForPolish(window));
     QVERIFY(QGuiApplication::focusObject() == textField1);
     QVERIFY(window->focusObject() == textField1);
-    QVERIFY(textField1->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(textField1);
 
     QTest::keyClick(window, Qt::Key_Q);
     QTRY_COMPARE(textField1->text(), "q");

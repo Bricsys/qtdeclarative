@@ -460,7 +460,7 @@ void tst_QQuickColorDialogImpl::changeHex()
     // Modify the value in the TextField to something else.
     colorTextField->forceActiveFocus();
     colorTextField->select(1, colorTextField->text().size());
-    QVERIFY(colorTextField->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(colorTextField);
     QTest::keyClick(dialogHelper.popupWindow(), Qt::Key_Backspace);
     QTest::keyClick(dialogHelper.popupWindow(), '0');
     QTest::keyClick(dialogHelper.popupWindow(), '0');
@@ -550,7 +550,7 @@ void tst_QQuickColorDialogImpl::changeColorFromTextFields()
         dialogHelper.quickDialog->setHsl(false);
 
     textField->forceActiveFocus();
-    QVERIFY(textField->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(textField);
 
     // Simulate entering a new value.
     textField->setText(newValue);

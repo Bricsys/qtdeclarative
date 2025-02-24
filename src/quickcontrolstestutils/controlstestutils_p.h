@@ -99,6 +99,12 @@ namespace QQuickControlsTestUtils
     [[nodiscard]] bool arePopupWindowsSupported();
 }
 
+namespace QQuickTest
+{
+// Overload of the one in quicktest.h.
+[[nodiscard]] QString qActiveFocusFailureMessage(QQuickPopup *popup);
+}
+
 #define VERIFY_VISUAL_FOCUS(control) \
 do { \
     QVERIFY2(control->hasVisualFocus(), qUtf8Printable(visualFocusFailureMessage(control))); \

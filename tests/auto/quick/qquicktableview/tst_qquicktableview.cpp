@@ -7141,7 +7141,7 @@ void tst_QQuickTableView::editUsingEditTriggers()
         QCOMPARE(tableView->selectionModel()->currentIndex(), index1);
         const auto editItem1 = tableView->property(kEditItem).value<QQuickItem *>();
         QVERIFY(editItem1);
-        QVERIFY(editItem1->hasActiveFocus());
+        QVERIFY_ACTIVE_FOCUS(editItem1);
         QCOMPARE(tableView->property(kEditIndex).value<QModelIndex>(), index1);
 
         // edit cell 2 (without closing the previous edit session first)
@@ -7149,7 +7149,7 @@ void tst_QQuickTableView::editUsingEditTriggers()
         QCOMPARE(tableView->selectionModel()->currentIndex(), index2);
         const auto editItem2 = tableView->property(kEditItem).value<QQuickItem *>();
         QVERIFY(editItem2);
-        QVERIFY(editItem2->hasActiveFocus());
+        QVERIFY_ACTIVE_FOCUS(editItem2);
         QCOMPARE(tableView->property(kEditIndex).value<QModelIndex>(), index2);
 
         // single tap outside content item should close the editor
@@ -7165,7 +7165,7 @@ void tst_QQuickTableView::editUsingEditTriggers()
         QCOMPARE(tableView->selectionModel()->currentIndex(), index1);
         const auto editItem1 = tableView->property(kEditItem).value<QQuickItem *>();
         QVERIFY(editItem1);
-        QVERIFY(editItem1->hasActiveFocus());
+        QVERIFY_ACTIVE_FOCUS(editItem1);
         QCOMPARE(tableView->property(kEditIndex).value<QModelIndex>(), index1);
 
         // edit cell 2 (without closing the previous edit session first)
@@ -7173,7 +7173,7 @@ void tst_QQuickTableView::editUsingEditTriggers()
         QCOMPARE(tableView->selectionModel()->currentIndex(), index2);
         const auto editItem2 = tableView->property(kEditItem).value<QQuickItem *>();
         QVERIFY(editItem2);
-        QVERIFY(editItem2->hasActiveFocus());
+        QVERIFY_ACTIVE_FOCUS(editItem2);
         QCOMPARE(tableView->property(kEditIndex).value<QModelIndex>(), index2);
 
         // single tap outside the edit item should close the editor
@@ -7202,7 +7202,7 @@ void tst_QQuickTableView::editUsingEditTriggers()
         QCOMPARE(tableView->selectionModel()->currentIndex(), index1);
         const auto editItem1 = tableView->property(kEditItem).value<QQuickItem *>();
         QVERIFY(editItem1);
-        QVERIFY(editItem1->hasActiveFocus());
+        QVERIFY_ACTIVE_FOCUS(editItem1);
         QCOMPARE(tableView->property(kEditIndex).value<QModelIndex>(), index1);
 
         // tap on a non-selected cell. This should close the editor, and move
@@ -7230,7 +7230,7 @@ void tst_QQuickTableView::editUsingEditTriggers()
         QTest::keyClick(window, Qt::Key_Return);
         const auto editItem1 = tableView->property(kEditItem).value<QQuickItem *>();
         QVERIFY(editItem1);
-        QVERIFY(editItem1->hasActiveFocus());
+        QVERIFY_ACTIVE_FOCUS(editItem1);
         QCOMPARE(tableView->property(kEditIndex).value<QModelIndex>(), index1);
 
         // Pressing escape should close the editor
@@ -7243,7 +7243,7 @@ void tst_QQuickTableView::editUsingEditTriggers()
         QTest::keyClick(window, Qt::Key_Enter);
         const auto editItem2 = tableView->property(kEditItem).value<QQuickItem *>();
         QVERIFY(editItem2);
-        QVERIFY(editItem2->hasActiveFocus());
+        QVERIFY_ACTIVE_FOCUS(editItem2);
         QCOMPARE(tableView->property(kEditIndex).value<QModelIndex>(), index1);
 
         // single tap outside the edit item should close the editor
@@ -7261,7 +7261,7 @@ void tst_QQuickTableView::editUsingEditTriggers()
         QCOMPARE(tableView->property(kEditIndex).value<QModelIndex>(), index1);
         auto textInput1 = tableView->property(kEditItem).value<QQuickTextInput *>();
         QVERIFY(textInput1);
-        QVERIFY(textInput1->hasActiveFocus());
+        QVERIFY_ACTIVE_FOCUS(textInput1);
         QCOMPARE(textInput1->text(), "x");
 
         // Pressing escape should close the editor
@@ -7288,7 +7288,7 @@ void tst_QQuickTableView::editUsingEditTriggers()
         QCOMPARE(tableView->property(kEditIndex).value<QModelIndex>(), index1);
         auto textInput2 = tableView->property(kEditItem).value<QQuickTextInput *>();
         QVERIFY(textInput2);
-        QVERIFY(textInput2->hasActiveFocus());
+        QVERIFY_ACTIVE_FOCUS(textInput2);
         QCOMPARE(textInput2->text(), "1");
 
         if (!(editTriggers & QQuickTableView::SingleTapped)) {
@@ -7678,7 +7678,7 @@ void tst_QQuickTableView::editAndCloseEditor()
     QCOMPARE(tableView->selectionModel()->currentIndex(), index1);
     const QQuickItem *editItem1 = tableView->property(kEditItem).value<QQuickItem *>();
     QVERIFY(editItem1);
-    QVERIFY(editItem1->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(editItem1);
     QCOMPARE(tableView->property(kEditIndex).value<QModelIndex>(), index1);
     QCOMPARE(editItem1->parentItem(), cellItem1);
     QCOMPARE(editItem1->property("editing").toBool(), true);
@@ -7689,7 +7689,7 @@ void tst_QQuickTableView::editAndCloseEditor()
     QCOMPARE(tableView->selectionModel()->currentIndex(), index2);
     const QQuickItem *editItem2 = tableView->property(kEditItem).value<QQuickItem *>();
     QVERIFY(editItem2);
-    QVERIFY(editItem2->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(editItem2);
     QCOMPARE(tableView->property(kEditIndex).value<QModelIndex>(), index2);
     QCOMPARE(editItem2->parentItem(), cellItem2);
     QCOMPARE(editItem2->property("editing").toBool(), true);

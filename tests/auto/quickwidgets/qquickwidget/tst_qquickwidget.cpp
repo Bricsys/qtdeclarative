@@ -16,6 +16,7 @@
 #include <QtQuickTemplates2/private/qquickbutton_p.h>
 #include <QtQuickTemplates2/private/qquickoverlay_p.h>
 #include <QtQuickTemplates2/private/qquickpopup_p.h>
+#include <QtQuickTest/quicktest.h>
 #include <QtQuickTestUtils/private/qmlutils_p.h>
 #include <QtQuickTestUtils/private/visualtestutils_p.h>
 #include <QtGui/QWindow>
@@ -1108,11 +1109,11 @@ void tst_qquickwidget::focusOnClick()
     QVERIFY(text2);
 
     QTest::mouseClick(window, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(75, 25));
-    QTRY_VERIFY(text1->hasActiveFocus());
+    QTRY_VERIFY_ACTIVE_FOCUS(text1);
     QVERIFY(!text2->hasActiveFocus());
 
     QTest::mouseClick(window, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(75, 75));
-    QTRY_VERIFY(text2->hasActiveFocus());
+    QTRY_VERIFY_ACTIVE_FOCUS(text2);
     QVERIFY(!text1->hasActiveFocus());
 
 }
@@ -1154,7 +1155,7 @@ void tst_qquickwidget::focusOnClickInProxyWidget()
 
     // Click on text1
     QTest::mouseClick(window1, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(75, 25));
-    QTRY_VERIFY(text1->hasActiveFocus());
+    QTRY_VERIFY_ACTIVE_FOCUS(text1);
     QVERIFY(!text2->hasActiveFocus());
 
 
@@ -1172,7 +1173,7 @@ void tst_qquickwidget::focusOnClickInProxyWidget()
     QTRY_VERIFY(!text2->hasActiveFocus());
 
     QTest::mouseClick(window2, Qt::LeftButton, Qt::KeyboardModifiers(), QPoint(75, 25));
-    QTRY_VERIFY(text1->hasActiveFocus());
+    QTRY_VERIFY_ACTIVE_FOCUS(text1);
     QVERIFY(!text2->hasActiveFocus());
 }
 #endif
@@ -1211,11 +1212,11 @@ void tst_qquickwidget::focusPreserved()
     QVERIFY(QTest::qWaitForWindowExposed(quick.get()));
     QTRY_VERIFY(quick->hasFocus());
     QTRY_VERIFY(content->hasFocus());
-    QTRY_VERIFY(content->hasActiveFocus());
+    QTRY_VERIFY_ACTIVE_FOCUS(content.get());
 
     content2->forceActiveFocus();
     QVERIFY(content2->hasFocus());
-    QVERIFY(content2->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(content2.get());
 
     widget->show();
     widget->setFocus();
@@ -1230,7 +1231,7 @@ void tst_qquickwidget::focusPreserved()
     quick->activateWindow();
     QTRY_VERIFY(quick->hasFocus());
     QTRY_VERIFY(content2->hasFocus());
-    QTRY_VERIFY(content2->hasActiveFocus());
+    QTRY_VERIFY_ACTIVE_FOCUS(content2.get());
 }
 
 /*

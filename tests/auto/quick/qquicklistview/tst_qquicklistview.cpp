@@ -9336,7 +9336,7 @@ void tst_QQuickListView::keyNavigationEnabled()
     QCOMPARE(listView->isKeyNavigationEnabled(), true);
 
     listView->setFocus(true);
-    QVERIFY(listView->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(listView);
 
     listView->setHighlightMoveDuration(0);
 
@@ -9416,7 +9416,7 @@ void tst_QQuickListView::QTBUG_61269_appendDuringScrollDown() // AKA QTBUG-62864
     listView->setHighlightMoveVelocity(400);
     listView->setHighlightMoveDuration(-1); // let it animate
     listView->setFocus(true);
-    QVERIFY(listView->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(listView);
     qreal highlightYLimit = listView->height() - highlightItem->height(); // should be 200
 
     for (int i = 1; i < 15; ++i) {

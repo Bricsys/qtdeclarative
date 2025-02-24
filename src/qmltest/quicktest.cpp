@@ -728,6 +728,47 @@ int quick_test_main_with_setup(int argc, char **argv, const char *name, const ch
     return exitCode;
 }
 
+/*!
+    \macro QVERIFY_ACTIVE_FOCUS(item)
+    \relates QQuickTest
+    \since 6.10
+
+    Checks whether the \a item (which must be derived from \l QQuickItem) has
+    \l {QQuickItem::activeFocus}{active focus}. If it does, execution
+    continues. If not, a failure is recorded in the test log and the test won't
+    be executed further. The failure message contains focus-specific
+    information that is relevant for diagnosing the cause of the failure.
+
+    \include macro-usage-limitation.qdocinc
+*/
+
+/*!
+    \macro QTRY_VERIFY_ACTIVE_FOCUS(item)
+    \relates QQuickTest
+    \since 6.10
+
+    This macro does the same check as \l QVERIFY_ACTIVE_FOCUS with \a item, but
+    repeatedly, until either the condition becomes true or the timeout (in
+    milliseconds) is reached. Between each evaluation, events will be
+    processed. If the timeout is reached, a failure is recorded in the test log
+    and the test won't be executed further.
+
+    \include macro-usage-limitation.qdocinc
+*/
+
+QString QQuickTest::qActiveFocusFailureMessage(const QQuickItem *item)
+{
+    QString message;
+    QDebug debug(&message);
+    const QQuickWindow *window = item->window();
+    const QString activeFocusItemStr = window
+        ? QDebug::toString(window->activeFocusItem()) : QStringLiteral("(unknown; item has no window)");
+    debug.nospace() << "item: " << item
+        << " focusPolicy: " << static_cast<Qt::FocusPolicy>(item->focusPolicy());
+    debug.noquote() << " window's activeFocusItem: " << activeFocusItemStr;
+    return message;
+}
+
 QT_END_NAMESPACE
 
 #include "moc_quicktest_p.cpp"

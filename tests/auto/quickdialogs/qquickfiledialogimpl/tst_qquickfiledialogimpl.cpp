@@ -714,7 +714,7 @@ void tst_QQuickFileDialogImpl::cancelDialogWhileTextEditHasFocus()
 #endif
     auto breadcrumbBar = dialogHelper.quickDialog->findChild<QQuickFolderBreadcrumbBar*>();
     QVERIFY(breadcrumbBar);
-    QVERIFY(breadcrumbBar->textField()->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(breadcrumbBar->textField());
 
     // Close it via the cancel button.
     auto dialogButtonBox = dialogHelper.quickDialog->footer()->findChild<QQuickDialogButtonBox*>();
@@ -829,7 +829,7 @@ void tst_QQuickFileDialogImpl::goUpWhileTextEditHasFocus()
 #endif
     auto breadcrumbBar = dialogHelper.quickDialog->findChild<QQuickFolderBreadcrumbBar*>();
     QVERIFY(breadcrumbBar);
-    QVERIFY(breadcrumbBar->textField()->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(breadcrumbBar->textField());
 
     // Go up a directory via the button next to the breadcrumb bar.
     auto barListView = qobject_cast<QQuickListView*>(breadcrumbBar->contentItem());
@@ -1535,7 +1535,7 @@ void tst_QQuickFileDialogImpl::selectNewFileViaTextField()
                 fileNameTextField->mapToScene({ fileNameTextField->width() / 2, fileNameTextField->height() / 2 }).toPoint();
 
         QTest::mouseClick(dialogHelper.popupWindow(), Qt::LeftButton, Qt::NoModifier, textFieldCenterPos);
-        QTRY_VERIFY(fileNameTextField->hasActiveFocus());
+        QTRY_VERIFY_ACTIVE_FOCUS(fileNameTextField);
         QCOMPARE(acceptButton->isEnabled(), false);
 
         const QByteArray newFileName("foo.txt");
@@ -1549,7 +1549,7 @@ void tst_QQuickFileDialogImpl::selectNewFileViaTextField()
         QTRY_COMPARE(fileNameTextField->text(), newFileName);
         QCOMPARE(dialogHelper.dialog->selectedFile().fileName(), newFileName);
 
-        QVERIFY(fileNameTextField->hasActiveFocus());
+        QVERIFY_ACTIVE_FOCUS(fileNameTextField);
         for (int i = 0; i < newFileName.size(); i++)
             QTest::keyClick(dialogHelper.popupWindow(), Qt::Key_Backspace);
         QCOMPARE(acceptButton->isEnabled(), false);

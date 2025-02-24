@@ -17,6 +17,7 @@
 #include <QtQuick/private/qquickgridview_p.h>
 #include <QtQuick/private/qquicktext_p.h>
 #include <QtQmlModels/private/qqmllistmodel_p.h>
+#include <QtQuickTest/quicktest.h>
 #include <QtQuickTestUtils/private/qmlutils_p.h>
 #include <QtQuickTestUtils/private/viewtestutils_p.h>
 #include <QtQuickTestUtils/private/visualtestutils_p.h>
@@ -6752,7 +6753,7 @@ void tst_QQuickGridView::keyNavigationEnabled()
     QCOMPARE(gridView->isKeyNavigationEnabled(), true);
 
     gridView->setFocus(true);
-    QVERIFY(gridView->hasActiveFocus());
+    QVERIFY_ACTIVE_FOCUS(gridView);
 
     gridView->setHighlightMoveDuration(0);
 

@@ -79,7 +79,22 @@ Q_QMLTEST_EXPORT bool qIsPolishScheduled(const QQuickWindow *window);
 #endif
 Q_QMLTEST_EXPORT bool qWaitForPolish(const QQuickItem *item, int timeout = defaultTimeout);
 Q_QMLTEST_EXPORT bool qWaitForPolish(const QQuickWindow *window, int timeout = defaultTimeout);
+
+// These are "private" functions that we need in the public macros and hence
+// can't live in private headers. This is the same as what qtestcase.h does with e.g. qCaught.
+// controlstestutils_p.h has an overload for QQuickPopup.
+[[nodiscard]] Q_QMLTEST_EXPORT QString qActiveFocusFailureMessage(const QQuickItem *item);
 }
+
+#define QVERIFY_ACTIVE_FOCUS(item) \
+    do { \
+        QVERIFY2(item->hasActiveFocus(), qUtf8Printable(QQuickTest::qActiveFocusFailureMessage(item))); \
+    } while (false)
+
+#define QTRY_VERIFY_ACTIVE_FOCUS(item) \
+    do { \
+        QTRY_VERIFY2(item->hasActiveFocus(), qUtf8Printable(QQuickTest::qActiveFocusFailureMessage(item))); \
+    } while (false)
 
 QT_END_NAMESPACE
 
