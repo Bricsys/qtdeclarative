@@ -2312,7 +2312,7 @@ void TestQmllint::testPlugin_data()
                      Message{ u"Saw binding on Item property x with value QJSPrimitiveValue (and type 8) in scope Item"_s, 11, 12 },
                      Message{ u"Saw binding on Item property x with value NULL (and type 2) in scope Item"_s, 14, 12 },
                      Message{ u"Saw binding on Item property onXChanged with value function (and type 8) in scope Item"_s, 18, 21 },
-                     Message{ u"Saw read on ObjectPrototype property log in scope Ite"_s, 21, 36 },
+                     Message{ u"Saw read on ObjectPrototype property log in scope Item"_s, 21, 36 },
                      Message{ u"Saw binding on Item property onXChanged with value QVariant (and type 8) in scope Item"_s, 22, 21 },
                      Message{ u"Saw write on Item property x with value double in scope Item"_s, 30, 17 },
                      Message{ u"Saw write on Item property x with value int in scope Item"_s, 35, 31 },

@@ -30,7 +30,7 @@
         },
         {
             "name": "TestDefaultValue4",
-            "settingsName": "TestDefaultValue3",
+            "settingsName": "TestDefaultValue4",
             "description": "A warning to test defaults",
             "defaultLevel": "error"
         }
