@@ -86,6 +86,10 @@
     \title Android: Activity
 */
 /*!
+    \externalpage https://developer.android.com/reference/android/view/View#event-handling-and-threading
+    \title Android: Event Handling and Threading
+*/
+/*!
     \externalpage https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/
     \title Kotlin: Int
 */
