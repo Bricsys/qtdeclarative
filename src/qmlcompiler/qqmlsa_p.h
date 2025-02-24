@@ -17,25 +17,17 @@
 #include <qtqmlcompilerexports.h>
 
 #include <private/qqmljslogger_p.h>
-#include <QtCore/qset.h>
 #include "qqmljsmetatypes_p.h"
 
-#include <map>
 #include <unordered_map>
 #include <vector>
 #include <memory>
 
 QT_BEGIN_NAMESPACE
 
-class QQmlJSTypeResolver;
-struct QQmlJSTypePropagator;
 class QQmlJSImportVisitor;
 
 namespace QQmlSA {
-
-class Bindings;
-class GenericPassPrivate;
-class PassManager;
 
 enum class AccessSemantics { Reference, Value, None, Sequence };
 
@@ -90,7 +82,7 @@ public:
 
 private:
     QMultiHash<QString, Binding> m_bindings;
-    QQmlSA::Binding::Bindings *q_ptr;
+    QQmlSA::Binding::Bindings *q_ptr = nullptr;
 };
 
 class BindingPrivate
@@ -108,7 +100,7 @@ public:
 
 private:
     QQmlJSMetaPropertyBinding m_binding;
-    Binding *q_ptr;
+    Binding *q_ptr = nullptr;
 };
 
 class MethodPrivate
@@ -129,7 +121,7 @@ public:
 
 private:
     QQmlJSMetaMethod m_method;
-    Method *q_ptr;
+    Method *q_ptr = nullptr;
 };
 
 class MethodsPrivate
@@ -150,7 +142,7 @@ public:
 
 private:
     QMultiHash<QString, Method> m_methods;
-    QQmlSA::Method::Methods *q_ptr;
+    QQmlSA::Method::Methods *q_ptr = nullptr;
 };
 
 class PropertyPrivate
@@ -174,7 +166,7 @@ public:
 
 private:
     QQmlJSMetaProperty m_property;
-    QQmlSA::Property *q_ptr;
+    QQmlSA::Property *q_ptr = nullptr;
 };
 
 class Q_QMLCOMPILER_EXPORT PassManagerPrivate
@@ -233,8 +225,8 @@ public:
     std::vector<std::shared_ptr<ElementPass>> m_elementPasses;
     std::multimap<QString, PropertyPassInfo> m_propertyPasses;
     std::unordered_map<quint32, BindingInfo> m_bindingsByLocation;
-    QQmlJSImportVisitor *m_visitor;
-    QQmlJSTypeResolver *m_typeResolver;
+    QQmlJSImportVisitor *m_visitor = nullptr;
+    QQmlJSTypeResolver *m_typeResolver = nullptr;
 };
 
 class FixSuggestionPrivate
@@ -268,7 +260,7 @@ public:
 
 private:
     QQmlJSFixSuggestion m_fixSuggestion;
-    QQmlSA::FixSuggestion *q_ptr;
+    QQmlSA::FixSuggestion *q_ptr = nullptr;
 };
 
 } // namespace QQmlSA

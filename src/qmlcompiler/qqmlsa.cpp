@@ -15,7 +15,6 @@
 #include <QtQmlCompiler/private/qqmlsasourcelocation_p.h>
 
 #include <memory>
-#include <new>
 
 QT_BEGIN_NAMESPACE
 
@@ -892,9 +891,9 @@ public:
     }
 
 private:
-    PassManager *m_manager;
+    PassManager *m_manager = nullptr;
 
-    GenericPass *q_ptr;
+    GenericPass *q_ptr = nullptr;
 };
 
 GenericPass::~GenericPass() = default;
@@ -1261,21 +1260,24 @@ void PassManagerPrivate::analyzeWrite(const Element &element, const QString &pro
                                       const Element &value, const Element &writeScope,
                                       const QQmlSA::SourceLocation &location)
 {
-    for (PropertyPass *pass : findPropertyUsePasses(element, propertyName))
+    const auto &passes = findPropertyUsePasses(element, propertyName);
+    for (PropertyPass *pass : passes)
         pass->onWrite(element, propertyName, value, writeScope, location);
 }
 
 void PassManagerPrivate::analyzeRead(const Element &element, const QString &propertyName,
                                      const Element &readScope, const QQmlSA::SourceLocation &location)
 {
-    for (PropertyPass *pass : findPropertyUsePasses(element, propertyName))
+    const auto &passes = findPropertyUsePasses(element, propertyName);
+    for (PropertyPass *pass : passes)
         pass->onRead(element, propertyName, readScope, location);
 }
 
 void PassManagerPrivate::analyzeCall(const Element &element, const QString &propertyName,
                                      const Element &readScope, const QQmlSA::SourceLocation &location)
 {
-    for (PropertyPass *pass : findPropertyUsePasses(element, propertyName))
+    const auto &passes = findPropertyUsePasses(element, propertyName);
+    for (PropertyPass *pass : passes)
         pass->onCall(element, propertyName, readScope, location);
 }
 
