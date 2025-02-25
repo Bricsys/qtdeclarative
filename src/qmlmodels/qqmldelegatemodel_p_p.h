@@ -120,12 +120,25 @@ public:
     QQmlRefPointer<QQmlDelegateModelItemMetaType> metaType;
     QQmlRefPointer<QQmlContextData> contextData;
     QPointer<QObject> object;
-    QPointer<QQmlDelegateModelAttached> attached;
     QQDMIncubationTask *incubationTask = nullptr;
     QQmlComponent *delegate = nullptr;
     int objectRef = 0;
     int scriptRef = 0;
     int groups = 0;
+
+    QQmlDelegateModelAttached *attached() const
+    {
+        if (!object)
+            return nullptr;
+
+        QQmlData *ddata = QQmlData::get(object);
+        if (!ddata || !ddata->hasExtendedData())
+            return nullptr;
+
+        return static_cast<QQmlDelegateModelAttached *>(
+                ddata->attachedProperties()->value(
+                        QQmlPrivate::attachedPropertiesFunc<QQmlDelegateModel>()));
+    }
 
 Q_SIGNALS:
     void modelIndexChanged();

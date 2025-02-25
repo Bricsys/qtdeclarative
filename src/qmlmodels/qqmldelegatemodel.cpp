@@ -1525,7 +1525,7 @@ static void incrementIndexes(QQmlDelegateModelItem *cacheItem, int count, const 
         for (int i = 1; i < count; ++i)
             incubationTask->index[i] += deltas[i];
     }
-    if (QQmlDelegateModelAttached *attached = cacheItem->attached) {
+    if (QQmlDelegateModelAttached *attached = cacheItem->attached()) {
         for (int i = 1; i < qMin<int>(count, Compositor::MaximumGroupCount); ++i)
             attached->m_currentIndex[i] += deltas[i];
     }
@@ -1575,7 +1575,7 @@ void QQmlDelegateModelPrivate::itemsInserted(
                                 ? insert.index[i] + offset
                                 : insert.index[i];
                 }
-                if (QQmlDelegateModelAttached *attached = cacheItem->attached) {
+                if (QQmlDelegateModelAttached *attached = cacheItem->attached()) {
                     for (int i = 1; i < m_groupCount; ++i)
                         attached->m_currentIndex[i] = cacheItem->groups & (1 << i)
                                 ? insert.index[i] + offset
@@ -1697,7 +1697,7 @@ void QQmlDelegateModelPrivate::itemsRemoved(
                         for (int i = 1; i < m_groupCount; ++i)
                             incubationTask->index[i] = -1;
                     }
-                    if (QQmlDelegateModelAttached *attached = cacheItem->attached) {
+                    if (QQmlDelegateModelAttached *attached = cacheItem->attached()) {
                         for (int i = 1; i < m_groupCount; ++i)
                             attached->m_currentIndex[i] = -1;
                     }
@@ -1722,7 +1722,7 @@ void QQmlDelegateModelPrivate::itemsRemoved(
                             }
                         }
                     }
-                    if (QQmlDelegateModelAttached *attached = cacheItem->attached) {
+                    if (QQmlDelegateModelAttached *attached = cacheItem->attached()) {
                         for (int i = 1; i < m_groupCount; ++i) {
                             if (remove.inGroup(i))
                                 attached->m_currentIndex[i] = remove.index[i];
@@ -1904,7 +1904,7 @@ void QQmlDelegateModelPrivate::emitChanges()
     QVarLengthArray<QPointer<QQmlDelegateModelAttached>> attachedObjects;
     attachedObjects.reserve(m_cache.length());
     for (const QQmlDelegateModelItem *cacheItem : std::as_const(m_cache))
-        attachedObjects.append(cacheItem->attached);
+        attachedObjects.append(cacheItem->attached());
 
     for (const QPointer<QQmlDelegateModelAttached> &attached : std::as_const(attachedObjects)) {
         if (attached && attached->m_cacheItem)
@@ -2109,10 +2109,8 @@ void QQmlDelegateModel::_q_layoutChanged(const QList<QPersistentModelIndex> &par
 
 QQmlDelegateModelAttached *QQmlDelegateModel::qmlAttachedProperties(QObject *obj)
 {
-    if (QQmlDelegateModelItem *cacheItem = QQmlDelegateModelItem::dataForObject(obj)) {
-        cacheItem->attached = new QQmlDelegateModelAttached(cacheItem, obj);
-        return cacheItem->attached;
-    }
+    if (QQmlDelegateModelItem *cacheItem = QQmlDelegateModelItem::dataForObject(obj))
+        return new QQmlDelegateModelAttached(cacheItem, obj);
     return new QQmlDelegateModelAttached(obj);
 }
 
@@ -2497,10 +2495,8 @@ void QQmlDelegateModelItem::destroyObject()
     }
     object->deleteLater();
 
-    if (attached) {
-        attached->m_cacheItem = nullptr;
-        attached = nullptr;
-    }
+    if (QQmlDelegateModelAttached *attachedObject = attached())
+        attachedObject->m_cacheItem = nullptr;
 
     contextData.reset();
     object = nullptr;
@@ -3359,8 +3355,8 @@ void QQmlDelegateModelGroup::resolve(QQmlV4FunctionPtr args)
         Q_ASSERT(model->m_cache.size() == model->m_compositor.count(Compositor::Cache));
     } else {
         cacheItem->resolveIndex(model->m_adaptorModel, resolvedIndex);
-        if (cacheItem->attached)
-            cacheItem->attached->emitUnresolvedChanged();
+        if (QQmlDelegateModelAttached *attached = cacheItem->attached())
+            attached->emitUnresolvedChanged();
     }
 
     model->emitChanges();
