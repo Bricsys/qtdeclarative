@@ -228,8 +228,8 @@ QQmlFormatOptions QQmlFormatOptions::buildCommandLineOptions(const QStringList &
 
         for (const auto &file : std::as_const(files)) {
             if (!QFile::exists(file)) {
-                options.addError("Error: Entry \"" + file + "\" of file \"" + path
-                                 + "\" passed to option -F could not be found.");
+                options.addError("Error: Entry \""_L1 + file + "\" of file \""_L1 + path
+                                 + "\" passed to option -F could not be found."_L1);
                 return options;
             }
         }
@@ -237,7 +237,7 @@ QQmlFormatOptions QQmlFormatOptions::buildCommandLineOptions(const QStringList &
         const auto &args = parser.positionalArguments();
         for (const auto &file : args) {
             if (!QFile::exists(file)) {
-                options.addError("Error: Could not find file \"" + file + "\".");
+                options.addError("Error: Could not find file \""_L1 + file + "\"."_L1);
                 return options;
             }
         }
