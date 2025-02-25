@@ -184,8 +184,7 @@ QQmlInstanceModel::ReleaseFlags QQmlTableInstanceModel::release(QObject *object,
     // The item is not referenced by anyone
     m_modelItems.remove(modelItem->modelIndex());
 
-    if (reusable == Reusable) {
-        m_reusableItemsPool.insertItem(modelItem);
+    if (reusable == Reusable && m_reusableItemsPool.insertItem(modelItem)) {
         emit itemPooled(modelItem->modelIndex(), modelItem->object);
         return QQmlInstanceModel::Pooled;
     }

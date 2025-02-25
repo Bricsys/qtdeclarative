@@ -123,7 +123,6 @@ public:
     QPointer<QQmlDelegateModelAttached> attached;
     QQDMIncubationTask *incubationTask = nullptr;
     QQmlComponent *delegate = nullptr;
-    int poolTime = 0;
     int objectRef = 0;
     int scriptRef = 0;
     int groups = 0;
@@ -167,14 +166,26 @@ void QV4::Heap::QQmlDelegateModelItemObject::init(QQmlDelegateModelItem *item)
 class QQmlReusableDelegateModelItemsPool
 {
 public:
-    void insertItem(QQmlDelegateModelItem *modelItem);
+    bool insertItem(QQmlDelegateModelItem *modelItem);
     QQmlDelegateModelItem *takeItem(const QQmlComponent *delegate, int newIndexHint);
     void reuseItem(QQmlDelegateModelItem *item, int newModelIndex);
     void drain(int maxPoolTime, std::function<void(QQmlDelegateModelItem *cacheItem)> releaseItem);
-    int size() { return m_reusableItemsPool.size(); }
+    int size()
+    {
+        Q_ASSERT(m_reusableItemsPool.size() <= MaxSize);
+        return int(m_reusableItemsPool.size());
+    }
 
 private:
-    QList<QQmlDelegateModelItem *> m_reusableItemsPool;
+    struct PoolItem
+    {
+        QQmlDelegateModelItem *item = nullptr;
+        int poolTime = 0;
+    };
+
+    static constexpr size_t MaxSize = size_t(std::numeric_limits<int>::max());
+
+    std::vector<PoolItem> m_reusableItemsPool;
 };
 
 class QQmlDelegateModelPrivate;

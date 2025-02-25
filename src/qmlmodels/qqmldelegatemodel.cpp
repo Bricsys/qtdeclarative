@@ -597,9 +597,8 @@ QQmlDelegateModel::ReleaseFlags QQmlDelegateModelPrivate::release(QObject *objec
     if (!cacheItem->releaseObject())
         return QQmlDelegateModel::Referenced;
 
-    if (reusableFlag == QQmlInstanceModel::Reusable) {
+    if (reusableFlag == QQmlInstanceModel::Reusable && m_reusableItemsPool.insertItem(cacheItem)) {
         removeCacheItem(cacheItem);
-        m_reusableItemsPool.insertItem(cacheItem);
         emit q_func()->itemPooled(cacheItem->modelIndex(), cacheItem->object);
         return QQmlInstanceModel::Pooled;
     }
@@ -3851,8 +3850,14 @@ void QQmlPartsModel::emitModelUpdated(const QQmlChangeSet &changeSet, bool reset
     }
 }
 
-void QQmlReusableDelegateModelItemsPool::insertItem(QQmlDelegateModelItem *modelItem)
+bool QQmlReusableDelegateModelItemsPool::insertItem(QQmlDelegateModelItem *modelItem)
 {
+    // We can only hold INT_MAX items, due to the return type of size().
+    if (Q_UNLIKELY(m_reusableItemsPool.size() == QQmlReusableDelegateModelItemsPool::MaxSize))
+        return false;
+
+    Q_ASSERT(m_reusableItemsPool.size() < QQmlReusableDelegateModelItemsPool::MaxSize);
+
     // Currently, the only way for a view to reuse items is to call release()
     // in the model class with the second argument explicitly set to
     // QQmlReuseableDelegateModelItemsPool::Reusable. If the released item is
@@ -3900,8 +3905,7 @@ void QQmlReusableDelegateModelItemsPool::insertItem(QQmlDelegateModelItem *model
     Q_ASSERT(modelItem->object);
     Q_ASSERT(modelItem->delegate);
 
-    modelItem->poolTime = 0;
-    m_reusableItemsPool.append(modelItem);
+    m_reusableItemsPool.push_back({modelItem, 0});
 
     qCDebug(lcItemViewDelegateRecycling)
             << "item:" << modelItem
@@ -3910,16 +3914,18 @@ void QQmlReusableDelegateModelItemsPool::insertItem(QQmlDelegateModelItem *model
             << "row:" << modelItem->modelRow()
             << "column:" << modelItem->modelColumn()
             << "pool size:" << m_reusableItemsPool.size();
+
+    return true;
 }
 
 QQmlDelegateModelItem *QQmlReusableDelegateModelItemsPool::takeItem(const QQmlComponent *delegate, int newIndexHint)
 {
     // Find the oldest item in the pool that was made from the same delegate as
     // the given argument, remove it from the pool, and return it.
-    for (auto it = m_reusableItemsPool.begin(); it != m_reusableItemsPool.end(); ++it) {
-        if ((*it)->delegate != delegate)
+    for (auto it = m_reusableItemsPool.cbegin(); it != m_reusableItemsPool.cend(); ++it) {
+        QQmlDelegateModelItem *modelItem = it->item;
+        if (modelItem->delegate != delegate)
             continue;
-        auto modelItem = *it;
         m_reusableItemsPool.erase(it);
 
         qCDebug(lcItemViewDelegateRecycling)
@@ -3953,13 +3959,11 @@ void QQmlReusableDelegateModelItemsPool::drain(int maxPoolTime, std::function<vo
     qCDebug(lcItemViewDelegateRecycling) << "pool size before drain:" << m_reusableItemsPool.size();
 
     for (auto it = m_reusableItemsPool.begin(); it != m_reusableItemsPool.end();) {
-        auto modelItem = *it;
-        modelItem->poolTime++;
-        if (modelItem->poolTime <= maxPoolTime) {
+        if (++(it->poolTime) <= maxPoolTime) {
             ++it;
         } else {
+            releaseItem(it->item);
             it = m_reusableItemsPool.erase(it);
-            releaseItem(modelItem);
         }
     }
 
