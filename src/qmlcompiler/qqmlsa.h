@@ -42,7 +42,6 @@ class PassManager;
 class PassManagerPrivate;
 class PropertyPass;
 class PropertyPrivate;
-struct BindingInfo;
 struct PropertyPassInfo;
 
 enum class MethodType { Signal, Slot, Method, StaticMethod };
@@ -79,9 +78,11 @@ public:
     ~Binding();
 
     Element groupType() const;
+    Element bindingScope() const;
     BindingType bindingType() const;
     QString stringValue() const;
     QString propertyName() const;
+    bool isAttached() const;
     Element attachedType() const;
 
 #if QT_DEPRECATED_SINCE(6, 9)
@@ -325,7 +326,7 @@ public:
 
     std::vector<std::shared_ptr<ElementPass>> elementPasses() const;
     std::multimap<QString, PropertyPassInfo> propertyPasses() const;
-    std::unordered_map<quint32, BindingInfo> bindingsByLocation() const;
+    std::unordered_map<quint32, Binding> bindingsByLocation() const;
 
 private:
     PassManager();
