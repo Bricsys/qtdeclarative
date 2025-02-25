@@ -238,11 +238,11 @@ void QQmlDMAbstractItemModelData::setValue(int role, const QVariant &value)
 
 QV4::ReturnedValue QQmlDMAbstractItemModelData::get()
 {
+    QV4::Scope scope(metaType->v4Engine);
     if (m_type->prototype.isUndefined()) {
-        QQmlAdaptorModelEngineData * const data = QQmlAdaptorModelEngineData::get(v4);
+        QQmlAdaptorModelEngineData *const data = QQmlAdaptorModelEngineData::get(scope.engine);
         m_type->initializeConstructor(data);
     }
-    QV4::Scope scope(v4);
     QV4::ScopedObject proto(scope, m_type->prototype.value());
     QV4::ScopedObject o(scope, proto->engine()->memoryManager->allocate<QQmlDelegateModelItemObject>(this));
     o->setPrototypeOf(proto);

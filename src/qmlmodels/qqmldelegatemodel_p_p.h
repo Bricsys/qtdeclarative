@@ -105,7 +105,7 @@ public:
     int modelIndex() const { return index; }
     virtual void setModelIndex(int idx, int newRow, int newColumn, bool alwaysEmit = false);
 
-    virtual QV4::ReturnedValue get() { return QV4::QObjectWrapper::wrap(v4, this); }
+    virtual QV4::ReturnedValue get() { return QV4::QObjectWrapper::wrap(metaType->v4Engine, this); }
 
     virtual void setValue(const QString &role, const QVariant &value) { Q_UNUSED(role); Q_UNUSED(value); }
     virtual bool resolveIndex(const QQmlAdaptorModel &, int) { return false; }
@@ -117,7 +117,6 @@ public:
     static QV4::ReturnedValue set_member(QQmlDelegateModelItem *thisItem, uint flag, const QV4::Value &arg);
     static QV4::ReturnedValue get_index(QQmlDelegateModelItem *thisItem, uint flag, const QV4::Value &arg);
 
-    QV4::ExecutionEngine *v4 = nullptr;
     QQmlRefPointer<QQmlDelegateModelItemMetaType> metaType;
     QQmlRefPointer<QQmlContextData> contextData;
     QPointer<QObject> object;

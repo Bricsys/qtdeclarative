@@ -2409,8 +2409,7 @@ QQmlDelegateModelItem::QQmlDelegateModelItem(
         const QQmlRefPointer<QQmlDelegateModelItemMetaType> &metaType,
         QQmlAdaptorModel::Accessors *accessor,
         int modelIndex, int row, int column)
-    : v4(metaType->v4Engine)
-    , metaType(metaType)
+    : metaType(metaType)
     , index(modelIndex)
     , row(row)
     , column(column)

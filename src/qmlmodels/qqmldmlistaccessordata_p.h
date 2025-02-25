@@ -68,9 +68,10 @@ public:
 
     QV4::ReturnedValue get() override
     {
-        QQmlAdaptorModelEngineData *data = QQmlAdaptorModelEngineData::get(v4);
-        QV4::Scope scope(v4);
-        QV4::ScopedObject o(scope, v4->memoryManager->allocate<QQmlDelegateModelItemObject>(this));
+        QV4::Scope scope(metaType->v4Engine);
+        QQmlAdaptorModelEngineData *data = QQmlAdaptorModelEngineData::get(scope.engine);
+        QV4::ScopedObject o(
+                scope, scope.engine->memoryManager->allocate<QQmlDelegateModelItemObject>(this));
         QV4::ScopedObject p(scope, data->listItemProto.value());
         o->setPrototypeOf(p);
         ++scriptRef;
