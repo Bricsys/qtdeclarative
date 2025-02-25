@@ -135,6 +135,16 @@ LoggerCategoryPrivate *LoggerCategoryPrivate::get(LoggerCategory *loggerCategory
     warning categories in the \c{QQmlSA} framework.
 */
 
+/*!
+    \fn constexpr LoggerWarningId::LoggerWarningId(QAnyStringView name)
+    Constructs a LoggerWarningId object with logging catergory name \a name.
+ */
+
+/*!
+    \fn QAnyStringView LoggerWarningId::name() const
+    Returns the name of the wrapped warning category.
+ */
+
 namespace LoggingUtils {
 
 QString levelToString(const QQmlJS::LoggerCategory &category)
