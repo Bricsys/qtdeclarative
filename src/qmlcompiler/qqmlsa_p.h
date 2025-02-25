@@ -43,14 +43,6 @@ enum class Flag {
     IsListProperty = 0x400,
 };
 
-struct BindingInfo
-{
-    QString fullPropertyName;
-    QQmlSA::Binding binding;
-    QQmlSA::Element bindingScope;
-    bool isAttached;
-};
-
 struct PropertyPassInfo
 {
     QStringList properties;
@@ -92,13 +84,26 @@ public:
     explicit BindingPrivate(Binding *);
     BindingPrivate(Binding *, const BindingPrivate &);
 
+    static BindingPrivate *get(Binding *binding) { return binding->d_func(); }
+    static const BindingPrivate *get(const Binding *binding) { return binding->d_func(); }
+
     static QQmlSA::Binding createBinding(const QQmlJSMetaPropertyBinding &);
     static QQmlJSMetaPropertyBinding binding(QQmlSA::Binding &binding);
     static const QQmlJSMetaPropertyBinding binding(const QQmlSA::Binding &binding);
 
+    void setPropertyName(QString name) { m_binding.setPropertyName(name); }
+
+    Element bindingScope() const { return m_bindingScope; }
+    void setBindingScope(Element bindingScope) { m_bindingScope = bindingScope; }
+
+    bool isAttached() const { return m_isAttached; }
+    void setIsAttached(bool isAttached) { m_isAttached = isAttached; }
+
 private:
     QQmlJSMetaPropertyBinding m_binding;
+    Element m_bindingScope;
     Binding *q_ptr = nullptr;
+    bool m_isAttached = false;
 };
 
 class MethodPrivate
@@ -222,7 +227,7 @@ public:
 
     std::vector<std::shared_ptr<ElementPass>> m_elementPasses;
     std::multimap<QString, PropertyPassInfo> m_propertyPasses;
-    std::unordered_map<quint32, BindingInfo> m_bindingsByLocation;
+    std::unordered_map<quint32, Binding> m_bindingsByLocation;
     QQmlJSImportVisitor *m_visitor = nullptr;
     QQmlJSTypeResolver *m_typeResolver = nullptr;
 };

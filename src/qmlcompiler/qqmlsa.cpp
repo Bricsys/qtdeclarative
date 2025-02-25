@@ -252,8 +252,11 @@ Binding &Binding::operator=(const Binding &other)
     if (*this == other)
         return *this;
 
-    d_func()->m_binding = other.d_func()->m_binding;
-    d_func()->q_ptr = this;
+    Q_D(Binding);
+    d->m_binding = other.d_func()->m_binding;
+    d->m_bindingScope = other.d_func()->m_bindingScope;
+    d->q_ptr = this;
+    d->m_isAttached = other.d_func()->m_isAttached;
     return *this;
 }
 
@@ -265,8 +268,11 @@ Binding &Binding::operator=(Binding &&other) noexcept
     if (*this == other)
         return *this;
 
-    d_func()->m_binding = std::move(other.d_func()->m_binding);
-    d_func()->q_ptr = this;
+    Q_D(Binding);
+    d->m_binding = std::move(other.d_func()->m_binding);
+    d->m_bindingScope = std::move(other.d_func()->m_bindingScope);
+    d->q_ptr = this;
+    d->m_isAttached = other.d_func()->m_isAttached;
     return *this;
 }
 
@@ -277,11 +283,14 @@ Binding::~Binding() = default;
 
 bool Binding::operatorEqualsImpl(const Binding &lhs, const Binding &rhs)
 {
-    return lhs.d_func()->m_binding == rhs.d_func()->m_binding;
+    return lhs.d_func()->m_binding == rhs.d_func()->m_binding
+            && lhs.d_func()->m_bindingScope == rhs.d_func()->m_bindingScope
+            && lhs.d_func()->m_isAttached == rhs.d_func()->m_isAttached;
 }
 
 BindingPrivate::BindingPrivate(Binding *interface, const BindingPrivate &other)
-    : m_binding{ other.m_binding }, q_ptr{ interface }
+    : m_binding{ other.m_binding }, m_bindingScope{ other.m_bindingScope }, q_ptr{ interface },
+      m_isAttached{ other.m_isAttached }
 {
 }
 
@@ -312,6 +321,14 @@ Element Binding::groupType() const
 }
 
 /*!
+    Returns the Element scope in which the binding is defined.
+ */
+Element Binding::bindingScope() const
+{
+    return BindingPrivate::get(this)->m_bindingScope;
+}
+
+/*!
     Returns the type of this binding.
  */
 QQmlSA::BindingType Binding::bindingType() const
@@ -334,6 +351,14 @@ QString Binding::stringValue() const
 QString Binding::propertyName() const
 {
     return BindingPrivate::binding(*this).propertyName();
+}
+
+/*!
+    Returns \c true if this type is attached to another one, \c false otherwise.
+ */
+bool Binding::isAttached() const
+{
+    return BindingPrivate::get(this)->m_isAttached;
 }
 
 /*!
@@ -1486,8 +1511,8 @@ void PassManagerPrivate::addBindingSourceLocations(const Element &element, const
                                                    const QString prefix, bool isAttached)
 {
     const Element &currentScope = scope.isNull() ? element : scope;
-    const auto ownBindings = currentScope.ownPropertyBindings();
-    for (const auto &binding : ownBindings) {
+    auto ownBindings = currentScope.ownPropertyBindings();
+    for (auto &binding : ownBindings) {
         switch (binding.bindingType()) {
         case QQmlSA::BindingType::GroupProperty:
             addBindingSourceLocations(element, Element{ binding.groupType() },
@@ -1511,9 +1536,10 @@ void PassManagerPrivate::addBindingSourceLocations(const Element &element, const
             break;
         }
 
-        m_bindingsByLocation.insert({ binding.sourceLocation().offset(),
-                                      BindingInfo{ prefix + binding.propertyName(), binding,
-                                                   currentScope, isAttached } });
+        BindingPrivate::get(&binding)->setBindingScope(currentScope);
+        BindingPrivate::get(&binding)->setPropertyName(prefix + binding.propertyName());
+        BindingPrivate::get(&binding)->setIsAttached(isAttached);
+        m_bindingsByLocation.insert({ binding.sourceLocation().offset(), binding });
         if (binding.bindingType() != QQmlSA::BindingType::Script)
             analyzeBinding(element, QQmlSA::Element(), binding.sourceLocation());
     }
@@ -1584,22 +1610,22 @@ void PassManagerPrivate::analyzeCall(const Element &element, const QString &prop
 void PassManagerPrivate::analyzeBinding(const Element &element, const QQmlSA::Element &value,
                                         const QQmlSA::SourceLocation &location)
 {
-    const auto info = m_bindingsByLocation.find(location.offset());
+    const auto it = m_bindingsByLocation.find(location.offset());
 
     // If there's no matching binding that means we're in a nested Ret somewhere inside an
     // expression
-    if (info == m_bindingsByLocation.end())
+    if (it == m_bindingsByLocation.cend())
         return;
 
-    const QQmlSA::Element &bindingScope = info->second.bindingScope;
-    const QQmlSA::Binding &binding = info->second.binding;
-    const QString &propertyName = info->second.fullPropertyName;
+    const auto &[offset, binding] = *it;
+    const QQmlSA::Element &bindingScope = binding.bindingScope();
+    const QString &propertyName = binding.propertyName();
 
     const auto elementPasses = findPropertyUsePasses(element, propertyName);
     for (PropertyPass *pass : elementPasses)
         pass->onBinding(element, propertyName, binding, bindingScope, value);
 
-    if (!info->second.isAttached || bindingScope.baseType().isNull())
+    if (!binding.isAttached() || bindingScope.baseType().isNull())
         return;
 
     const auto bindingScopePasses = findPropertyUsePasses(bindingScope.baseType(), propertyName);
@@ -1946,7 +1972,7 @@ std::multimap<QString, PropertyPassInfo> PassManager::propertyPasses() const
 /*!
     Returns bindings by their source location.
  */
-std::unordered_map<quint32, BindingInfo> PassManager::bindingsByLocation() const
+std::unordered_map<quint32, Binding> PassManager::bindingsByLocation() const
 {
     Q_D(const PassManager);
     return d->m_bindingsByLocation;
