@@ -161,7 +161,6 @@ QQmlDelegateModelParts::QQmlDelegateModelParts(QQmlDelegateModel *parent)
 
 QQmlDelegateModelPrivate::QQmlDelegateModelPrivate(QQmlContext *ctxt)
     : m_delegateChooser(nullptr)
-    , m_cacheMetaType(nullptr)
     , m_context(ctxt)
     , m_parts(nullptr)
     , m_filterGroup(QStringLiteral("items"))
@@ -186,9 +185,6 @@ QQmlDelegateModelPrivate::~QQmlDelegateModelPrivate()
 
     // Free up all items in the pool
     drainReusableItemsPool(0);
-
-    if (m_cacheMetaType)
-        m_cacheMetaType->release();
 }
 
 int QQmlDelegateModelPrivate::adaptorModelCount() const
@@ -306,7 +302,7 @@ void QQmlDelegateModel::componentComplete()
         }
     }
 
-    d->m_cacheMetaType = new QQmlDelegateModelItemMetaType(
+    d->m_cacheMetaType = QQml::makeRefPointer<QQmlDelegateModelItemMetaType>(
                 d->m_context->engine()->handle(), this, groupNames);
 
     d->m_compositor.setGroupCount(d->m_groupCount);

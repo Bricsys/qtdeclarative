@@ -349,7 +349,7 @@ public:
     QQmlStrongJSQObjectReference<QQmlComponent> m_delegate;
     QQmlAbstractDelegateComponent *m_delegateChooser;
     QMetaObject::Connection m_delegateChooserChanged;
-    QQmlDelegateModelItemMetaType *m_cacheMetaType;
+    QQmlRefPointer<QQmlDelegateModelItemMetaType> m_cacheMetaType;
     QPointer<QQmlContext> m_context;
     QQmlDelegateModelParts *m_parts;
     QQmlDelegateModelGroupEmitterList m_pendingParts;
