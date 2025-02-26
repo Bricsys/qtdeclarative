@@ -45,7 +45,7 @@ public:
     QQmlDelegateModelItemMetaType(QV4::ExecutionEngine *engine, QQmlDelegateModel *model, const QStringList &groupNames);
     ~QQmlDelegateModelItemMetaType();
 
-    void initializeMetaObject();
+    void initializeAttachedMetaObject();
     void initializePrototype();
 
     int parseGroups(const QStringList &groupNames) const;
@@ -54,7 +54,7 @@ public:
     QPointer<QQmlDelegateModel> model;
     const int groupCount;
     QV4::ExecutionEngine * const v4Engine;
-    QQmlDelegateModelAttachedMetaObject *metaObject;
+    QQmlRefPointer<QQmlDelegateModelAttachedMetaObject> attachedMetaObject;
     const QStringList groupNames;
     QV4::PersistentValue modelItemProto;
 };

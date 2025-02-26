@@ -2166,18 +2166,13 @@ QQmlDelegateModelItemMetaType::QQmlDelegateModelItemMetaType(
     : model(model)
     , groupCount(groupNames.size() + 1)
     , v4Engine(engine)
-    , metaObject(nullptr)
     , groupNames(groupNames)
 {
 }
 
-QQmlDelegateModelItemMetaType::~QQmlDelegateModelItemMetaType()
-{
-    if (metaObject)
-        metaObject->release();
-}
+QQmlDelegateModelItemMetaType::~QQmlDelegateModelItemMetaType() = default;
 
-void QQmlDelegateModelItemMetaType::initializeMetaObject()
+void QQmlDelegateModelItemMetaType::initializeAttachedMetaObject()
 {
     QMetaObjectBuilder builder;
     builder.setFlags(DynamicMetaObject);
@@ -2201,7 +2196,8 @@ void QQmlDelegateModelItemMetaType::initializeMetaObject()
         propertyBuilder.setWritable(true);
     }
 
-    metaObject = new QQmlDelegateModelAttachedMetaObject(this, builder.toMetaObject());
+    attachedMetaObject = QQml::makeRefPointer<QQmlDelegateModelAttachedMetaObject>(
+            this, builder.toMetaObject());
 }
 
 void QQmlDelegateModelItemMetaType::initializePrototype()
@@ -2619,11 +2615,11 @@ QQmlDelegateModelAttached::QQmlDelegateModelAttached(
     // Let m_previousIndex be equal to m_currentIndex
     std::copy(std::begin(m_currentIndex), std::end(m_currentIndex), std::begin(m_previousIndex));
 
-    if (!cacheItem->metaType->metaObject)
-        cacheItem->metaType->initializeMetaObject();
+    if (!cacheItem->metaType->attachedMetaObject)
+        cacheItem->metaType->initializeAttachedMetaObject();
 
-    QObjectPrivate::get(this)->metaObject = cacheItem->metaType->metaObject;
-    cacheItem->metaType->metaObject->addref();
+    QObjectPrivate::get(this)->metaObject = cacheItem->metaType->attachedMetaObject.data();
+    cacheItem->metaType->attachedMetaObject->addref();
 }
 
 void QQmlDelegateModelAttached::resetCurrentIndex()
