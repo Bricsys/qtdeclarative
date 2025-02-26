@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements QtQmlStatusChange
             // Connect signal listener to "onClicked" signal from main.qml
             // addSignalListener returns int which can be used later to identify the listener
             //! [qml signal listener]
-            if (qtQmlStatus == QtQmlStatus.READY && !m_switch.isChecked()) {
+            if (qtQmlStatus == QtQmlStatus.READY && m_switch.isChecked()) {
                 m_qmlButtonSignalListenerId = m_firstQmlContent.connectOnClickedListener(
                         (String name, Void v) -> {
                             Log.i(TAG, "QML button clicked");
