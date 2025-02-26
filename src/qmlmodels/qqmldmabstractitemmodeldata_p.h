@@ -246,7 +246,7 @@ public:
     {
         if (!metaObject) {
             VDMAbstractItemModelDataType *dataType = const_cast<VDMAbstractItemModelDataType *>(this);
-            dataType->initializeMetaType(model);
+            dataType->initializeMetaObject(model);
         }
 
         if (const QAbstractItemModel *aim = model.aim()) {
@@ -307,11 +307,11 @@ public:
             int index, int row, int column) override
     {
         if (!metaObject)
-            initializeMetaType(model);
+            initializeMetaObject(model);
         return new QQmlDMAbstractItemModelData(metaType, this, index, row, column);
     }
 
-    void initializeMetaType(const QQmlAdaptorModel &model)
+    void initializeMetaObject(const QQmlAdaptorModel &model)
     {
         QMetaObjectBuilder builder;
         QQmlAdaptorModelEngineData::setModelDataType<QQmlDMAbstractItemModelData>(&builder, this);

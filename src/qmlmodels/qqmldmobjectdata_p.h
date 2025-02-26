@@ -107,15 +107,14 @@ public:
             int index, int row, int column) override
     {
         if (!metaObject)
-            initializeMetaType(model);
+            initializeMetaObject();
         return index >= 0 && index < model.list.count()
                 ? new QQmlDMObjectData(metaType, this, index, row, column, qvariant_cast<QObject *>(model.list.at(index)))
                 : nullptr;
     }
 
-    void initializeMetaType(QQmlAdaptorModel &model)
+    void initializeMetaObject()
     {
-        Q_UNUSED(model);
         QQmlAdaptorModelEngineData::setModelDataType<QQmlDMObjectData>(&builder, this);
 
         metaObject.reset(builder.toMetaObject());
