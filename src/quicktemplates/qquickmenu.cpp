@@ -253,8 +253,8 @@ static const int SUBMENU_DELAY = 225;
     \li \l {Popup::}{aboutToHide()}
     \endlist
 
-    In addition, showing a popup (using for example \l {Popup::}{open()} or
-    \l popup() will, on some platforms, be a blocking call. This means that the
+    In addition, showing a popup (using, for example, \l {Popup::}{open()} or \l
+    {popup()}) will be a blocking call on some platforms. This means that the
     call will not return before the menu is closed again, which can affect the
     logic in your application. This is especially important to take into
     consideration if your application is targeting multiple
