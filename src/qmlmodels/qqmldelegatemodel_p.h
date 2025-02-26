@@ -190,7 +190,7 @@ class QQmlDelegateModelAttached : public QObject
 public:
     QQmlDelegateModelAttached(QObject *parent);
     QQmlDelegateModelAttached(QQmlDelegateModelItem *cacheItem, QObject *parent);
-    ~QQmlDelegateModelAttached() {}
+    ~QQmlDelegateModelAttached();
 
     void resetCurrentIndex();
     void setCacheItem(QQmlDelegateModelItem *item);

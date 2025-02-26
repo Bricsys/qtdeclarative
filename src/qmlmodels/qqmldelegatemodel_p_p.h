@@ -225,11 +225,11 @@ public:
 class QQmlDelegateModelGroupEmitter
 {
 public:
-    virtual ~QQmlDelegateModelGroupEmitter() {}
+    virtual ~QQmlDelegateModelGroupEmitter();
     virtual void emitModelUpdated(const QQmlChangeSet &changeSet, bool reset) = 0;
-    virtual void createdPackage(int, QQuickPackage *) {}
-    virtual void initPackage(int, QQuickPackage *) {}
-    virtual void destroyingPackage(QQuickPackage *) {}
+    virtual void createdPackage(int, QQuickPackage *);
+    virtual void initPackage(int, QQuickPackage *);
+    virtual void destroyingPackage(QQuickPackage *);
 
     QIntrusiveListNode emitterNode;
 };

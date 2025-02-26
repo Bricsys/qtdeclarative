@@ -1155,6 +1155,11 @@ void QQDMIncubationTask::setInitialState(QObject *o)
     vdm->setInitialState(this, o);
 }
 
+QQmlDelegateModelGroupEmitter::~QQmlDelegateModelGroupEmitter() = default;
+void QQmlDelegateModelGroupEmitter::createdPackage(int, QQuickPackage *) {}
+void QQmlDelegateModelGroupEmitter::initPackage(int, QQuickPackage *) {}
+void QQmlDelegateModelGroupEmitter::destroyingPackage(QQuickPackage *) {}
+
 void QQmlDelegateModelPrivate::setInitialState(QQDMIncubationTask *incubationTask, QObject *o)
 {
     QQmlDelegateModelItem *cacheItem = incubationTask->incubating;
@@ -2622,6 +2627,8 @@ QQmlDelegateModelAttached::QQmlDelegateModelAttached(
     cacheItem->metaType->attachedMetaObject->addref();
 }
 
+QQmlDelegateModelAttached::~QQmlDelegateModelAttached() = default;
+
 void QQmlDelegateModelAttached::resetCurrentIndex()
 {
     if (QQDMIncubationTask *incubationTask = m_cacheItem->incubationTask) {
@@ -2938,9 +2945,7 @@ QQmlDelegateModelGroup::QQmlDelegateModelGroup(
     d->setModel(model, Compositor::Group(index));
 }
 
-QQmlDelegateModelGroup::~QQmlDelegateModelGroup()
-{
-}
+QQmlDelegateModelGroup::~QQmlDelegateModelGroup() = default;
 
 /*!
     \qmlproperty string QtQml.Models::DelegateModelGroup::name
