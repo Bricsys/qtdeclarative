@@ -14,12 +14,12 @@ QtBuild {
 
 android {
     namespace = "com.example.qtabstractlistmodel_kotlin"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.qtabstractlistmodel_kotlin"
         minSdk = 28
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
