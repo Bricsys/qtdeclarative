@@ -43,9 +43,9 @@ enum class Flag {
     IsListProperty = 0x400,
 };
 
-struct PropertyPassInfo
+struct PropertyPassInvocation
 {
-    QStringList properties;
+    QString property;
     std::shared_ptr<QQmlSA::PropertyPass> pass;
     bool allowInheritance = true;
 };
@@ -226,7 +226,7 @@ public:
                                    const QString prefix = QString(), bool isAttached = false);
 
     std::vector<std::unique_ptr<ElementPass>> m_elementPasses;
-    std::multimap<QString, PropertyPassInfo> m_propertyPasses;
+    std::multimap<QString, PropertyPassInvocation> m_propertyPasses;
     std::unordered_map<quint32, Binding> m_bindingsByLocation;
     QQmlJSImportVisitor *m_visitor = nullptr;
     QQmlJSTypeResolver *m_typeResolver = nullptr;
