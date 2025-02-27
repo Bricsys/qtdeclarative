@@ -534,6 +534,42 @@ void QQmlDelegateModel::setRootIndex(const QVariant &root)
 }
 
 /*!
+    \qmlproperty enumeration QtQml.Models::DelegateModel::delegateModelAccess
+
+    \include delegatemodelaccess.qdocinc
+*/
+QQmlDelegateModel::DelegateModelAccess QQmlDelegateModel::delegateModelAccess() const
+{
+    Q_D(const QQmlDelegateModel);
+    return d->m_adaptorModel.delegateModelAccess;
+}
+
+void QQmlDelegateModel::setDelegateModelAccess(
+        QQmlDelegateModel::DelegateModelAccess delegateModelAccess)
+{
+    Q_D(QQmlDelegateModel);
+    if (d->m_adaptorModel.delegateModelAccess == delegateModelAccess)
+        return;
+
+    if (d->m_transaction) {
+        qmlWarning(this) << tr("The delegateModelAccess of a DelegateModel "
+                               "cannot be changed within onUpdated.");
+        return;
+    }
+
+    if (d->m_complete) {
+        _q_itemsRemoved(0, d->m_count);
+        d->m_adaptorModel.delegateModelAccess = delegateModelAccess;
+        _q_itemsInserted(0, d->adaptorModelCount());
+        d->requestMoreIfNecessary();
+    } else {
+        d->m_adaptorModel.delegateModelAccess = delegateModelAccess;
+    }
+
+    emit delegateModelAccessChanged();
+}
+
+/*!
     \qmlmethod QModelIndex QtQml.Models::DelegateModel::modelIndex(int index)
 
     QAbstractItemModel provides a hierarchical tree of data, whereas
@@ -904,7 +940,9 @@ static bool isDoneIncubating(QQmlIncubator::Status status)
      return status == QQmlIncubator::Ready || status == QQmlIncubator::Error;
 }
 
-void QQDMIncubationTask::initializeRequiredProperties(QQmlDelegateModelItem *modelItemToIncubate, QObject *object)
+void QQDMIncubationTask::initializeRequiredProperties(
+        QQmlDelegateModelItem *modelItemToIncubate, QObject *object,
+        QQmlDelegateModel::DelegateModelAccess access)
 {
     // QQmlObjectCreator produces a private internal context.
     // We can always attach the extra object there.
@@ -976,9 +1014,18 @@ void QQDMIncubationTask::initializeRequiredProperties(QQmlDelegateModelItem *mod
                             object, propName, requiredProperties,
                             engine, &wasInRequired);
                 if (wasInRequired) {
-                    QQmlAnyBinding binding = QQmlPropertyToPropertyBinding::create(
-                        engine, QQmlProperty(itemOrProxy, propName), targetProp);
-                    binding.installOn(targetProp);
+                    QQmlProperty sourceProp(itemOrProxy, propName);
+                    QQmlAnyBinding forward = QQmlPropertyToPropertyBinding::create(
+                            engine, sourceProp, targetProp);
+                    if (access != QQmlDelegateModel::Qt5ReadWrite)
+                        forward.setSticky();
+                    forward.installOn(targetProp);
+                    if (access == QQmlDelegateModel::ReadWrite && sourceProp.isWritable()) {
+                        QQmlAnyBinding reverse = QQmlPropertyToPropertyBinding::create(
+                                engine, targetProp, sourceProp);
+                        reverse.setSticky();
+                        reverse.installOn(sourceProp);
+                    }
                 }
             }
         }
@@ -1163,7 +1210,8 @@ void QQmlDelegateModelGroupEmitter::destroyingPackage(QQuickPackage *) {}
 void QQmlDelegateModelPrivate::setInitialState(QQDMIncubationTask *incubationTask, QObject *o)
 {
     QQmlDelegateModelItem *cacheItem = incubationTask->incubating;
-    incubationTask->initializeRequiredProperties(incubationTask->incubating, o);
+    incubationTask->initializeRequiredProperties(
+            incubationTask->incubating, o, m_adaptorModel.delegateModelAccess);
     cacheItem->object = o;
 
     if (QQuickPackage *package = qmlobject_cast<QQuickPackage *>(cacheItem->object))
@@ -1266,8 +1314,14 @@ QObject *QQmlDelegateModelPrivate::object(Compositor::Group group, int index, QQ
             ctxt->setContextObject(cacheItem);
             cacheItem->contextData = ctxt;
 
-            if (m_adaptorModel.hasProxyObject())
-                ctxt = cacheItem->initProxy();
+            // If the model is read-only we cannot just expose the object as context
+            // We actually need a separate model object to moderate access.
+            if (m_adaptorModel.hasProxyObject()) {
+                if (m_adaptorModel.delegateModelAccess == QQmlDelegateModel::ReadOnly)
+                    cacheItem->initProxy();
+                else
+                    ctxt = cacheItem->initProxy();
+            }
 
             cp->incubateObject(
                         cacheItem->incubationTask,

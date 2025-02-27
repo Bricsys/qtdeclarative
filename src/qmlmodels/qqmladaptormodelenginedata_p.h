@@ -52,12 +52,14 @@ public:
         metaType->signalOffset = T::staticMetaObject.methodCount();
     }
 
-    static void addProperty(QMetaObjectBuilder *builder, int propertyId, const QByteArray &propertyName, const QByteArray &propertyType)
+    static void addProperty(
+            QMetaObjectBuilder *builder, int propertyId, const QByteArray &propertyName,
+            const QByteArray &propertyType, bool isWritable)
     {
         builder->addSignal("__" + QByteArray::number(propertyId) + "()");
         QMetaPropertyBuilder property = builder->addProperty(
                 propertyName, propertyType, propertyId);
-        property.setWritable(true);
+        property.setWritable(isWritable);
     }
 
     V4_DEFINE_EXTENSION(QQmlAdaptorModelEngineData, get)

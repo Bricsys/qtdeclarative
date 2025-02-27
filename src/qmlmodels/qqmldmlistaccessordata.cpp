@@ -117,7 +117,8 @@ int VDMListDelegateDataType::createProperty(const char *name, const char *)
 
     // We use QVariant because the types may be different in the different objects.
     QQmlAdaptorModelEngineData::addProperty(
-            &builder, propertyIndex, name, QByteArrayLiteral("QVariant"));
+            &builder, propertyIndex, name, QByteArrayLiteral("QVariant"),
+            model->delegateModelAccess != QQmlDelegateModel::ReadOnly);
 
     metaObject.reset(builder.toMetaObject());
     *static_cast<QMetaObject *>(this) = *metaObject;

@@ -40,16 +40,16 @@ void QQmlAdaptorModel::setModel(const QVariant &variant)
         if (qobject_cast<QAbstractItemModel *>(object))
             accessors = new VDMAbstractItemModelDataType(this);
         else
-            accessors = new VDMObjectDelegateDataType;
+            accessors = new VDMObjectDelegateDataType(this);
     } else if (list.type() == QQmlListAccessor::ListProperty) {
         auto object = static_cast<const QQmlListReference *>(list.list().constData())->object();
         if (QQmlData *ddata = QQmlData::get(object))
             modelStrongReference = ddata->jsWrapper;
         setObject(object);
-        accessors = new VDMObjectDelegateDataType;
+        accessors = new VDMObjectDelegateDataType(this);
     } else if (list.type() == QQmlListAccessor::ObjectList) {
         setObject(nullptr);
-        accessors = new VDMObjectDelegateDataType;
+        accessors = new VDMObjectDelegateDataType(this);
     } else if (list.type() != QQmlListAccessor::Invalid
             && list.type() != QQmlListAccessor::Instance) { // Null QObject
         setObject(nullptr);

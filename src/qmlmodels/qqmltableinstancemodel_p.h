@@ -72,6 +72,15 @@ public:
     QQmlComponent *delegate() const;
     void setDelegate(QQmlComponent *);
 
+    QQmlDelegateModel::DelegateModelAccess delegateModelAccess() const
+    {
+        return m_adaptorModel.delegateModelAccess;
+    }
+    void setDelegateModelAccess(QQmlDelegateModel::DelegateModelAccess delegateModelAccess)
+    {
+        m_adaptorModel.delegateModelAccess = delegateModelAccess;
+    }
+
     const QAbstractItemModel *abstractItemModel() const override;
 
     QObject *object(int index, QQmlIncubator::IncubationMode incubationMode = QQmlIncubator::AsynchronousIfNested) override;

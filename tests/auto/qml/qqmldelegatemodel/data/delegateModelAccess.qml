@@ -1,4 +1,5 @@
 import QtQml
+import Test
 
 DelegateModel {
     id: root
@@ -62,23 +63,23 @@ DelegateModel {
         property int y: 12
     }
 
-    property int n: -1
-    property int o: -1
+    property int modelIndex: Model.None
+    property int delegateIndex: Delegate.None
 
     model: {
-        switch (n) {
-        case 0: return singularModel
-        case 1: return listModel
-        case 2: return array
-        case 3: return object
+        switch (modelIndex) {
+        case Model.Singular: return singularModel
+        case Model.List: return listModel
+        case Model.Array: return array
+        case Model.Object: return object
         }
         return undefined;
     }
 
     delegate: {
-        switch (o) {
-        case 0: return untypedDelegate
-        case 1: return typedDelegate
+        switch (delegateIndex) {
+        case Delegate.Untyped: return untypedDelegate
+        case Delegate.Typed: return typedDelegate
         }
         return null
     }

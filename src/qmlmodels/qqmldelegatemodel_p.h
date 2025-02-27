@@ -47,6 +47,8 @@ class Q_QMLMODELS_EXPORT QQmlDelegateModel : public QQmlInstanceModel, public QQ
     Q_PROPERTY(QQmlListProperty<QQmlDelegateModelGroup> groups READ groups CONSTANT)
     Q_PROPERTY(QObject *parts READ parts CONSTANT)
     Q_PROPERTY(QVariant rootIndex READ rootIndex WRITE setRootIndex NOTIFY rootIndexChanged)
+    Q_PROPERTY(DelegateModelAccess delegateModelAccess READ delegateModelAccess
+            WRITE setDelegateModelAccess NOTIFY delegateModelAccessChanged REVISION(6, 10) FINAL)
     Q_CLASSINFO("DefaultProperty", "delegate")
     QML_NAMED_ELEMENT(DelegateModel)
     QML_ADDED_IN_VERSION(2, 1)
@@ -54,6 +56,13 @@ class Q_QMLMODELS_EXPORT QQmlDelegateModel : public QQmlInstanceModel, public QQ
     Q_INTERFACES(QQmlParserStatus)
 
 public:
+    enum DelegateModelAccess : quint8 {
+        Qt5ReadWrite,
+        ReadOnly,
+        ReadWrite
+    };
+    Q_ENUM(DelegateModelAccess)
+
     QQmlDelegateModel();
     QQmlDelegateModel(QQmlContext *, QObject *parent=nullptr);
     ~QQmlDelegateModel();
@@ -69,6 +78,9 @@ public:
 
     QVariant rootIndex() const;
     void setRootIndex(const QVariant &root);
+
+    DelegateModelAccess delegateModelAccess() const;
+    void setDelegateModelAccess(DelegateModelAccess delegateModelAccess);
 
     Q_INVOKABLE QVariant modelIndex(int idx) const;
     Q_INVOKABLE QVariant parentModelIndex() const;
@@ -130,6 +142,7 @@ Q_SIGNALS:
     void defaultGroupsChanged();
     void rootIndexChanged();
     void delegateChanged();
+    Q_REVISION(6, 10) void delegateModelAccessChanged();
 
 private Q_SLOTS:
     void _q_itemsChanged(int index, int count, const QVector<int> &roles);

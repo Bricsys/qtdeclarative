@@ -214,7 +214,9 @@ public:
         , incubating(nullptr)
         , vdm(l) {}
 
-    void initializeRequiredProperties(QQmlDelegateModelItem *modelItemToIncubate, QObject* object);
+    void initializeRequiredProperties(
+            QQmlDelegateModelItem *modelItemToIncubate, QObject* object,
+            QQmlDelegateModel::DelegateModelAccess access);
     void statusChanged(Status) override;
     void setInitialState(QObject *) override;
 

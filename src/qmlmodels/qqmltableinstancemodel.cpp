@@ -320,8 +320,14 @@ void QQmlTableInstanceModel::incubateModelItem(QQmlDelegateModelItem *modelItem,
             ctxt->setContextObject(modelItem);
             modelItem->contextData = ctxt;
 
-            if (m_adaptorModel.hasProxyObject())
-                ctxt = modelItem->initProxy();
+            // If the model is read-only we cannot just expose the object as context
+            // We actually need a separate model object to moderate access.
+            if (m_adaptorModel.hasProxyObject()) {
+                if (m_adaptorModel.delegateModelAccess == QQmlDelegateModel::ReadOnly)
+                    modelItem->initProxy();
+                else
+                    ctxt = modelItem->initProxy();
+            }
 
             cp->incubateObject(
                         modelItem->incubationTask,
@@ -523,7 +529,8 @@ const QAbstractItemModel *QQmlTableInstanceModel::abstractItemModel() const
 
 void QQmlTableInstanceModelIncubationTask::setInitialState(QObject *object)
 {
-    initializeRequiredProperties(modelItemToIncubate, object);
+    initializeRequiredProperties(
+            modelItemToIncubate, object, tableInstanceModel->delegateModelAccess());
     modelItemToIncubate->object = object;
     emit tableInstanceModel->initItem(modelItemToIncubate->modelIndex(), object);
 

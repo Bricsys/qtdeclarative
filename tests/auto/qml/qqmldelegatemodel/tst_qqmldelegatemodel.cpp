@@ -889,21 +889,68 @@ void tst_QQmlDelegateModel::delegateChooser()
     }
 }
 
+namespace Model {
+Q_NAMESPACE
+QML_ELEMENT
+enum Kind : qint8
+{
+    None = -1,
+    Singular,
+    List,
+    Array,
+    Object
+};
+Q_ENUM_NS(Kind)
+}
+
+namespace Delegate {
+Q_NAMESPACE
+QML_ELEMENT
+enum Kind : qint8
+{
+    None = -1,
+    Untyped,
+    Typed
+};
+Q_ENUM_NS(Kind)
+}
+
+template<typename Enum>
+const char *enumKey(Enum value) {
+    const QMetaObject *mo = qt_getEnumMetaObject(value);
+    const QMetaEnum metaEnum = mo->enumerator(mo->indexOfEnumerator(qt_getEnumName(value)));
+    return metaEnum.valueToKey(value);
+}
+
 void tst_QQmlDelegateModel::delegateModelAccess_data()
 {
-    QTest::addColumn<int>("n");
-    QTest::addColumn<int>("o");
+    QTest::addColumn<QQmlDelegateModel::DelegateModelAccess>("access");
+    QTest::addColumn<Model::Kind>("modelKind");
+    QTest::addColumn<Delegate::Kind>("delegateKind");
 
-    for (int n = 0; n < 4; ++n) {
-        for (int o = 0; o < 2; ++o)
-            QTest::addRow("model%d-typed%d", n, o) << n << o;
+    using Access = QQmlDelegateModel::DelegateModelAccess;
+    for (auto access : { Access::Qt5ReadWrite, Access::ReadOnly, Access::ReadWrite }) {
+        for (auto model : { Model::Singular, Model::List, Model::Array, Model::Object }) {
+            for (auto delegate : { Delegate::Untyped, Delegate::Typed }) {
+                QTest::addRow("%s-%s-%s", enumKey(access), enumKey(model), enumKey(delegate))
+                        << access << model << delegate;
+            }
+        }
     }
 }
 
 void tst_QQmlDelegateModel::delegateModelAccess()
 {
-    QFETCH(int, n);
-    QFETCH(int, o);
+    static const bool initialized = []() {
+        qmlRegisterNamespaceAndRevisions(&Model::staticMetaObject, "Test", 1);
+        qmlRegisterNamespaceAndRevisions(&Delegate::staticMetaObject, "Test", 1);
+        return true;
+    }();
+    QVERIFY(initialized);
+
+    QFETCH(QQmlDelegateModel::DelegateModelAccess, access);
+    QFETCH(Model::Kind, modelKind);
+    QFETCH(Delegate::Kind, delegateKind);
 
     QQmlEngine engine;
     const QUrl url = testFileUrl("delegateModelAccess.qml");
@@ -914,27 +961,52 @@ void tst_QQmlDelegateModel::delegateModelAccess()
     QQmlDelegateModel *delegateModel = qobject_cast<QQmlDelegateModel *>(object.data());
     QVERIFY(delegateModel);
 
-    if (o == 0 && n == 2)
+    if (delegateKind == Delegate::Untyped && modelKind == Model::Array)
         QSKIP("Properties of objects in arrays are not exposed as context properties");
 
-    object->setProperty("n", n);
-    object->setProperty("o", o);
+    if (access == QQmlDelegateModel::ReadOnly) {
+        const QRegularExpression message(
+                url.toString() + ":[0-9]+: TypeError: Cannot assign to read-only property \"x\"");
+
+        QTest::ignoreMessage(QtWarningMsg, message);
+        if (delegateKind == Delegate::Untyped)
+            QTest::ignoreMessage(QtWarningMsg, message);
+    }
+
+    object->setProperty("delegateModelAccess", access);
+    object->setProperty("modelIndex", modelKind);
+    object->setProperty("delegateIndex", delegateKind);
 
     QObject *delegate = delegateModel->object(0);
     QVERIFY(delegate);
 
-    QCOMPARE(delegate->property("immediateX").toDouble(), 11);
-    QCOMPARE(delegate->property("modelX").toDouble(), 11);
+    const bool modelWritable = access != QQmlDelegateModel::ReadOnly;
+    const bool immediateWritable = (delegateKind == Delegate::Untyped)
+            ? access != QQmlDelegateModel::ReadOnly
+            : access == QQmlDelegateModel::ReadWrite;
+
+    double expected = 11;
+
+    QCOMPARE(delegate->property("immediateX").toDouble(), expected);
+    QCOMPARE(delegate->property("modelX").toDouble(), expected);
+
+    if (modelWritable)
+        expected = 3;
 
     QMetaObject::invokeMethod(delegate, "writeThroughModel");
-    QCOMPARE(delegate->property("immediateX").toDouble(), 3);
-    QCOMPARE(delegate->property("modelX").toDouble(), 3);
+    QCOMPARE(delegate->property("immediateX").toDouble(), expected);
+    QCOMPARE(delegate->property("modelX").toDouble(), expected);
+
+    if (immediateWritable)
+        expected = 1;
 
     QMetaObject::invokeMethod(delegate, "writeImmediate");
-    QCOMPARE(delegate->property("immediateX").toDouble(), 1);
 
-    // Writing the required property has broken the binding, rather than writing the model
-    QCOMPARE(delegate->property("modelX").toDouble(), o == 0 ? 1 : 3);
+    // Writes to required properties always succeed, but might not be propagated to the model
+    QCOMPARE(delegate->property("immediateX").toDouble(),
+             delegateKind == Delegate::Untyped ? expected : 1);
+
+    QCOMPARE(delegate->property("modelX").toDouble(), expected);
 }
 
 QTEST_MAIN(tst_QQmlDelegateModel)

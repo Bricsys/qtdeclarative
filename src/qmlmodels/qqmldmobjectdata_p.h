@@ -59,26 +59,26 @@ class VDMObjectDelegateDataType final
       public QQmlAdaptorModel::Accessors
 {
 public:
-    int propertyOffset;
-    int signalOffset;
-    bool shared;
     QMetaObjectBuilder builder;
+    QQmlAdaptorModel *model = nullptr;
+    int propertyOffset = 0;
+    int signalOffset = 0;
+    bool shared = false;
 
-    VDMObjectDelegateDataType()
-        : propertyOffset(0)
-        , signalOffset(0)
+    VDMObjectDelegateDataType(QQmlAdaptorModel *model)
+        : model(model)
         , shared(true)
     {
     }
 
     VDMObjectDelegateDataType(const VDMObjectDelegateDataType &type)
-        : propertyOffset(type.propertyOffset)
-        , signalOffset(type.signalOffset)
-        , shared(false)
-        , builder(type.metaObject.data(), QMetaObjectBuilder::Properties
+        : builder(type.metaObject.data(), QMetaObjectBuilder::Properties
                 | QMetaObjectBuilder::Signals
                 | QMetaObjectBuilder::SuperClass
                 | QMetaObjectBuilder::ClassName)
+        , model(type.model)
+        , propertyOffset(type.propertyOffset)
+        , signalOffset(type.signalOffset)
     {
         builder.setFlags(MetaObjectFlag::DynamicMetaObject);
     }
@@ -217,8 +217,9 @@ public:
             } else {
                 propertyBuilder = m_type->builder.addProperty(property.name(), property.typeName());
             }
-            propertyBuilder.setWritable(property.isWritable());
-            propertyBuilder.setResettable(property.isResettable());
+            const bool modelWritable = m_type->model->delegateModelAccess != QQmlDelegateModel::ReadOnly;
+            propertyBuilder.setWritable(modelWritable && property.isWritable());
+            propertyBuilder.setResettable(modelWritable && property.isResettable());
             propertyBuilder.setConstant(property.isConstant());
         }
 

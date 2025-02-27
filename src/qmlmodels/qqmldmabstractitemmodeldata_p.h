@@ -323,7 +323,9 @@ public:
             const int propertyId = propertyRoles.size();
             propertyRoles.append(it.key());
             roleNames.insert(it.value(), it.key());
-            QQmlAdaptorModelEngineData::addProperty(&builder, propertyId, it.value(), propertyType);
+            QQmlAdaptorModelEngineData::addProperty(
+                    &builder, propertyId, it.value(), propertyType,
+                    model.delegateModelAccess != QQmlDelegateModel::ReadOnly);
         }
 
         metaObject.reset(builder.toMetaObject());
