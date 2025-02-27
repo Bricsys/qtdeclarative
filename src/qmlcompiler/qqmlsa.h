@@ -325,8 +325,6 @@ public:
 
     bool isCategoryEnabled(LoggerWarningId category) const;
 
-    std::vector<std::shared_ptr<ElementPass>> elementPasses() const;
-    std::multimap<QString, PropertyPassInfo> propertyPasses() const;
     std::unordered_map<quint32, Binding> bindingsByLocation() const;
 
 private:

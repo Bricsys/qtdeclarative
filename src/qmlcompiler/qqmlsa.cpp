@@ -1952,24 +1952,6 @@ void DebugPropertyPass::onWrite(const QQmlSA::Element &element, const QString &p
 }
 
 /*!
-    Returns the list of element passes.
- */
-std::vector<std::shared_ptr<ElementPass>> PassManager::elementPasses() const
-{
-    Q_D(const PassManager);
-    return d->m_elementPasses;
-}
-
-/*!
-    Returns the list of property passes.
- */
-std::multimap<QString, PropertyPassInfo> PassManager::propertyPasses() const
-{
-    Q_D(const PassManager);
-    return d->m_propertyPasses;
-}
-
-/*!
     Returns bindings by their source location.
  */
 std::unordered_map<quint32, Binding> PassManager::bindingsByLocation() const
