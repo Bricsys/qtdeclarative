@@ -225,7 +225,7 @@ public:
                                    const QQmlSA::Element &scope = QQmlSA::Element(),
                                    const QString prefix = QString(), bool isAttached = false);
 
-    std::vector<std::shared_ptr<ElementPass>> m_elementPasses;
+    std::vector<std::unique_ptr<ElementPass>> m_elementPasses;
     std::multimap<QString, PropertyPassInfo> m_propertyPasses;
     std::unordered_map<quint32, Binding> m_bindingsByLocation;
     QQmlJSImportVisitor *m_visitor = nullptr;
