@@ -683,7 +683,9 @@ void QObjectWrapper::setProperty(
     }
 
     if (Q_UNLIKELY(lcBuiltinsBindingRemoval().isInfoEnabled())) {
-        if (auto binding = QQmlPropertyPrivate::binding(object, QQmlPropertyIndex(property->coreIndex()))) {
+        if (auto binding = QQmlPropertyPrivate::binding(
+                    object, QQmlPropertyIndex(property->coreIndex()));
+                binding && !binding->isSticky()) {
             const auto stackFrame = engine->currentStackFrame;
             switch (binding->kind()) {
             case QQmlAbstractBinding::QmlBinding: {
@@ -706,7 +708,8 @@ void QObjectWrapper::setProperty(
             }
         }
     }
-    QQmlPropertyPrivate::removeBinding(object, QQmlPropertyIndex(property->coreIndex()));
+    QQmlPropertyPrivate::removeBinding(
+            object, QQmlPropertyIndex(property->coreIndex()), QQmlPropertyPrivate::None);
 
     if (property->isVarProperty()) {
         // allow assignment of "special" values (null, undefined, function) to var properties

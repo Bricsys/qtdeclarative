@@ -756,7 +756,10 @@ bool QQmlValueTypeWrapper::virtualPut(Managed *m, PropertyKey id, const Value &v
             return true;
         } else if (referenceObject) {
             if (Q_UNLIKELY(lcBuiltinsBindingRemoval().isInfoEnabled())) {
-                if (auto binding = QQmlPropertyPrivate::binding(referenceObject, QQmlPropertyIndex(referencePropertyIndex, pd.coreIndex()))) {
+                if (auto binding = QQmlPropertyPrivate::binding(
+                            referenceObject,
+                            QQmlPropertyIndex(referencePropertyIndex, pd.coreIndex()));
+                        binding && !binding->isSticky()) {
                     Q_ASSERT(binding->kind() == QQmlAbstractBinding::QmlBinding);
                     const auto qmlBinding = static_cast<const QQmlBinding*>(binding);
                     const auto stackFrame = v4->currentStackFrame;
@@ -768,7 +771,8 @@ bool QQmlValueTypeWrapper::virtualPut(Managed *m, PropertyKey id, const Value &v
                            qPrintable(stackFrame->source()), stackFrame->lineNumber());
                 }
             }
-            QQmlPropertyPrivate::removeBinding(referenceObject, QQmlPropertyIndex(referencePropertyIndex, pd.coreIndex()));
+            QQmlPropertyPrivate::removeBinding(
+                    referenceObject, QQmlPropertyIndex(referencePropertyIndex, pd.coreIndex()));
         }
     }
 

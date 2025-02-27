@@ -1097,8 +1097,10 @@ int QQmlVMEMetaObject::metaCall(QObject *o, QMetaObject::Call c, int _id, void *
                         if (flags & QQmlPropertyData::RemoveBindingOnAliasWrite) {
                             QQmlData *targetData = QQmlData::get(target);
                             if (targetData && targetData->hasBindingBit(coreIndex)) {
-                                QQmlPropertyPrivate::removeBinding(target, encodedIndex);
-                                targetData->clearBindingBit(coreIndex);
+                                if (QQmlPropertyPrivate::removeBinding(
+                                            target, encodedIndex, QQmlPropertyPrivate::None)) {
+                                    targetData->clearBindingBit(coreIndex);
+                                }
                             }
                         }
                     }

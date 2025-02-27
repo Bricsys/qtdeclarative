@@ -818,7 +818,7 @@ void
 QQmlPropertyPrivate::setBinding(const QQmlProperty &that, QQmlAbstractBinding *newBinding)
 {
     if (!newBinding) {
-        removeBinding(that);
+        removeBinding(that, OverrideSticky);
         return;
     }
 
@@ -830,7 +830,9 @@ QQmlPropertyPrivate::setBinding(const QQmlProperty &that, QQmlAbstractBinding *n
     setBinding(newBinding);
 }
 
-static void removeOldBinding(QObject *object, QQmlPropertyIndex index, QQmlPropertyPrivate::BindingFlags flags = QQmlPropertyPrivate::None)
+static bool removeOldBinding(
+        QObject *object, QQmlPropertyIndex index,
+        QQmlPropertyPrivate::BindingFlags flags = QQmlPropertyPrivate::None)
 {
     int coreIndex = index.coreIndex();
     int valueTypeIndex = index.valueTypeIndex();
@@ -838,7 +840,7 @@ static void removeOldBinding(QObject *object, QQmlPropertyIndex index, QQmlPrope
     QQmlData *data = QQmlData::get(object, false);
 
     if (!data || !data->hasBindingBit(coreIndex))
-        return;
+        return true;
 
     QQmlAbstractBinding::Ptr oldBinding;
     oldBinding = data->bindings;
@@ -851,39 +853,46 @@ static void removeOldBinding(QObject *object, QQmlPropertyIndex index, QQmlPrope
     if (!oldBinding) {
         // Clear the binding bit so that the binding doesn't appear later for any reason
         data->clearBindingBit(coreIndex);
-        return;
+        return true;
     }
 
     if (valueTypeIndex != -1 && oldBinding->kind() == QQmlAbstractBinding::ValueTypeProxy) {
         oldBinding = static_cast<QQmlValueTypeProxyBinding *>(oldBinding.data())->binding(index);
         if (!oldBinding)
-           return;
+           return true;
     }
+
+    if (oldBinding->isSticky() && !(flags & QQmlPropertyPrivate::OverrideSticky))
+        return false;
 
     if (!(flags & QQmlPropertyPrivate::DontEnable))
         oldBinding->setEnabled(false, {});
     oldBinding->removeFromObject();
+    return true;
 }
 
-void QQmlPropertyPrivate::removeBinding(QQmlAbstractBinding *b)
+bool QQmlPropertyPrivate::removeBinding(
+        QQmlAbstractBinding *b, QQmlPropertyPrivate::BindingFlags flags)
 {
-    removeBinding(b->targetObject(), b->targetPropertyIndex());
+    return removeBinding(b->targetObject(), b->targetPropertyIndex(), flags);
 }
 
-void QQmlPropertyPrivate::removeBinding(QObject *o, QQmlPropertyIndex index)
+bool QQmlPropertyPrivate::removeBinding(
+        QObject *o, QQmlPropertyIndex index, QQmlPropertyPrivate::BindingFlags flags)
 {
     Q_ASSERT(o);
 
     auto [target, targetIndex] = findAliasTarget(o, index);
-    removeOldBinding(target, targetIndex);
+    return removeOldBinding(target, targetIndex, flags);
 }
 
-void QQmlPropertyPrivate::removeBinding(const QQmlProperty &that)
+bool QQmlPropertyPrivate::removeBinding(
+        const QQmlProperty &that, QQmlPropertyPrivate::BindingFlags flags)
 {
     if (!that.d || !that.isProperty() || !that.d->object)
-        return;
+        return false;
 
-    removeBinding(that.d->object, that.d->encodedIndex());
+    return removeBinding(that.d->object, that.d->encodedIndex(), flags);
 }
 
 QQmlAbstractBinding *
@@ -978,12 +987,11 @@ void QQmlPropertyPrivate::setBinding(QQmlAbstractBinding *binding, BindingFlags 
     }
 #endif
 
-    removeOldBinding(object, index, flags);
+    removeOldBinding(object, index, flags | OverrideSticky);
 
     binding->addToObject();
     if (!(flags & DontEnable))
         binding->setEnabled(true, writeFlags);
-
 }
 
 /*!
@@ -1258,7 +1266,8 @@ static void removeValuePropertyBinding(
     // Remove any existing bindings on this property
     if (!(flags & QQmlPropertyData::DontRemoveBinding) && object) {
         QQmlPropertyPrivate::removeBinding(
-                    object, QQmlPropertyPrivate::encodedIndex(core, valueTypeData));
+                    object, QQmlPropertyPrivate::encodedIndex(core, valueTypeData),
+                    QQmlPropertyPrivate::OverrideSticky);
     }
 }
 
@@ -1343,8 +1352,10 @@ struct BindingFixer
         void *argv[] = {&bindable};
         QMetaObject::metacall(object, QMetaObject::BindableProperty, property.coreIndex(), argv);
         untypedBinding = bindable.binding();
-        if (auto priv = QPropertyBindingPrivate::get(untypedBinding))
+        if (auto priv = QPropertyBindingPrivate::get(untypedBinding)) {
+            wasSticky = priv->isSticky();
             priv->setSticky(true);
+        }
     }
 
     ~BindingFixer()
@@ -1352,11 +1363,12 @@ struct BindingFixer
         if (untypedBinding.isNull())
             return;
         auto priv = QPropertyBindingPrivate::get(untypedBinding);
-        priv->setSticky(false);
+        priv->setSticky(wasSticky);
     }
 
 private:
     QUntypedPropertyBinding untypedBinding;
+    bool wasSticky = false;
 };
 
 struct ConvertAndAssignResult {

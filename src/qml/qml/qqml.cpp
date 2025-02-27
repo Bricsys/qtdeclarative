@@ -1396,7 +1396,8 @@ static PropertyResult changeObjectProperty(QV4::Lookup *lookup, QObject *object,
         return data.result;
 
     const QQmlPropertyData *property = lookup->qobjectLookup.propertyData;
-    QQmlPropertyPrivate::removeBinding(object, QQmlPropertyIndex(property->coreIndex()));
+    QQmlPropertyPrivate::removeBinding(
+            object, QQmlPropertyIndex(property->coreIndex()), QQmlPropertyPrivate::None);
     op(property);
     return PropertyResult::OK;
 }
@@ -1432,7 +1433,8 @@ static PropertyResult changeFallbackProperty(QV4::Lookup *lookup, QObject *objec
         return data.result;
 
     const int coreIndex = lookup->qobjectFallbackLookup.coreIndex;
-    QQmlPropertyPrivate::removeBinding(object, QQmlPropertyIndex(coreIndex));
+    QQmlPropertyPrivate::removeBinding(
+            object, QQmlPropertyIndex(coreIndex), QQmlPropertyPrivate::None);
 
     op(data.metaObject, coreIndex);
     return PropertyResult::OK;

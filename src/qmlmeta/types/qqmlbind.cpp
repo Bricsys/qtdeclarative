@@ -1254,7 +1254,7 @@ void QQmlBindPrivate::preEvalEntry(QQmlBindEntry *entry)
 
     // NOTE: removeBinding has no effect on QProperty classes, but
     //       we already used takeBinding to remove it
-    QQmlPropertyPrivate::removeBinding(entry->prop);
+    QQmlPropertyPrivate::removeBinding(entry->prop, QQmlPropertyPrivate::OverrideSticky);
 }
 
 void QQmlBindPrivate::postEvalEntry(QQmlBindEntry *entry)

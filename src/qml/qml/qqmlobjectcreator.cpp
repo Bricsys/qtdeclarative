@@ -732,7 +732,9 @@ void QQmlObjectCreator::setupBindings(BindingSetupFlags mode)
         QQmlAbstractBinding *binding = QQmlPropertyPrivate::binding(_bindingTarget, QQmlPropertyIndex(_valueTypeProperty->coreIndex()));
 
         if (binding && binding->kind() != QQmlAbstractBinding::ValueTypeProxy) {
-            QQmlPropertyPrivate::removeBinding(_bindingTarget, QQmlPropertyIndex(_valueTypeProperty->coreIndex()));
+            QQmlPropertyPrivate::removeBinding(
+                    _bindingTarget, QQmlPropertyIndex(_valueTypeProperty->coreIndex()),
+                    QQmlPropertyPrivate::OverrideSticky);
         } else if (binding) {
             QQmlValueTypeProxyBinding *proxy = static_cast<QQmlValueTypeProxyBinding *>(binding);
 
@@ -992,7 +994,8 @@ bool QQmlObjectCreator::setPropertyBinding(const QQmlPropertyData *bindingProper
             removePendingBinding(_bindingTarget, bindingProperty->coreIndex());
         } else {
             QQmlPropertyPrivate::removeBinding(
-                    _bindingTarget, QQmlPropertyIndex(bindingProperty->coreIndex()));
+                    _bindingTarget, QQmlPropertyIndex(bindingProperty->coreIndex()),
+                    QQmlPropertyPrivate::OverrideSticky);
         }
     }
 

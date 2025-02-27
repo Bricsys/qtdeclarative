@@ -179,7 +179,7 @@ public:
         if (prop.isBindable())
             prop.property().bindable(prop.object()).takeBinding();
         else
-            QQmlPropertyPrivate::removeBinding(prop);
+            QQmlPropertyPrivate::removeBinding(prop, QQmlPropertyPrivate::OverrideSticky);
     }
 
     /*!
@@ -279,6 +279,25 @@ public:
         } else {
             return asUntypedPropertyBinding().error().hasError();
         }
+    }
+
+    bool isSticky() const
+    {
+        if (d.isNull())
+            return false;
+        if (d.isT1())
+            return d.asT1()->isSticky();
+        return d.asT2()->isSticky();
+    }
+
+    void setSticky(bool sticky = true)
+    {
+        if (d.isNull())
+            return;
+        if (d.isT1())
+            d.asT1()->setSticky(sticky);
+        else
+            d.asT2()->setSticky(sticky);
     }
 
     /*!
