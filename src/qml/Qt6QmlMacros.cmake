@@ -1799,6 +1799,21 @@ function(_qt_internal_target_generate_qmldir target)
     _qt_internal_qmldir_item_list("optional import" QT_QML_MODULE_OPTIONAL_IMPORTS)
     _qt_internal_qmldir_item_list("default import" QT_QML_MODULE_DEFAULT_IMPORTS)
 
+    # User convenience: Add QtQuick to dependencies if it hasn't been added so far
+    # and the target links against  Qt::Quick
+    if(NOT "QtQuick" IN_LIST QT_QML_MODULE_DEPENDENCIES)
+        get_target_property(linked_libraries ${target} LINK_LIBRARIES)
+        if((TARGET Qt6::Quick AND Qt6::Quick IN_LIST linked_libraries) OR
+            (TARGET Qt::Quick AND Qt::Quick IN_LIST linked_libraries))
+            set_property(
+                TARGET ${target}
+                APPEND
+                PROPERTY QT_QML_MODULE_DEPENDENCIES
+                "QtQuick"
+            )
+        endif()
+    endif()
+
     _qt_internal_qmldir_item_list(depends QT_QML_MODULE_DEPENDENCIES)
 
     get_target_property(prefix ${target} QT_QML_MODULE_RESOURCE_PREFIX)
