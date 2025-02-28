@@ -1099,7 +1099,7 @@ void QQmlTreeModelToTableModel::queueDataChanged(int top, int bottom,
 
 void QQmlTreeModelToTableModel::emitQueuedSignals()
 {
-    QList<DataChangedParams> combinedUpdates;
+    QVarLengthArray<DataChangedParams> combinedUpdates;
     /* First, iterate through the queued updates and merge the overlapping ones
      * to reduce the number of updates.
      * We don't merge adjacent updates, because they are typically filed with a
