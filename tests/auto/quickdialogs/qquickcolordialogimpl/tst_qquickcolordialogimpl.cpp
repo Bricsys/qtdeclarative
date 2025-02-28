@@ -651,6 +651,8 @@ void tst_QQuickColorDialogImpl::dialogCanMoveBetweenWindows()
     QMetaObject::invokeMethod(dialogHelper.window(), "resetParentWindow");
     QTRY_COMPARE(dialogHelper.quickDialog->parent(), dialogHelper.window());
 
+    dialogHelper.popupWindow()->close();
+    QVERIFY(dialogHelper.openDialog());
     QVERIFY(dialogHelper.waitForPopupWindowActiveAndPolished());
 
     CLOSE_DIALOG("Ok");
