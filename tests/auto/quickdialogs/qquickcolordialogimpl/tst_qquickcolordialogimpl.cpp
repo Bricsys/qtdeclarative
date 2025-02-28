@@ -127,7 +127,7 @@ void tst_QQuickColorDialogImpl::defaults()
     QVERIFY2(!alphaSlider->isVisible(),
              "The AlphaSlider should not be visible unless the ShowAlphaChannel options has "
              "explicitly been set");
-    dialogHelper.dialog->close();
+    dialogHelper.popupWindow()->close();
     QTRY_VERIFY(!dialogHelper.isQuickDialogOpen());
     dialogHelper.dialog->setOptions(QColorDialogOptions::ShowAlphaChannel);
     QVERIFY(dialogHelper.openDialog());
@@ -143,7 +143,7 @@ void tst_QQuickColorDialogImpl::defaults()
         QVERIFY2(eyeDropperButton->isVisible(),
                  "The Eye Dropper Button should be visible unless the NoEyeDropperButton option has "
                  "explicitly been set");
-        dialogHelper.dialog->close();
+        dialogHelper.popupWindow()->close();
         QTRY_VERIFY(!dialogHelper.isQuickDialogOpen());
         dialogHelper.dialog->setOptions(QColorDialogOptions::NoEyeDropperButton);
         QVERIFY(dialogHelper.openDialog());
