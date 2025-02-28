@@ -656,6 +656,7 @@ public:
     bool setCurrentIndexFromKeyEvent(QKeyEvent *e);
     bool canEdit(const QModelIndex tappedIndex, bool warn);
     bool editFromKeyEvent(QKeyEvent *e);
+    void closeEditorAndCommit();
 
     // QQuickSelectable
     QQuickItem *selectionPointerHandlerTarget() const override;
