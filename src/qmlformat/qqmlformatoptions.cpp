@@ -199,7 +199,7 @@ QQmlFormatOptions QQmlFormatOptions::buildCommandLineOptions(const QStringList &
         const QString path = parser.value("files"_L1);
         QFile file(path);
         if (!file.open(QIODevice::Text | QIODevice::ReadOnly)) {
-            options.addError("Error: Could not open file \"" + path + "\" for option -F."_L1);
+            options.addError("Error: Could not open file \""_L1 + path + "\" for option -F."_L1);
             return options;
         }
 
