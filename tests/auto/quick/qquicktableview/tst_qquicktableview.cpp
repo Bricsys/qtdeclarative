@@ -7774,7 +7774,7 @@ void tst_QQuickTableView::attachedPropertiesOnEditDelegate()
     QQuickItem *editItem3 = tableView->property(kEditItem).value<QQuickItem *>();
     QVERIFY(editItem3);
     const auto attached3 = getAttachedObject(editItem3);
-    QVERIFY(editItem3);
+    QVERIFY(attached3);
     QSignalSpy commitSpy3(attached3, &QQuickTableViewAttached::commit);
 
     QTest::keyClick(window, Qt::Key_Escape);
@@ -7783,20 +7783,37 @@ void tst_QQuickTableView::attachedPropertiesOnEditDelegate()
     QCOMPARE(commitSpy3.count(), 0);
 
     // Repeat once more, but tap outside the edit item.
-    // This should close the edit, but without an accepted signal.
+    // This should close the edit with an accepted signal.
     tableView->edit(index);
     QCOMPARE(tableView->property(kEditIndex).value<QModelIndex>(), index);
     QQuickItem *editItem4 = tableView->property(kEditItem).value<QQuickItem *>();
     QVERIFY(editItem4);
     const auto attached4 = getAttachedObject(editItem4);
-    QVERIFY(editItem4);
+    QVERIFY(attached4);
     QSignalSpy commitSpy4(attached4, &QQuickTableViewAttached::commit);
 
     const QPoint tapPos = window->contentItem()->mapFromItem(editItem4, QPointF(-10, -10)).toPoint();
     QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, tapPos);
     QVERIFY(!tableView->property(kEditItem).value<QQuickItem *>());
     QVERIFY(!tableView->property(kEditIndex).value<QModelIndex>().isValid());
-    QCOMPARE(commitSpy4.count(), 0);
+    QCOMPARE(commitSpy4.count(), 1);
+
+    // Repeat once more, but transfer focus to a different text input
+    // This should close the edit with an accepted signal.
+    tableView->edit(index);
+    QCOMPARE(tableView->property(kEditIndex).value<QModelIndex>(), index);
+    QQuickItem *editItem5 = tableView->property(kEditItem).value<QQuickItem *>();
+    QVERIFY(editItem5);
+    const auto attached5 = getAttachedObject(editItem5);
+    QVERIFY(attached5);
+    QSignalSpy commitSpy5(attached5, &QQuickTableViewAttached::commit);
+
+    auto *textInput = view->rootObject()->property("textInput").value<QQuickTextInput *>();
+    QVERIFY(textInput);
+    textInput->forceActiveFocus();
+    QVERIFY(!tableView->property(kEditItem).value<QQuickItem *>());
+    QVERIFY(!tableView->property(kEditIndex).value<QModelIndex>().isValid());
+    QCOMPARE(commitSpy5.count(), 1);
 }
 
 void tst_QQuickTableView::requiredPropertiesOnEditDelegate()
