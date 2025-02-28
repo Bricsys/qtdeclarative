@@ -141,8 +141,8 @@ private:
     };
 
     struct DataChangedParams {
-        QModelIndex topLeft;
-        QModelIndex bottomRight;
+        int top;
+        int bottom;
         QVarLengthArray<int, 5> roles;
     };
 
@@ -159,9 +159,7 @@ private:
     void enableSignalAggregation();
     void disableSignalAggregation();
     bool isAggregatingSignals() const { return m_signalAggregatorStack > 0; }
-    void queueDataChanged(const QModelIndex &topLeft,
-                          const QModelIndex &bottomRight,
-                          std::initializer_list<int> roles);
+    void queueDataChanged(int top, int bottom, std::initializer_list<int> roles);
     void emitQueuedSignals();
     void connectToModel();
 

@@ -574,7 +574,7 @@ void QQmlTreeModelToTableModel::collapseRow(int n)
     TreeItem &item = m_items[n];
     item.expanded = false;
     m_expandedItems.remove(item.index);
-    queueDataChanged(index(n, 0), index(n, 0), {ExpandedRole});
+    queueDataChanged(n, n, {ExpandedRole});
     int childrenCount = m_model->rowCount(item.index);
     if ((item.index.flags() & Qt::ItemNeverHasChildren) || !m_model->hasChildren(item.index) || childrenCount == 0)
         return;
@@ -620,11 +620,8 @@ void QQmlTreeModelToTableModel::removeVisibleRows(int startIndex, int endIndex, 
 
         /* We need to update the model index for all the items below the removed ones */
         int lastIndex = m_items.size() - 1;
-        if (startIndex <= lastIndex) {
-            const QModelIndex &topLeft = index(startIndex, 0, QModelIndex());
-            const QModelIndex &bottomRight = index(lastIndex, 0, QModelIndex());
-            queueDataChanged(topLeft, bottomRight, {ModelIndexRole});
-        }
+        if (startIndex <= lastIndex)
+            queueDataChanged(startIndex, lastIndex, {ModelIndexRole});
     }
 }
 
@@ -781,8 +778,7 @@ void QQmlTreeModelToTableModel::modelRowsInserted(const QModelIndex & parent, in
     TreeItem item;
     int parentRow = itemIndex(parent);
     if (parentRow >= 0) {
-        const QModelIndex& parentIndex = index(parentRow, 0);
-        queueDataChanged(parentIndex, parentIndex, {HasChildrenRole});
+        queueDataChanged(parentRow, parentRow, {HasChildrenRole});
         item = m_items.at(parentRow);
         if (!item.expanded) {
             ASSERT_CONSISTENCY();
@@ -831,10 +827,8 @@ void QQmlTreeModelToTableModel::modelRowsRemoved(const QModelIndex & parent, int
     Q_UNUSED(start)
     Q_UNUSED(end)
     int parentRow = itemIndex(parent);
-    if (parentRow >= 0) {
-        const QModelIndex& parentIndex = index(parentRow, 0);
-        queueDataChanged(parentIndex, parentIndex, {HasChildrenRole});
-    }
+    if (parentRow >= 0)
+        queueDataChanged(parentRow, parentRow, {HasChildrenRole});
     disableSignalAggregation();
     ASSERT_CONSISTENCY();
 }
@@ -852,9 +846,8 @@ void QQmlTreeModelToTableModel::modelRowsAboutToBeMoved(const QModelIndex & sour
         /* If the destination parent has no children, we'll need to
          * report a change on the HasChildrenRole */
         if (isVisible(destinationParent) && m_model->rowCount(destinationParent) == 0) {
-            const QModelIndex &topLeft = index(itemIndex(destinationParent), 0, QModelIndex());
-            const QModelIndex &bottomRight = topLeft;
-            queueDataChanged(topLeft, bottomRight, {HasChildrenRole});
+            const int parentRow = itemIndex(destinationParent);
+            queueDataChanged(parentRow, parentRow, {HasChildrenRole});
         }
     } else {
         int depthDifference = -1;
@@ -935,15 +928,10 @@ void QQmlTreeModelToTableModel::modelRowsAboutToBeMoved(const QModelIndex & sour
             if (rowCount > 0)
                 bottom = qMax(bottom, lastChildIndex(m_model->index(rowCount - 1, 0, bottomParent)));
         }
-        const QModelIndex &topLeft = index(top, 0, QModelIndex());
-        const QModelIndex &bottomRight = index(bottom, 0, QModelIndex());
-        queueDataChanged(topLeft, bottomRight, {ModelIndexRole});
+        queueDataChanged(top, bottom, {ModelIndexRole});
 
-        if (depthDifference != 0) {
-            const QModelIndex &topLeft = index(bufferCopyOffset, 0, QModelIndex());
-            const QModelIndex &bottomRight = index(bufferCopyOffset + totalMovedCount - 1, 0, QModelIndex());
-            queueDataChanged(topLeft, bottomRight, {DepthRole});
-        }
+        if (depthDifference != 0)
+            queueDataChanged(bufferCopyOffset, bufferCopyOffset + totalMovedCount - 1, {DepthRole});
     }
 }
 
@@ -961,9 +949,7 @@ void QQmlTreeModelToTableModel::modelRowsMoved(const QModelIndex & sourceParent,
     if (isVisible(sourceParent) && m_model->rowCount(sourceParent) == 0) {
         int parentRow = itemIndex(sourceParent);
         collapseRow(parentRow);
-        const QModelIndex &topLeft = index(parentRow, 0, QModelIndex());
-        const QModelIndex &bottomRight = topLeft;
-        queueDataChanged(topLeft, bottomRight, {ExpandedRole, HasChildrenRole});
+        queueDataChanged(parentRow, parentRow, {ExpandedRole, HasChildrenRole});
     }
 
     disableSignalAggregation();
@@ -1102,15 +1088,13 @@ void QQmlTreeModelToTableModel::disableSignalAggregation() {
     }
 }
 
-void QQmlTreeModelToTableModel::queueDataChanged(const QModelIndex &topLeft,
-                                               const QModelIndex &bottomRight,
-                                               std::initializer_list<int> roles)
+void QQmlTreeModelToTableModel::queueDataChanged(int top, int bottom,
+                                                 std::initializer_list<int> roles)
 {
-    if (isAggregatingSignals()) {
-        m_queuedDataChanged.append(DataChangedParams { topLeft, bottomRight, roles });
-    } else {
-        emit dataChanged(topLeft, bottomRight, roles);
-    }
+    if (isAggregatingSignals())
+        m_queuedDataChanged.append(DataChangedParams { top, bottom, roles });
+    else
+        emit dataChanged(index(top, 0), index(bottom, 0), roles);
 }
 
 void QQmlTreeModelToTableModel::emitQueuedSignals()
@@ -1122,19 +1106,19 @@ void QQmlTreeModelToTableModel::emitQueuedSignals()
      * different role (a parent row is next to its children).
      */
     for (const DataChangedParams &dataChange : std::as_const(m_queuedDataChanged)) {
-        int startRow = dataChange.topLeft.row();
-        int endRow = dataChange.bottomRight.row();
+        const int startRow = dataChange.top;
+        const int endRow = dataChange.bottom;
         bool merged = false;
         for (DataChangedParams &combined : combinedUpdates) {
-            int combinedStartRow = combined.topLeft.row();
-            int combinedEndRow = combined.bottomRight.row();
+            int combinedStartRow = combined.top;
+            int combinedEndRow = combined.bottom;
             if ((startRow <= combinedStartRow && endRow >= combinedStartRow) ||
                 (startRow <= combinedEndRow && endRow >= combinedEndRow)) {
                 if (startRow < combinedStartRow) {
-                    combined.topLeft = dataChange.topLeft;
+                    combined.top = dataChange.top;
                 }
                 if (endRow > combinedEndRow) {
-                    combined.bottomRight = dataChange.bottomRight;
+                    combined.bottom = dataChange.bottom;
                 }
                 for (int role : dataChange.roles) {
                     if (!combined.roles.contains(role))
@@ -1151,8 +1135,9 @@ void QQmlTreeModelToTableModel::emitQueuedSignals()
 
     /* Finally, emit the dataChanged signals */
     for (const DataChangedParams &dataChange : combinedUpdates) {
-        emit dataChanged(dataChange.topLeft, dataChange.bottomRight, {dataChange.roles.begin(),
-                                                                      dataChange.roles.end()});
+        const QModelIndex topLeft = index(dataChange.top, 0);
+        const QModelIndex bottomRight = index(dataChange.bottom, 0);
+        emit dataChanged(topLeft, bottomRight, {dataChange.roles.begin(), dataChange.roles.end()});
     }
     m_queuedDataChanged.clear();
 }
