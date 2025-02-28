@@ -488,7 +488,7 @@ void QQmlTreeModelToTableModel::expandRow(int n)
         return;
     item.expanded = true;
     m_expandedItems.insert(item.index);
-    emit dataChanged(index(n, m_column), index(n, m_column), {ExpandedRole});
+    emit dataChanged(index(n, 0), index(n, 0), {ExpandedRole});
 
     m_itemsToExpand.append(item);
     expandPendingRows();
@@ -574,7 +574,7 @@ void QQmlTreeModelToTableModel::collapseRow(int n)
     TreeItem &item = m_items[n];
     item.expanded = false;
     m_expandedItems.remove(item.index);
-    queueDataChanged(index(n, m_column), index(n, m_column), {ExpandedRole});
+    queueDataChanged(index(n, 0), index(n, 0), {ExpandedRole});
     int childrenCount = m_model->rowCount(item.index);
     if ((item.index.flags() & Qt::ItemNeverHasChildren) || !m_model->hasChildren(item.index) || childrenCount == 0)
         return;
@@ -781,7 +781,7 @@ void QQmlTreeModelToTableModel::modelRowsInserted(const QModelIndex & parent, in
     TreeItem item;
     int parentRow = itemIndex(parent);
     if (parentRow >= 0) {
-        const QModelIndex& parentIndex = index(parentRow, m_column);
+        const QModelIndex& parentIndex = index(parentRow, 0);
         queueDataChanged(parentIndex, parentIndex, {HasChildrenRole});
         item = m_items.at(parentRow);
         if (!item.expanded) {
@@ -832,7 +832,7 @@ void QQmlTreeModelToTableModel::modelRowsRemoved(const QModelIndex & parent, int
     Q_UNUSED(end)
     int parentRow = itemIndex(parent);
     if (parentRow >= 0) {
-        const QModelIndex& parentIndex = index(parentRow, m_column);
+        const QModelIndex& parentIndex = index(parentRow, 0);
         queueDataChanged(parentIndex, parentIndex, {HasChildrenRole});
     }
     disableSignalAggregation();

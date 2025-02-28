@@ -176,7 +176,6 @@ private:
     int m_signalAggregatorStack = 0;
     QList<DataChangedParams> m_queuedDataChanged;
     std::array<QMetaObject::Connection, 15> m_connections;
-    int m_column = 0;
 };
 
 QT_END_NAMESPACE
