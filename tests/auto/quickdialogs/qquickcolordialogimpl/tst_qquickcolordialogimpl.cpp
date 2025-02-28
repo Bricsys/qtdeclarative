@@ -641,7 +641,11 @@ void tst_QQuickColorDialogImpl::dialogCanMoveBetweenWindows()
     QCOMPARE(dialogHelper.dialog->parentWindow(), qvariant_cast<QQuickWindow *>(subWindow2));
 
     QMetaObject::invokeMethod(dialogHelper.window(), "resetParentWindow");
-    QCOMPARE(dialogHelper.quickDialog->parent(), dialogHelper.window());
+    QTRY_COMPARE(dialogHelper.quickDialog->parent(), dialogHelper.window());
+
+    dialogHelper.popupWindow()->close();
+    QVERIFY(dialogHelper.openDialog());
+    QVERIFY(dialogHelper.waitForPopupWindowActiveAndPolished());
 
     CLOSE_DIALOG("Ok");
 }
