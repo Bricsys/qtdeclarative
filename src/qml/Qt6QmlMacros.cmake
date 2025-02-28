@@ -993,7 +993,7 @@ Check https://doc.qt.io/qt-6/qt-cmake-policy-qtp0001.html for policy details."
         endif()
     endforeach()
 
-    if(${QT_QML_GENERATE_QMLLS_INI})
+    if(QT_QML_GENERATE_QMLLS_INI)
         if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.19.0")
             # collect all build dirs obtained from all the qt_add_qml_module calls and
             # write the .qmlls.ini file in a deferred call
