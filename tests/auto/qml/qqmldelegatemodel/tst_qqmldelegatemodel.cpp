@@ -57,6 +57,9 @@ private slots:
     void viewUpdatedOnDelegateChoiceAffectingRoleChange();
     void proxyModelWithDelayedSourceModelInListView();
     void delegateChooser();
+
+    void delegateModelAccess_data();
+    void delegateModelAccess();
 };
 
 class BaseAbstractItemModel : public QAbstractItemModel
@@ -884,6 +887,54 @@ void tst_QQmlDelegateModel::delegateChooser()
         QVERIFY(rectangle);
         QCOMPARE(rectangle->color(), QColor::fromString(adaptorModel->value(adaptorModel->indexAt(i, 0), "modelData").toString()));
     }
+}
+
+void tst_QQmlDelegateModel::delegateModelAccess_data()
+{
+    QTest::addColumn<int>("n");
+    QTest::addColumn<int>("o");
+
+    for (int n = 0; n < 4; ++n) {
+        for (int o = 0; o < 2; ++o)
+            QTest::addRow("model%d-typed%d", n, o) << n << o;
+    }
+}
+
+void tst_QQmlDelegateModel::delegateModelAccess()
+{
+    QFETCH(int, n);
+    QFETCH(int, o);
+
+    QQmlEngine engine;
+    const QUrl url = testFileUrl("delegateModelAccess.qml");
+    QQmlComponent c(&engine, url);
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> object(c.create());
+
+    QQmlDelegateModel *delegateModel = qobject_cast<QQmlDelegateModel *>(object.data());
+    QVERIFY(delegateModel);
+
+    if (o == 0 && n == 2)
+        QSKIP("Properties of objects in arrays are not exposed as context properties");
+
+    object->setProperty("n", n);
+    object->setProperty("o", o);
+
+    QObject *delegate = delegateModel->object(0);
+    QVERIFY(delegate);
+
+    QCOMPARE(delegate->property("immediateX").toDouble(), 11);
+    QCOMPARE(delegate->property("modelX").toDouble(), 11);
+
+    QMetaObject::invokeMethod(delegate, "writeThroughModel");
+    QCOMPARE(delegate->property("immediateX").toDouble(), 3);
+    QCOMPARE(delegate->property("modelX").toDouble(), 3);
+
+    QMetaObject::invokeMethod(delegate, "writeImmediate");
+    QCOMPARE(delegate->property("immediateX").toDouble(), 1);
+
+    // Writing the required property has broken the binding, rather than writing the model
+    QCOMPARE(delegate->property("modelX").toDouble(), o == 0 ? 1 : 3);
 }
 
 QTEST_MAIN(tst_QQmlDelegateModel)
