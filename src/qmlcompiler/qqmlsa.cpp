@@ -1490,10 +1490,8 @@ bool PassManagerPrivate::registerPropertyPass(std::shared_ptr<PropertyPass> pass
 
         name = lookupName(element, Register);
     }
-    const QQmlSA::PropertyPassInfo passInfo{ propertyName.isEmpty()
-                                                     ? QStringList{}
-                                                     : QStringList{ propertyName.toString() },
-                                             std::move(pass), allowInheritance };
+    const QQmlSA::PropertyPassInvocation passInfo{ propertyName.toString(), std::move(pass),
+                                                   allowInheritance };
     m_propertyPasses.insert({ name, passInfo });
 
     return true;
@@ -1687,10 +1685,8 @@ QSet<PropertyPass *> PassManagerPrivate::findPropertyUsePasses(const QQmlSA::Ele
             for (auto it = pass.first; it != pass.second; it++) {
                 if (typeName != typeNames.constFirst() && !it->second.allowInheritance)
                     continue;
-                if (it->second.properties.isEmpty()
-                    || it->second.properties.contains(propertyName)) {
+                if (it->second.property.isEmpty() || it->second.property == propertyName)
                     passes.insert(it->second.pass.get());
-                }
             }
         }
     }
