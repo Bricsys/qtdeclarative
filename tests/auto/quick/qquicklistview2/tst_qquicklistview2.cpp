@@ -74,6 +74,8 @@ private slots:
     void gadgetModelSections();
     void visibleBoundToCountGreaterThanZero();
 
+    void setDelegateAfterModel();
+
 private:
     void flickWithTouch(QQuickWindow *window, const QPoint &from, const QPoint &to);
     QScopedPointer<QPointingDevice> touchDevice = QScopedPointer<QPointingDevice>(QTest::createTouchDevice());
@@ -1357,6 +1359,27 @@ void tst_QQuickListView2::visibleBoundToCountGreaterThanZero()
     // Using the TRY variant here as well is necessary.
     QTRY_COMPARE_GT_WITH_TIMEOUT(countChangedSpy.count(), 1, oneSecondInMs);
     QVERIFY(listView->isVisible());
+}
+
+void tst_QQuickListView2::setDelegateAfterModel()
+{
+    QQmlEngine engine;
+    const QUrl url = testFileUrl("setDelegateAfterModel.qml");
+    QQmlComponent component(&engine, url);
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(!object.isNull());
+
+    // If the model was lost by setting the delegate, the count would be 0.
+    QCOMPARE(object->property("count").toInt(), 3);
+
+    QTest::ignoreMessage(
+            QtWarningMsg,
+            qPrintable(url.toString() + ":17:5: QML ListView: Cannot retain explicitly set "
+                                        "delegate on non-DelegateModel"));
+    object->setProperty("useObjectModel", QVariant::fromValue<bool>(true));
+    QCOMPARE(object->property("count").toInt(), 2);
 }
 
 QTEST_MAIN(tst_QQuickListView2)
