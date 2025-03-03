@@ -177,19 +177,36 @@ void QQuickItemView::setModel(const QVariant &m)
     QObject *object = qvariant_cast<QObject*>(model);
     QQmlInstanceModel *vim = nullptr;
     if (object && (vim = qobject_cast<QQmlInstanceModel *>(object))) {
+        if (d->explicitDelegate) {
+            QQmlComponent *delegate = nullptr;
+            if (QQmlDelegateModel *old = qobject_cast<QQmlDelegateModel *>(oldModel))
+                delegate = old->delegate();
+
+            if (QQmlDelegateModel *newModel = qobject_cast<QQmlDelegateModel *>(vim)) {
+                newModel->setDelegate(delegate);
+            } else if (delegate) {
+                qmlWarning(this) << "Cannot retain explicitly set delegate on non-DelegateModel";
+                d->explicitDelegate = false;
+            }
+        }
+
         if (d->ownModel) {
             delete oldModel;
             d->ownModel = false;
         }
         d->model = vim;
     } else {
-        if (!d->ownModel) {
-            d->model = new QQmlDelegateModel(qmlContext(this), this);
-            d->ownModel = true;
-            if (isComponentComplete())
-                static_cast<QQmlDelegateModel *>(d->model.data())->componentComplete();
-        } else {
+        if (d->ownModel) {
             d->model = oldModel;
+        } else {
+            if (d->explicitDelegate) {
+                QQmlComponent *delegate = nullptr;
+                if (QQmlDelegateModel *old = qobject_cast<QQmlDelegateModel *>(oldModel))
+                    delegate = old->delegate();
+                d->createDelegateModel(this)->setDelegate(delegate);
+            } else {
+                d->createDelegateModel(this);
+            }
         }
         if (QQmlDelegateModel *dataModel = qobject_cast<QQmlDelegateModel*>(d->model))
             dataModel->setModel(model);
@@ -245,22 +262,41 @@ QQmlComponent *QQuickItemView::delegate() const
 void QQuickItemView::setDelegate(QQmlComponent *delegate)
 {
     Q_D(QQuickItemView);
-    if (delegate == this->delegate())
-        return;
-    if (!d->ownModel) {
-        d->model = new QQmlDelegateModel(qmlContext(this));
-        d->ownModel = true;
-        if (isComponentComplete())
-            static_cast<QQmlDelegateModel *>(d->model.data())->componentComplete();
-    }
-    if (QQmlDelegateModel *dataModel = qobject_cast<QQmlDelegateModel*>(d->model)) {
-        int oldCount = dataModel->count();
-        dataModel->setDelegate(delegate);
-        if (oldCount != dataModel->count())
+    const auto setExplicitDelegate = [&](QQmlDelegateModel *delegateModel) {
+        int oldCount = delegateModel->count();
+        delegateModel->setDelegate(delegate);
+        if (oldCount != delegateModel->count())
             d->emitCountChanged();
+        d->explicitDelegate = true;
+        d->delegateValidated = false;
+    };
+
+    if (!d->model) {
+        if (!delegate) {
+            // Explicitly set a null delegate. We can do this without model.
+            d->explicitDelegate = true;
+            return;
+        }
+
+        setExplicitDelegate(d->createDelegateModel(this));
+        // The new model is not connected to applyDelegateChange, yet. We only do this once
+        // there is actual data, via an explicit setModel(). So we have to manually emit the
+        // delegateChanged() here.
+        emit delegateChanged();
+        return;
     }
-    emit delegateChanged();
-    d->delegateValidated = false;
+
+    if (QQmlDelegateModel *delegateModel = qobject_cast<QQmlDelegateModel *>(d->model)) {
+        // Disable the warning in applyDelegateChange since the new delegate is also explicit.
+        d->explicitDelegate = false;
+        setExplicitDelegate(delegateModel);
+        return;
+    }
+
+    if (delegate)
+        qmlWarning(this) << "Cannot set a delegate on an explicitly provided non-DelegateModel";
+    else
+        d->explicitDelegate = true; // Explicitly set null delegate always works
 }
 
 
@@ -1087,6 +1123,15 @@ qreal QQuickItemViewPrivate::calculatedMaxExtent() const
 
 void QQuickItemViewPrivate::applyDelegateChange()
 {
+    Q_Q(QQuickItemView);
+
+    if (explicitDelegate) {
+        qmlWarning(q) << "Explicitly set delegate is externally overridden";
+        explicitDelegate = false;
+    }
+
+    emit q->delegateChanged();
+
     releaseVisibleItems(QQmlDelegateModel::NotReusable);
     releaseCurrentItem(QQmlDelegateModel::NotReusable);
     updateSectionCriteria();
@@ -1528,7 +1573,9 @@ QQuickItemViewPrivate::QQuickItemViewPrivate()
 #if QT_CONFIG(quick_viewtransitions)
     , runDelayedRemoveTransition(false)
 #endif
-    , delegateValidated(false), isClearing(false)
+    , delegateValidated(false)
+    , isClearing(false)
+    , explicitDelegate(false)
 {
     bufferPause.addAnimationChangeListener(this, QAbstractAnimationJob::Completion);
     bufferPause.setLoopCount(1);
