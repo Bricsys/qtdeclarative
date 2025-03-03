@@ -4936,6 +4936,13 @@ void tst_qqmllanguage::compositeSingletonRemote()
 // Reads values from a Singleton accessed through selectors.
 void tst_qqmllanguage::compositeSingletonSelectors()
 {
+    // Poison the cache
+    QQmlEngine e1;
+    QQmlComponent component1(&e1, testFileUrl("singletonTest1.qml"));
+    QVERIFY2(component1.isReady(), qPrintable(component1.errorString()));
+    QScopedPointer<QObject> o1(component1.create());
+    QVERIFY(!o1.isNull());
+
     QQmlEngine e2;
     QQmlFileSelector qmlSelector(&e2);
     qmlSelector.setExtraSelectors(QStringList() << "basicSelector");

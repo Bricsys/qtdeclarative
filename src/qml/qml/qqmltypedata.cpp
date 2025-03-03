@@ -81,6 +81,12 @@ bool QQmlTypeData::tryLoadFromDiskCache()
 {
     Q_ASSERT(isTypeLoaderThread());
 
+    if (!m_backupSourceCode.isCacheable())
+        return false;
+
+    if (auto unit = QQmlMetaType::obtainCompilationUnit(url()))
+        return loadFromDiskCache(unit);
+
     if (!readCacheFile())
         return false;
 
@@ -453,7 +459,7 @@ void QQmlTypeData::done()
             ? m_document.data()->isSingleton()
             : (m_compiledData->unitData()->flags & QV4::CompiledData::Unit::IsSingleton);
         m_qmlType = QQmlMetaType::findCompositeType(
-                finalUrl(), m_compiledData, isSingleton
+                url(), m_compiledData, isSingleton
                         ? QQmlMetaType::Singleton
                         : QQmlMetaType::NonSingleton);
         m_typeClassName = QByteArray(m_qmlType.typeId().name()).chopped(1);

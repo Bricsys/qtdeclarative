@@ -35,14 +35,22 @@ void QQmlScriptBlob::dataReceived(const SourceCodeData &data)
 {
     Q_ASSERT(isTypeLoaderThread());
 
-    if (readCacheFile()) {
-        auto unit = QQml::makeRefPointer<QV4::CompiledData::CompilationUnit>();
-        QString error;
-        if (unit->loadFromDisk(url(), data.sourceTimeStamp(), &error)) {
+    if (data.isCacheable()) {
+        if (auto unit = QQmlMetaType::obtainCompilationUnit(url())) {
             initializeFromCompilationUnit(std::move(unit));
             return;
-        } else {
-            qCDebug(DBG_DISK_CACHE()) << "Error loading" << urlString() << "from disk cache:" << error;
+        }
+
+        if (readCacheFile()) {
+            auto unit = QQml::makeRefPointer<QV4::CompiledData::CompilationUnit>();
+            QString error;
+            if (unit->loadFromDisk(url(), data.sourceTimeStamp(), &error)) {
+                initializeFromCompilationUnit(std::move(unit));
+                return;
+            } else {
+                qCDebug(DBG_DISK_CACHE()) << "Error loading" << urlString()
+                                          << "from disk cache:" << error;
+            }
         }
     }
 
@@ -167,7 +175,7 @@ void QQmlScriptBlob::done()
     m_scripts.clear();
 
     if (auto cu = m_scriptData->compilationUnit()) {
-        cu->qmlType = QQmlMetaType::findCompositeType(finalUrl(), cu, QQmlMetaType::JavaScript);
+        cu->qmlType = QQmlMetaType::findCompositeType(url(), cu, QQmlMetaType::JavaScript);
         QQmlMetaType::registerInternalCompositeType(cu);
     }
 }
