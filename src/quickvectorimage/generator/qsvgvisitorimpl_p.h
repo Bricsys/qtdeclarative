@@ -17,6 +17,7 @@
 
 #include <QtSvg/private/qsvgvisitor_p.h>
 #include "qquickgenerator_p.h"
+#include "qquickanimatedproperty_p.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -53,9 +54,15 @@ protected:
     void visitSwitchNodeEnd(const QSvgSwitch *node) override;
 
 private:
+    typedef QPair<const QSvgAbstractAnimation *, const QSvgAbstractAnimatedProperty *> AnimationPair;
+    QList<AnimationPair> collectAnimations(const QSvgNode *node, const QString &propertyName);
+    void applyAnimationsToProperty(const QList<AnimationPair> &animations,
+                                   QQuickAnimatedProperty *property);
+
     void fillCommonNodeInfo(const QSvgNode *node, NodeInfo &info);
+    void fillPathAnimationInfo(const QSvgNode *node, PathNodeInfo &info);
     void fillAnimationInfo(const QSvgNode *node, NodeInfo &info);
-    void fillColorAnimationInfo(const QSvgNode *node, NodeInfo &info);
+    void fillColorAnimationInfo(const QSvgNode *node, PathNodeInfo &info);
     void fillTransformAnimationInfo(const QSvgNode *node, NodeInfo &info);
     void handleBaseNodeSetup(const QSvgNode *node);
     void handleBaseNode(const QSvgNode *node);

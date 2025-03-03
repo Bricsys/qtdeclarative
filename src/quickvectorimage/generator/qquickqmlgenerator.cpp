@@ -251,6 +251,90 @@ void QQuickQmlGenerator::generateGradient(const QGradient *grad)
     }
 }
 
+void QQuickQmlGenerator::generatePropertyAnimation(const QQuickAnimatedProperty &property,
+                                                   const QString &targetName,
+                                                   const QString &propertyName)
+{
+    if (property.animationCount() > 1) {
+        stream() << "ParallelAnimation {";
+        m_indentLevel++;
+        stream() << "running: true";
+    }
+
+    for (int i = 0; i < property.animationCount(); ++i) {
+        const QQuickAnimatedProperty::PropertyAnimation &animation = property.animation(i);
+
+        stream() << "SequentialAnimation {";
+        m_indentLevel++;
+
+        if (property.animationCount() == 1)
+            stream() << "running: true";
+
+        const int startOffset = animation.startOffset;
+        if (startOffset > 0)
+            stream() << "PauseAnimation { duration: " << startOffset << " }";
+
+        stream() << "SequentialAnimation {";
+        m_indentLevel++;
+
+        const int repeatCount = animation.repeatCount;
+        if (repeatCount < 0)
+            stream() << "loops: Animation.Infinite";
+        else
+            stream() << "loops: " << repeatCount;
+
+        int previousTime = 0;
+        for (auto it = animation.frames.constBegin(); it != animation.frames.constEnd(); ++it) {
+            const int time = it.key();
+            const QVariant &value = it.value();
+
+            if (value.typeId() == QMetaType::QColor)
+                stream() << "ColorAnimation {";
+            else
+                stream() << "PropertyAnimation {";
+            m_indentLevel++;
+
+            stream() << "target: " << targetName;
+            stream() << "property: \"" << propertyName << "\"";
+            if (value.typeId() == QMetaType::QColor)
+                stream() << "to: \"" << value.toString() << '"';
+            else
+                stream() << "to: " << value.toReal();
+            stream() << "duration: " << (time - previousTime);
+
+            m_indentLevel--;
+            stream() << "}";
+
+            previousTime = time;
+        }
+
+        if (!(animation.flags & QQuickAnimatedProperty::PropertyAnimation::FreezeAtEnd)) {
+            stream() << "ScriptAction {";
+            m_indentLevel++;
+            stream() << "script: " << targetName << "." << propertyName << " = ";
+
+            QVariant value = property.defaultValue();
+            if (value.typeId() == QMetaType::QColor)
+                stream(SameLine) << "\"" << value.toString() << "\"";
+            else
+                stream(SameLine) << value.toReal();
+            m_indentLevel--;
+            stream() << "}";
+        }
+
+        m_indentLevel--;
+        stream() << "}";
+
+        m_indentLevel--;
+        stream() << "}";
+    }
+
+    if (property.animationCount() > 1) {
+        m_indentLevel--;
+        stream() << "}";
+    }
+}
+
 void QQuickQmlGenerator::generateTransform(const QTransform &xf)
 {
     if (xf.isAffine()) {
@@ -280,11 +364,15 @@ void QQuickQmlGenerator::outputShapePath(const PathNodeInfo &info, const QPainte
 
     static int counter = 0;
 
-    const bool noPen = info.strokeStyle.color == QColorConstants::Transparent;
+    const QColor strokeColor = info.strokeStyle.color.defaultValue().value<QColor>();
+    const bool noPen = strokeColor == QColorConstants::Transparent && !info.strokeStyle.color.isAnimated();
     if (pathSelector == QQuickVectorImageGenerator::StrokePath && noPen)
         return;
 
-    const bool noFill = info.grad.type() == QGradient::NoGradient && info.fillColor == QColorConstants::Transparent;
+    const QColor fillColor = info.fillColor.defaultValue().value<QColor>();
+    const bool noFill = info.grad.type() == QGradient::NoGradient
+                        && fillColor == QColorConstants::Transparent
+                        && !info.fillColor.isAnimated();
 
     if (pathSelector == QQuickVectorImageGenerator::FillPath && noFill)
         return;
@@ -313,7 +401,7 @@ void QQuickQmlGenerator::outputShapePath(const PathNodeInfo &info, const QPainte
     if (noPen || !(pathSelector & QQuickVectorImageGenerator::StrokePath)) {
         stream() << "strokeColor: \"transparent\"";
     } else {
-        stream() << "strokeColor: \"" << info.strokeStyle.color.name(QColor::HexArgb) << "\"";
+        stream() << "strokeColor: \"" << strokeColor.name(QColor::HexArgb) << "\"";
         stream() << "strokeWidth: " << info.strokeStyle.width;
         stream() << "capStyle: " << QQuickVectorImageGenerator::Utils::strokeCapStyleString(info.strokeStyle.lineCapStyle);
         stream() << "joinStyle: " << QQuickVectorImageGenerator::Utils::strokeJoinStyleString(info.strokeStyle.lineJoinStyle);
@@ -337,7 +425,7 @@ void QQuickQmlGenerator::outputShapePath(const PathNodeInfo &info, const QPainte
             fillTransform *= objectToUserSpace;
         }
     } else {
-        stream() << "fillColor: \"" << info.fillColor.name(QColor::HexArgb) << "\"";
+        stream() << "fillColor: \"" << fillColor.name(QColor::HexArgb) << "\"";
     }
 
     if (!fillTransform.isIdentity()) {
@@ -368,17 +456,8 @@ void QQuickQmlGenerator::outputShapePath(const PathNodeInfo &info, const QPainte
     m_indentLevel--;
     stream() << "}";
 
-    for (int i = 0; i < info.animateColors.size(); ++i) {
-        const NodeInfo::AnimateColor &animateColor = info.animateColors.at(i);
-        generateAnimateColor(shapePathId,
-                             animateColor.fill
-                                 ? QStringLiteral("fillColor")
-                                 : QStringLiteral("strokeColor"),
-                             animateColor,
-                             animateColor.fill
-                                 ? info.fillColor
-                                 : info.strokeStyle.color);
-    }
+    generatePropertyAnimation(info.strokeStyle.color, shapePathId, QStringLiteral("strokeColor"));
+    generatePropertyAnimation(info.fillColor, shapePathId, QStringLiteral("fillColor"));
 
     counter++;
 }
@@ -417,13 +496,8 @@ void QQuickQmlGenerator::generateTextNode(const TextNodeInfo &info)
     const QString textItemId = QStringLiteral("_qt_textItem_%1").arg(counter);
     stream() << "id: " << textItemId;
 
-    for (int i = 0; i < info.animateColors.size(); ++i) {
-        const NodeInfo::AnimateColor &animateColor = info.animateColors.at(i);
-        generateAnimateColor(textItemId,
-                             animateColor.fill ? QStringLiteral("color") : QStringLiteral("styleColor"),
-                             animateColor,
-                             animateColor.fill ? info.fillColor : info.strokeColor);
-    }
+    generatePropertyAnimation(info.fillColor, textItemId, QStringLiteral("color"));
+    generatePropertyAnimation(info.strokeColor, textItemId, QStringLiteral("styleColor"));
 
     if (info.isTextArea) {
         stream() << "x: " << info.position.x();
@@ -454,7 +528,7 @@ void QQuickQmlGenerator::generateTextNode(const TextNodeInfo &info)
     }
     counter++;
 
-    stream() << "color: \"" << info.fillColor.name(QColor::HexArgb) << "\"";
+    stream() << "color: \"" << info.fillColor.defaultValue().value<QColor>().name(QColor::HexArgb) << "\"";
     stream() << "textFormat:" << (info.needsRichText ? "Text.RichText" : "Text.StyledText");
 
     QString s = info.text;
@@ -486,8 +560,9 @@ void QQuickQmlGenerator::generateTextNode(const TextNodeInfo &info)
         break;
     };
 
-    if (info.strokeColor != QColorConstants::Transparent) {
-        stream() << "styleColor: \"" << info.strokeColor.name(QColor::HexArgb) << "\"";
+    const QColor strokeColor = info.strokeColor.defaultValue().value<QColor>();
+    if (strokeColor != QColorConstants::Transparent || info.strokeColor.isAnimated()) {
+        stream() << "styleColor: \"" << strokeColor.name(QColor::HexArgb) << "\"";
         stream() << "style: Text.Outline";
     }
 
@@ -662,62 +737,6 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
 
     m_indentLevel--;
     stream() << "}";
-
-    m_indentLevel--;
-    stream() << "}";
-}
-
-void QQuickQmlGenerator::generateAnimateColor(const QString &targetName,
-                                              const QString &propertyName,
-                                              const NodeInfo::AnimateColor &animateColor,
-                                              const QColor &resetColor)
-{
-    stream() << "SequentialAnimation {";
-    m_indentLevel++;
-    stream() << "running: true";
-
-    if (animateColor.start > 0.0) {
-        stream() << "PauseAnimation {";
-        m_indentLevel++;
-        stream() << "duration: " << animateColor.start;
-        m_indentLevel--;
-        stream() << "}";
-    }
-
-    // Sequential animation for key frames
-    stream() << "SequentialAnimation {";
-    if (animateColor.repeatCount < 0)
-        stream() << "loops: Animation.Infinite";
-    else
-        stream() << "loops: " << animateColor.repeatCount;
-
-    m_indentLevel++;
-
-    for (const auto &keyFrame : animateColor.keyFrames) {
-        stream() << "ColorAnimation {";
-        m_indentLevel++;
-
-        stream() << "target: " << targetName;
-        stream() << "property: \"" << propertyName << "\"";
-        stream() << "to: \"" << keyFrame.second.name(QColor::HexArgb) << '"';
-        stream() << "duration: " << keyFrame.first;
-
-        m_indentLevel--;
-        stream() << "}";
-    }
-
-    m_indentLevel--;
-    stream() << "}"; // SequentialAnimation
-
-    if (!animateColor.freeze) {
-        stream() << "ScriptAction {";
-        m_indentLevel++;
-        stream() << "script: " << targetName << "." << propertyName << " = \"";
-        stream(SameLine) << resetColor.name(QColor::HexArgb);
-        stream(SameLine) << "\"";
-        m_indentLevel--;
-        stream() << "}";
-    }
 
     m_indentLevel--;
     stream() << "}";

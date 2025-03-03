@@ -836,17 +836,17 @@ void QSvgVisitorImpl::visitTextNode(const QSvgText *node)
                 auto addPathForFormat = [&](QPainterPath p, QTextCharFormat fmt) {
                     PathNodeInfo info;
                     fillCommonNodeInfo(node, info);
-                    fillAnimationInfo(node, info);
+                    fillPathAnimationInfo(node, info);
                     auto fillStyle = node->style().fill;
                     if (fillStyle)
                         info.fillRule = fillStyle->fillRule();
 
                     if (fmt.hasProperty(QTextCharFormat::ForegroundBrush)) {
-                        info.fillColor = fmt.foreground().color();
+                        info.fillColor.setDefaultValue(fmt.foreground().color());
                         if (fmt.foreground().gradient() != nullptr && fmt.foreground().gradient()->type() != QGradient::NoGradient)
                             info.grad = *fmt.foreground().gradient();
                     } else {
-                        info.fillColor = styleResolver->currentFillColor();
+                        info.fillColor.setDefaultValue(styleResolver->currentFillColor());
                     }
 
                     info.painterPath = p;
@@ -857,13 +857,13 @@ void QSvgVisitorImpl::visitTextNode(const QSvgText *node)
                         pen = fmt.textOutline();
                         if (strokeGradient == nullptr) {
                             info.strokeStyle = StrokeStyle::fromPen(pen);
-                            info.strokeStyle.color = pen.color();
+                            info.strokeStyle.color.setDefaultValue(pen.color());
                         }
                     } else {
                         pen = styleResolver->currentStroke();
                         if (strokeGradient == nullptr) {
                             info.strokeStyle = StrokeStyle::fromPen(pen);
-                            info.strokeStyle.color = styleResolver->currentStrokeColor();
+                            info.strokeStyle.color.setDefaultValue(styleResolver->currentStrokeColor());
                         }
                     }
 
@@ -877,7 +877,7 @@ void QSvgVisitorImpl::visitTextNode(const QSvgText *node)
                     if (strokeGradient != nullptr) {
                         PathNodeInfo strokeInfo;
                         fillCommonNodeInfo(node, strokeInfo);
-                        fillAnimationInfo(node, strokeInfo);
+                        fillPathAnimationInfo(node, strokeInfo);
 
                         strokeInfo.grad = *strokeGradient;
 
@@ -936,15 +936,27 @@ void QSvgVisitorImpl::visitTextNode(const QSvgText *node)
         fillCommonNodeInfo(node, info);
         fillAnimationInfo(node, info);
 
+        {
+            QList<AnimationPair> animations = collectAnimations(node, QStringLiteral("fill"));
+            if (!animations.isEmpty())
+                applyAnimationsToProperty(animations, &info.fillColor);
+        }
+
+        {
+            QList<AnimationPair> animations = collectAnimations(node, QStringLiteral("stroke"));
+            if (!animations.isEmpty())
+                applyAnimationsToProperty(animations, &info.strokeColor);
+        }
+
         info.position = node->position();
         info.size = node->size();
         info.font = font;
         info.text = text;
         info.isTextArea = isTextArea;
         info.needsRichText = needsRichText;
-        info.fillColor = styleResolver->currentFillColor();
+        info.fillColor.setDefaultValue(styleResolver->currentFillColor());
         info.alignment = styleResolver->states().textAnchor;
-        info.strokeColor = styleResolver->currentStrokeColor();
+        info.strokeColor.setDefaultValue(styleResolver->currentStrokeColor());
 
         m_generator->generateTextNode(info);
     }
@@ -1078,37 +1090,84 @@ void QSvgVisitorImpl::fillCommonNodeInfo(const QSvgNode *node, NodeInfo &info)
     info.isDisplayed = node->displayMode() != QSvgNode::DisplayMode::NoneMode;
 }
 
-void QSvgVisitorImpl::fillColorAnimationInfo(const QSvgNode *node, NodeInfo &info)
+QList<QSvgVisitorImpl::AnimationPair> QSvgVisitorImpl::collectAnimations(const QSvgNode *node,
+                                                                         const QString &propertyName)
 {
+    QList<AnimationPair> ret;
     const QList<QSvgAbstractAnimation *> animations = node->document()->animator()->animationsForNode(node);
     for (const QSvgAbstractAnimation *animation : animations) {
         const QList<QSvgAbstractAnimatedProperty *> properties = animation->properties();
         for (const QSvgAbstractAnimatedProperty *property : properties) {
-            if (property->type() == QSvgAbstractAnimatedProperty::Color) {
-                const QSvgAnimatedPropertyColor *colorProperty = static_cast<const QSvgAnimatedPropertyColor *>(property);
-                const QList<qreal> keyFrames = colorProperty->keyFrames();
-
-                NodeInfo::AnimateColor animateColor;
-                animateColor.start = animation->start();
-                animateColor.fill = colorProperty->propertyName() == QStringLiteral("fill");
-                animateColor.repeatCount = animation->iterationCount();
-                animateColor.freeze = animation->animationType() == QSvgAbstractAnimation::SMIL
-                                          ? static_cast<const QSvgAnimateNode *>(animation)->fill() == QSvgAnimateNode::Freeze
-                                          : true;
-
-                const QList<QColor> colors = colorProperty->colors();
-                Q_ASSERT(colors.size() == keyFrames.size());
-
-                for (int i = 0; i < keyFrames.size(); ++i) {
-                    qreal timeCode = keyFrames.at(i) * animation->duration();
-                    QColor color = colors.at(i);
-                    animateColor.keyFrames.append(qMakePair(timeCode, color));
-                }
-
-                if (!animateColor.keyFrames.isEmpty())
-                    info.animateColors.append(animateColor);
-            }
+            if (property->propertyName() == propertyName)
+                ret.append(qMakePair(animation, property));
         }
+    }
+
+    return ret;
+}
+
+void QSvgVisitorImpl::applyAnimationsToProperty(const QList<AnimationPair> &animations,
+                                                QQuickAnimatedProperty *outProperty)
+{
+    qCDebug(lcVectorImageAnimations) << "Applying animations to property with default value"
+                                     << outProperty->defaultValue();
+    for (auto it = animations.constBegin(); it != animations.constEnd(); ++it) {
+        qCDebug(lcVectorImageAnimations) << "    -> Add animation";
+        const QSvgAbstractAnimation *animation = it->first;
+        const QSvgAbstractAnimatedProperty *property = it->second;
+
+        const int start = animation->start();
+        const int repeatCount = animation->iterationCount();
+        const int duration = animation->duration();
+
+        bool freeze = false;
+        if (animation->animationType() == QSvgAbstractAnimation::SMIL) {
+            const QSvgAnimateNode *animateNode = static_cast<const QSvgAnimateNode *>(animation);
+            freeze = animateNode->fill() == QSvgAnimateNode::Freeze;
+        }
+
+        qCDebug(lcVectorImageAnimations) << "        -> Start:" << start
+                                         << ", repeatCount:" << repeatCount
+                                         << ", freeze:" << freeze;
+
+        QList<qreal> propertyKeyFrames = property->keyFrames();
+
+        QQuickAnimatedProperty::PropertyAnimation outAnimation;
+        outAnimation.repeatCount = repeatCount;
+        outAnimation.startOffset = start;
+        if (freeze)
+            outAnimation.flags |= QQuickAnimatedProperty::PropertyAnimation::FreezeAtEnd;
+
+        for (int j = 0; j < propertyKeyFrames.size(); ++j) {
+            const int time = qRound(propertyKeyFrames.at(j) * duration);
+
+            if (j == 0)
+                const_cast<QSvgAbstractAnimatedProperty *>(property)->interpolate(1, 0.0);
+            else
+                const_cast<QSvgAbstractAnimatedProperty *>(property)->interpolate(j, 1.0);
+
+            QVariant value = property->interpolatedValue();
+            outAnimation.frames[time] = value;
+            qCDebug(lcVectorImageAnimations) << "        -> Frame " << time << " is " << value;
+        }
+
+        outProperty->addAnimation(outAnimation);
+    }
+}
+
+void QSvgVisitorImpl::fillColorAnimationInfo(const QSvgNode *node, PathNodeInfo &info)
+{
+    // Collect all animations affecting fill
+    {
+        QList<AnimationPair> animations = collectAnimations(node, QStringLiteral("fill"));
+        if (!animations.isEmpty())
+            applyAnimationsToProperty(animations, &info.fillColor);
+    }
+
+    {
+        QList<AnimationPair> animations = collectAnimations(node, QStringLiteral("stroke"));
+        if (!animations.isEmpty())
+            applyAnimationsToProperty(animations, &info.strokeStyle.color);
     }
 }
 
@@ -1421,9 +1480,14 @@ void QSvgVisitorImpl::fillTransformAnimationInfo(const QSvgNode *node, NodeInfo 
     }
 }
 
-void QSvgVisitorImpl::fillAnimationInfo(const QSvgNode *node, NodeInfo &info)
+void QSvgVisitorImpl::fillPathAnimationInfo(const QSvgNode *node, PathNodeInfo &info)
 {
     fillColorAnimationInfo(node, info);
+    fillAnimationInfo(node, info);
+}
+
+void QSvgVisitorImpl::fillAnimationInfo(const QSvgNode *node, NodeInfo &info)
+{
     fillTransformAnimationInfo(node, info);
 }
 
@@ -1463,7 +1527,6 @@ void QSvgVisitorImpl::handlePathNode(const QSvgNode *node, const QPainterPath &p
 
     PathNodeInfo info;
     fillCommonNodeInfo(node, info);
-    fillAnimationInfo(node, info);
     auto fillStyle = node->style().fill;
     if (fillStyle)
         info.fillRule = fillStyle->fillRule();
@@ -1471,14 +1534,16 @@ void QSvgVisitorImpl::handlePathNode(const QSvgNode *node, const QPainterPath &p
     const QGradient *strokeGradient = styleResolver->currentStrokeGradient();
 
     info.painterPath = path;
-    info.fillColor = styleResolver->currentFillColor();
+    info.fillColor.setDefaultValue(styleResolver->currentFillColor());
     if (strokeGradient == nullptr) {
         info.strokeStyle = StrokeStyle::fromPen(styleResolver->currentStroke());
-        info.strokeStyle.color = styleResolver->currentStrokeColor();
+        info.strokeStyle.color.setDefaultValue(styleResolver->currentStrokeColor());
     }
     if (styleResolver->currentFillGradient() != nullptr)
         info.grad = styleResolver->applyOpacityToGradient(*styleResolver->currentFillGradient(), styleResolver->currentFillOpacity());
     info.fillTransform = styleResolver->currentFillTransform();
+
+    fillPathAnimationInfo(node, info);
 
     m_generator->generatePath(info);
 

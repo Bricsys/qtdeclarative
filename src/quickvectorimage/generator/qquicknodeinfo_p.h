@@ -22,6 +22,8 @@
 #include <QQuickItem>
 #include <QtGui/private/qfixed_p.h>
 
+#include "qquickanimatedproperty_p.h"
+
 QT_BEGIN_NAMESPACE
 
 struct NodeInfo
@@ -34,15 +36,6 @@ struct NodeInfo
     bool isDefaultOpacity = true;
     bool isVisible = true;
     bool isDisplayed = true; // TODO: Map to display enum in QtSvg
-
-    struct AnimateColor {
-        int start = 0;
-        int repeatCount = 0;
-        bool fill = false;
-        bool freeze = false;
-        QList<QPair<qreal, QColor> > keyFrames;
-    };
-    QList<AnimateColor> animateColors;
 
     struct TransformAnimation {
         struct TransformKeyFrame {
@@ -74,7 +67,7 @@ struct StrokeStyle
     int miterLimit = 4;
     qreal dashOffset = 0;
     QList<qreal> dashArray;
-    QColor color = QColorConstants::Transparent;
+    QQuickAnimatedProperty color = QQuickAnimatedProperty(QVariant::fromValue(QColorConstants::Transparent));
     qreal width = 1.0;
 
     static StrokeStyle fromPen(const QPen &p)
@@ -95,7 +88,7 @@ struct PathNodeInfo : NodeInfo
 {
     QPainterPath painterPath;
     Qt::FillRule fillRule = Qt::FillRule::WindingFill;
-    QColor fillColor;
+    QQuickAnimatedProperty fillColor = QQuickAnimatedProperty(QVariant::fromValue(QColor{}));
     StrokeStyle strokeStyle;
     QGradient grad;
     QTransform fillTransform;
@@ -110,8 +103,8 @@ struct TextNodeInfo : NodeInfo
     QString text;
     QFont font;
     Qt::Alignment alignment;
-    QColor fillColor;
-    QColor strokeColor;
+    QQuickAnimatedProperty fillColor = QQuickAnimatedProperty(QVariant::fromValue(QColor{}));
+    QQuickAnimatedProperty strokeColor = QQuickAnimatedProperty(QVariant::fromValue(QColor{}));
 };
 
 struct AnimateColorNodeInfo : NodeInfo

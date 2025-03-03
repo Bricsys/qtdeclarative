@@ -158,16 +158,78 @@ void QQuickItemGenerator::generatePath(const PathNodeInfo &info, const QRectF &o
     }
 }
 
+void QQuickItemGenerator::generatePropertyAnimation(const QQuickAnimatedProperty &property,
+                                                    QObject *target,
+                                                    const QString &propertyName)
+{
+    for (int i = 0; i < property.animationCount(); ++i) {
+        const QQuickAnimatedProperty::PropertyAnimation &animation = property.animation(i);
+
+        QQuickSequentialAnimation *sequentialAnimation = new QQuickSequentialAnimation(target);
+        QQmlListProperty<QQuickAbstractAnimation> anims = sequentialAnimation->animations();
+
+        if (animation.startOffset > 0) {
+            QQuickPauseAnimation *pauseAnimation = new QQuickPauseAnimation(sequentialAnimation);
+            pauseAnimation->setDuration(animation.startOffset);
+            anims.append(&anims, pauseAnimation);
+        }
+
+        QQuickSequentialAnimation *keyFrameAnimation = new QQuickSequentialAnimation(sequentialAnimation);
+        keyFrameAnimation->setLoops(animation.repeatCount);
+        anims.append(&anims, keyFrameAnimation);
+
+        anims = keyFrameAnimation->animations();
+
+        int previousTime = 0;
+        for (auto it = animation.frames.constBegin(); it != animation.frames.constEnd(); ++it) {
+            const int time = it.key();
+            const QVariant &value = it.value();
+
+            QQuickPropertyAnimation *propertyAnimation;
+            if (value.typeId() == QMetaType::QColor) {
+                QQuickColorAnimation *colorAnimation = new QQuickColorAnimation(keyFrameAnimation);
+                colorAnimation->setTo(value.value<QColor>());
+                propertyAnimation = colorAnimation;
+            } else {
+                propertyAnimation = new QQuickPropertyAnimation(keyFrameAnimation);
+                propertyAnimation->setTo(value.toReal());
+            }
+
+            propertyAnimation->setTargetObject(target);
+            propertyAnimation->setProperty(propertyName);
+
+            propertyAnimation->setDuration(time - previousTime);
+            anims.append(&anims, propertyAnimation);
+
+            previousTime = time;
+        }
+
+        if (!(animation.flags & QQuickAnimatedProperty::PropertyAnimation::FreezeAtEnd)) {
+            anims = sequentialAnimation->animations();
+
+            QQuickPropertyAction *resetAction = new QQuickPropertyAction(sequentialAnimation);
+            resetAction->setTargetObject(target);
+            resetAction->setProperty(propertyName);
+            resetAction->setValue(property.defaultValue());
+            anims.append(&anims, resetAction);
+        }
+
+        sequentialAnimation->setRunning(true);
+    }
+}
+
 void QQuickItemGenerator::outputShapePath(const PathNodeInfo &info, const QPainterPath *painterPath, const QQuadPath *quadPath, QQuickVectorImageGenerator::PathSelector pathSelector, const QRectF &boundingRect)
 {
     Q_UNUSED(pathSelector)
     Q_ASSERT(painterPath || quadPath);
 
-    const bool noPen = info.strokeStyle.color == QColorConstants::Transparent;
+    const QColor color = info.strokeStyle.color.defaultValue().value<QColor>();
+    const bool noPen = color == QColorConstants::Transparent && !info.strokeStyle.color.isAnimated();
     if (pathSelector == QQuickVectorImageGenerator::StrokePath && noPen)
         return;
 
-    const bool noFill = info.grad.type() == QGradient::NoGradient && info.fillColor == QColorConstants::Transparent;
+    const QColor fillColor = info.fillColor.defaultValue().value<QColor>();
+    const bool noFill = info.grad.type() == QGradient::NoGradient && fillColor == QColorConstants::Transparent && !info.fillColor.isAnimated();
 
     if (pathSelector == QQuickVectorImageGenerator::FillPath && noFill)
         return;
@@ -183,7 +245,7 @@ void QQuickItemGenerator::outputShapePath(const PathNodeInfo &info, const QPaint
     if (noPen || !(pathSelector & QQuickVectorImageGenerator::StrokePath)) {
         shapePath->setStrokeColor(Qt::transparent);
     } else {
-        shapePath->setStrokeColor(info.strokeStyle.color);
+        shapePath->setStrokeColor(color);
         shapePath->setStrokeWidth(info.strokeStyle.width);
         shapePath->setCapStyle(QQuickShapePath::CapStyle(info.strokeStyle.lineCapStyle));
         shapePath->setJoinStyle(QQuickShapePath::JoinStyle(info.strokeStyle.lineJoinStyle));
@@ -207,18 +269,11 @@ void QQuickItemGenerator::outputShapePath(const PathNodeInfo &info, const QPaint
             fillTransform *= objectToUserSpace;
         }
     } else {
-        shapePath->setFillColor(info.fillColor);
+        shapePath->setFillColor(fillColor);
     }
 
-    for (int i = 0; i < info.animateColors.size(); ++i) {
-        const NodeInfo::AnimateColor &animateColor = info.animateColors.at(i);
-        generateAnimateColor(shapePath,
-                             animateColor.fill
-                                 ? QStringLiteral("fillColor")
-                                 : QStringLiteral("strokeColor"),
-                             animateColor,
-                             animateColor.fill ? info.fillColor : info.strokeStyle.color);
-    }
+    generatePropertyAnimation(info.strokeStyle.color, shapePath, QStringLiteral("strokeColor"));
+    generatePropertyAnimation(info.fillColor, shapePath, QStringLiteral("fillColor"));
 
     shapePath->setFillRule(fillRule);
     if (!fillTransform.isIdentity())
@@ -340,23 +395,19 @@ void QQuickItemGenerator::generateTextNode(const TextNodeInfo &info)
         }
     }
 
-    textItem->setColor(info.fillColor);
+    textItem->setColor(info.fillColor.defaultValue().value<QColor>());
     textItem->setTextFormat(info.needsRichText ? QQuickText::RichText : QQuickText::StyledText);
     textItem->setText(info.text);
     textItem->setFont(info.font);
 
-    if (info.strokeColor != QColorConstants::Transparent) {
-        textItem->setStyleColor(info.strokeColor);
+    const QColor strokeColor = info.strokeColor.defaultValue().value<QColor>();
+    if (strokeColor != QColorConstants::Transparent || info.strokeColor.isAnimated()) {
+        textItem->setStyleColor(strokeColor);
         textItem->setStyle(QQuickText::Outline);
     }
 
-    for (int i = 0; i < info.animateColors.size(); ++i) {
-        const NodeInfo::AnimateColor &animateColor = info.animateColors.at(i);
-        generateAnimateColor(currentItem(),
-                             animateColor.fill ? QStringLiteral("color") : QStringLiteral("styleColor"),
-                             animateColor,
-                             animateColor.fill ? info.fillColor : info.strokeColor);
-    }
+    generatePropertyAnimation(info.fillColor, textItem, QStringLiteral("color"));
+    generatePropertyAnimation(info.strokeColor, textItem, QStringLiteral("styleColor"));
 
     m_items.pop(); m_items.pop();
 }
@@ -508,51 +559,6 @@ void QQuickItemGenerator::generateAnimateTransform(const QList<QQuickTransform *
     }
 
     mainAnimation->setRunning(true);
-}
-
-void QQuickItemGenerator::generateAnimateColor(QObject *target,
-                                               const QString &propertyName,
-                                               const NodeInfo::AnimateColor &animateColor,
-                                               const QColor &resetColor)
-{
-    QQuickSequentialAnimation *sequentialAnimation = new QQuickSequentialAnimation(target);
-    QQmlListProperty<QQuickAbstractAnimation> anims = sequentialAnimation->animations();
-
-    if (animateColor.start > 0) {
-        QQuickPauseAnimation *pauseAnimation = new QQuickPauseAnimation(sequentialAnimation);
-        pauseAnimation->setDuration(animateColor.start);
-        anims.append(&anims, pauseAnimation);
-    }
-
-    QQuickSequentialAnimation *keyFrameAnimation = new QQuickSequentialAnimation(target);
-    keyFrameAnimation->setLoops(animateColor.repeatCount);
-    anims.append(&anims, keyFrameAnimation);
-
-    anims = keyFrameAnimation->animations();
-
-    for (const auto &keyFrame : animateColor.keyFrames) {
-        QQuickColorAnimation *colorAnimation = new QQuickColorAnimation(sequentialAnimation);
-
-        colorAnimation->setTargetObject(target);
-        colorAnimation->setProperty(propertyName);
-
-        colorAnimation->setTo(keyFrame.second);
-        colorAnimation->setDuration(keyFrame.first);
-        anims.append(&anims, colorAnimation);
-    }
-
-    if (!animateColor.freeze) {
-        QQuickColorAnimation *resetAnimation = new QQuickColorAnimation(sequentialAnimation);
-        resetAnimation->setDuration(0);
-        resetAnimation->setLoops(1);
-        resetAnimation->setTargetObject(target);
-        resetAnimation->setProperty(propertyName);
-        resetAnimation->setTo(resetColor);
-        anims.append(&anims, resetAnimation);
-    }
-
-    if (sequentialAnimation != nullptr)
-        sequentialAnimation->setRunning(true);
 }
 
 bool QQuickItemGenerator::generateStructureNode(const StructureNodeInfo &info)
