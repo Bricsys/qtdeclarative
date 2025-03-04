@@ -2454,6 +2454,13 @@ QQuickListView::~QQuickListView()
 
     \sa {Stacking Order in ListView}
 */
+
+/*!
+    \qmlproperty enumeration QtQuick::ListView::delegateModelAccess
+
+    \include delegatemodelaccess.qdocinc
+*/
+
 /*!
     \qmlproperty int QtQuick::ListView::currentIndex
     \qmlproperty Item QtQuick::ListView::currentItem

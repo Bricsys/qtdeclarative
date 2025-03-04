@@ -174,6 +174,9 @@ void QQuickItemView::setModel(const QVariant &m)
             QObjectPrivate::disconnect(
                     delegateModel, &QQmlDelegateModel::delegateChanged,
                     d, &QQuickItemViewPrivate::applyDelegateChange);
+            QObjectPrivate::disconnect(
+                    delegateModel, &QQmlDelegateModel::delegateModelAccessChanged,
+                    d, &QQuickItemViewPrivate::applyDelegateModelAccessChange);
         }
     }
 
@@ -199,6 +202,20 @@ void QQuickItemView::setModel(const QVariant &m)
             }
         }
 
+        if (d->explicitDelegateModelAccess) {
+            QQmlDelegateModel::DelegateModelAccess access = QQmlDelegateModel::Qt5ReadWrite;
+            if (QQmlDelegateModel *old = oldModel.delegateModel())
+                access = old->delegateModelAccess();
+
+            if (QQmlDelegateModel *delegateModel = newModel.delegateModel()) {
+                delegateModel->setDelegateModelAccess(access);
+            } else if (access != QQmlDelegateModel::Qt5ReadWrite) {
+                qmlWarning(this) << "Cannot retain explicitly set delegate model access "
+                                    "on non-DelegateModel";
+                d->explicitDelegateModelAccess = false;
+            }
+        }
+
         if (d->ownModel) {
             delete oldModel.instanceModel();
             d->ownModel = false;
@@ -216,6 +233,13 @@ void QQuickItemView::setModel(const QVariant &m)
             if (QQmlDelegateModel *old = oldModel.delegateModel())
                 delegate = old->delegate();
             newModel.delegateModel()->setDelegate(delegate);
+        }
+
+        if (d->explicitDelegateModelAccess) {
+            QQmlDelegateModel::DelegateModelAccess access = QQmlDelegateModel::Qt5ReadWrite;
+            if (QQmlDelegateModel *old = oldModel.delegateModel())
+                access = old->delegateModelAccess();
+            newModel.delegateModel()->setDelegateModelAccess(access);
         }
 
         newModel.delegateModel()->setModel(model);
@@ -258,6 +282,9 @@ void QQuickItemView::setModel(const QVariant &m)
             QObjectPrivate::connect(
                     dataModel, &QQmlDelegateModel::delegateChanged,
                     d, &QQuickItemViewPrivate::applyDelegateChange);
+            QObjectPrivate::connect(
+                    dataModel, &QQmlDelegateModel::delegateModelAccessChanged,
+                    d, &QQuickItemViewPrivate::applyDelegateModelAccessChange);
         }
         d->emitCountChanged();
     }
@@ -1159,6 +1186,18 @@ void QQuickItemViewPrivate::applyDelegateChange()
     updateViewport();
 }
 
+void QQuickItemViewPrivate::applyDelegateModelAccessChange()
+{
+    Q_Q(QQuickItemView);
+
+    if (explicitDelegateModelAccess) {
+        qmlWarning(q) << "Explicitly set delegateModelAccess is externally overridden";
+        explicitDelegateModelAccess = false;
+    }
+
+    emit q->delegateModelAccessChanged();
+}
+
 // for debugging only
 void QQuickItemViewPrivate::checkVisible() const
 {
@@ -1588,6 +1627,7 @@ QQuickItemViewPrivate::QQuickItemViewPrivate()
     , delegateValidated(false)
     , isClearing(false)
     , explicitDelegate(false)
+    , explicitDelegateModelAccess(false)
 {
     bufferPause.addAnimationChangeListener(this, QAbstractAnimationJob::Completion);
     bufferPause.setLoopCount(1);
@@ -2667,6 +2707,55 @@ void QQuickItemViewPrivate::updateVisibleIndex()
             visibleIndex = (*it)->index;
             break;
         }
+    }
+}
+
+QQmlDelegateModel::DelegateModelAccess QQuickItemView::delegateModelAccess() const
+{
+    Q_D(const QQuickItemView);
+    if (QQmlDelegateModel *dataModel = qobject_cast<QQmlDelegateModel *>(d->model))
+        return dataModel->delegateModelAccess();
+    return QQmlDelegateModel::Qt5ReadWrite;
+}
+
+void QQuickItemView::setDelegateModelAccess(
+        QQmlDelegateModel::DelegateModelAccess delegateModelAccess)
+{
+    Q_D(QQuickItemView);
+    const auto setExplicitDelegateModelAccess = [&](QQmlDelegateModel *delegateModel) {
+        delegateModel->setDelegateModelAccess(delegateModelAccess);
+        d->explicitDelegateModelAccess = true;
+    };
+
+    if (!d->model) {
+        if (delegateModelAccess == QQmlDelegateModel::Qt5ReadWrite) {
+            // Explicitly set delegateModelAccess to Legacy. We can do this without model.
+            d->explicitDelegateModelAccess = true;
+            return;
+        }
+
+        setExplicitDelegateModelAccess(QQmlDelegateModel::createForView(this, d));
+
+        // The new model is not connected to applyDelegateModelAccessChange, yet. We only do this
+        // once there is actual data, via an explicit setModel(). So we have to manually emit the
+        // delegateModelAccessChanged() here.
+        emit delegateModelAccessChanged();
+        return;
+    }
+
+    if (QQmlDelegateModel *delegateModel = qobject_cast<QQmlDelegateModel *>(d->model)) {
+        // Disable the warning in applyDelegateModelAccessChange since the new delegate model
+        // access is also explicit.
+        d->explicitDelegateModelAccess = false;
+        setExplicitDelegateModelAccess(delegateModel);
+        return;
+    }
+
+    if (delegateModelAccess == QQmlDelegateModel::Qt5ReadWrite) {
+        d->explicitDelegateModelAccess = true; // Explicitly set null delegate always works
+    } else {
+        qmlWarning(this) << "Cannot set a delegateModelAccess on an explicitly provided "
+                            "non-DelegateModel";
     }
 }
 

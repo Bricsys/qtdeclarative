@@ -169,6 +169,7 @@ public:
     qreal calculatedMaxExtent() const;
 
     void applyDelegateChange();
+    void applyDelegateModelAccessChange();
 
     void applyPendingChanges();
     bool applyModelChanges(ChangeResult *insertionResult, ChangeResult *removalResult);
@@ -311,6 +312,7 @@ public:
     bool delegateValidated : 1;
     bool isClearing : 1;
     bool explicitDelegate: 1;
+    bool explicitDelegateModelAccess: 1;
 
 protected:
     virtual Qt::Orientation layoutOrientation() const = 0;
