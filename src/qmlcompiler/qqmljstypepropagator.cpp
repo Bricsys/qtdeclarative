@@ -1,5 +1,5 @@
 // Copyright (C) 2021 The Qt Company Ltd.
-// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial
 
 #include "qqmljsscope_p.h"
 #include "qqmljstypepropagator_p.h"
@@ -943,9 +943,19 @@ void QQmlJSTypePropagator::generate_StoreProperty(int nameIndex, int base)
                                     getCurrentSourceLocation());
     }
 
-    m_state.setHasSideEffects(true);
+    if (!m_typeResolver->canHoldUndefined(property)
+            && m_typeResolver->canHoldUndefined(m_state.accumulatorIn())) {
+        // If the input can be undefined but the property cannot hold it
+        // we must not coerce the input to the property type:
+        // * In the case of resettable properties this would suppress a reset
+        // * In the case of non-resettable properties it would suppress an exception.
+        // For example, undefined -> string becomes "undefined".
+        setError(u"Cannot assign potential undefined to %1"_s.arg(property.descriptiveName()));
+    }
+
     addReadAccumulator(property);
     addReadRegister(base, callBase);
+    m_state.setHasSideEffects(true);
 }
 
 void QQmlJSTypePropagator::generate_SetLookup(int index, int base)
@@ -2181,6 +2191,7 @@ void QQmlJSTypePropagator::generate_InitializeBlockDeadTemporalZone(int firstReg
 {
     Q_UNUSED(firstReg)
     Q_UNUSED(count)
+    m_state.setHasSideEffects(true);
     // Ignore. We reject uninitialized values anyway.
 }
 
@@ -2298,6 +2309,13 @@ void QQmlJSTypePropagator::endInstruction(QV4::Moth::Instr::Type instr)
             setError(u"Instruction is expected to populate the accumulator"_s);
             return;
         }
+    }
+
+    if (!(m_error->isValid() && m_error->isError())
+        && instr != QV4::Moth::Instr::Type::DeadTemporalZoneCheck) {
+        // An instruction needs to have side effects or write to another register otherwise it's a
+        // noop. DeadTemporalZoneCheck is not needed by the compiler and is ignored.
+        Q_ASSERT(m_state.hasSideEffects() || m_state.changedRegisterIndex() != -1);
     }
 
     if (m_state.changedRegisterIndex() != InvalidRegister) {

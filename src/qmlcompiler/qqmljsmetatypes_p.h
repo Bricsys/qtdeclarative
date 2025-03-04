@@ -1,5 +1,5 @@
 // Copyright (C) 2019 The Qt Company Ltd.
-// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial
 
 #ifndef QQMLJSMETATYPES_P_H
 #define QQMLJSMETATYPES_P_H
@@ -120,7 +120,7 @@ public:
         Const,
     };
 
-    QQmlJSMetaParameter(const QString &name, const QString &typeName,
+    QQmlJSMetaParameter(const QString &name = QString(), const QString &typeName = QString(),
                         Constness typeQualifier = NonConst,
                         QWeakPointer<const QQmlJSScope> type = {})
         : m_name(name), m_typeName(typeName), m_type(type), m_typeQualifier(typeQualifier)
@@ -135,8 +135,12 @@ public:
     void setType(QWeakPointer<const QQmlJSScope> type) { m_type = type; }
     Constness typeQualifier() const { return m_typeQualifier; }
     void setTypeQualifier(Constness typeQualifier) { m_typeQualifier = typeQualifier; }
+
     bool isPointer() const { return m_isPointer; }
     void setIsPointer(bool isPointer) { m_isPointer = isPointer; }
+
+    bool isList() const { return m_isList; }
+    void setIsList(bool isList) { m_isList = isList; }
 
     friend bool operator==(const QQmlJSMetaParameter &a, const QQmlJSMetaParameter &b)
     {
@@ -162,7 +166,10 @@ private:
     QWeakPointer<const QQmlJSScope> m_type;
     Constness m_typeQualifier = NonConst;
     bool m_isPointer = false;
+    bool m_isList = false;
 };
+
+using QQmlJSMetaReturnType = QQmlJSMetaParameter;
 
 class QQmlJSMetaMethod
 {
@@ -191,20 +198,18 @@ public:
     QQmlJSMetaMethod() = default;
     explicit QQmlJSMetaMethod(QString name, QString returnType = QString())
         : m_name(std::move(name))
-        , m_returnTypeName(std::move(returnType))
+        , m_returnType(QString(), std::move(returnType))
         , m_methodType(Method)
     {}
 
     QString methodName() const { return m_name; }
     void setMethodName(const QString &name) { m_name = name; }
 
-    QString returnTypeName() const { return m_returnTypeName; }
-    QSharedPointer<const QQmlJSScope> returnType() const { return m_returnType.toStrongRef(); }
-    void setReturnTypeName(const QString &type) { m_returnTypeName = type; }
-    void setReturnType(const QSharedPointer<const QQmlJSScope> &type)
-    {
-        m_returnType = type;
-    }
+    QQmlJSMetaReturnType returnValue() const { return m_returnType; }
+    void setReturnValue(const QQmlJSMetaReturnType returnValue) { m_returnType = returnValue; }
+    QString returnTypeName() const { return m_returnType.typeName(); }
+    QSharedPointer<const QQmlJSScope> returnType() const { return m_returnType.type(); }
+    void setReturnTypeName(const QString &type) { m_returnType.setTypeName(type); }
 
     QList<QQmlJSMetaParameter> parameters() const { return m_parameters; }
 
@@ -257,7 +262,7 @@ public:
 
     friend bool operator==(const QQmlJSMetaMethod &a, const QQmlJSMetaMethod &b)
     {
-        return a.m_name == b.m_name && a.m_returnTypeName == b.m_returnTypeName
+        return a.m_name == b.m_name && a.m_returnType == b.m_returnType
                 && a.m_returnType == b.m_returnType && a.m_parameters == b.m_parameters
                 && a.m_annotations == b.m_annotations && a.m_methodType == b.m_methodType
                 && a.m_methodAccess == b.m_methodAccess && a.m_revision == b.m_revision
@@ -274,8 +279,7 @@ public:
         QtPrivate::QHashCombine combine;
 
         seed = combine(seed, method.m_name);
-        seed = combine(seed, method.m_returnTypeName);
-        seed = combine(seed, method.m_returnType.toStrongRef().data());
+        seed = combine(seed, method.m_returnType);
         seed = combine(seed, method.m_annotations);
         seed = combine(seed, method.m_methodType);
         seed = combine(seed, method.m_methodAccess);
@@ -291,8 +295,8 @@ public:
 
 private:
     QString m_name;
-    QString m_returnTypeName;
-    QWeakPointer<const QQmlJSScope> m_returnType;
+
+    QQmlJSMetaReturnType m_returnType;
 
     QList<QQmlJSMetaParameter> m_parameters;
     QList<QQmlJSAnnotation> m_annotations;

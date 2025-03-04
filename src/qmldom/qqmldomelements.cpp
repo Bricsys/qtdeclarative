@@ -314,13 +314,39 @@ bool Import::iterateDirectSubpaths(DomItem &self, DirectVisitor visitor)
     return cont;
 }
 
-void Import::writeOut(DomItem &, OutWriter &ow) const
+void Import::writeOut(DomItem &self, OutWriter &ow) const
 {
     if (implicit)
         return;
-    ow.ensureNewline();
+
+    QString code;
+    const DomItem owner = self.owner();
+    if (std::shared_ptr<QmlFile> qmlFilePtr = self.ownerAs<QmlFile>())
+        code = qmlFilePtr->code();
+
+    // check for an empty line before the import, and preserve it
+    int preNewlines = 0;
+
+    const FileLocations::Tree elLoc = FileLocations::findAttachedInfo(self).foundTree;
+
+    quint32 start = elLoc->info().fullRegion.offset;
+    if (size_t(code.size()) >= start) {
+        while (start != 0) {
+            QChar c = code.at(--start);
+            if (c == u'\n') {
+                if (++preNewlines == 2)
+                    break;
+            } else if (!c.isSpace())
+                break;
+        }
+    }
+    if (preNewlines == 0)
+        ++preNewlines;
+
+    ow.ensureNewline(preNewlines);
     ow.writeRegion(u"import").space();
     ow.writeRegion(u"uri", uri.toString());
+
     if (uri.isModule()) {
         QString vString = version.stringValue();
         if (!vString.isEmpty())
@@ -714,7 +740,7 @@ void QmlObject::writeOut(DomItem &self, OutWriter &ow, QString onTarget) const
     ow.writeRegion(u"name", name());
     if (!onTarget.isEmpty())
         ow.space().writeRegion(u"on", u"on").space().writeRegion(u"onTarget", onTarget);
-    ow.writeRegion(u"leftBrace", u" {").newline();
+    ow.writeRegion(u"leftBrace", u" {");
     int baseIndent = ow.increaseIndent();
     int spacerId = 0;
     if (!idStr().isEmpty()) { // *always* put id first
@@ -730,8 +756,10 @@ void QmlObject::writeOut(DomItem &self, OutWriter &ow, QString onTarget) const
             == LineWriterOptions::AttributesSequence::Normalize) {
             ow.ensureNewline(2);
         }
-        if (myId)
+        if (myId) {
             myId.writeOutPost(ow);
+            ow.ensureNewline(1);
+        }
     }
     quint32 counter = ow.counter();
     DomItem component;
@@ -850,9 +878,10 @@ void QmlObject::writeOut(DomItem &self, OutWriter &ow, QString onTarget) const
             } else {
                 el.second.writeOut(ow);
             }
+            ow.ensureNewline();
         }
         ow.decreaseIndent(1, baseIndent);
-        ow.ensureNewline().write(u"}");
+        ow.write(u"}");
 
         return;
     }

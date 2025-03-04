@@ -809,36 +809,68 @@ function(_qt_internal_target_enable_qmllint target)
     _qt_internal_extend_qml_import_paths(import_args)
 
     _qt_internal_get_tool_wrapper_script_path(tool_wrapper)
-    set(cmd
-        ${tool_wrapper}
-        $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::qmllint>
+
+    set(qmllint_args
         --bare
         ${import_args}
         ${qrc_args}
         ${qmllint_files}
     )
 
+    get_target_property(target_binary_dir ${target} BINARY_DIR)
+    set(qmllint_dir ${target_binary_dir}/.rcc/qmllint)
+    set(qmllint_rsp_path ${qmllint_dir}/${target}.rsp)
+
+    file(GENERATE
+        OUTPUT "${qmllint_rsp_path}"
+        CONTENT "$<JOIN:${qmllint_args},\n>\n"
+    )
+
+    set(cmd
+        ${tool_wrapper}
+        $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::qmllint>
+        @${qmllint_rsp_path}
+    )
+
+    set(cmd_dummy ${CMAKE_COMMAND} -E echo "Nothing to do for target ${lint_target}.")
+
     # We need this target to depend on all qml type registrations. This is the
     # only way we can be sure that all *.qmltypes files for any QML modules we
     # depend on will have been generated.
     add_custom_target(${lint_target}
-        COMMAND "$<${have_qmllint_files}:${cmd}>"
+        COMMAND "$<IF:${have_qmllint_files},${cmd},${cmd_dummy}>"
         COMMAND_EXPAND_LISTS
         DEPENDS
             ${QT_CMAKE_EXPORT_NAMESPACE}::qmllint
             ${qmllint_files}
+            ${qmllint_rsp_path}
             $<TARGET_NAME_IF_EXISTS:all_qmltyperegistrations>
         WORKING_DIRECTORY "$<TARGET_PROPERTY:${target},SOURCE_DIR>"
     )
     _qt_internal_assign_to_qmllint_targets_folder(${lint_target})
 
-    set(lint_args "--json" "${CMAKE_BINARY_DIR}/${lint_target}.json")
+    list(APPEND qmllint_args "--json" "${CMAKE_BINARY_DIR}/${lint_target}.json")
+
+    set(qmllint_rsp_path ${qmllint_dir}/${target}_json.rsp)
+
+    file(GENERATE
+        OUTPUT "${qmllint_rsp_path}"
+        CONTENT "$<JOIN:${qmllint_args},\n>\n"
+    )
+
+    set(cmd
+        ${tool_wrapper}
+        $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::qmllint>
+        @${qmllint_rsp_path}
+    )
+
     add_custom_target(${lint_target_json}
-        COMMAND "$<${have_qmllint_files}:${cmd};${lint_args}>"
+        COMMAND "$<${have_qmllint_files}:${cmd}>"
         COMMAND_EXPAND_LISTS
         DEPENDS
             ${QT_CMAKE_EXPORT_NAMESPACE}::qmllint
             ${qmllint_files}
+            ${qmllint_rsp_path}
             $<TARGET_NAME_IF_EXISTS:all_qmltyperegistrations>
         WORKING_DIRECTORY "$<TARGET_PROPERTY:${target},SOURCE_DIR>"
     )
@@ -849,18 +881,34 @@ function(_qt_internal_target_enable_qmllint target)
    get_target_property(module_uri ${target} QT_QML_MODULE_URI)
 
    _qt_internal_get_tool_wrapper_script_path(tool_wrapper)
+
+   set(qmllint_args
+       ${import_args}
+       ${qrc_args}
+       --module
+       ${module_uri}
+   )
+
+   set(qmllint_rsp_path ${qmllint_dir}/${target}_module.rsp)
+
+   file(GENERATE
+       OUTPUT "${qmllint_rsp_path}"
+       CONTENT "$<JOIN:${qmllint_args},\n>\n"
+   )
+
+   set(cmd
+       ${tool_wrapper}
+       $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::qmllint>
+       @${qmllint_rsp_path}
+   )
+
    add_custom_target(${lint_target_module}
-       COMMAND
-           ${tool_wrapper}
-           $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::qmllint>
-           ${import_args}
-           ${qrc_args}
-           --module
-           ${module_uri}
+       COMMAND ${cmd}
        COMMAND_EXPAND_LISTS
        DEPENDS
            ${QT_CMAKE_EXPORT_NAMESPACE}::qmllint
            ${qmllint_files}
+           ${qmllint_rsp_path}
            $<TARGET_NAME_IF_EXISTS:all_qmltyperegistrations>
        WORKING_DIRECTORY "$<TARGET_PROPERTY:${target},SOURCE_DIR>"
    )
@@ -935,28 +983,54 @@ function(_qt_internal_add_all_qmllint_target target_var default_target_name lint
     if("${target_name}" STREQUAL "")
         set(target_name ${default_target_name})
     endif()
-    if(NOT TARGET ${target_name})
-        add_custom_target(${target_name})
-        _qt_internal_assign_to_qmllint_targets_folder(${target_name})
-    endif()
     if(CMAKE_GENERATOR MATCHES "^Visual Studio ")
         # For the Visual Studio generators we cannot use add_dependencies, because this would enable
         # ${lint_target} in the default build of the solution. See QTBUG-115166 and upstream CMake
-        # issue #16668 for details. As a work-around, we run the ${lint_target} through 'cmake
-        # --build' as PRE_BUILD step of the all_qmllint target.
-        add_custom_command(
-            TARGET ${target_name} PRE_BUILD
-            COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" -t ${lint_target}
-        )
+        # issue #16668 for details. Instead, we record ${lint_target} and create an all_qmllint
+        # target at the end of the top-level directory scope.
+        if(${CMAKE_VERSION} VERSION_LESS "3.19.0")
+            if(NOT QT_NO_QMLLINT_CREATION_WARNING)
+                message(WARNING "Cannot create target ${target_name} with this CMake version. "
+                    "Please upgrade to CMake 3.19.0 or newer. "
+                    "Set QT_NO_QMLLINT_CREATION_WARNING to ON to disable this warning."
+                )
+            endif()
+            return()
+        endif()
+        set(property_name _qt_target_${target_name}_dependencies)
+        get_property(recorded_targets GLOBAL PROPERTY ${property_name})
+        if("${recorded_targets}" STREQUAL "")
+            cmake_language(EVAL CODE
+                "cmake_language(DEFER DIRECTORY \"${CMAKE_SOURCE_DIR}\" CALL _qt_internal_add_all_qmllint_target_deferred \"${target_name}\")"
+            )
+        endif()
+        set_property(GLOBAL APPEND PROPERTY ${property_name} ${lint_target})
 
         # Exclude ${lint_target} from the solution's default build to avoid it being enabled should
         # the user add a dependency to it.
         set_property(TARGET ${lint_target} PROPERTY EXCLUDE_FROM_DEFAULT_BUILD ON)
     else()
+        if(NOT TARGET ${target_name})
+            add_custom_target(${target_name})
+            _qt_internal_assign_to_qmllint_targets_folder(${target_name})
+        endif()
         add_dependencies(${target_name} ${lint_target})
     endif()
 endfunction()
 
+# Hack for the Visual Studio generator. Create the all_qmllint target named ${target} and work
+# around the lack of a working add_dependencies by calling 'cmake --build' for every dependency.
+function(_qt_internal_add_all_qmllint_target_deferred target)
+    get_property(target_dependencies GLOBAL PROPERTY _qt_target_${target}_dependencies)
+    set(target_commands "")
+    foreach(dependency IN LISTS target_dependencies)
+        list(APPEND target_commands
+            COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" -t ${dependency}
+        )
+    endforeach()
+    add_custom_target(${target} ${target_commands})
+    _qt_internal_assign_to_qmllint_targets_folder(${target})
+endfunction()
 function(_qt_internal_target_enable_qmlcachegen target output_targets_var qmlcachegen)
 
     set(output_targets)
@@ -1507,6 +1581,35 @@ if(NOT QT_NO_CREATE_VERSIONLESS_FUNCTIONS)
     endfunction()
 endif()
 
+function(_qt_internal_set_qml_target_multi_config_output_directory target output_directory)
+    # In multi-config builds we need to make sure that at least one configuration has the dynamic
+    # plugin that is located next to qmldir file, otherwise QML engine won't be able to load the
+    # plugin.
+    get_cmake_property(is_multi_config GENERATOR_IS_MULTI_CONFIG)
+    if(is_multi_config)
+        # We don't care about static plugins here since, they are linked at build time and
+        # their location doesn't affect the runtime.
+        get_target_property(target_type ${target} TYPE)
+        if(target_type STREQUAL "SHARED_LIBRARY" OR target_type STREQUAL "MODULE_LIBRARY")
+            if(NOT "${output_directory}")
+                set(output_directory "${CMAKE_CURRENT_BINARY_DIR}")
+            endif()
+
+            list(GET CMAKE_CONFIGURATION_TYPES 0 default_config)
+            string(JOIN "" output_directory_with_default_config
+                "$<IF:$<CONFIG:${default_config}>,"
+                    "${output_directory},"
+                    "${output_directory}/$<CONFIG>"
+                ">"
+            )
+            set_target_properties(${target} PROPERTIES
+                RUNTIME_OUTPUT_DIRECTORY "${output_directory_with_default_config}"
+                LIBRARY_OUTPUT_DIRECTORY "${output_directory_with_default_config}"
+            )
+        endif()
+    endif()
+endfunction()
+
 function(qt6_add_qml_plugin target)
     set(args_option
         STATIC
@@ -1752,6 +1855,8 @@ function(qt6_add_qml_plugin target)
         )
     endif()
 
+    _qt_internal_set_qml_target_multi_config_output_directory(${target} "${arg_OUTPUT_DIRECTORY}")
+
     if(NOT arg_NO_GENERATE_PLUGIN_SOURCE)
         set(generated_cpp_file_name_base "${target}_${arg_CLASS_NAME}")
         set(register_types_function_name "qml_register_types_${escaped_uri}")
@@ -1848,8 +1953,9 @@ function(qt6_target_qml_sources target)
         message(FATAL_ERROR "Unknown/unexpected arguments: ${arg_UNPARSED_ARGUMENTS}")
     endif()
 
-    if (NOT arg_QML_FILES AND NOT arg_RESOURCES)
-        if(NOT arg_NO_LINT)
+    get_target_property(no_lint ${target} QT_QML_MODULE_NO_LINT)
+    if(NOT arg_QML_FILES AND NOT arg_RESOURCES)
+        if(NOT arg_NO_LINT AND NOT no_lint)
             _qt_internal_target_enable_qmllint(${target})
         endif()
 
@@ -1868,7 +1974,6 @@ function(qt6_target_qml_sources target)
         )
     endif()
 
-    get_target_property(no_lint                ${target} QT_QML_MODULE_NO_LINT)
     get_target_property(no_cachegen            ${target} QT_QML_MODULE_NO_CACHEGEN)
     get_target_property(no_qmldir              ${target} QT_QML_MODULE_NO_GENERATE_QMLDIR)
     get_target_property(resource_prefix        ${target} QT_QML_MODULE_RESOURCE_PREFIX)

@@ -12,9 +12,11 @@ set(cpp_sources
     enumProperty.h
     gadgetwithenum.h
     invisible.h
+    listprovider.h
     multiforeign.h
     objectwithmethod.h
     person.cpp person.h
+    resettable.h
     sequenceToIterable.h
     sequencetypeexample.cpp sequencetypeexample.h
     state.h
@@ -36,6 +38,7 @@ set(qml_files
     Cycle1.qml
     Cycle2.qml
     Cycle3.qml
+    CppMethodListReturnType.qml
     CxxTypeFromDir.qml
     CxxTypeFromImplicit.qml
     Dummy.qml
@@ -84,6 +87,7 @@ set(qml_files
     compositeTypeMethod.qml
     compositesingleton.qml
     consoleObject.qml
+    consoleTrace.qml
     construct.qml
     contextParam.qml
     conversionDecrement.qml
@@ -116,6 +120,7 @@ set(qml_files
     extendedTypes.qml
     failures.qml
     fallbacklookups.qml
+    fallbackresettable.qml
     fileDialog.qml
     fromBoolValue.qml
     functionLookup.qml
@@ -175,10 +180,14 @@ set(qml_files
     popContextAfterRet.qml
     prefixedMetaType.qml
     pressAndHoldButton.qml
+    reduceWithNullThis.qml
     readEnumFromInstance.qml
     registerelimination.qml
     registerPropagation.qml
+    renameAdjust.qml
+    resettable.qml
     revisions.qml
+    scopeIdLookup.qml
     scopeVsObject.qml
     script.js
     script.mjs

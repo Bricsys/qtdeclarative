@@ -260,9 +260,16 @@ protected:
     {
         out(ast->lbracketToken);
         int baseIndent = lw.increaseIndent(1);
-        if (ast->elements)
+        if (ast->elements) {
             accept(ast->elements);
-        out(ast->commaToken);
+            out(ast->commaToken);
+            auto lastElement = lastListElement(ast->elements);
+            if (lastElement->element && cast<ObjectPattern *>(lastElement->element->initializer)) {
+                newLine();
+            }
+        } else {
+            out(ast->commaToken);
+        }
         lw.decreaseIndent(1, baseIndent);
         out(ast->rbracketToken);
         return false;
@@ -284,14 +291,22 @@ protected:
     bool visit(PatternElementList *ast) override
     {
         for (PatternElementList *it = ast; it; it = it->next) {
+            const bool isObjectInitializer =
+                    it->element && cast<ObjectPattern *>(it->element->initializer);
+            if (isObjectInitializer)
+                newLine();
+
             if (it->elision)
                 accept(it->elision);
             if (it->elision && it->element)
                 out(", ");
             if (it->element)
                 accept(it->element);
-            if (it->next)
+            if (it->next) {
                 out(", ");
+                if (isObjectInitializer)
+                    newLine();
+            }
         }
         return false;
     }
@@ -302,24 +317,16 @@ protected:
             PatternProperty *assignment = AST::cast<PatternProperty *>(it->property);
             if (assignment) {
                 preVisit(assignment);
-                bool isStringLike = AST::cast<StringLiteralPropertyName *>(assignment->name)
-                        || cast<IdentifierPropertyName *>(assignment->name);
+                accept(assignment->name);
                 bool useInitializer = false;
                 const bool bindingIdentifierExist = !assignment->bindingIdentifier.isEmpty();
                 if (assignment->colonToken.length > 0) {
-                    if (isStringLike)
-                        out("\"");
-                    accept(assignment->name);
-                    if (isStringLike)
-                        out("\"");
                     out(": ");
                     useInitializer = true;
                     if (bindingIdentifierExist)
                         out(assignment->bindingIdentifier);
                     if (assignment->bindingTarget)
                         accept(assignment->bindingTarget);
-                } else {
-                    accept(assignment->name);
                 }
                 if (assignment->initializer) {
                     if (bindingIdentifierExist) {
@@ -374,12 +381,12 @@ protected:
 
     bool visit(IdentifierPropertyName *ast) override
     {
-        out(ast->id.toString());
+        out(ast->propertyNameToken);
         return true;
     }
     bool visit(StringLiteralPropertyName *ast) override
     {
-        out(ast->id.toString());
+        out(ast->propertyNameToken);
         return true;
     }
     bool visit(NumericLiteralPropertyName *ast) override
@@ -446,9 +453,7 @@ protected:
     {
         accept(ast->base);
         out(ast->lparenToken);
-        int baseIndent = lw.increaseIndent(1);
         accept(ast->arguments);
-        lw.decreaseIndent(1, baseIndent);
         out(ast->rparenToken);
         return false;
     }
@@ -553,10 +558,12 @@ protected:
     bool visit(Block *ast) override
     {
         out(ast->lbraceToken);
-        ++expressionDepth;
-        lnAcceptIndented(ast->statements);
-        newLine();
-        --expressionDepth;
+        if (ast->statements) {
+            ++expressionDepth;
+            lnAcceptIndented(ast->statements);
+            newLine();
+            --expressionDepth;
+        }
         out(ast->rbraceToken);
         return false;
     }

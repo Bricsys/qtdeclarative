@@ -92,4 +92,5 @@ private slots:
     void inlineComponentsFromDifferentFiles();
     void singletons();
     void constSignalParameters();
+    void signalConnections();
 };
