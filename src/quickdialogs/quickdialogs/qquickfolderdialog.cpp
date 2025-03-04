@@ -5,6 +5,8 @@
 
 #include <QtCore/qloggingcategory.h>
 #include <QtQml/qqmlfile.h>
+#include <QtQuickDialogs2QuickImpl/private/qquickplatformfolderdialog_p.h>
+#include <QtQuickDialogs2QuickImpl/private/qquickfolderdialogimpl_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -255,6 +257,9 @@ void QQuickFolderDialog::onShow(QPlatformDialogHelper *dialog)
         if (m_firstShow && initialDir.isValid() && QDir(QQmlFile::urlToLocalFileOrQrc(initialDir)).exists())
             fileDialog->setDirectory(m_options->initialDirectory());
     }
+    if (QQuickPlatformFolderDialog *folderDialog = qobject_cast<QQuickPlatformFolderDialog *>(dialog))
+        folderDialog->dialog()->setPopupType(m_popupType);
+
     QQuickAbstractDialog::onShow(dialog);
 }
 

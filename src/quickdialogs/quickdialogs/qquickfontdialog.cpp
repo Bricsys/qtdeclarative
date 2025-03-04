@@ -4,6 +4,8 @@
 #include "qquickfontdialog_p.h"
 
 #include <QtCore/qloggingcategory.h>
+#include <QtQuickDialogs2QuickImpl/private/qquickplatformfontdialog_p.h>
+#include <QtQuickDialogs2QuickImpl/private/qquickfontdialogimpl_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -181,6 +183,8 @@ void QQuickFontDialog::onShow(QPlatformDialogHelper *dialog)
         fontDialog->setOptions(m_options); // setOptions only assigns a member and isn't virtual
         fontDialog->setCurrentFont(m_selectedFont);
     }
+    if (QQuickPlatformFontDialog *fontDialog = qobject_cast<QQuickPlatformFontDialog *>(dialog))
+        fontDialog->dialog()->setPopupType(m_popupType);
 
     QQuickAbstractDialog::onShow(dialog);
 }

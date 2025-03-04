@@ -23,6 +23,7 @@
 #include <QtQuickTemplates2/private/qquickdialogbuttonbox_p_p.h>
 #include <QtQuickTemplates2/private/qquicklabel_p.h>
 #include <QtQuickTemplates2/private/qquickoverlay_p.h>
+#include <QtQuickTemplates2/private/qquickpopup_p.h>
 #include <QtQuickControls2/qquickstyle.h>
 
 using namespace QQuickVisualTestUtils;
@@ -95,6 +96,7 @@ private slots:
     void setSchemeForSelectedFile();
     void reopenAfterHideEvent();
     void sidebarStandardPaths();
+    void popupType();
 
 private:
     enum DelegateOrderPolicy
@@ -1772,6 +1774,42 @@ void tst_QQuickFileDialogImpl::sidebarStandardPaths()
         QCOMPARE(dialogHelper.dialog->currentFolder().toLocalFile(), QStandardPaths::writableLocation(paths[i]));
         QCOMPARE(dialogHelper.quickDialog->currentFolder().toLocalFile(), QStandardPaths::writableLocation(paths[i]));
     }
+}
+
+void tst_QQuickFileDialogImpl::popupType()
+{
+    FileDialogTestHelper dialogHelper(this, "fileDialog.qml");
+
+    OPEN_QUICK_DIALOG();
+    QVERIFY(dialogHelper.waitForPopupWindowActiveAndPolished());
+
+           // Window should be the default value
+    QCOMPARE(dialogHelper.quickDialog->popupType(), QQuickPopup::Window);
+    QCOMPARE(dialogHelper.dialog->popupType(), QQuickPopup::Window);
+
+    QVERIFY(dialogHelper.popupWindow());
+    QCOMPARE_NE(dialogHelper.popupWindow(), dialogHelper.window());
+
+    dialogHelper.dialog->close();
+    QTRY_VERIFY(!dialogHelper.isQuickDialogOpen());
+    dialogHelper.dialog->setPopupType(QQuickPopup::Item);
+    QVERIFY(dialogHelper.openDialog());
+    QQuickTest::qWaitForPolish(dialogHelper.window());
+    QCOMPARE(dialogHelper.quickDialog->popupType(), QQuickPopup::Item);
+    QCOMPARE(dialogHelper.quickDialog->window(), dialogHelper.window());
+
+    dialogHelper.dialog->close();
+    QTRY_VERIFY(!dialogHelper.isQuickDialogOpen());
+
+    dialogHelper.dialog->setPopupType(QQuickPopup::Window);
+    QVERIFY(dialogHelper.openDialog());
+    QVERIFY(dialogHelper.waitForPopupWindowActiveAndPolished());
+
+    QVERIFY(dialogHelper.popupWindow());
+    QCOMPARE_NE(dialogHelper.popupWindow(), dialogHelper.window());
+    QCOMPARE(dialogHelper.quickDialog->popupType(), QQuickPopup::Window);
+
+    dialogHelper.dialog->close();
 }
 
 QTEST_MAIN(tst_QQuickFileDialogImpl)

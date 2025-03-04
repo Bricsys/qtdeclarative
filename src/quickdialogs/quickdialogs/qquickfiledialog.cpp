@@ -7,6 +7,8 @@
 #include <QtCore/qloggingcategory.h>
 #include <QtQml/qqmlfile.h>
 #include <QtQml/qqmlinfo.h>
+#include <QtQuickDialogs2QuickImpl/private/qquickplatformfiledialog_p.h>
+#include <QtQuickDialogs2QuickImpl/private/qquickfiledialogimpl_p.h>
 
 #include <QtQuickDialogs2Utils/private/qquickfilenamefilter_p.h>
 
@@ -551,6 +553,9 @@ void QQuickFileDialog::onShow(QPlatformDialogHelper *dialog)
                 fileDialog->setDirectory(m_options->initialDirectory());
         }
     }
+    if (QQuickPlatformFileDialog *fileDialog = qobject_cast<QQuickPlatformFileDialog *>(dialog))
+        fileDialog->dialog()->setPopupType(m_popupType);
+
     QQuickAbstractDialog::onShow(dialog);
 }
 

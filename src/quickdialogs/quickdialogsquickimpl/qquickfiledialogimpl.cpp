@@ -283,7 +283,6 @@ void QQuickFileDialogImplPrivate::selectFile()
 QQuickFileDialogImpl::QQuickFileDialogImpl(QObject *parent)
     : QQuickDialog(*(new QQuickFileDialogImplPrivate), parent)
 {
-    setPopupType(QQuickPopup::Window);
 }
 
 QQuickFileDialogImplAttached *QQuickFileDialogImpl::qmlAttachedProperties(QObject *object)
