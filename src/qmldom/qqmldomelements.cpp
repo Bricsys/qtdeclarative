@@ -1852,6 +1852,8 @@ void PropertyDefinition::writeOut(const DomItem &, OutWriter &lw) const
     lw.ensureNewline();
     if (isDefaultMember)
         lw.writeRegion(DefaultKeywordRegion).ensureSpace();
+    if (isFinal)
+        lw.writeRegion(FinalKeywordRegion).ensureSpace();
     if (isRequired)
         lw.writeRegion(RequiredKeywordRegion).ensureSpace();
     if (isReadonly)

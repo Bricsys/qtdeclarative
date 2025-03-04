@@ -526,6 +526,7 @@ bool QQmlDomAstCreator::visit(AST::UiPublicMember *el)
         p.isDefaultMember = el->isDefaultMember();
         p.isRequired = el->isRequired();
         p.isList = el->typeModifier == QLatin1String("list");
+        p.isFinal = el->isFinal();
         if (!el->typeModifier.isEmpty())
             p.typeName = el->typeModifier.toString() + QChar(u'<') + p.typeName + QChar(u'>');
         PropertyDefinition *pPtr;

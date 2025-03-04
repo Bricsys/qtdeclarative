@@ -464,6 +464,10 @@ void TestQmlformat::testFormat_data()
             << "fromAsIdentifier.qml"
             << "fromAsIdentifier.formatted.qml"
             << QStringList{} << RunOption::OnCopy;
+    QTest::newRow("finalProperties")
+            << "finalProperties.qml"
+            << "finalProperties.formatted.qml"
+            << QStringList{} << RunOption::OnCopy;
 }
 
 void TestQmlformat::testFormat()

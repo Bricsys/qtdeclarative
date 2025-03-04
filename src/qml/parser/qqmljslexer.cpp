@@ -1618,6 +1618,7 @@ static const int uriTokens[] = {
     QQmlJSGrammar::T_DO,
     QQmlJSGrammar::T_ELSE,
     QQmlJSGrammar::T_FALSE,
+    QQmlJSGrammar::T_FINAL,
     QQmlJSGrammar::T_FINALLY,
     QQmlJSGrammar::T_FOR,
     QQmlJSGrammar::T_FUNCTION,
