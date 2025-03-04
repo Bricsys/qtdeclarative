@@ -447,6 +447,7 @@ public:
     QVector<QQmlJSScope::Ptr> childScopes();
 
     QVector<QQmlJSScope::ConstPtr> childScopes() const;
+    QVector<QQmlJSScope::ConstPtr> descendantScopes() const;
 
     static QTypeRevision resolveTypes(
             const Ptr &self, const QQmlJS::ContextualTypes &contextualTypes,
