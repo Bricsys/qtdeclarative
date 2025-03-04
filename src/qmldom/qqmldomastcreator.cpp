@@ -525,6 +525,7 @@ bool QQmlDomAstCreator::visit(AST::UiPublicMember *el)
         p.isReadonly = el->isReadonly();
         p.isDefaultMember = el->isDefaultMember();
         p.isRequired = el->isRequired();
+        p.isFinal = el->isFinal();
         p.isList = el->typeModifier == QLatin1String("list");
         p.isFinal = el->isFinal();
         if (!el->typeModifier.isEmpty())
@@ -561,6 +562,10 @@ bool QQmlDomAstCreator::visit(AST::UiPublicMember *el)
         if (p.isDefaultMember) {
             FileLocations::addRegion(nodeStack.last().fileLocations, DefaultKeywordRegion,
                                      el->defaultToken());
+        }
+        if (p.isFinal) {
+            FileLocations::addRegion(nodeStack.last().fileLocations, FinalKeywordRegion,
+                                     el->finalToken());
         }
         if (p.isRequired) {
             FileLocations::addRegion(nodeStack.last().fileLocations, RequiredKeywordRegion,
