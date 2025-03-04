@@ -480,6 +480,7 @@ QStringList QAccessibleQuickItem::actionNames() const
     switch (role()) {
     case QAccessible::Link:
     case QAccessible::PushButton:
+    case QAccessible::MenuItem:
         actions << QAccessibleActionInterface::pressAction();
         break;
     case QAccessible::RadioButton:
