@@ -18,6 +18,7 @@
 #include "qqmldom_global.h"
 #include "qqmldomfunctionref_p.h"
 
+#include <QtCore/QDebug>
 #include <QtCore/QFile>
 #include <QtCore/QStringList>
 #include <QtCore/QCoreApplication>
