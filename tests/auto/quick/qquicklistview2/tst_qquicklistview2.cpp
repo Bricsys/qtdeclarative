@@ -1380,6 +1380,12 @@ void tst_QQuickListView2::setDelegateAfterModel()
                                         "delegate on non-DelegateModel"));
     object->setProperty("useObjectModel", QVariant::fromValue<bool>(true));
     QCOMPARE(object->property("count").toInt(), 2);
+
+    // The old model must not mess with the view anymore.
+    QTest::failOnWarning(qPrintable(url.toString() + ":17:5: QML ListView: Explicitly set delegate "
+                                                     "is externally overridden"));
+    QMetaObject::invokeMethod(object.data(), "plantDelegate");
+    QCOMPARE(object->property("count").toInt(), 4);
 }
 
 QTEST_MAIN(tst_QQuickListView2)
