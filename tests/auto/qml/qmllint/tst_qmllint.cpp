@@ -1030,9 +1030,7 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
                                             "Cannot assign literal of type null to double") } } };
     QTest::newRow("missingRequiredAlias")
             << QStringLiteral("missingRequiredAlias.qml")
-            << Result { { Message {
-                       QStringLiteral("Component is missing required property requiredAlias from "
-                                      "RequiredWithRootLevelAlias") } } };
+            << Result{ { Message{ u"Component is missing required property foo from Item"_s } } };
     QTest::newRow("missingSingletonPragma")
             << QStringLiteral("missingSingletonPragma.qml")
             << Result { { Message { QStringLiteral(
@@ -1231,6 +1229,9 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
     QTest::newRow("multiplePasses")
             << testFile("multiplePasses.qml")
             << Result {{ Message { QStringLiteral("Unqualified access") }}};
+    QTest::newRow("missingRequiredOnObjectDefinitionBinding")
+            << QStringLiteral("missingRequiredPropertyOnObjectDefinitionBinding.qml")
+            << Result{ { { uR"(Component is missing required property i from here)"_s, 4, 26 } } };
 }
 
 void TestQmllint::dirtyQmlCode()
@@ -1434,6 +1435,11 @@ void TestQmllint::cleanQmlCode_data()
 
     QTest::addRow("deceptiveLayout") << u"deceptiveLayout.qml"_s;
     QTest::addRow("regExp") << u"regExp.qml"_s;
+    QTest::newRow("aliasToRequiredProperty")
+            << QStringLiteral("aliasToRequiredPropertyIsNotRequiredItself.qml");
+    QTest::newRow("setRequiredTroughAlias") << QStringLiteral("setRequiredPropertyThroughAlias.qml");
+    QTest::newRow("setRequiredTroughAliasOfAlias")
+            << QStringLiteral("setRequiredPropertyThroughAliasOfAlias.qml");
 }
 
 void TestQmllint::cleanQmlCode()
