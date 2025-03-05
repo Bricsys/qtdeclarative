@@ -1716,7 +1716,7 @@ bool QQmlObjectCreator::populateInstance(int index, QObject *instance, QObject *
         const QV4::CompiledData::Property* property = _compiledObject->propertiesBegin() + propertyIndex;
         const QQmlPropertyData *propertyData = _propertyCache->property(_propertyCache->propertyOffset() + propertyIndex);
         // only compute stringAt if there's a chance for the lookup to succeed
-        auto postHocIt = postHocRequired.isEmpty() ? postHocRequired.end() : postHocRequired.find(stringAt(property->nameIndex));
+        auto postHocIt = postHocRequired.isEmpty() ? postHocRequired.end() : postHocRequired.find(stringAt(property->nameIndex()));
         if (!property->isRequired() && postHocRequired.end() == postHocIt)
             continue;
         if (postHocIt != postHocRequired.end())
@@ -1724,7 +1724,7 @@ bool QQmlObjectCreator::populateInstance(int index, QObject *instance, QObject *
         if (isContextObject)
             sharedState->hadTopLevelRequiredProperties = true;
         sharedState->requiredProperties.insert({_qobject, propertyData},
-                                               RequiredPropertyInfo {compilationUnit->stringAt(property->nameIndex), compilationUnit->finalUrl(), property->location, {}});
+                                               RequiredPropertyInfo {compilationUnit->stringAt(property->nameIndex()), compilationUnit->finalUrl(), property->location, {}});
 
     }
 

@@ -524,7 +524,7 @@ inline QQmlError QQmlPropertyCacheCreator<ObjectContainer>::createMetaObject(
     auto pend = obj->propertiesEnd();
     for ( ; p != pend; ++p) {
         bool notInRevision = false;
-        const QQmlPropertyData *d = resolver.property(stringAt(p->nameIndex), &notInRevision);
+        const QQmlPropertyData *d = resolver.property(stringAt(p->nameIndex()), &notInRevision);
         if (d && d->isFinal())
             return qQmlCompileError(p->location, QQmlPropertyCacheCreatorBase::tr("Cannot override FINAL property"));
     }
@@ -584,7 +584,7 @@ inline QQmlError QQmlPropertyCacheCreator<ObjectContainer>::createMetaObject(
         auto flags = QQmlPropertyData::defaultSignalFlags();
 
         const QString changedSigName =
-                QQmlSignalNames::propertyNameToChangedSignalName(stringAt(p->nameIndex));
+                QQmlSignalNames::propertyNameToChangedSignalName(stringAt(p->nameIndex()));
         seenSignals[changedSigName] = AllowOverride::No;
 
         cache->appendSignal(changedSigName, flags, effectiveMethodIndex++);
@@ -797,7 +797,7 @@ inline QQmlError QQmlPropertyCacheCreator<ObjectContainer>::createMetaObject(
             propertyFlags.setIsWritable(true);
 
 
-        QString propertyName = stringAt(p->nameIndex);
+        QString propertyName = stringAt(p->nameIndex());
         if (!obj->hasAliasAsDefaultProperty() && propertyIdx == obj->indexOfDefaultPropertyOrAlias)
             cache->_defaultPropertyName = propertyName;
         cache->appendProperty(propertyName, propertyFlags, effectivePropertyIndex++,

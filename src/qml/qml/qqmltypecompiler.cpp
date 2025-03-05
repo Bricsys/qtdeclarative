@@ -404,7 +404,7 @@ bool SignalHandlerResolver::resolveSignalHandlerExpressions(
                 }
 
                 for (const QmlIR::Property *property = obj->firstProperty(); property; property = property->next) {
-                    const QString propName = stringAt(property->nameIndex);
+                    const QString propName = stringAt(property->nameIndex());
                     customSignals.insert(propName, QStringList());
                 }
             }

@@ -36,7 +36,7 @@ void Object::simplifyRequiredProperties() {
     if (required.isEmpty())
         return;
     for (auto it = this->propertiesBegin(); it != this->propertiesEnd(); ++it) {
-        auto requiredIt = required.find(it->nameIndex);
+        auto requiredIt = required.find(it->nameIndex());
         if (requiredIt != required.end()) {
             it->setIsRequired(true);
             required.erase(requiredIt);
@@ -194,11 +194,11 @@ QString Object::appendProperty(Property *prop, const QString &propertyName, bool
         target = this;
 
     for (Property *p = target->properties->first; p; p = p->next)
-        if (p->nameIndex == prop->nameIndex)
+        if (p->nameIndex() == prop->nameIndex())
             return tr("Duplicate property name");
 
     for (Alias *a = target->aliases->first; a; a = a->next)
-        if (a->nameIndex() == prop->nameIndex)
+        if (a->nameIndex() == prop->nameIndex())
             return tr("Property duplicates alias name");
 
     if (propertyName.constData()->isUpper())
@@ -228,7 +228,7 @@ QString Object::appendAlias(Alias *alias, const QString &aliasName, bool isDefau
         return tr("Duplicate alias name");
 
     const auto aliasSameAsProperty = std::find_if(target->properties->begin(), target->properties->end(), [&alias](const Property &targetProp){
-        return targetProp.nameIndex == alias->nameIndex();
+        return targetProp.nameIndex() == alias->nameIndex();
     });
 
     if (aliasSameAsProperty != target->properties->end())
@@ -1089,7 +1089,7 @@ bool IRBuilder::visit(QQmlJS::AST::UiPublicMember *node)
             }
 
             const QString propName = name.toString();
-            property->nameIndex = registerString(propName);
+            property->setNameIndex(registerString(propName));
 
             QQmlJS::SourceLocation loc = node->firstSourceLocation();
             property->location.set(loc.startLine, loc.startColumn);
@@ -1116,7 +1116,7 @@ bool IRBuilder::visit(QQmlJS::AST::UiPublicMember *node)
                 QQmlJS::AST::Node::accept(node->binding, this);
             } else if (node->statement) {
                 if (!isRedundantNullInitializerForPropertyDeclaration(_propertyDeclaration, node->statement))
-                    appendBinding(node->identifierToken, node->identifierToken, _propertyDeclaration->nameIndex, node->statement, node);
+                    appendBinding(node->identifierToken, node->identifierToken, _propertyDeclaration->nameIndex(), node->statement, node);
             }
             qSwap(_propertyDeclaration, property);
         }

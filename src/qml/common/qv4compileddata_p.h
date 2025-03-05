@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 // Also change the comment behind the number to describe the latest change. This has the added
 // benefit that if another patch changes the version too, it will result in a merge conflict, and
 // not get removed silently.
-#define QV4_DATA_STRUCTURE_VERSION 0x42 // Change metatype computation of AOT-compiled functions
+#define QV4_DATA_STRUCTURE_VERSION 0x43 // Reserved bit for to-be-introduced final flag
 
 class QIODevice;
 class QQmlTypeNameCache;
@@ -790,14 +790,16 @@ static_assert(sizeof(Signal) == 12, "Signal structure needs to have the expected
 struct Property
 {
 private:
+    using NameIndexField = quint32_le_bitfield_member<0, 31>;
+    using ReservedField = quint32_le_bitfield_member<31, 1>;
+
     using CommonTypeOrTypeNameIndexField = quint32_le_bitfield_member<0, 28>;
     using IsRequiredField = quint32_le_bitfield_member<28, 1>;
     using IsCommonTypeField = quint32_le_bitfield_member<29, 1>;
     using IsListField = quint32_le_bitfield_member<30, 1>;
     using IsReadOnlyField = quint32_le_bitfield_member<31, 1>;
-
 public:
-    quint32_le nameIndex;
+    quint32_le_bitfield_union<NameIndexField, ReservedField> nameIndexAndReserved;
     quint32_le_bitfield_union<
             CommonTypeOrTypeNameIndexField,
             IsRequiredField,
@@ -805,6 +807,9 @@ public:
             IsListField,
             IsReadOnlyField> data;
     Location location;
+
+    quint32 nameIndex() const { return nameIndexAndReserved.get<NameIndexField>(); }
+    void setNameIndex(int nameIndex) { nameIndexAndReserved.set<NameIndexField>(nameIndex); }
 
     void setCommonType(CommonType t)
     {
