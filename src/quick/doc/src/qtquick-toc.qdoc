@@ -70,6 +70,13 @@
     \li \l {Qt Quick Widgets}{Displaying Qml views in Qt Widgets}
     \li \l {C++ Extension Points Provided By Qt Quick}{C++ Extension Points}
     \li \l {Qt Quick Shared Image Provider}{Shared image provider}
+    \li \l {Qt Quick for Android}
+        \list
+            \li \l {Qt Quick Android Classes}
+            \li \l {Qt Quick for Android Studio Projects}
+            \li \l {Using QtAbstractItemModel in Android Studio Projects}
+            \li \l {Exposing QtAbstractListModel to QML}
+        \endlist
     \li \l {Changes to Qt Quick}{Upgrading from Qt 5}
     \li \l {Best Practices for QML and Qt Quick}
     \li \l {Qt Quick Tools and Utilities}
@@ -97,6 +104,5 @@
                 \endlist
             \li \l {Qt Quick How-tos}{How-Tos}
         \endlist
-    \li \l {Qt Quick Android Classes}
     \endlist
 */
