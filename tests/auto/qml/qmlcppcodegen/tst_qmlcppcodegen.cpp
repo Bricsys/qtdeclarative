@@ -118,6 +118,7 @@ private slots:
     void failures();
     void fallbackLookups();
     void fileImportsContainCxxTypes();
+    void finalProperty();
     void flagEnum();
     void flushBeforeCapture();
     void fromBoolValue();
@@ -2118,6 +2119,16 @@ void tst_QmlCppCodegen::fileImportsContainCxxTypes()
     QScopedPointer<QObject> o(c.create());
     QVERIFY(!o.isNull());
     QCOMPARE(o->objectName(), u"horst guenther"_s);
+}
+
+void tst_QmlCppCodegen::finalProperty()
+{
+    QQmlEngine e;
+    QQmlComponent c(&e, QUrl(u"qrc:/qt/qml/TestTypes/finalUser.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+    QCOMPARE(o->property("f").toInt(), 12);
 }
 
 void tst_QmlCppCodegen::flagEnum()

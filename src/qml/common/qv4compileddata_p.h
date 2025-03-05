@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 // Also change the comment behind the number to describe the latest change. This has the added
 // benefit that if another patch changes the version too, it will result in a merge conflict, and
 // not get removed silently.
-#define QV4_DATA_STRUCTURE_VERSION 0x43 // Reserved bit for to-be-introduced final flag
+#define QV4_DATA_STRUCTURE_VERSION 0x44 // added a flag to mark properties as final from QML
 
 class QIODevice;
 class QQmlTypeNameCache;
@@ -791,7 +791,7 @@ struct Property
 {
 private:
     using NameIndexField = quint32_le_bitfield_member<0, 31>;
-    using ReservedField = quint32_le_bitfield_member<31, 1>;
+    using FinalField = quint32_le_bitfield_member<31, 1>;
 
     using CommonTypeOrTypeNameIndexField = quint32_le_bitfield_member<0, 28>;
     using IsRequiredField = quint32_le_bitfield_member<28, 1>;
@@ -799,7 +799,7 @@ private:
     using IsListField = quint32_le_bitfield_member<30, 1>;
     using IsReadOnlyField = quint32_le_bitfield_member<31, 1>;
 public:
-    quint32_le_bitfield_union<NameIndexField, ReservedField> nameIndexAndReserved;
+    quint32_le_bitfield_union<NameIndexField, FinalField> nameIndexAndFinal;
     quint32_le_bitfield_union<
             CommonTypeOrTypeNameIndexField,
             IsRequiredField,
@@ -808,8 +808,11 @@ public:
             IsReadOnlyField> data;
     Location location;
 
-    quint32 nameIndex() const { return nameIndexAndReserved.get<NameIndexField>(); }
-    void setNameIndex(int nameIndex) { nameIndexAndReserved.set<NameIndexField>(nameIndex); }
+    quint32 nameIndex() const { return nameIndexAndFinal.get<NameIndexField>(); }
+    void setNameIndex(int nameIndex) { nameIndexAndFinal.set<NameIndexField>(nameIndex); }
+
+    bool isFinal() const { return nameIndexAndFinal.get<FinalField>(); }
+    void setIsFinal(bool final) { nameIndexAndFinal.set<FinalField>(final ? 1 : 0); }
 
     void setCommonType(CommonType t)
     {

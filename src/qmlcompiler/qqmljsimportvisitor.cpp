@@ -308,6 +308,7 @@ void QQmlJSImportVisitor::resolveAliases()
                 // Copy additional property information from target
                 newProperty.setIsList(targetProperty.isList());
                 newProperty.setIsWritable(targetProperty.isWritable());
+                newProperty.setIsFinal(targetProperty.isFinal());
                 newProperty.setIsPointer(targetProperty.isPointer());
 
                 const bool onlyId = !property.aliasExpression().contains(u'.');
@@ -1749,6 +1750,7 @@ bool QQmlJSImportVisitor::visit(UiPublicMember *publicMember)
         prop.setPropertyName(publicMember->name.toString());
         prop.setIsList(publicMember->typeModifier == QLatin1String("list"));
         prop.setIsWritable(!publicMember->isReadonly());
+        prop.setIsFinal(publicMember->isFinal());
         prop.setAliasExpression(aliasExpr);
         prop.setSourceLocation(
                 combine(publicMember->firstSourceLocation(), publicMember->colonToken));

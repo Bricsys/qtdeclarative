@@ -58,6 +58,7 @@ set(qml_files
     Dummy2.qml
     EditConstraint.qml
     Enums.qml
+    FinalProperty.qml
     Foozle.qml
     GetOptionalLookupOnQJSValueNonStrict.qml
     GetOptionalLookupShadowed.qml
@@ -163,6 +164,7 @@ set(qml_files
     fallbacklookups.qml
     fallbackresettable.qml
     fileDialog.qml
+    finalUser.qml
     flagEnum.qml
     fromBoolValue.qml
     funcWithParams.qml

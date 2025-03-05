@@ -795,6 +795,8 @@ inline QQmlError QQmlPropertyCacheCreator<ObjectContainer>::createMetaObject(
 
         if (!p->isReadOnly() && !propertyType.flags().testFlag(QMetaType::IsQmlList))
             propertyFlags.setIsWritable(true);
+        if (p->isFinal())
+            propertyFlags.setIsFinal(true);
 
 
         QString propertyName = stringAt(p->nameIndex());

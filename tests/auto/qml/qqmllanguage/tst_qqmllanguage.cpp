@@ -422,6 +422,7 @@ private slots:
     void asValueTypeGood();
 
     void longConversion();
+    void finalProperty();
 
     void enumPropsManyUnderylingTypes();
 
@@ -9621,6 +9622,29 @@ void tst_qqmllanguage::referenceObjectPrefersBindableConnectionToNotifyConnectio
     QVERIFY(readCounter);
 
     QCOMPARE(readCounter->notifyBindableSignalConnections, 0);
+}
+
+void tst_qqmllanguage::finalProperty()
+{
+    QQmlEngine engine;
+    {
+        QQmlComponent c(&engine, testFileUrl("FinalProperty.qml"));
+        QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+        QScopedPointer<QObject> o(c.create());
+        QVERIFY(!o.isNull());
+        QCOMPARE(o->property("f").toInt(), 12);
+    }
+    {
+        const QUrl url = testFileUrl("FinalOverridden.qml");
+        QQmlComponent c(&engine, url);
+        QVERIFY(!c.isReady());
+        QCOMPARE(c.errorString(), url.toString() + ":4 Cannot override FINAL property\n"_L1);
+    }
+
+    // In JavaScript, you can still call all kinds of things "final"
+    const QJSValue f = engine.evaluate(
+            "(function final(final) { var a = final; { let final = a; return final; } })(47)"_L1);
+    QCOMPARE(f.toInt(), 47);
 }
 
 QTEST_MAIN(tst_qqmllanguage)
