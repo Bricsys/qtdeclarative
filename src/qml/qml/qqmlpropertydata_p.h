@@ -397,6 +397,17 @@ public:
         return true;
     }
 
+    QUntypedBindable propertyBindable(QObject *target) const
+    {
+        QUntypedBindable result;
+        void *argv[] = { &result };
+        if (hasStaticMetaCallFunction())
+            staticMetaCallFunction()(target, QMetaObject::BindableProperty, relativePropertyIndex(), argv);
+        else
+            doMetacall<QMetaObject::BindableProperty>(target, coreIndex(), argv);
+        return result;
+    }
+
     static Flags defaultSignalFlags()
     {
         Flags f;
