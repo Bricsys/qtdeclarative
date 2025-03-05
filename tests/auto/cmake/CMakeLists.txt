@@ -13,7 +13,7 @@ cmake_minimum_required(VERSION 3.16)
 project(qtdeclarative_cmake_tests)
 enable_testing()
 
-set(required_packages Core)
+set(required_packages Core TestInternalsPrivate)
 set(optional_packages Qml Quick)
 
 # Setup the test when called as a completely standalone project.
@@ -169,3 +169,5 @@ if(TARGET Qt::Quick)
         endif()
     endif()
 endif()
+
+add_subdirectory(RunCMake)
