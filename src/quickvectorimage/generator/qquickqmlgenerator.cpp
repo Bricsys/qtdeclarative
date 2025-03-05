@@ -467,6 +467,13 @@ void QQuickQmlGenerator::outputShapePath(const PathNodeInfo &info, const QPainte
             generateTransform(xf);
     }
 
+    if (info.trim.enabled) {
+        stream() << "trim.start: " << info.trim.start.defaultValue().toReal();
+        stream() << "trim.end: " << info.trim.end.defaultValue().toReal();
+        stream() << "trim.offset: " << info.trim.offset.defaultValue().toReal();
+
+    }
+
     if (fillRule == QQuickShapePath::WindingFill)
         stream() << "fillRule: ShapePath.WindingFill";
     else
@@ -483,6 +490,12 @@ void QQuickQmlGenerator::outputShapePath(const PathNodeInfo &info, const QPainte
 
     m_indentLevel--;
     stream() << "}";
+
+    if (info.trim.enabled) {
+        generatePropertyAnimation(info.trim.start, shapePathId + QStringLiteral(".trim"), QStringLiteral("start"));
+        generatePropertyAnimation(info.trim.end, shapePathId + QStringLiteral(".trim"), QStringLiteral("end"));
+        generatePropertyAnimation(info.trim.offset, shapePathId + QStringLiteral(".trim"), QStringLiteral("offset"));
+    }
 
     generatePropertyAnimation(info.strokeStyle.color, shapePathId, QStringLiteral("strokeColor"));
     generatePropertyAnimation(info.strokeStyle.opacity, shapePathId, QStringLiteral("strokeColor"), AnimationType::ColorOpacity);

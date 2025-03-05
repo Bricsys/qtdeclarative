@@ -70,6 +70,14 @@ struct StrokeStyle
     }
 };
 
+struct PathTrimInfo
+{
+    bool enabled = false;
+    QQuickAnimatedProperty start = QQuickAnimatedProperty(QVariant::fromValue(0.0));
+    QQuickAnimatedProperty end = QQuickAnimatedProperty(QVariant::fromValue(1.0));
+    QQuickAnimatedProperty offset = QQuickAnimatedProperty(QVariant::fromValue(0.0));
+};
+
 struct PathNodeInfo : NodeInfo
 {
     QPainterPath painterPath;
@@ -79,6 +87,7 @@ struct PathNodeInfo : NodeInfo
     StrokeStyle strokeStyle;
     QGradient grad;
     QTransform fillTransform;
+    PathTrimInfo trim;
 };
 
 struct TextNodeInfo : NodeInfo
