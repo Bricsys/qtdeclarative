@@ -246,7 +246,7 @@ public:
         if (isAbstractPropertyBinding()) {
             auto abstractBinding = asAbstractBinding();
             Q_ASSERT(abstractBinding->targetObject() == target.object() || QQmlPropertyPrivate::get(target)->core.isAlias());
-            Q_ASSERT(!target.isBindable());
+            Q_ASSERT(!target.isBindable() || QQmlPropertyPrivate::get(target)->isValueType());
             if (mode == IgnoreInterceptors)
                 QQmlPropertyPrivate::setBinding(abstractBinding, QQmlPropertyPrivate::None, QQmlPropertyData::DontRemoveBinding | QQmlPropertyData::BypassInterceptor);
             else

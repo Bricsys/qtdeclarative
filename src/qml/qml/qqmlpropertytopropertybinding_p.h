@@ -19,6 +19,7 @@
 #include <private/qqmlengine_p.h>
 #include <private/qqmlnotifier_p.h>
 #include <private/qqmlvaluetype_p.h>
+#include <private/qv4jscall_p.h>
 
 #include <QtCore/qproperty.h>
 
@@ -44,8 +45,7 @@ private:
     friend class QQmlUnbindableToBindablePropertyBinding;
     friend class QQmlBindableToBindablePropertyBinding;
 
-    QQmlPropertyToPropertyBinding(
-            QQmlEngine *engine, QObject *sourceObject, QQmlPropertyIndex sourcePropertyIndex);
+    QQmlPropertyToPropertyBinding(QQmlEngine *engine, const QQmlProperty &source);
 
     template<typename Capture>
     QVariant readSourceValue(Capture &&capture) const
@@ -99,8 +99,7 @@ public:
 
 protected:
     QQmlPropertyToUnbindablePropertyBinding(
-            QQmlEngine *engine, QObject *sourceObject, QQmlPropertyIndex sourcePropertyIndex,
-            QObject *targetObject, int targetPropertyIndex);
+            QQmlEngine *engine, const QQmlProperty &source, const QQmlProperty &target);
 
     virtual void captureProperty(
             const QMetaObject *sourceMetaObject, const QMetaProperty &sourceProperty) = 0;
@@ -113,8 +112,7 @@ class QQmlUnbindableToUnbindablePropertyBinding
 {
 public:
     QQmlUnbindableToUnbindablePropertyBinding(
-            QQmlEngine *engine, QObject *sourceObject, QQmlPropertyIndex sourcePropertyIndex,
-            QObject *targetObject, int targetPropertyIndex);
+            QQmlEngine *engine, const QQmlProperty &source, const QQmlProperty &target);
 protected:
     void captureProperty(
             const QMetaObject *sourceMetaObject, const QMetaProperty &sourceProperty) final;
@@ -125,8 +123,7 @@ class QQmlBindableToUnbindablePropertyBinding
 {
 public:
     QQmlBindableToUnbindablePropertyBinding(
-            QQmlEngine *engine, QObject *sourceObject, QQmlPropertyIndex sourcePropertyIndex,
-            QObject *targetObject, int targetPropertyIndex);
+            QQmlEngine *engine, const QQmlProperty &source, const QQmlProperty &target);
 
     static void update(QPropertyObserver *observer, QUntypedPropertyData *);
 
@@ -137,34 +134,57 @@ private:
     bool m_isObserving = false;
 };
 
+class QQmlPropertyToBindablePropertyBinding : public QPropertyBindingPrivate
+{
+public:
+    QQmlPropertyToBindablePropertyBinding(
+            QQmlEngine *engine, const QQmlProperty &source, const QQmlProperty &target,
+            const QtPrivate::BindingFunctionVTable *vtable);
+
+    template<typename Concrete>
+    static bool update(QMetaType metaType, QUntypedPropertyData *dataPtr, void *f)
+    {
+        Concrete *self = reinterpret_cast<Concrete *>(
+                // Address of QPropertyBindingPrivate subobject
+                static_cast<std::byte *>(f) - QPropertyBindingPrivate::getSizeEnsuringAlignment());
+
+        const QVariant value = self->m_binding.readSourceValue(
+                [self](const QMetaObject *metaObject, const QMetaProperty &property) {
+            self->captureProperty(metaObject, property);
+        });
+
+        QV4::coerce(
+                self->m_binding.engine->handle(), value.metaType(), value.constData(),
+                metaType, dataPtr);
+        return true;
+    }
+
+protected:
+    QQmlPropertyToPropertyBinding m_binding;
+};
+
 class QQmlUnbindableToBindablePropertyBinding
-    : public QPropertyBindingPrivate, public QQmlNotifierEndpoint
+    : public QQmlPropertyToBindablePropertyBinding, public QQmlNotifierEndpoint
 {
 public:
     QQmlUnbindableToBindablePropertyBinding(
-            QQmlEngine *engine, QObject *sourceObject, QQmlPropertyIndex sourcePropertyIndex,
-            QObject *targetObject, int targetPropertyIndex);
+            QQmlEngine *engine, const QQmlProperty &source, const QQmlProperty &target);
 
-    static bool update(QMetaType metaType, QUntypedPropertyData *dataPtr, void *f);
     void update();
 
-private:
-    QQmlPropertyToPropertyBinding m_binding;
-    QPointer<QObject> m_targetObject;
-    QQmlPropertyIndex m_targetPropertyIndex;
+    void captureProperty(const QMetaObject *, const QMetaProperty &property)
+    {
+        m_binding.doConnectNotify(this, property);
+    }
 };
 
-class QQmlBindableToBindablePropertyBinding
-    : public QPropertyBindingPrivate
+class QQmlBindableToBindablePropertyBinding : public QQmlPropertyToBindablePropertyBinding
 {
 public:
     QQmlBindableToBindablePropertyBinding(
-            QQmlEngine *engine, QObject *sourceObject, QQmlPropertyIndex sourcePropertyIndex,
-            QObject *targetObject, int targetPropertyIndex);
-    static bool update(QMetaType metaType, QUntypedPropertyData *dataPtr, void *f);
+            QQmlEngine *engine, const QQmlProperty &source, const QQmlProperty &target);
 
-private:
-    QQmlPropertyToPropertyBinding m_binding;
+    void captureProperty(const QMetaObject *, const QMetaProperty &) {}
 };
 
 void QQmlUnbindableToUnbindableGuard_callback(QQmlNotifierEndpoint *e, void **);

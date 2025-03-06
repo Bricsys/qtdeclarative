@@ -7,7 +7,6 @@
 #include <private/qqmlengine_p.h>
 #include <private/qqmlvmemetaobject_p.h>
 #include <private/qv4alloca_p.h>
-#include <private/qv4jscall_p.h>
 
 #include <QtQml/qqmlinfo.h>
 
@@ -29,47 +28,39 @@ QQmlAnyBinding QQmlPropertyToPropertyBinding::create(
         QQmlEngine *engine, const QQmlProperty &source, const QQmlProperty &target)
 {
     QQmlAnyBinding result;
-    if (target.isBindable()) {
+    if (target.isBindable() && !QQmlPropertyPrivate::get(target)->isValueType()) {
         if (source.isBindable()) {
             result = QUntypedPropertyBinding(new QQmlBindableToBindablePropertyBinding(
-                    engine, source.object(), QQmlPropertyPrivate::get(source)->encodedIndex(),
-                    target.object(), target.index()));
+                    engine, source, target));
             return result;
         }
 
         result = QUntypedPropertyBinding(new QQmlUnbindableToBindablePropertyBinding(
-                engine, source.object(), QQmlPropertyPrivate::get(source)->encodedIndex(),
-                target.object(), target.index()));
+                engine, source, target));
         return result;
     }
 
     if (source.isBindable()) {
-        result = new QQmlBindableToUnbindablePropertyBinding(
-                engine, source.object(), QQmlPropertyPrivate::get(source)->encodedIndex(),
-                target.object(), target.index());
+        result = new QQmlBindableToUnbindablePropertyBinding(engine, source, target);
         return result;
     }
 
-    result = new QQmlUnbindableToUnbindablePropertyBinding(
-            engine, source.object(), QQmlPropertyPrivate::get(source)->encodedIndex(),
-            target.object(), target.index());
+    result = new QQmlUnbindableToUnbindablePropertyBinding(engine, source, target);
     return result;
 }
 
 QQmlPropertyToPropertyBinding::QQmlPropertyToPropertyBinding(
-        QQmlEngine *engine, QObject *sourceObject, QQmlPropertyIndex sourcePropertyIndex)
+        QQmlEngine *engine, const QQmlProperty &source)
     : engine(engine)
-    , sourceObject(sourceObject)
-    , sourcePropertyIndex(sourcePropertyIndex)
+    , sourceObject(source.object())
+    , sourcePropertyIndex(QQmlPropertyPrivate::get(source)->encodedIndex())
 {
 }
 
 QQmlUnbindableToUnbindablePropertyBinding::QQmlUnbindableToUnbindablePropertyBinding(
-        QQmlEngine *engine, QObject *sourceObject, QQmlPropertyIndex sourcePropertyIndex,
-        QObject *targetObject, int targetPropertyIndex)
+        QQmlEngine *engine, const QQmlProperty &source, const QQmlProperty &target)
     : QQmlNotifierEndpoint(QQmlUnbindableToUnbindableGuard)
-    , QQmlPropertyToUnbindablePropertyBinding(
-            engine, sourceObject, sourcePropertyIndex, targetObject, targetPropertyIndex)
+    , QQmlPropertyToUnbindablePropertyBinding(engine, source, target)
 {
 }
 
@@ -104,10 +95,8 @@ void QQmlPropertyToUnbindablePropertyBinding::update(QQmlPropertyData::WriteFlag
     Q_ASSERT(d);
 
     // Check for a binding update loop
-    if (Q_UNLIKELY(updatingFlag())) {
-        printBindingLoopError(QQmlPropertyPrivate::restore(target, *d, &vtd, nullptr));
+    if (Q_UNLIKELY(updatingFlag()))
         return;
-    }
 
     setUpdatingFlag(true);
 
@@ -124,19 +113,16 @@ void QQmlPropertyToUnbindablePropertyBinding::update(QQmlPropertyData::WriteFlag
 }
 
 QQmlPropertyToUnbindablePropertyBinding::QQmlPropertyToUnbindablePropertyBinding(
-        QQmlEngine *engine, QObject *sourceObject, QQmlPropertyIndex sourcePropertyIndex,
-        QObject *targetObject, int targetPropertyIndex)
-    : m_binding(engine, sourceObject, sourcePropertyIndex)
+        QQmlEngine *engine, const QQmlProperty &source, const QQmlProperty &target)
+    : m_binding(engine, source)
 {
-    setTarget(targetObject, targetPropertyIndex, false, -1);
+    setTarget(target);
 }
 
 QQmlBindableToUnbindablePropertyBinding::QQmlBindableToUnbindablePropertyBinding(
-        QQmlEngine *engine, QObject *sourceObject, QQmlPropertyIndex sourcePropertyIndex,
-        QObject *targetObject, int targetPropertyIndex)
+        QQmlEngine *engine, const QQmlProperty &source, const QQmlProperty &target)
     : QPropertyObserver(QQmlBindableToUnbindablePropertyBinding::update)
-    , QQmlPropertyToUnbindablePropertyBinding(
-              engine, sourceObject, sourcePropertyIndex, targetObject, targetPropertyIndex)
+    , QQmlPropertyToUnbindablePropertyBinding(engine, source, target)
 {
 }
 
@@ -176,47 +162,30 @@ namespace QtPrivate {
 template<typename Binding>
 inline constexpr BindingFunctionVTable
     bindingFunctionVTableForQQmlPropertyToBindablePropertyBinding = {
-        &Binding::update,
+        &QQmlPropertyToBindablePropertyBinding::update<Binding>,
         [](void *qpropertyBinding) { delete reinterpret_cast<Binding *>(qpropertyBinding); },
         [](void *, void *){},
         0
     };
 }
 
-QQmlUnbindableToBindablePropertyBinding::QQmlUnbindableToBindablePropertyBinding(
-        QQmlEngine *engine, QObject *sourceObject, QQmlPropertyIndex sourcePropertyIndex,
-        QObject *targetObject, int targetPropertyIndex)
+QQmlPropertyToBindablePropertyBinding::QQmlPropertyToBindablePropertyBinding(
+        QQmlEngine *engine, const QQmlProperty &source, const QQmlProperty &target,
+        const QtPrivate::BindingFunctionVTable *vtable)
     : QPropertyBindingPrivate(
-              targetObject->metaObject()->property(targetPropertyIndex).metaType(),
-              &QtPrivate::bindingFunctionVTableForQQmlPropertyToBindablePropertyBinding<
-                      QQmlUnbindableToBindablePropertyBinding>,
-              QPropertyBindingSourceLocation(), true)
-    , QQmlNotifierEndpoint(QQmlUnbindableToBindableGuard)
-    , m_binding(engine, sourceObject, sourcePropertyIndex)
-    , m_targetObject(targetObject)
-    , m_targetPropertyIndex(targetPropertyIndex)
+              target.propertyMetaType(), vtable, QPropertyBindingSourceLocation(), false)
+    , m_binding(engine, source)
 {
 }
 
-bool QQmlUnbindableToBindablePropertyBinding::update(
-        QMetaType metaType, QUntypedPropertyData *dataPtr, void *f)
+QQmlUnbindableToBindablePropertyBinding::QQmlUnbindableToBindablePropertyBinding(
+        QQmlEngine *engine, const QQmlProperty &source, const QQmlProperty &target)
+    : QQmlPropertyToBindablePropertyBinding(
+              engine, source, target,
+              &QtPrivate::bindingFunctionVTableForQQmlPropertyToBindablePropertyBinding<
+                      QQmlUnbindableToBindablePropertyBinding>)
+    , QQmlNotifierEndpoint(QQmlUnbindableToBindableGuard)
 {
-    QQmlUnbindableToBindablePropertyBinding *self
-            = reinterpret_cast<QQmlUnbindableToBindablePropertyBinding *>(
-                // Address of QPropertyBindingPrivate subobject
-                static_cast<std::byte *>(f) - QPropertyBindingPrivate::getSizeEnsuringAlignment());
-
-    // Unbindable source property needs capturing
-    const QVariant value = self->m_binding.readSourceValue(
-            [self](const QMetaObject *sourceMetaObject, const QMetaProperty &property) {
-                Q_UNUSED(sourceMetaObject);
-                self->m_binding.doConnectNotify(self, property);
-            });
-
-    QV4::coerce(
-            self->m_binding.engine->handle(), value.metaType(), value.constData(),
-            metaType, dataPtr);
-    return true;
 }
 
 void QQmlUnbindableToBindablePropertyBinding::update()
@@ -226,9 +195,6 @@ void QQmlUnbindableToBindablePropertyBinding::update()
 
     if (const QPropertyBindingError error = bindingError();
             Q_UNLIKELY(error.type() == QPropertyBindingError::BindingLoop)) {
-        qmlWarning(m_targetObject)
-                << "Binding loop detected for property"
-                << m_targetObject->metaObject()->property(m_targetPropertyIndex.coreIndex()).name();
         return;
     }
 
@@ -236,33 +202,12 @@ void QQmlUnbindableToBindablePropertyBinding::update()
 }
 
 QQmlBindableToBindablePropertyBinding::QQmlBindableToBindablePropertyBinding(
-        QQmlEngine *engine, QObject *sourceObject, QQmlPropertyIndex sourcePropertyIndex,
-        QObject *targetObject, int targetPropertyIndex)
-    : QPropertyBindingPrivate(
-              targetObject->metaObject()->property(targetPropertyIndex).metaType(),
+        QQmlEngine *engine, const QQmlProperty &source, const QQmlProperty &target)
+    : QQmlPropertyToBindablePropertyBinding(
+              engine, source, target,
               &QtPrivate::bindingFunctionVTableForQQmlPropertyToBindablePropertyBinding<
-                      QQmlBindableToBindablePropertyBinding>,
-              QPropertyBindingSourceLocation(), true)
-    , m_binding(engine, sourceObject, sourcePropertyIndex)
+                      QQmlBindableToBindablePropertyBinding>)
 {
-}
-
-bool QQmlBindableToBindablePropertyBinding::update(
-        QMetaType metaType, QUntypedPropertyData *dataPtr, void *f)
-{
-    QQmlBindableToBindablePropertyBinding *self
-            = reinterpret_cast<QQmlBindableToBindablePropertyBinding *>(
-                // Address of QPropertyBindingPrivate subobject
-                static_cast<std::byte *>(f) - QPropertyBindingPrivate::getSizeEnsuringAlignment());
-
-    // Bindable-to-bindable captures automatically.
-    const QVariant value = self->m_binding.readSourceValue(
-            [](const QMetaObject *, const QMetaProperty &) {});
-
-    QV4::coerce(
-            self->m_binding.engine->handle(), value.metaType(), value.constData(),
-            metaType, dataPtr);
-    return true;
 }
 
 void QQmlUnbindableToUnbindableGuard_callback(QQmlNotifierEndpoint *e, void **)
