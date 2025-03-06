@@ -1564,55 +1564,6 @@ function(_qt_internal_target_enable_qmllint target)
         all_qmllint_module ${lint_target_module})
 endfunction()
 
-# This is a  modified version of __qt_propagate_generated_resource from qtbase.
-#
-# It uses a common __qt_internal_propagate_object_library function to link and propagate the object
-# library to the end-point executable.
-#
-# The reason for propagating the qmlcache target as a 'fake resource' from the build system
-# perspective is to ensure proper handling of the object files in generated qmake .prl files.
-function(_qt_internal_propagate_qmlcache_object_lib
-         target
-         generated_source_code
-         link_condition
-         output_generated_target)
-    set(resource_target "${target}_qmlcache")
-    qt6_add_library("${resource_target}" OBJECT "${generated_source_code}")
-
-    # Needed to trigger the handling of the object library for .prl generation.
-    set_property(TARGET ${resource_target} APPEND PROPERTY _qt_resource_name ${resource_target})
-
-    # Export info that this is a qmlcache target, in case if we ever need to detect such targets,
-    # similar how we need it for plugin initializers.
-    set_property(TARGET ${resource_target} PROPERTY _is_qt_qmlcache_target TRUE)
-    set_property(TARGET ${resource_target} APPEND PROPERTY
-        EXPORT_PROPERTIES _is_qt_qmlcache_target
-    )
-
-    # Save the path to the generated source file, relative to the the current build dir.
-    # The path will be used in static library prl file generation to ensure qmake links
-    # against the installed resource object files.
-    # Example saved path:
-    #    .rcc/qrc_qprintdialog.cpp
-    file(RELATIVE_PATH generated_cpp_file_relative_path
-        "${CMAKE_CURRENT_BINARY_DIR}"
-        "${generated_source_code}")
-    set_property(TARGET ${resource_target} APPEND PROPERTY
-        _qt_resource_generated_cpp_relative_path "${generated_cpp_file_relative_path}")
-
-    # Qml specific additions.
-    target_link_libraries(${resource_target} PRIVATE
-        ${QT_CMAKE_EXPORT_NAMESPACE}::Qml
-        ${QT_CMAKE_EXPORT_NAMESPACE}::Core
-    )
-
-    __qt_internal_propagate_object_library(${target} ${resource_target}
-        EXTRA_CONDITIONS "${link_condition}"
-    )
-
-    set(${output_generated_target} "${resource_target}" PARENT_SCOPE)
-endfunction()
-
 # Create an 'all_qmllint' target. The target's name can be user-controlled by ${target_var} with the
 # default name ${default_target_name}. The parameter ${lint_target} holds the name of the single
 # foo_qmllint target that should be triggered by the all_qmllint target.
