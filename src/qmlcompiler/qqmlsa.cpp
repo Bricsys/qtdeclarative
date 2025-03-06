@@ -489,7 +489,7 @@ QMultiHash<QString, Method>::const_iterator Method::Methods::constBegin() const
 }
 
 /*!
-    \fn QMultiHash<QString, Method>::const_iterator Methods::begin() const
+    \fn QMultiHash<QString, QQmlSA::Method>::const_iterator QQmlSA::Method::Methods::begin() const
     Returns an iterator to the beginning of the methods.
  */
 
@@ -508,7 +508,7 @@ QMultiHash<QString, Method>::const_iterator Method::Methods::constEnd() const
 }
 
 /*!
-    \fn QMultiHash<QString, Method>::const_iterator Methods::end() const
+    \fn QMultiHash<QString, QQmlSA::Method>::const_iterator QQmlSA::Method::Methods::end() const
     Returns an iterator to the end of the methods.
  */
 
@@ -876,7 +876,7 @@ Element &Element::operator=(const Element &other)
 }
 
 /*!
-    \fn Element &Element::operator=(Element &&) noexpect;
+    \fn QQmlSA::Element &QQmlSA::Element::operator=(QQmlSA::Element &&other)
     Move-assigns \a other to this Element instance.
  */
 
