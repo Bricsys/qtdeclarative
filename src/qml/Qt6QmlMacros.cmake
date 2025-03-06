@@ -4056,6 +4056,31 @@ function(_qt_internal_scan_qml_imports target imports_file_var when_to_scan)
         list(APPEND cmd_args "-qrcFiles" ${qrc_files})
     endif()
 
+    # Allow passing extra root paths, for cases when the qml sources might be outside the target
+    # source directory, which is the case for some QuickControls tests.
+    # Check for both target properties and directory variables.
+    get_target_property(extra_root_paths "${target}" QT_QML_IMPORT_SCANNER_EXTRA_ROOT_PATHS)
+    if(extra_root_paths)
+        foreach(extra_root_path IN LISTS extra_root_paths)
+            list(APPEND cmd_args -rootPath "${extra_root_path}")
+        endforeach()
+    endif()
+    if(QT_QML_IMPORT_SCANNER_EXTRA_ROOT_PATHS)
+        foreach(extra_root_path IN LISTS QT_QML_IMPORT_SCANNER_EXTRA_ROOT_PATHS)
+            list(APPEND cmd_args -rootPath "${extra_root_path}")
+        endforeach()
+    endif()
+
+    # Allow passing extra command args, because it might be useful during troubleshooting or for
+    # very specific test cases.
+    get_target_property(extra_args "${target}" QT_QML_IMPORT_SCANNER_EXTRA_ARGS)
+    if(extra_args)
+        list(APPEND cmd_args ${extra_args})
+    endif()
+    if(QT_QML_IMPORT_SCANNER_EXTRA_ARGS)
+        list(APPEND cmd_args ${QT_QML_IMPORT_SCANNER_EXTRA_ARGS})
+    endif()
+
     # Use a response file to avoid command line length issues if we have a lot
     # of arguments on the command line
     string(LENGTH "${cmd_args}" length)
