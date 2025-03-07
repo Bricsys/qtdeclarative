@@ -510,11 +510,13 @@ private:
     struct ExtraData
     {
         ExtraData() {
-            std::fill_n(cornerRadii, 4, -1);
+            std::fill_n(cornerRadii, 4, 0);
             std::fill_n(cornerBevel, 4, std::optional<bool>());
+            isCornerRadiusSet = 0;
         }
         qreal radius = 0;
         qreal cornerRadii[4];
+        unsigned isCornerRadiusSet : 4;
         bool bevel = false;
         std::optional<bool> cornerBevel[4];
     };
