@@ -167,34 +167,37 @@ void QQuickRepeater::setModel(const QVariant &m)
         return;
 
     clear();
-    if (d->model) {
-        qmlobject_disconnect(d->model, QQmlInstanceModel, SIGNAL(modelUpdated(QQmlChangeSet,bool)),
-                this, QQuickRepeater, SLOT(modelUpdated(QQmlChangeSet,bool)));
-        qmlobject_disconnect(d->model, QQmlInstanceModel, SIGNAL(createdItem(int,QObject*)),
-                this, QQuickRepeater, SLOT(createdItem(int,QObject*)));
-        qmlobject_disconnect(d->model, QQmlInstanceModel, SIGNAL(initItem(int,QObject*)),
-                this, QQuickRepeater, SLOT(initItem(int,QObject*)));
-        if (QQmlDelegateModel *delegateModel = qobject_cast<QQmlDelegateModel*>(d->model)) {
+
+    QQmlDelegateModelPointer oldModel(d->model);
+    if (QQmlInstanceModel *instanceModel = oldModel.instanceModel()) {
+        disconnect(instanceModel, &QQmlInstanceModel::modelUpdated,
+                   this, &QQuickRepeater::modelUpdated);
+        disconnect(instanceModel, &QQmlInstanceModel::createdItem,
+                   this, &QQuickRepeater::createdItem);
+        disconnect(instanceModel, &QQmlInstanceModel::initItem,
+                   this, &QQuickRepeater::initItem);
+        if (QQmlDelegateModel *delegateModel = oldModel.delegateModel()) {
             QObjectPrivate::disconnect(
                     delegateModel, &QQmlDelegateModel::delegateChanged,
                     d, &QQuickRepeaterPrivate::applyDelegateChange);
         }
     }
 
-    QQmlInstanceModel *oldModel = d->model;
     d->model = nullptr;
     d->dataSource = model;
-    QObject *object = qvariant_cast<QObject*>(model);
+
+    QObject *object = qvariant_cast<QObject *>(model);
     d->dataSourceAsObject = object;
     d->dataSourceIsObject = object != nullptr;
-    QQmlInstanceModel *vim = nullptr;
-    if (object && (vim = qobject_cast<QQmlInstanceModel *>(object))) {
+
+    QQmlDelegateModelPointer newModel(qobject_cast<QQmlInstanceModel *>(object));
+    if (newModel) {
         if (d->explicitDelegate) {
             QQmlComponent *delegate = nullptr;
-            if (QQmlDelegateModel *old = qobject_cast<QQmlDelegateModel *>(oldModel))
+            if (QQmlDelegateModel *old = oldModel.delegateModel())
                 delegate = old->delegate();
 
-            if (QQmlDelegateModel *delegateModel = qobject_cast<QQmlDelegateModel *>(vim)) {
+            if (QQmlDelegateModel *delegateModel = newModel.delegateModel()) {
                 delegateModel->setDelegate(delegate);
             } else if (delegate) {
                 qmlWarning(this) << "Cannot retain explicitly set delegate on non-DelegateModel";
@@ -203,34 +206,35 @@ void QQuickRepeater::setModel(const QVariant &m)
         }
 
         if (d->ownModel) {
-            delete oldModel;
+            delete oldModel.instanceModel();
             d->ownModel = false;
         }
-        d->model = vim;
+        d->model = newModel.instanceModel();
+    } else if (d->ownModel) {
+        newModel = oldModel;
+        d->model = newModel.instanceModel();
+        if (QQmlDelegateModel *delegateModel = newModel.delegateModel())
+            delegateModel->setModel(model);
     } else {
-        if (d->ownModel) {
-            d->model = oldModel;
-        } else {
-            if (d->explicitDelegate) {
-                QQmlComponent *delegate = nullptr;
-                if (QQmlDelegateModel *old = qobject_cast<QQmlDelegateModel *>(oldModel))
-                    delegate = old->delegate();
-                QQmlDelegateModel::createForView(this, d)->setDelegate(delegate);
-            } else {
-                QQmlDelegateModel::createForView(this, d);
-            }
+        newModel = QQmlDelegateModel::createForView(this, d);
+        if (d->explicitDelegate) {
+            QQmlComponent *delegate = nullptr;
+            if (QQmlDelegateModel *old = oldModel.delegateModel())
+                delegate = old->delegate();
+            newModel.delegateModel()->setDelegate(delegate);
         }
-        if (QQmlDelegateModel *dataModel = qobject_cast<QQmlDelegateModel*>(d->model))
-            dataModel->setModel(model);
+
+        newModel.delegateModel()->setModel(model);
     }
-    if (d->model) {
-        qmlobject_connect(d->model, QQmlInstanceModel, SIGNAL(modelUpdated(QQmlChangeSet,bool)),
-                this, QQuickRepeater, SLOT(modelUpdated(QQmlChangeSet,bool)));
-        qmlobject_connect(d->model, QQmlInstanceModel, SIGNAL(createdItem(int,QObject*)),
-                this, QQuickRepeater, SLOT(createdItem(int,QObject*)));
-        qmlobject_connect(d->model, QQmlInstanceModel, SIGNAL(initItem(int,QObject*)),
-                this, QQuickRepeater, SLOT(initItem(int,QObject*)));
-        if (QQmlDelegateModel *dataModel = qobject_cast<QQmlDelegateModel *>(d->model)) {
+
+    if (QQmlInstanceModel *instanceModel = newModel.instanceModel()) {
+        connect(instanceModel, &QQmlInstanceModel::modelUpdated,
+                this, &QQuickRepeater::modelUpdated);
+        connect(instanceModel, &QQmlInstanceModel::createdItem,
+                this, &QQuickRepeater::createdItem);
+        connect(instanceModel, &QQmlInstanceModel::initItem,
+                this, &QQuickRepeater::initItem);
+        if (QQmlDelegateModel *dataModel = newModel.delegateModel()) {
             QObjectPrivate::connect(
                     dataModel, &QQmlDelegateModel::delegateChanged,
                     d, &QQuickRepeaterPrivate::applyDelegateChange);

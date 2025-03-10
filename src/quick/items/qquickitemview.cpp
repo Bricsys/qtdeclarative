@@ -146,69 +146,6 @@ QVariant QQuickItemView::model() const
     return d->modelVariant;
 }
 
-struct ModelPointer
-{
-    ModelPointer() = default;
-    ModelPointer(const ModelPointer &) = default;
-    ModelPointer(ModelPointer &&) = default;
-    ModelPointer &operator=(const ModelPointer &) = default;
-    ModelPointer &operator=(ModelPointer &&) = default;
-
-    ModelPointer(QQmlInstanceModel *model)
-        : model(model)
-        , concrete(model ? Unknown : InstanceModel)
-    {}
-
-    ModelPointer(QQmlDelegateModel *model)
-        : model(model)
-        , concrete(DelegateModel)
-    {}
-
-    ModelPointer &operator=(QQmlInstanceModel *instanceModel)
-    {
-        model = instanceModel;
-        concrete = model ? Unknown : InstanceModel;
-        return *this;
-    }
-
-    ModelPointer &operator=(QQmlDelegateModel *delegateModel)
-    {
-        model = delegateModel;
-        concrete = DelegateModel;
-        return *this;
-    }
-
-    QQmlDelegateModel *delegateModel()
-    {
-        switch (concrete) {
-        case DelegateModel:
-            return static_cast<QQmlDelegateModel *>(model);
-        case InstanceModel:
-            return nullptr;
-        case Unknown:
-            break;
-        }
-
-        QQmlDelegateModel *result = qobject_cast<QQmlDelegateModel *>(model);
-        concrete = result ? DelegateModel : InstanceModel;
-        return result;
-    }
-
-    QQmlInstanceModel *instanceModel() { return model; }
-
-    operator bool() const { return model != nullptr; }
-
-private:
-    enum ConcreteType {
-        Unknown,
-        InstanceModel,
-        DelegateModel
-    };
-
-    QQmlInstanceModel *model = nullptr;
-    ConcreteType concrete = InstanceModel;
-};
-
 void QQuickItemView::setModel(const QVariant &m)
 {
     Q_D(QQuickItemView);
@@ -219,7 +156,7 @@ void QQuickItemView::setModel(const QVariant &m)
     if (d->modelVariant == model)
         return;
 
-    ModelPointer oldModel(d->model);
+    QQmlDelegateModelPointer oldModel(d->model);
     if (QQmlInstanceModel *instanceModel = oldModel.instanceModel()) {
         disconnect(instanceModel, &QQmlInstanceModel::modelUpdated,
                    this, &QQuickItemView::modelUpdated);
@@ -247,7 +184,7 @@ void QQuickItemView::setModel(const QVariant &m)
 
     QObject *object = qvariant_cast<QObject *>(model);
 
-    ModelPointer newModel(qobject_cast<QQmlInstanceModel *>(object));
+    QQmlDelegateModelPointer newModel(qobject_cast<QQmlInstanceModel *>(object));
     if (newModel) {
         if (d->explicitDelegate) {
             QQmlComponent *delegate = nullptr;

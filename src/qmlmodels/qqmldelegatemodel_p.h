@@ -253,6 +253,69 @@ public:
     friend class QQmlDelegateModelAttachedMetaObject;
 };
 
+struct QQmlDelegateModelPointer
+{
+    QQmlDelegateModelPointer() = default;
+    QQmlDelegateModelPointer(const QQmlDelegateModelPointer &) = default;
+    QQmlDelegateModelPointer(QQmlDelegateModelPointer &&) = default;
+    QQmlDelegateModelPointer &operator=(const QQmlDelegateModelPointer &) = default;
+    QQmlDelegateModelPointer &operator=(QQmlDelegateModelPointer &&) = default;
+
+    QQmlDelegateModelPointer(QQmlInstanceModel *model)
+        : model(model)
+          , concrete(model ? Unknown : InstanceModel)
+    {}
+
+    QQmlDelegateModelPointer(QQmlDelegateModel *model)
+        : model(model)
+          , concrete(DelegateModel)
+    {}
+
+    QQmlDelegateModelPointer &operator=(QQmlInstanceModel *instanceModel)
+    {
+        model = instanceModel;
+        concrete = model ? Unknown : InstanceModel;
+        return *this;
+    }
+
+    QQmlDelegateModelPointer &operator=(QQmlDelegateModel *delegateModel)
+    {
+        model = delegateModel;
+        concrete = DelegateModel;
+        return *this;
+    }
+
+    QQmlDelegateModel *delegateModel()
+    {
+        switch (concrete) {
+        case DelegateModel:
+            return static_cast<QQmlDelegateModel *>(model);
+        case InstanceModel:
+            return nullptr;
+        case Unknown:
+            break;
+        }
+
+        QQmlDelegateModel *result = qobject_cast<QQmlDelegateModel *>(model);
+        concrete = result ? DelegateModel : InstanceModel;
+        return result;
+    }
+
+    QQmlInstanceModel *instanceModel() { return model; }
+
+    operator bool() const { return model != nullptr; }
+
+private:
+    enum ConcreteType {
+        Unknown,
+        InstanceModel,
+        DelegateModel
+    };
+
+    QQmlInstanceModel *model = nullptr;
+    ConcreteType concrete = InstanceModel;
+};
+
 QT_END_NAMESPACE
 
 #endif // QQMLDATAMODEL_P_H
