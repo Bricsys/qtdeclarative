@@ -62,6 +62,9 @@ private slots:
     void innerRequired();
     void boundDelegateComponent();
     void setDelegateAfterModel();
+
+    void delegateModelAccess_data();
+    void delegateModelAccess();
 };
 
 class TestObject : public QObject
@@ -1211,6 +1214,126 @@ void tst_QQuickRepeater::setDelegateAfterModel()
                                                      "is externally overridden"));
     QMetaObject::invokeMethod(object.data(), "plantDelegate");
     QCOMPARE(object->property("count").toInt(), 4);
+}
+
+namespace Model {
+Q_NAMESPACE
+QML_ELEMENT
+enum Kind : qint8
+{
+    None = -1,
+    Singular,
+    List,
+    Array,
+    Object
+};
+Q_ENUM_NS(Kind)
+}
+
+namespace Delegate {
+Q_NAMESPACE
+QML_ELEMENT
+enum Kind : qint8
+{
+    None = -1,
+    Untyped,
+    Typed
+};
+Q_ENUM_NS(Kind)
+}
+
+template<typename Enum>
+const char *enumKey(Enum value) {
+    const QMetaObject *mo = qt_getEnumMetaObject(value);
+    const QMetaEnum metaEnum = mo->enumerator(mo->indexOfEnumerator(qt_getEnumName(value)));
+    return metaEnum.valueToKey(value);
+}
+
+void tst_QQuickRepeater::delegateModelAccess_data()
+{
+    QTest::addColumn<QQmlDelegateModel::DelegateModelAccess>("access");
+    QTest::addColumn<Model::Kind>("modelKind");
+    QTest::addColumn<Delegate::Kind>("delegateKind");
+
+    using Access = QQmlDelegateModel::DelegateModelAccess;
+    for (auto access : { Access::Qt5ReadWrite, Access::ReadOnly, Access::ReadWrite }) {
+        for (auto model : { Model::Singular, Model::List, Model::Array, Model::Object }) {
+            for (auto delegate : { Delegate::Untyped, Delegate::Typed }) {
+                QTest::addRow("%s-%s-%s", enumKey(access), enumKey(model), enumKey(delegate))
+                    << access << model << delegate;
+            }
+        }
+    }
+}
+
+void tst_QQuickRepeater::delegateModelAccess()
+{
+    static const bool initialized = []() {
+        qmlRegisterNamespaceAndRevisions(&Model::staticMetaObject, "Test", 1);
+        qmlRegisterNamespaceAndRevisions(&Delegate::staticMetaObject, "Test", 1);
+        return true;
+    }();
+    QVERIFY(initialized);
+
+    QFETCH(QQmlDelegateModel::DelegateModelAccess, access);
+    QFETCH(Model::Kind, modelKind);
+    QFETCH(Delegate::Kind, delegateKind);
+
+    QQmlEngine engine;
+    const QUrl url = testFileUrl("delegateModelAccess.qml");
+    QQmlComponent c(&engine, url);
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> object(c.create());
+
+    QQuickRepeater *repeater = qvariant_cast<QQuickRepeater *>(object->property("repeater"));
+    QVERIFY(repeater);
+
+    if (delegateKind == Delegate::Untyped && modelKind == Model::Array)
+        QSKIP("Properties of objects in arrays are not exposed as context properties");
+
+    if (access == QQmlDelegateModel::ReadOnly) {
+        const QRegularExpression message(
+                url.toString() + ":[0-9]+: TypeError: Cannot assign to read-only property \"a\"");
+
+        QTest::ignoreMessage(QtWarningMsg, message);
+        if (delegateKind == Delegate::Untyped)
+            QTest::ignoreMessage(QtWarningMsg, message);
+    }
+
+    object->setProperty("delegateModelAccess", access);
+    object->setProperty("modelIndex", modelKind);
+    object->setProperty("delegateIndex", delegateKind);
+
+    QObject *delegate = repeater->itemAt(0);
+    QVERIFY(delegate);
+
+    const bool modelWritable = access != QQmlDelegateModel::ReadOnly;
+    const bool immediateWritable = (delegateKind == Delegate::Untyped)
+            ? access != QQmlDelegateModel::ReadOnly
+            : access == QQmlDelegateModel::ReadWrite;
+
+    double expected = 11;
+
+    QCOMPARE(delegate->property("immediateX").toDouble(), expected);
+    QCOMPARE(delegate->property("modelX").toDouble(), expected);
+
+    if (modelWritable)
+        expected = 3;
+
+    QMetaObject::invokeMethod(delegate, "writeThroughModel");
+    QCOMPARE(delegate->property("immediateX").toDouble(), expected);
+    QCOMPARE(delegate->property("modelX").toDouble(), expected);
+
+    if (immediateWritable)
+        expected = 1;
+
+    QMetaObject::invokeMethod(delegate, "writeImmediate");
+
+    // Writes to required properties always succeed, but might not be propagated to the model
+    QCOMPARE(delegate->property("immediateX").toDouble(),
+             delegateKind == Delegate::Untyped ? expected : 1);
+
+    QCOMPARE(delegate->property("modelX").toDouble(), expected);
 }
 
 QTEST_MAIN(tst_QQuickRepeater)

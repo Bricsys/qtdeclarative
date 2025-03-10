@@ -1186,18 +1186,6 @@ void QQuickItemViewPrivate::applyDelegateChange()
     updateViewport();
 }
 
-void QQuickItemViewPrivate::applyDelegateModelAccessChange()
-{
-    Q_Q(QQuickItemView);
-
-    if (explicitDelegateModelAccess) {
-        qmlWarning(q) << "Explicitly set delegateModelAccess is externally overridden";
-        explicitDelegateModelAccess = false;
-    }
-
-    emit q->delegateModelAccessChanged();
-}
-
 // for debugging only
 void QQuickItemViewPrivate::checkVisible() const
 {

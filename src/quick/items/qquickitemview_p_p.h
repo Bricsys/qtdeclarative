@@ -169,7 +169,10 @@ public:
     qreal calculatedMaxExtent() const;
 
     void applyDelegateChange();
-    void applyDelegateModelAccessChange();
+    void applyDelegateModelAccessChange()
+    {
+        QQmlDelegateModel::applyDelegateModelAccessChangeOnView(q_func(), this);
+    }
 
     void applyPendingChanges();
     bool applyModelChanges(ChangeResult *insertionResult, ChangeResult *removalResult);

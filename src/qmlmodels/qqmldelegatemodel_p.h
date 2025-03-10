@@ -127,6 +127,17 @@ public:
     }
 
     template<typename View, typename ViewPrivate>
+    static void applyDelegateModelAccessChangeOnView(View *q, ViewPrivate *d)
+    {
+        if (d->explicitDelegateModelAccess) {
+            qmlWarning(q) << "Explicitly set delegateModelAccess is externally overridden";
+            d->explicitDelegateModelAccess = false;
+        }
+
+        Q_EMIT q->delegateModelAccessChanged();
+    }
+
+    template<typename View, typename ViewPrivate>
     static void applyDelegateChangeOnView(View *q, ViewPrivate *d)
     {
         if (d->explicitDelegate) {
