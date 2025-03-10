@@ -2074,7 +2074,7 @@ void QQuickDeliveryAgentPrivate::deliverPointerEvent(QPointerEvent *event)
 */
 // FIXME: should this be iterative instead of recursive?
 QVector<QQuickItem *> QQuickDeliveryAgentPrivate::eventTargets(QQuickItem *item, const QEvent *event, QPointF scenePos,
-                                                               std::function<std::optional<bool>(QQuickItem *item, const QEvent *event)> predicate) const
+                                                               qxp::function_ref<std::optional<bool> (QQuickItem *, const QEvent *)> predicate) const
 {
     QVector<QQuickItem *> targets;
     auto itemPrivate = QQuickItemPrivate::get(item);
@@ -2086,13 +2086,9 @@ QVector<QQuickItem *> QQuickDeliveryAgentPrivate::eventTargets(QQuickItem *item,
             return targets;
     }
     QList<QQuickItem *> children = itemPrivate->paintOrderChildItems();
-    if (predicate) {
-        const auto override = predicate(item, event);
-        if (override == true)
-            relevant = true;
-        else if (override == false)
-            relevant = false;
-    }
+    const std::optional<bool> override = predicate(item, event);
+    if (override.has_value())
+        relevant = override.value();
     if (relevant) {
         auto it = std::lower_bound(children.begin(), children.end(), 0,
            [](auto lhs, auto rhs) -> bool { return lhs->z() < rhs; });
@@ -2937,7 +2933,11 @@ bool QQuickDeliveryAgentPrivate::dragOverThreshold(QVector2D delta)
 */
 QVector<QQuickItem *> QQuickDeliveryAgentPrivate::contextMenuTargets(QQuickItem *item, const QContextMenuEvent *event) const
 {
-    return eventTargets(item, event, event->pos(), nullptr);
+    auto predicate = [](QQuickItem *, const QEvent *) -> std::optional<bool> {
+        return std::nullopt;
+    };
+
+    return eventTargets(item, event, event->pos(), predicate);
 }
 
 /*!
