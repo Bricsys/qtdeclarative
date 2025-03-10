@@ -1970,7 +1970,8 @@ void QQuickWindowPrivate::rhiCreationFailureMessage(const QString &backendName,
 
 void QQuickWindowPrivate::cleanupNodes()
 {
-    qDeleteAll(std::exchange(cleanupNodeList, {}));
+    qDeleteAll(cleanupNodeList);
+    cleanupNodeList.clear();
 }
 
 void QQuickWindowPrivate::cleanupNodesOnShutdown(QQuickItem *item)
