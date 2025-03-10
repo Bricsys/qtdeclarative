@@ -205,9 +205,9 @@ void QQuickItemView::setModel(const QVariant &m)
                 QQmlComponent *delegate = nullptr;
                 if (QQmlDelegateModel *old = qobject_cast<QQmlDelegateModel *>(oldModel))
                     delegate = old->delegate();
-                d->createDelegateModel(this)->setDelegate(delegate);
+                QQmlDelegateModel::createForView(this, d)->setDelegate(delegate);
             } else {
-                d->createDelegateModel(this);
+                QQmlDelegateModel::createForView(this, d);
             }
         }
         if (QQmlDelegateModel *dataModel = qobject_cast<QQmlDelegateModel*>(d->model))
@@ -280,7 +280,7 @@ void QQuickItemView::setDelegate(QQmlComponent *delegate)
             return;
         }
 
-        setExplicitDelegate(d->createDelegateModel(this));
+        setExplicitDelegate(QQmlDelegateModel::createForView(this, d));
         // The new model is not connected to applyDelegateChange, yet. We only do this once
         // there is actual data, via an explicit setModel(). So we have to manually emit the
         // delegateChanged() here.
@@ -1127,12 +1127,7 @@ void QQuickItemViewPrivate::applyDelegateChange()
 {
     Q_Q(QQuickItemView);
 
-    if (explicitDelegate) {
-        qmlWarning(q) << "Explicitly set delegate is externally overridden";
-        explicitDelegate = false;
-    }
-
-    emit q->delegateChanged();
+    QQmlDelegateModel::applyDelegateChangeOnView(q, this);
 
     releaseVisibleItems(QQmlDelegateModel::NotReusable);
     releaseCurrentItem(QQmlDelegateModel::NotReusable);

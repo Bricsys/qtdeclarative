@@ -229,16 +229,6 @@ public:
             releaseItem(item, reusableFlag);
     }
 
-    QQmlDelegateModel *createDelegateModel(QQuickItemView *q) {
-        Q_ASSERT(model.isNull());
-        QQmlDelegateModel *delegateModel = new QQmlDelegateModel(qmlContext(q), q);
-        model = delegateModel;
-        ownModel = true;
-        if (q->isComponentComplete())
-            delegateModel->componentComplete();
-        return delegateModel;
-    }
-
     void emitCountChanged();
 
     virtual QQuickItemViewAttached *getAttachedObject(const QObject *) const { return nullptr; }
