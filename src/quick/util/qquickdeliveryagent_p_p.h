@@ -18,6 +18,7 @@
 #include <QtQuick/private/qquickdeliveryagent_p.h>
 #include <QtGui/qevent.h>
 #include <QtCore/qstack.h>
+#include <QtCore/qxpfunctional.h>
 
 #include <private/qevent_p.h>
 #include <private/qpointingdevice_p.h>
@@ -166,7 +167,7 @@ public:
     void deliverUpdatedPoints(QPointerEvent *event);
     void deliverMatchingPointsToItem(QQuickItem *item, bool isGrabber, QPointerEvent *pointerEvent, bool handlersOnly = false);
 
-    QVector<QQuickItem *> eventTargets(QQuickItem *, const QEvent *event, QPointF scenePos,  std::function<std::optional<bool> (QQuickItem *, const QEvent *)> predicate) const;
+    QVector<QQuickItem *> eventTargets(QQuickItem *, const QEvent *event, QPointF scenePos, qxp::function_ref<std::optional<bool> (QQuickItem *, const QEvent *)> predicate) const;
     QVector<QQuickItem *> pointerTargets(QQuickItem *, const QPointerEvent *event, const QEventPoint &point,
                                          bool checkMouseButtons, bool checkAcceptsTouch) const;
     QVector<QQuickItem *> mergePointerTargets(const QVector<QQuickItem *> &list1, const QVector<QQuickItem *> &list2) const;
