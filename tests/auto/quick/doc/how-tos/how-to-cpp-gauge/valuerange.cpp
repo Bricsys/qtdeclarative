@@ -3,6 +3,8 @@
 
 #include "valuerange.h"
 
+#include <algorithm>
+
 QT_BEGIN_NAMESPACE
 
 ValueRange::ValueRange(QObject *parent)
@@ -161,7 +163,7 @@ qreal ValueRange::visualPosition() const
 
 void ValueRange::setPosition(qreal pos)
 {
-    pos = qBound<qreal>(0.0, pos, 1.0);
+    pos = std::clamp(pos, qreal(0.0), qreal(1.0));
     if (qFuzzyCompare(mPosition, pos))
         return;
 
