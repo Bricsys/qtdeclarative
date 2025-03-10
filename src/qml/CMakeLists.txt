@@ -521,7 +521,6 @@ set_source_files_properties(compat/removed_api.cpp
 #    ""
 #)
 
-qt_declarative_write_tag_header(Qml)
 set(_qt_qlalr_flags "--no-debug" "--qt")
 qt_process_qlalr(Qml "${CMAKE_CURRENT_SOURCE_DIR}/parser/qqmljs.g" "${_qt_qlalr_flags}")
 qt_declarative_generate_reg_exp_jit_tables(Qml)
