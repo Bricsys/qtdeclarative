@@ -186,11 +186,9 @@ QVariant QQmlDMAbstractItemModelData::modelData() const
                 : value(m_type->propertyRoles[0]);
     }
 
-    // If we're using context properties, the model object is also the context object.
-    // In that case we cannot provide modelData. Otherwise return the object itself as modelData.
-    return (contextData->contextObject() == this)
-            ? QVariant()
-            : QVariant::fromValue(this);
+    return useStructuredModelData
+            ? QVariant::fromValue(this)
+            : QVariant();
 }
 
 void QQmlDMAbstractItemModelData::setModelData(const QVariant &modelData)

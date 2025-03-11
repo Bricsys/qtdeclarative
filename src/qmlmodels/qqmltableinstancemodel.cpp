@@ -290,6 +290,10 @@ void QQmlTableInstanceModel::incubateModelItem(QQmlDelegateModelItem *modelItem,
             modelItem->incubationTask->forceCompletion();
     } else if (m_qmlContext && m_qmlContext->isValid()) {
         modelItem->incubationTask = new QQmlTableInstanceModelIncubationTask(this, modelItem, incubationMode);
+        // TODO: In order to retain compatibility, we cannot allow the incubation task to clear the
+        //       context object in the presence of required properties. This results in the context
+        //       properties still being available in the delegate even though they shouldn't.
+        // modelItem->incubationTask->incubating = modelItem;
 
         QQmlContext *creationContext = modelItem->delegate->creationContext();
         const QQmlRefPointer<QQmlContextData> componentContext
@@ -298,6 +302,12 @@ void QQmlTableInstanceModel::incubateModelItem(QQmlDelegateModelItem *modelItem,
         QQmlComponentPrivate *cp = QQmlComponentPrivate::get(modelItem->delegate);
         if (cp->isBound()) {
             modelItem->contextData = componentContext;
+
+            // Ignore return value of initProxy. We want to know the proxy when assigning required
+            // properties, but we don't want it to pollute our context. The context is bound.
+            if (m_adaptorModel.hasProxyObject())
+                modelItem->initProxy();
+
             cp->incubateObject(
                         modelItem->incubationTask,
                         modelItem->delegate,
@@ -309,6 +319,9 @@ void QQmlTableInstanceModel::incubateModelItem(QQmlDelegateModelItem *modelItem,
                         QQmlContextData::get(creationContext  ? creationContext : m_qmlContext.data()));
             ctxt->setContextObject(modelItem);
             modelItem->contextData = ctxt;
+
+            if (m_adaptorModel.hasProxyObject())
+                ctxt = modelItem->initProxy();
 
             cp->incubateObject(
                         modelItem->incubationTask,

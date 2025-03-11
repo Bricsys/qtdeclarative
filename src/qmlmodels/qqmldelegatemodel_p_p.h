@@ -141,6 +141,8 @@ public:
                         QQmlPrivate::attachedPropertiesFunc<QQmlDelegateModel>()));
     }
 
+    void disableStructuredModelData() { useStructuredModelData = false; }
+
 Q_SIGNALS:
     void modelIndexChanged();
     Q_REVISION(2, 12) void rowChanged();
@@ -152,6 +154,7 @@ protected:
     int index = -1;
     int row = -1;
     int column = -1;
+    bool useStructuredModelData = true;
 };
 
 namespace QV4 {

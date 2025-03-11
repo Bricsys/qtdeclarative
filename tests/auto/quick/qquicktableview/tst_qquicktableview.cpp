@@ -300,6 +300,10 @@ private slots:
     void invalidateTableInstanceModelContextObject();
     void transposed();
 
+    void universalModelData();
+    void typedModelData();
+    void requiredModelData();
+
     // Row and column reordering
     void checkVisualRowColumnAfterReorder();
     void checkColumnRowSizeAfterReorder();
@@ -7990,6 +7994,202 @@ void tst_QQuickTableView::transposed()
     // Also sanity-check that the old column-major items are removed
     for (int row = 1; row < 3; ++row)
         QVERIFY(!tableView->itemAtCell({0, row}));
+}
+
+void tst_QQuickTableView::universalModelData()
+{
+    LOAD_TABLEVIEW("universalModelData.qml");
+
+    for (int i = 0; i < 6; ++i) {
+        tableView->setProperty("n", i);
+
+        WAIT_UNTIL_POLISHED;
+
+        QCOMPARE(QQuickTableViewPrivate::get(tableView)->loadedItems.size(), 1);
+        QObject *delegate
+                = QQuickTableViewPrivate::get(tableView)->loadedItems.begin().value()->item;
+        QVERIFY(delegate);
+
+        QObject *modelItem = delegate->property("modelSelf").value<QObject *>();
+        QVERIFY(modelItem != nullptr);
+        switch (i) {
+        case 0: {
+            // list model with 1 role
+            QCOMPARE(delegate->property("modelA"), QStringLiteral("a"));
+            QVERIFY(!delegate->property("modelDataA").isValid());
+            QCOMPARE(delegate->property("modelDataSelf"), QStringLiteral("a"));
+            QCOMPARE(delegate->property("modelModelData"), QStringLiteral("a"));
+            QCOMPARE(delegate->property("modelAnonymous"), QStringLiteral("a"));
+            break;
+        }
+        case 1: {
+            // list model with 2 roles
+            QCOMPARE(delegate->property("modelA"), QStringLiteral("a"));
+            QCOMPARE(delegate->property("modelDataA"), QStringLiteral("a"));
+            QCOMPARE(delegate->property("modelDataSelf"), QVariant::fromValue(modelItem));
+            QCOMPARE(delegate->property("modelModelData"), QVariant::fromValue(modelItem));
+            QCOMPARE(delegate->property("modelAnonymous"), QVariant::fromValue(modelItem));
+            break;
+        }
+        case 2: {
+            // JS array of objects
+            QCOMPARE(delegate->property("modelA"), QStringLiteral("a"));
+            QCOMPARE(delegate->property("modelDataA"), QStringLiteral("a"));
+
+            // Do the comparison in QVariantMap. The values get converted back and forth a
+            // few times, making any JavaScript equality comparison impossible.
+            // This is only due to test setup, though.
+            const QVariantMap modelData = delegate->property("modelDataSelf").value<QVariantMap>();
+            QVERIFY(!modelData.isEmpty());
+            QCOMPARE(delegate->property("modelModelData").value<QVariantMap>(), modelData);
+            QCOMPARE(delegate->property("modelAnonymous").value<QVariantMap>(), modelData);
+            break;
+        }
+        case 3: {
+            // string list
+            QVERIFY(!delegate->property("modelA").isValid());
+            QVERIFY(!delegate->property("modelDataA").isValid());
+            QCOMPARE(delegate->property("modelDataSelf"), QStringLiteral("a"));
+            QCOMPARE(delegate->property("modelModelData"), QStringLiteral("a"));
+            QCOMPARE(delegate->property("modelAnonymous"), QStringLiteral("a"));
+            break;
+        }
+        case 4: {
+            // single object
+            QCOMPARE(delegate->property("modelA"), QStringLiteral("a"));
+            QCOMPARE(delegate->property("modelDataA"), QStringLiteral("a"));
+            QObject *modelData = delegate->property("modelDataSelf").value<QObject *>();
+            QVERIFY(modelData != nullptr);
+            QCOMPARE(delegate->property("modelModelData"), QVariant::fromValue(modelData));
+            QCOMPARE(delegate->property("modelAnonymous"), QVariant::fromValue(modelData));
+            break;
+        }
+        case 5: {
+            // a number
+            QVERIFY(!delegate->property("modelA").isValid());
+            QVERIFY(!delegate->property("modelDataA").isValid());
+            const QVariant modelData = delegate->property("modelDataSelf");
+
+            // This is int on 32bit systems because qsizetype fits into int there.
+            // On 64bit systems it's double because qsizetype doesn't fit into int.
+            if (sizeof(qsizetype) > sizeof(int))
+                QCOMPARE(modelData.metaType(), QMetaType::fromType<double>());
+            else
+                QCOMPARE(modelData.metaType(), QMetaType::fromType<int>());
+
+            QCOMPARE(modelData.value<int>(), 0);
+            QCOMPARE(delegate->property("modelModelData"), modelData);
+            QCOMPARE(delegate->property("modelAnonymous"), modelData);
+            break;
+        }
+        default:
+            QFAIL("wrong model number");
+            break;
+        }
+    }
+}
+
+void tst_QQuickTableView::typedModelData()
+{
+    LOAD_TABLEVIEW("typedModelData.qml");
+    const QUrl url = testFileUrl("typedModelData.qml");
+
+    for (int i = 0; i < 4; ++i) {
+        if (i == 0) {
+            for (int j = 0; j < 3; ++j) {
+                QTest::ignoreMessage(
+                    QtWarningMsg,
+                    "Could not find any constructor for value type QQmlPointFValueType "
+                    "to call with value QVariant(double, 11)");
+            }
+
+            QTest::ignoreMessage(
+                QtWarningMsg,
+                qPrintable(url.toString() + ":60:9: Unable to assign double to QPointF"));
+            QTest::ignoreMessage(
+                QtWarningMsg,
+                qPrintable(url.toString() + ":59:9: Unable to assign double to QPointF"));
+        }
+
+        tableView->setProperty("n", i);
+
+        WAIT_UNTIL_POLISHED;
+
+        QCOMPARE(QQuickTableViewPrivate::get(tableView)->loadedItems.size(), 1);
+        QObject *delegate
+                = QQuickTableViewPrivate::get(tableView)->loadedItems.begin().value()->item;
+        QVERIFY(delegate);
+
+        const QPointF modelItem = delegate->property("modelSelf").value<QPointF>();
+        switch (i) {
+        case 0: {
+            // list model with 1 role.
+            // Does not work, for the most part, because the model is singular
+            QCOMPARE(delegate->property("modelX"), 11.0);
+            QCOMPARE(delegate->property("modelDataX"), 0.0);
+            QCOMPARE(delegate->property("modelSelf"), QPointF(11.0, 0.0));
+            QCOMPARE(delegate->property("modelDataSelf"), QPointF());
+            QCOMPARE(delegate->property("modelModelData"), QPointF());
+            QCOMPARE(delegate->property("modelAnonymous"), QPointF());
+            break;
+        }
+        case 1: {
+            // list model with 2 roles
+            QCOMPARE(delegate->property("modelX"), 13.0);
+            QCOMPARE(delegate->property("modelDataX"), 13.0);
+            QCOMPARE(delegate->property("modelSelf"), QVariant::fromValue(modelItem));
+            QCOMPARE(delegate->property("modelDataSelf"), QVariant::fromValue(modelItem));
+            QCOMPARE(delegate->property("modelModelData"), QVariant::fromValue(modelItem));
+            QCOMPARE(delegate->property("modelAnonymous"), QVariant::fromValue(modelItem));
+            break;
+        }
+        case 2: {
+            // JS array of objects
+            QCOMPARE(delegate->property("modelX"), 17.0);
+            QCOMPARE(delegate->property("modelDataX"), 17.0);
+
+            const QPointF modelData = delegate->property("modelDataSelf").value<QPointF>();
+            QCOMPARE(modelData, QPointF(17, 18));
+            QCOMPARE(delegate->property("modelSelf"), QVariant::fromValue(modelData));
+            QCOMPARE(delegate->property("modelModelData").value<QPointF>(), modelData);
+            QCOMPARE(delegate->property("modelAnonymous").value<QPointF>(), modelData);
+            break;
+        }
+        case 3: {
+            // single object
+            QCOMPARE(delegate->property("modelX"), 21);
+            QCOMPARE(delegate->property("modelDataX"), 21);
+            const QPointF modelData = delegate->property("modelDataSelf").value<QPointF>();
+            QCOMPARE(modelData, QPointF(21, 22));
+            QCOMPARE(delegate->property("modelSelf"), QVariant::fromValue(modelData));
+            QCOMPARE(delegate->property("modelModelData"), QVariant::fromValue(modelData));
+            QCOMPARE(delegate->property("modelAnonymous"), QVariant::fromValue(modelData));
+            break;
+        }
+        default:
+            QFAIL("wrong model number");
+            break;
+        }
+    }
+}
+
+void tst_QQuickTableView::requiredModelData()
+{
+    LOAD_TABLEVIEW("requiredModelData.qml")
+
+    for (int i = 0; i < 4; ++i) {
+        tableView->setProperty("n", i);
+
+        WAIT_UNTIL_POLISHED;
+
+        QCOMPARE(QQuickTableViewPrivate::get(tableView)->loadedItems.size(), 1);
+        QObject *delegate
+                = QQuickTableViewPrivate::get(tableView)->loadedItems.begin().value()->item;
+        QVERIFY(delegate);
+        const QVariant a = delegate->property("a");
+        QCOMPARE(a.metaType(), QMetaType::fromType<QString>());
+        QCOMPARE(a.toString(), QLatin1String("a"));
+    }
 }
 
 void tst_QQuickTableView::checkVisualRowColumnAfterReorder()

@@ -130,30 +130,27 @@ const QMetaObject *VDMListDelegateDataType::toDynamicMetaObject(QObject *object)
 QMetaObject *VDMListDelegateDataType::toDynamicMetaObject(QObject *object)
 #endif
 {
-    if (const QQmlRefPointer<QQmlContextData> &contextData
-            = static_cast<QQmlDMListAccessorData *>(object)->contextData) {
-        if (contextData->contextObject() == object) {
-            // We are using context properties. There should be a propertyCache so that row and
-            // column are hidden. We shall also return the static metaObject in that case.
+    QQmlDMListAccessorData *data = static_cast<QQmlDMListAccessorData *>(object);
+    if (!data->useStructuredModelData) {
+        // We cannot produce structured modelData. There should be a propertyCache so that row and
+        // column are hidden. We shall also return the static metaObject in that case.
 
-            if (!propertyCache) {
-                propertyCache = QQmlPropertyCache::createStandalone(
-                        &QQmlDMListAccessorData::staticMetaObject, model->modelItemRevision);
-                if (QQmlData *ddata = QQmlData::get(object, true))
-                    ddata->propertyCache = propertyCache;
-            }
+        if (!propertyCache) {
+            propertyCache = QQmlPropertyCache::createStandalone(
+                    &QQmlDMListAccessorData::staticMetaObject, model->modelItemRevision);
+            if (QQmlData *ddata = QQmlData::get(object, true))
+                ddata->propertyCache = propertyCache;
+        }
 
 #if QT_VERSION >= QT_VERSION_CHECK(7, 0, 0)
-            return &QQmlDMListAccessorData::staticMetaObject;
+        return &QQmlDMListAccessorData::staticMetaObject;
 #else
-            return const_cast<QMetaObject *>(&QQmlDMListAccessorData::staticMetaObject);
+        return const_cast<QMetaObject *>(&QQmlDMListAccessorData::staticMetaObject);
 #endif
-        }
     }
 
     // If the context object is not the model object, we are using required properties.
     // In that case, create any extra properties.
-    QQmlDMListAccessorData *data = static_cast<QQmlDMListAccessorData *>(object);
     if (!data->cachedDataClean) {
         createMissingProperties(&data->cachedData);
         data->cachedDataClean = true;

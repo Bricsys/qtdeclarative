@@ -983,6 +983,10 @@ void QQDMIncubationTask::initializeRequiredProperties(QQmlDelegateModelItem *mod
             }
         }
     } else {
+        // To retain compatibility, we cannot enable structured model data if the data is passed
+        // via context properties.
+        modelItemToIncubate->disableStructuredModelData();
+
         if (!isBound)
             modelItemToIncubate->contextData->setContextObject(modelItemToIncubate);
         if (proxiedObject)
