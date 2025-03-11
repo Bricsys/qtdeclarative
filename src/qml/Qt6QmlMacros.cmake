@@ -417,8 +417,8 @@ function(qt6_add_qml_module target)
         endif()
 
         get_target_property(backing_target_type ${target} TYPE)
-        get_target_property(is_android_executable "${target}" _qt_is_android_executable)
-        if (backing_target_type STREQUAL "EXECUTABLE" OR is_android_executable)
+        get_target_property(android_type "${target}" _qt_android_target_type)
+        if (backing_target_type STREQUAL "EXECUTABLE" OR android_type STREQUAL "APPLICATION")
             if(DEFINED arg_PLUGIN_TARGET)
                 message(FATAL_ERROR
                     "A QML module with an executable as its backing target "
@@ -1467,8 +1467,8 @@ function(_qt_internal_target_enable_qmllint target)
     # for an executable though, since it can never be found as a QML module for
     # a different QML module/target.
     get_target_property(target_type ${target} TYPE)
-    get_target_property(is_android_executable ${target} _qt_is_android_executable)
-    if(target_type STREQUAL "EXECUTABLE" OR is_android_executable)
+    get_target_property(android_type ${target} _qt_android_target_type)
+    if(target_type STREQUAL "EXECUTABLE" OR android_type STREQUAL "APPLICATION")
         # The executable's own QML module's qmldir file will usually be under a
         # subdirectory (matching the module's target path) below the target's
         # build directory.
@@ -3187,8 +3187,8 @@ function(qt6_target_qml_sources target)
             _qt_generated_qrc_files "--resource$<SEMICOLON>" "$<SEMICOLON>"
         )
         get_target_property(target_type ${target} TYPE)
-        get_target_property(is_android_executable ${target} _qt_is_android_executable)
-        if(target_type STREQUAL "EXECUTABLE" OR is_android_executable)
+        get_target_property(android_type ${target} _qt_android_target_type)
+        if(target_type STREQUAL "EXECUTABLE" OR android_type STREQUAL "APPLICATION")
             # The application binary directory is part of the default import path.
             list(APPEND import_paths -I "$<TARGET_PROPERTY:${target},BINARY_DIR>")
         else()
