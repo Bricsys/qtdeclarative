@@ -24,12 +24,11 @@
 QT_BEGIN_NAMESPACE
 
 class VDMObjectDelegateDataType;
-class QQmlDMObjectData : public QQmlDelegateModelItem, public QQmlAdaptorModelProxyInterface
+class QQmlDMObjectData : public QQmlDelegateModelItem
 {
     Q_OBJECT
     Q_PROPERTY(QObject *modelData READ modelData NOTIFY modelDataChanged)
     QT_ANONYMOUS_PROPERTY(QObject * READ modelData NOTIFY modelDataChanged FINAL)
-    Q_INTERFACES(QQmlAdaptorModelProxyInterface)
 public:
     QQmlDMObjectData(
             const QQmlRefPointer<QQmlDelegateModelItemMetaType> &metaType,
@@ -47,7 +46,7 @@ public:
     }
 
     QObject *modelData() const { return object; }
-    QObject *proxiedObject() override { return object; }
+    QQmlRefPointer<QQmlContextData> initProxy() final;
 
     QPointer<QObject> object;
 

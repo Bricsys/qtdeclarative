@@ -1168,24 +1168,6 @@ void QQmlDelegateModelPrivate::setInitialState(QQDMIncubationTask *incubationTas
         emitInitItem(incubationTask, cacheItem->object);
 }
 
-static QQmlRefPointer<QQmlContextData> initProxy(QQmlDelegateModelItem *cacheItem)
-{
-    QQmlAdaptorModelProxyInterface *proxy
-            = qobject_cast<QQmlAdaptorModelProxyInterface *>(cacheItem);
-    if (!proxy)
-        return cacheItem->contextData;
-
-    QQmlRefPointer<QQmlContextData> ctxt = QQmlContextData::createChild(cacheItem->contextData);
-    QObject *proxied = proxy->proxiedObject();
-    cacheItem->incubationTask->proxiedObject = proxied;
-    cacheItem->incubationTask->proxyContext = ctxt;
-    ctxt->setContextObject(cacheItem);
-    // We don't own the proxied object. We need to clear it if it goes away.
-    QObject::connect(proxied, &QObject::destroyed,
-                     cacheItem, &QQmlDelegateModelItem::childContextObjectDestroyed);
-    return ctxt;
-}
-
 QObject *QQmlDelegateModelPrivate::object(Compositor::Group group, int index, QQmlIncubator::IncubationMode incubationMode)
 {
     if (!m_delegate || index < 0 || index >= m_compositor.count(group)) {
@@ -1266,7 +1248,7 @@ QObject *QQmlDelegateModelPrivate::object(Compositor::Group group, int index, QQ
             // Ignore return value of initProxy. We want to know the proxy when assigning required
             // properties, but we don't want it to pollute our context. The context is bound.
             if (m_adaptorModel.hasProxyObject())
-                initProxy(cacheItem);
+                cacheItem->initProxy();
 
             cp->incubateObject(
                         cacheItem->incubationTask,
@@ -1281,7 +1263,7 @@ QObject *QQmlDelegateModelPrivate::object(Compositor::Group group, int index, QQ
             cacheItem->contextData = ctxt;
 
             if (m_adaptorModel.hasProxyObject())
-                ctxt = initProxy(cacheItem);
+                ctxt = cacheItem->initProxy();
 
             cp->incubateObject(
                         cacheItem->incubationTask,

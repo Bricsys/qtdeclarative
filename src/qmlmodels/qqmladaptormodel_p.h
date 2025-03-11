@@ -140,18 +140,6 @@ private:
     Accessors m_nullAccessors;
 };
 
-class QQmlAdaptorModelProxyInterface
-{
-public:
-    virtual ~QQmlAdaptorModelProxyInterface() {}
-
-    virtual QObject *proxiedObject() = 0;
-};
-
-#define QQmlAdaptorModelProxyInterface_iid "org.qt-project.Qt.QQmlAdaptorModelProxyInterface"
-
-Q_DECLARE_INTERFACE(QQmlAdaptorModelProxyInterface, QQmlAdaptorModelProxyInterface_iid)
-
 QT_END_NAMESPACE
 
 #endif
