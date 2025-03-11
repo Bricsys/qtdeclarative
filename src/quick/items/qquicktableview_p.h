@@ -27,6 +27,7 @@ QT_REQUIRE_CONFIG(quick_tableview);
 #include <QtQml/private/qqmlnullablevalue_p.h>
 #include <QtQml/private/qqmlfinalizer_p.h>
 #include <QtQml/private/qqmlguard_p.h>
+#include <QtQmlModels/private/qqmldelegatemodel_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -68,6 +69,8 @@ class Q_QUICK_EXPORT QQuickTableView : public QQuickFlickable, public QQmlFinali
     Q_PROPERTY(bool resizableRows READ resizableRows WRITE setResizableRows NOTIFY resizableRowsChanged REVISION(6, 5) FINAL)
     Q_PROPERTY(EditTriggers editTriggers READ editTriggers WRITE setEditTriggers NOTIFY editTriggersChanged REVISION(6, 5) FINAL)
     Q_PROPERTY(SelectionMode selectionMode READ selectionMode WRITE setSelectionMode NOTIFY selectionModeChanged REVISION(6, 6) FINAL)
+    Q_PROPERTY(QQmlDelegateModel::DelegateModelAccess delegateModelAccess READ delegateModelAccess
+            WRITE setDelegateModelAccess NOTIFY delegateModelAccessChanged REVISION(6, 10) FINAL)
 
     QML_NAMED_ELEMENT(TableView)
     QML_ADDED_IN_VERSION(2, 12)
@@ -185,6 +188,9 @@ public:
     EditTriggers editTriggers() const;
     void setEditTriggers(EditTriggers editTriggers);
 
+    QQmlDelegateModel::DelegateModelAccess delegateModelAccess() const;
+    void setDelegateModelAccess(QQmlDelegateModel::DelegateModelAccess delegateModelAccess);
+
     Q_INVOKABLE void forceLayout();
     Q_INVOKABLE void positionViewAtCell(const QPoint &cell, PositionMode mode, const QPointF &offset = QPointF(), const QRectF &subRect = QRectF());
     Q_INVOKABLE void positionViewAtIndex(const QModelIndex &index, PositionMode mode, const QPointF &offset = QPointF(), const QRectF &subRect = QRectF());
@@ -274,7 +280,7 @@ Q_SIGNALS:
     Q_REVISION(6, 6) void selectionModeChanged();
     Q_REVISION(6, 8) void rowMoved(int logicalIndex, int oldVisualIndex, int newVisualIndex);
     Q_REVISION(6, 8) void columnMoved(int logicalIndex, int oldVisualIndex, int newVisualIndex);
-
+    Q_REVISION(6, 10) void delegateModelAccessChanged();
 
 protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;

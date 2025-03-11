@@ -4508,6 +4508,7 @@ void QQuickTableViewPrivate::syncWithPendingChanges()
     syncViewportRect();
     syncModel();
     syncDelegate();
+    syncDelegateModelAccess();
     syncSyncView();
     syncPositionView();
 
@@ -4554,6 +4555,18 @@ void QQuickTableViewPrivate::syncDelegate()
 
     if (assignedDelegate != tableModel->delegate())
         tableModel->setDelegate(assignedDelegate);
+}
+
+void QQuickTableViewPrivate::syncDelegateModelAccess()
+{
+    if (!tableModel) {
+        // Only the tableModel uses the delegateModelAccess assigned to a
+        // TableView. DelegateModel has its own delegateModelAccess, and
+        // ObjectModel doesn't use one.
+        return;
+    }
+
+    tableModel->setDelegateModelAccess(assignedDelegateModelAccess);
 }
 
 QVariant QQuickTableViewPrivate::modelImpl() const
@@ -5806,6 +5819,30 @@ void QQuickTableView::setEditTriggers(QQuickTableView::EditTriggers editTriggers
     d->editTriggers = editTriggers;
 
     emit editTriggersChanged();
+}
+
+/*!
+    \qmlproperty enumeration QtQuick::TableView::delegateModelAccess
+
+    \include delegatemodelaccess.qdocinc
+*/
+QQmlDelegateModel::DelegateModelAccess QQuickTableView::delegateModelAccess() const
+{
+    Q_D(const QQuickTableView);
+    return d->assignedDelegateModelAccess;
+}
+
+void QQuickTableView::setDelegateModelAccess(
+        QQmlDelegateModel::DelegateModelAccess delegateModelAccess)
+{
+    Q_D(QQuickTableView);
+    if (delegateModelAccess == d->assignedDelegateModelAccess)
+        return;
+
+    d->assignedDelegateModelAccess = delegateModelAccess;
+    d->scheduleRebuildTable(QQuickTableViewPrivate::RebuildOption::All);
+
+    emit delegateModelAccessChanged();
 }
 
 bool QQuickTableView::reuseItems() const
