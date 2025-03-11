@@ -397,6 +397,10 @@ void tst_qquickwidget::errors()
     view->setSource(testFileUrl("error1.qml"));
     QCOMPARE(view->status(), QQuickWidget::Error);
     QCOMPARE(view->errors().size(), 1);
+
+    QQuickWidget invalidRoot;
+    invalidRoot.setSource(testFileUrl("error2.qml")); // don't crash
+    QCOMPARE(invalidRoot.status(), QQuickWidget::Error);
 }
 
 void tst_qquickwidget::engine()
