@@ -642,6 +642,12 @@ QQuickDrawer::QQuickDrawer(QObject *parent)
 
     setFocus(true);
     setModal(true);
+
+    QQuickItemPrivate::get(d->popupItem)->isTabFence = isModal();
+    connect(this, &QQuickPopup::modalChanged, this, [this] {
+        QQuickItemPrivate::get(d_func()->popupItem)->isTabFence = isModal();
+    });
+
     setFiltersChildMouseEvents(true);
     setClosePolicy(CloseOnEscape | CloseOnReleaseOutside);
 }

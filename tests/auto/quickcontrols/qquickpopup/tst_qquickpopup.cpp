@@ -1821,64 +1821,77 @@ void tst_QQuickPopup::tabFence()
     window->requestActivate();
     QVERIFY(QTest::qWaitForWindowActive(window));
 
-    QQuickPopup *popup = window->property("dialog").value<QQuickPopup*>();
-    QVERIFY(popup);
-    popup->open();
-    QTRY_VERIFY(popup->isOpened());
+    QQuickPopup *drawer = window->property("drawer").value<QQuickPopup*>();
+    QVERIFY(drawer);
+    drawer->open();
+    QTRY_VERIFY(drawer->isOpened());
 
     QQuickButton *outsideButton1 = window->property("outsideButton1").value<QQuickButton*>();
     QVERIFY(outsideButton1);
     QQuickButton *outsideButton2 = window->property("outsideButton2").value<QQuickButton*>();
     QVERIFY(outsideButton2);
+    QQuickButton *drawerButton1 = window->property("drawerButton1").value<QQuickButton*>();
+    QVERIFY(drawerButton1);
+    QQuickButton *drawerButton2 = window->property("drawerButton2").value<QQuickButton*>();
+    QVERIFY(drawerButton2);
     QQuickButton *dialogButton1 = window->property("dialogButton1").value<QQuickButton*>();
     QVERIFY(dialogButton1);
     QQuickButton *dialogButton2 = window->property("dialogButton2").value<QQuickButton*>();
     QVERIFY(dialogButton2);
 
-    outsideButton1->forceActiveFocus();
+    drawer->setModal(false);
+
+    outsideButton1->forceActiveFocus(Qt::TabFocusReason);
     QVERIFY(outsideButton1->hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Tab);
     QVERIFY(outsideButton2->hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Tab);
-
-    // Individual styles may set modal: true
-    QVERIFY((popup->isModal() ? outsideButton1 : dialogButton1)->QQuickItem::hasActiveFocus());
+    QVERIFY(drawerButton1->QQuickItem::hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY((popup->isModal() ? outsideButton2 : dialogButton2)->QQuickItem::hasActiveFocus());
+    QVERIFY(drawerButton2->QQuickItem::hasActiveFocus());
+
+    // tab key should give focus to the outside buttons
+    // and not to the dialog
     QTest::keyClick(window, Qt::Key_Tab);
     QVERIFY(outsideButton1->hasActiveFocus());
+    QTest::keyClick(window, Qt::Key_Tab);
+    QVERIFY(outsideButton2->hasActiveFocus());
 
-    popup->setModal(true);
+    drawer->setModal(true);
 
     // When modal, focus loops between the two external buttons
-    outsideButton1->forceActiveFocus();
+    QTest::keyClick(window, Qt::Key_Tab);
     QVERIFY(outsideButton1->hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Tab);
     QVERIFY(outsideButton2->hasActiveFocus());
-    QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(outsideButton1->hasActiveFocus());
 
-    // Same thing for dialog's buttons
-    dialogButton1->forceActiveFocus();
+    // For the dialog the focus should loop inside
+    // no matter the modality
+    QQuickPopup *dialog = window->property("dialog").value<QQuickPopup*>();
+    QVERIFY(dialog);
+    dialog->open();
+    QTRY_VERIFY(dialog->isOpened());
+
+    dialog->setModal(false);
+    dialogButton1->forceActiveFocus(Qt::TabFocusReason);
     QVERIFY(dialogButton1->hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Tab);
     QVERIFY(dialogButton2->hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Tab);
     QVERIFY(dialogButton1->hasActiveFocus());
-
-    popup->setModal(false);
-
-    // When not modal, focus goes in and out of the dialog
-    outsideButton1->forceActiveFocus();
-    QVERIFY(outsideButton1->hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(outsideButton2->hasActiveFocus());
-    QTest::keyClick(window, Qt::Key_Tab);
+    QVERIFY(dialogButton2->hasActiveFocus());
+
+
+    dialog->setModal(true);
+    dialogButton1->forceActiveFocus(Qt::TabFocusReason);
     QVERIFY(dialogButton1->hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Tab);
     QVERIFY(dialogButton2->hasActiveFocus());
     QTest::keyClick(window, Qt::Key_Tab);
-    QVERIFY(outsideButton1->hasActiveFocus());
+    QVERIFY(dialogButton1->hasActiveFocus());
+    QTest::keyClick(window, Qt::Key_Tab);
+    QVERIFY(dialogButton2->hasActiveFocus());
 }
 
 void tst_QQuickPopup::invisibleToolTipOpen()
