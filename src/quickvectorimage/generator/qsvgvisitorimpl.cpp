@@ -187,22 +187,7 @@ inline bool isPathContainer(const QSvgStructureNode *node)
                 return false;
             }
             const QList<QSvgAbstractAnimation *> animations = child->document()->animator()->animationsForNode(child);
-
-            bool hasTransformAnimation = false;
-            for (const QSvgAbstractAnimation *animation : animations) {
-                const QList<QSvgAbstractAnimatedProperty *> properties = animation->properties();
-                for (const QSvgAbstractAnimatedProperty *property : properties) {
-                    if (property->type() == QSvgAbstractAnimatedProperty::Transform) {
-                        hasTransformAnimation = true;
-                        break;
-                    }
-                }
-
-                if (hasTransformAnimation)
-                    break;
-            }
-
-            if (hasTransformAnimation) {
+            if (!animations.isEmpty()) {
                 //qCDebug(lcQuickVectorGraphics) << "NOT path container because local transform animation";
                 return false;
             }
@@ -1085,7 +1070,7 @@ void QSvgVisitorImpl::fillCommonNodeInfo(const QSvgNode *node, NodeInfo &info)
     info.isDefaultTransform = node->style().transform.isDefault();
     info.transform = !info.isDefaultTransform ? node->style().transform->qtransform() : QTransform();
     info.isDefaultOpacity = node->style().opacity.isDefault();
-    info.opacity = !info.isDefaultOpacity ? node->style().opacity->opacity() : 1.0;
+    info.opacity.setDefaultValue(!info.isDefaultOpacity ? node->style().opacity->opacity() : 1.0);
     info.isVisible = node->isVisible();
     info.isDisplayed = node->displayMode() != QSvgNode::DisplayMode::NoneMode;
 }
@@ -1488,6 +1473,12 @@ void QSvgVisitorImpl::fillPathAnimationInfo(const QSvgNode *node, PathNodeInfo &
 
 void QSvgVisitorImpl::fillAnimationInfo(const QSvgNode *node, NodeInfo &info)
 {
+    {
+        QList<AnimationPair> animations = collectAnimations(node, QStringLiteral("opacity"));
+        if (!animations.isEmpty())
+            applyAnimationsToProperty(animations, &info.opacity);
+    }
+
     fillTransformAnimationInfo(node, info);
 }
 

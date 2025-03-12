@@ -100,9 +100,11 @@ void QQuickItemGenerator::generateNodeBase(const NodeInfo &info)
         }
     }
 
-    if (!info.isDefaultOpacity) {
-        currentItem()->setOpacity(info.opacity);
-    }
+    if (!info.isDefaultOpacity)
+        currentItem()->setOpacity(info.opacity.defaultValue().toReal());
+
+    if (info.opacity.isAnimated())
+        generatePropertyAnimation(info.opacity, currentItem(), QStringLiteral("opacity"));
 }
 
 bool QQuickItemGenerator::generateDefsNode(const NodeInfo &info)

@@ -88,7 +88,7 @@ void QQuickQmlGenerator::generateNodeBase(const NodeInfo &info)
     stream() << "id: " << idString;
 
     if (!info.isDefaultOpacity)
-        stream() << "opacity: " << info.opacity;
+        stream() << "opacity: " << info.opacity.defaultValue().toReal();
 
     if (!info.transformAnimation.animationTypes.isEmpty()) {
         stream() << "transform: [";
@@ -127,6 +127,9 @@ void QQuickQmlGenerator::generateNodeBase(const NodeInfo &info)
         generateTransform(info.transform);
         stream(SameLine) << "}";
     }
+
+    if (info.opacity.isAnimated())
+        generatePropertyAnimation(info.opacity, idString, QStringLiteral("opacity"));
 }
 
 bool QQuickQmlGenerator::generateDefsNode(const NodeInfo &info)

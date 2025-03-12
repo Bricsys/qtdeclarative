@@ -31,7 +31,7 @@ struct NodeInfo
     QString nodeId;
     QString typeName;
     QTransform transform;
-    qreal opacity = 1.0;
+    QQuickAnimatedProperty opacity = QQuickAnimatedProperty(QVariant::fromValue(1.0));
     bool isDefaultTransform = true;
     bool isDefaultOpacity = true;
     bool isVisible = true;
