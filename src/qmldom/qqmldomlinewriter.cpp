@@ -44,8 +44,6 @@ void PendingSourceLocation::changeAtOffset(quint32 offset, qint32 change, qint32
 
 void PendingSourceLocation::commit()
 {
-    if (toUpdate)
-        *toUpdate = value;
     if (updater)
         updater(value);
 }
@@ -212,12 +210,11 @@ SourceLocation LineWriter::committedLocation() const
     return SourceLocation(m_utf16Offset, 0, m_lineNr, m_lineUtf16Offset);
 }
 
-PendingSourceLocationId LineWriter::startSourceLocation(SourceLocation *toUpdate)
+PendingSourceLocationId LineWriter::startSourceLocation()
 {
     PendingSourceLocation res;
     res.id = ++m_lastSourceLocationId;
     res.value = currentSourceLocation();
-    res.toUpdate = toUpdate;
     m_pendingSourceLocations.insert(res.id, res);
     return res.id;
 }

@@ -117,11 +117,6 @@ public:
         lineWriter.write(v, t);
         return *this;
     }
-    OutWriter &write(QStringView v, SourceLocation *toUpdate)
-    {
-        lineWriter.write(v, toUpdate);
-        return *this;
-    }
     void flush() { lineWriter.flush(); }
     void eof(bool ensureNewline = true) { lineWriter.eof(ensureNewline); }
     int addNewlinesAutospacerCallback(int nLines)

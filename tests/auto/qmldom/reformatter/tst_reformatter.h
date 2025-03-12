@@ -118,7 +118,9 @@ private slots:
         while (!line.isNull()) {
             SourceLocation *loc = new SourceLocation;
             sourceLocations.append(loc);
-            lw.write(line, loc);
+            auto pLoc = lw.startSourceLocation([loc](SourceLocation val) { *loc = val; });
+            lw.write(line);
+            lw.endSourceLocation(pLoc);
             lw.write(u"\n");
             line = in.readLine();
         }

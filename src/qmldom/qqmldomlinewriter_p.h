@@ -113,7 +113,6 @@ public:
     void commit();
     PendingSourceLocationId id;
     SourceLocation value;
-    SourceLocation *toUpdate = nullptr;
     std::function<void(SourceLocation)> updater = nullptr;
     bool open = true;
 };
@@ -159,18 +158,11 @@ public:
         return *this;
     }
     LineWriter &write(QStringView v, TextAddType tType = TextAddType::Normal);
-    LineWriter &write(QStringView v, SourceLocation *toUpdate)
-    {
-        auto pLoc = startSourceLocation(toUpdate);
-        write(v);
-        endSourceLocation(pLoc);
-        return *this;
-    }
     void commitLine(const QString &eol, TextAddType t = TextAddType::Normal, int untilChar = -1);
     void flush();
     void eof(bool ensureNewline = true);
     SourceLocation committedLocation() const;
-    PendingSourceLocationId startSourceLocation(SourceLocation *);
+    PendingSourceLocationId startSourceLocation();
     PendingSourceLocationId startSourceLocation(std::function<void(SourceLocation)>);
     void endSourceLocation(PendingSourceLocationId);
     quint32 counter() const { return m_counter; }

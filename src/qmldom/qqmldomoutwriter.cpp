@@ -72,7 +72,7 @@ void OutWriter::regionStart(FileLocationRegion region)
     Q_ASSERT(!state().pendingRegions.contains(region));
     FileLocations::Tree fMap = state().currentMap;
     if (!skipComments && state().pendingComments.contains(region)) {
-        state().pendingComments[region].writePre(*this, nullptr);
+        state().pendingComments[region].writePre(*this);
     }
     state().pendingRegions[region] = lineWriter.startSourceLocation(
             [region, fMap](SourceLocation l) { FileLocations::addRegion(fMap, region, l); });
@@ -86,7 +86,7 @@ void OutWriter::regionEnd(FileLocationRegion region)
     state().pendingRegions.remove(region);
     if (state().pendingComments.contains(region)) {
         if (!skipComments) {
-            state().pendingComments[region].writePost(*this, nullptr);
+            state().pendingComments[region].writePost(*this);
         }
         state().pendingComments.remove(region);
     }

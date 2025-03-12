@@ -53,13 +53,13 @@ protected:
             return;
         const CommentedElement *c = comments->commentForNode(node, CommentAnchor::from(loc));
         if (c)
-            c->writePre(lw, nullptr);
+            c->writePre(lw);
         if (option != OnlyComments)
             out(loc);
         if (option == SpaceBeforePostComment)
             lw.ensureSpace();
         if (c)
-            c->writePost(lw, nullptr);
+            c->writePost(lw);
     }
     inline void newLine(quint32 count = 1) { lw.ensureNewline(count); }
 
