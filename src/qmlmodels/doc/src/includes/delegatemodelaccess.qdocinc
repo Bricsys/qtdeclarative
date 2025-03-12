@@ -11,3 +11,5 @@ Set it to \c DelegateModel.Qt5ReadWrite to enable writing via the \c model
 object and context properties but \e not via required properties.
 
 The default is \c DelegateModel.Qt5ReadWrite.
+
+\sa {Models and Views in Qt Quick#Changing Model Data}
