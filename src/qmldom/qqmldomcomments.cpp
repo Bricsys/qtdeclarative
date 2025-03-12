@@ -211,13 +211,11 @@ void Comment::write(OutWriter &lw) const
     CommentInfo cInfo = info();
     lw.ensureSpace(cInfo.preWhitespace());
     QStringView cBody = cInfo.comment();
-    PendingSourceLocationId cLoc = lw.lineWriter.startSourceLocation();
     lw.write(cBody.mid(0, 1));
     bool indentOn = lw.indentNextlines;
     lw.indentNextlines = false;
     lw.write(cBody.mid(1));
     lw.indentNextlines = indentOn;
-    lw.lineWriter.endSourceLocation(cLoc);
     lw.write(cInfo.postWhitespace());
 }
 

@@ -162,7 +162,6 @@ public:
     void flush();
     void eof(bool ensureNewline = true);
     SourceLocation committedLocation() const;
-    PendingSourceLocationId startSourceLocation();
     PendingSourceLocationId startSourceLocation(std::function<void(SourceLocation)>);
     void endSourceLocation(PendingSourceLocationId);
     quint32 counter() const { return m_counter; }

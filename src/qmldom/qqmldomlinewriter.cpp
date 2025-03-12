@@ -210,15 +210,6 @@ SourceLocation LineWriter::committedLocation() const
     return SourceLocation(m_utf16Offset, 0, m_lineNr, m_lineUtf16Offset);
 }
 
-PendingSourceLocationId LineWriter::startSourceLocation()
-{
-    PendingSourceLocation res;
-    res.id = ++m_lastSourceLocationId;
-    res.value = currentSourceLocation();
-    m_pendingSourceLocations.insert(res.id, res);
-    return res.id;
-}
-
 PendingSourceLocationId LineWriter::startSourceLocation(std::function<void(SourceLocation)> updater)
 {
     PendingSourceLocation res;
