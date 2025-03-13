@@ -106,6 +106,7 @@ QString TestQmlformatCli::runQmlformat(const QString &fileToFormat, QStringList 
 
     if (rOptions == RunOption::OnCopy) {
         QFile::copy(fileToFormat, tempFile);
+        QFile::copy(testFile(".qmlformat.ini"), tempDir.filePath(".qmlformat.ini"));
         args << QLatin1String("-i");
         args << tempFile;
     } else {
@@ -273,6 +274,8 @@ void TestQmlformatCli::testFilesOption()
     QFile container(tempFilePath);
     QVERIFY2(container.open(QIODevice::Text | QIODevice::WriteOnly),
              "Cannot create temp test file");
+
+    QFile::copy(testFile(".qmlformat.ini"), tempDir.filePath(".qmlformat.ini"));
 
     QTextStream out(&container);
     for (const auto &file : individualFiles) {
