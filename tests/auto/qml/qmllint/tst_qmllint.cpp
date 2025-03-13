@@ -71,6 +71,18 @@ private Q_SLOTS:
     void dirtyQmlCode_data();
     void dirtyQmlCode();
 
+    void dirtyQmlSnippet_data();
+    void dirtyQmlSnippet();
+
+    void cleanQmlSnippet_data();
+    void cleanQmlSnippet();
+
+    void dirtyJsSnippet_data();
+    void dirtyJsSnippet();
+
+    void cleanJsSnippet_data();
+    void cleanJsSnippet();
+
     void compilerWarnings_data();
     void compilerWarnings();
 
@@ -166,7 +178,8 @@ private:
                      QStringList resources = {},
                      DefaultImportOption defaultImports = UseDefaultImports,
                      QList<QQmlJS::LoggerCategory> *categories = nullptr, bool autoFixable = false,
-                     LintType type = LintFile, bool readSettings = false);
+                     LintType type = LintFile, bool readSettings = false,
+                     const QString *content = nullptr);
 
     void testFixes(bool shouldSucceed, QStringList importPaths, QStringList qmldirFiles,
                    QStringList resources, DefaultImportOption defaultImports,
@@ -1311,6 +1324,100 @@ void TestQmllint::dirtyQmlCode()
             });
 }
 
+void TestQmllint::dirtyQmlSnippet_data()
+{
+    QTest::addColumn<QString>("code");
+    QTest::addColumn<Result>("result");
+
+    QTest::newRow("testSnippet") << u"property int qwer: \"Hello\""_s
+                                 << Result{ { { "Cannot assign literal of type string to int"_L1 } } };
+}
+
+void TestQmllint::dirtyQmlSnippet()
+{
+    QFETCH(QString, code);
+    QFETCH(Result, result);
+
+    QString qmlCode = "import QtQuick\nItem {%1}"_L1.arg(code);
+
+    QJsonArray warnings;
+    callQmllint(QString(), result.flags.testFlag(Result::ExitsNormally), &warnings, {}, {}, {},
+                UseDefaultImports, nullptr, result.flags.testFlag(Result::Flag::AutoFixable),
+                LintFile, false, &qmlCode);
+
+    checkResult(warnings, result, [] { }, [] { }, [] { });
+}
+
+void TestQmllint::cleanQmlSnippet_data()
+{
+    QTest::addColumn<QString>("code");
+
+    QTest::newRow("testSnippet") << u"property int qwer: 123"_s;
+}
+
+void TestQmllint::cleanQmlSnippet()
+{
+    QFETCH(QString, code);
+
+    const QString qmlCode = "import QtQuick\nItem {%1}"_L1.arg(code);
+    const Result result = Result::clean();
+
+    QJsonArray warnings;
+    callQmllint(QString(), result.flags.testFlag(Result::ExitsNormally), &warnings, {}, {}, {},
+                UseDefaultImports, nullptr, result.flags.testFlag(Result::Flag::AutoFixable),
+                LintFile, false, &qmlCode);
+    checkResult(warnings, result, [] { }, [] { }, [] { });
+}
+
+void TestQmllint::dirtyJsSnippet_data()
+{
+    QTest::addColumn<QString>("code");
+    QTest::addColumn<Result>("result");
+
+    QTest::newRow("doubleLet") << u"let x = 4; let x = 4;"_s
+                                 << Result{ { { "Identifier 'x' has already been declared"_L1 } } };
+}
+
+void TestQmllint::dirtyJsSnippet()
+{
+    QFETCH(QString, code);
+    QFETCH(Result, result);
+
+    const QString qmlCode = "import QtQuick\nItem { function f() {%1}}"_L1.arg(code);
+
+    QJsonArray warnings;
+    QEXPECT_FAIL("doubleLet", "Not implemented yet", Abort);
+    callQmllint(QString(), result.flags.testFlag(Result::ExitsNormally), &warnings, {}, {}, {},
+                UseDefaultImports, nullptr, result.flags.testFlag(Result::Flag::AutoFixable),
+                LintFile, false, &qmlCode);
+
+    checkResult(
+                warnings, result, [] { QEXPECT_FAIL("doubleLet", "Not implemented yet", Abort); },
+    [] {}, [] {});
+}
+
+void TestQmllint::cleanJsSnippet_data()
+{
+    QTest::addColumn<QString>("code");
+
+    QTest::newRow("testSnippet") << u"let x = 5"_s;
+}
+
+void TestQmllint::cleanJsSnippet()
+{
+    QFETCH(QString, code);
+
+    const QString qmlCode = "import QtQuick\nItem { function f() {%1}}"_L1.arg(code);
+    const Result result = Result::clean();
+
+    QJsonArray warnings;
+    callQmllint(QString(), result.flags.testFlag(Result::ExitsNormally), &warnings, {}, {}, {},
+                UseDefaultImports, nullptr, result.flags.testFlag(Result::Flag::AutoFixable),
+                LintFile, false, &qmlCode);
+    checkResult(warnings, result, [] { }, [] { }, [] { });
+}
+
+
 void TestQmllint::cleanQmlCode_data()
 {
     QTest::addColumn<QString>("filename");
@@ -1715,7 +1822,7 @@ void TestQmllint::callQmllint(const QString &fileToLint, bool shouldSucceed, QJs
                               QStringList importPaths, QStringList qmldirFiles,
                               QStringList resources, DefaultImportOption defaultImports,
                               QList<QQmlJS::LoggerCategory> *categories, bool autoFixable,
-                              LintType type, bool readSettings)
+                              LintType type, bool readSettings, const QString *content)
 {
     QJsonArray jsonOutput;
 
@@ -1738,7 +1845,7 @@ void TestQmllint::callQmllint(const QString &fileToLint, bool shouldSucceed, QJs
         }
 
         lintResult = m_linter.lintFile(
-                    lintedFile, nullptr, true, &jsonOutput, resolvedImportPaths, qmldirFiles,
+                    lintedFile, content, true, &jsonOutput, resolvedImportPaths, qmldirFiles,
                     resources, resolvedCategories);
     } else {
         lintResult =
