@@ -168,6 +168,11 @@ private:
                      QList<QQmlJS::LoggerCategory> *categories = nullptr, bool autoFixable = false,
                      LintType type = LintFile, bool readSettings = false);
 
+    void testFixes(bool shouldSucceed, QStringList importPaths, QStringList qmldirFiles,
+                   QStringList resources, DefaultImportOption defaultImports,
+                   QList<QQmlJS::LoggerCategory> *categories, bool autoFixable, bool readSettings,
+                   const QString &fixedPath);
+
     void searchWarnings(const QJsonArray &warnings, const QString &string,
                         QtMsgType type = QtWarningMsg, quint32 line = 0, quint32 column = 0,
                         ContainOption shouldContain = StringContained,
@@ -1751,43 +1756,50 @@ void TestQmllint::callQmllint(const QString &fileToLint, bool shouldSucceed, QJs
     QCOMPARE(success, shouldSucceed);
 
     if (lintResult == QQmlJSLinter::LintSuccess || lintResult == QQmlJSLinter::HasWarnings) {
-        QString fixedCode;
-        QQmlJSLinter::FixResult fixResult = m_linter.applyFixes(&fixedCode, true);
+        testFixes(shouldSucceed, importPaths, qmldirFiles, resources, defaultImports, categories,
+                  autoFixable, readSettings, info.baseName() + u".fixed.qml"_s);
+    }
+}
 
-        if (autoFixable) {
-            QCOMPARE(fixResult, QQmlJSLinter::FixSuccess);
-            // Check that the fixed version of the file actually passes qmllint now
-            QTemporaryDir dir;
-            QVERIFY(dir.isValid());
-            QFile file(dir.filePath("Fixed.qml"));
-            QVERIFY2(file.open(QIODevice::WriteOnly), qPrintable(file.errorString()));
-            file.write(fixedCode.toUtf8());
-            file.flush();
-            file.close();
+void TestQmllint::testFixes(bool shouldSucceed, QStringList importPaths, QStringList qmldirFiles,
+                            QStringList resources, DefaultImportOption defaultImports,
+                            QList<QQmlJS::LoggerCategory> *categories, bool autoFixable,
+                            bool readSettings, const QString &fixedPath)
+{
+    QString fixedCode;
+    QQmlJSLinter::FixResult fixResult = m_linter.applyFixes(&fixedCode, true);
 
-            callQmllint(QFileInfo(file).absoluteFilePath(), true, nullptr, importPaths, qmldirFiles,
-                        resources, defaultImports, categories, false);
+    if (autoFixable) {
+        QCOMPARE(fixResult, QQmlJSLinter::FixSuccess);
+        // Check that the fixed version of the file actually passes qmllint now
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        QFile file(dir.filePath("Fixed.qml"));
+        QVERIFY2(file.open(QIODevice::WriteOnly), qPrintable(file.errorString()));
+        file.write(fixedCode.toUtf8());
+        file.flush();
+        file.close();
 
-            const QString fixedPath = testFile(info.baseName() + u".fixed.qml"_s);
+        callQmllint(QFileInfo(file).absoluteFilePath(), true, nullptr, importPaths, qmldirFiles,
+                    resources, defaultImports, categories, false, LintFile, readSettings);
 
-            if (QFileInfo(fixedPath).exists()) {
-                QFile fixedFile(fixedPath);
-                QVERIFY(fixedFile.open(QFile::ReadOnly));
-                QString fixedFileContents = QString::fromUtf8(fixedFile.readAll());
+        if (QFileInfo(fixedPath).exists()) {
+            QFile fixedFile(fixedPath);
+            QVERIFY(fixedFile.open(QFile::ReadOnly));
+            QString fixedFileContents = QString::fromUtf8(fixedFile.readAll());
 #ifdef Q_OS_WIN
-                fixedCode = fixedCode.replace(u"\r\n"_s, u"\n"_s);
-                fixedFileContents = fixedFileContents.replace(u"\r\n"_s, u"\n"_s);
+            fixedCode = fixedCode.replace(u"\r\n"_s, u"\n"_s);
+            fixedFileContents = fixedFileContents.replace(u"\r\n"_s, u"\n"_s);
 #endif
 
-                QCOMPARE(fixedCode, fixedFileContents);
-            }
-        } else {
-            if (shouldSucceed)
-                QCOMPARE(fixResult, QQmlJSLinter::NothingToFix);
-            else
-                QVERIFY(fixResult == QQmlJSLinter::FixSuccess
-                        || fixResult == QQmlJSLinter::NothingToFix);
+            QCOMPARE(fixedCode, fixedFileContents);
         }
+    } else {
+        if (shouldSucceed)
+            QCOMPARE(fixResult, QQmlJSLinter::NothingToFix);
+        else
+            QVERIFY(fixResult == QQmlJSLinter::FixSuccess
+                    || fixResult == QQmlJSLinter::NothingToFix);
     }
 }
 
