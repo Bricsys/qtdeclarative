@@ -197,6 +197,8 @@ void registerTypes()
     qmlRegisterTypesAndRevisions<VariantAssociationProvider>("Test", 1);
     qmlRegisterTypesAndRevisions<ReadCounter>("Test", 1);
     qmlRegisterSingletonType<ReadCounter>("Test", 1, 0, "ReadCounterSingleton", readCounterSingleton);
+
+    qmlRegisterTypesAndRevisions<BindablePoint>("Test", 1);
 }
 
 QVariant myCustomVariantTypeConverter(const QString &data)

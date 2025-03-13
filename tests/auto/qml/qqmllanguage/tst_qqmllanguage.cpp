@@ -512,6 +512,8 @@ private slots:
     void referenceObjectPrefersBindableConnectionToNotifyConnection();
     void dontAccumulateComplationUnitsOnQJSEngineEvaluate();
 
+    void aliasOfBindableValueTypeProperty();
+
 private:
     QQmlEngine engine;
     QStringList defaultImportPathList;
@@ -9668,6 +9670,29 @@ void tst_qqmllanguage::dontAccumulateComplationUnitsOnQJSEngineEvaluate()
 
         QCOMPARE(e.handle()->compilationUnits().size(), 1);
     }
+}
+
+void tst_qqmllanguage::aliasOfBindableValueTypeProperty()
+{
+    QQmlEngine e;
+    QQmlComponent c(&e, testFileUrl("aliasOfBindableValueTypeProperty.qml"));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+
+    QCOMPARE(o->property("aa"), 101);
+    QCOMPARE(o->property("changes"), 0);
+
+    o->setProperty("point", QPointF(17, 18));
+    QCOMPARE(o->property("aa"), 17);
+    QCOMPARE(o->property("changes"), 1);
+
+    BindablePoint *b = qobject_cast<BindablePoint *>(o.data());
+    QVERIFY(b);
+    b->bindablePoint().setValue(QPointF(19, 20));
+    QCOMPARE(o->property("aa"), 19);
+    QCOMPARE(o->property("changes"), 2);
 }
 
 QTEST_MAIN(tst_qqmllanguage)

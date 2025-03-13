@@ -1026,7 +1026,7 @@ inline QQmlError QQmlPropertyCacheAliasCreator<ObjectContainer>::propertyDataFor
                 resettable = writable && valueTypeMetaProperty.isResettable();
                 writable = writable && valueTypeMetaProperty.isWritable();
 
-                bindable = valueTypeMetaProperty.isBindable();
+                // Do not update bindable. The core property counts for bindability
             }
         }
     }
