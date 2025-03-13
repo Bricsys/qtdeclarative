@@ -60,20 +60,28 @@ Q_GLOBAL_STATIC(PluginMap, qmlPluginsById); // stores the uri and the PluginLoad
 
 static QVector<QStaticPlugin> makePlugins()
 {
+    const auto verifyIID = [](auto &&pluginMetadata) -> bool {
+        const QString iid = pluginMetadata.value(QLatin1String("IID")).toString();
+        if (Q_UNLIKELY(iid == QLatin1String(QQmlExtensionInterface_iid_old))) {
+            qWarning() << "Found plugin with old IID, this will be unsupported in upcoming Qt "
+                          "releases:"
+                       << pluginMetadata;
+            return true;
+        }
+        return iid == QLatin1String(QQmlEngineExtensionInterface_iid)
+                || iid == QLatin1String(QQmlExtensionInterface_iid);
+    };
+    const auto verifyInstance = [](auto *pluginInstance) -> bool {
+        return qobject_cast<QQmlEngineExtensionPlugin *>(pluginInstance)
+                || qobject_cast<QQmlExtensionPlugin *>(pluginInstance);
+    };
+
     QVector<QStaticPlugin> plugins;
     // To avoid traversing all static plugins for all imports, we cut down
     // the list the first time called to only contain QML plugins:
     const auto staticPlugins = QPluginLoader::staticPlugins();
     for (const QStaticPlugin &plugin : staticPlugins) {
-        const QString iid = plugin.metaData().value(QLatin1String("IID")).toString();
-        if (iid == QLatin1String(QQmlEngineExtensionInterface_iid)
-                || iid == QLatin1String(QQmlExtensionInterface_iid)
-                || iid == QLatin1String(QQmlExtensionInterface_iid_old)) {
-            if (Q_UNLIKELY(iid == QLatin1String(QQmlExtensionInterface_iid_old))) {
-                qWarning()
-                        << "Found plugin with old IID, this will be unsupported in upcoming Qt releases:"
-                        << plugin.metaData();
-            }
+        if (verifyIID(plugin.metaData()) && verifyInstance(plugin.instance())) {
             plugins.append(plugin);
         }
     }
@@ -488,24 +496,21 @@ bool QQmlPluginImporter::populatePluginDataVector(QVector<StaticPluginData> &res
     for (const QStaticPlugin &plugin : plugins) {
         // Since a module can list more than one plugin,
         // we keep iterating even after we found a match.
-        QObject *instance = plugin.instance();
-        if (qobject_cast<QQmlEngineExtensionPlugin *>(instance)
-                || qobject_cast<QQmlExtensionPlugin *>(instance)) {
-            const QJsonArray metaTagsUriList =
-                    plugin.metaData().value(QStringLiteral("uri")).toArray();
-            if (metaTagsUriList.isEmpty()) {
-                if (errors) {
-                    QQmlError error;
-                    error.setDescription(QQmlImports::tr(
-                                             "static plugin for module \"%1\" with name \"%2\" "
-                                             "has no metadata URI")
-                                         .arg(uri, QString::fromUtf8(
-                                                  instance->metaObject()->className())));
-                    error.setUrl(QUrl::fromLocalFile(qmldir->qmldirLocation()));
-                    errors->prepend(error);
-                }
-                return false;
+        const QJsonArray metaTagsUriList = plugin.metaData().value(QStringLiteral("uri")).toArray();
+        if (metaTagsUriList.isEmpty()) {
+            if (errors) {
+                QQmlError error;
+                error.setDescription(
+                        QQmlImports::tr("static plugin for module \"%1\" with name \"%2\" "
+                                        "has no metadata URI")
+                                .arg(uri,
+                                     QString::fromUtf8(
+                                             plugin.instance()->metaObject()->className())));
+                error.setUrl(QUrl::fromLocalFile(qmldir->qmldirLocation()));
+                errors->prepend(error);
             }
+            return false;
+        }
             // A plugin can be set up to handle multiple URIs, so go through the list:
             for (const QJsonValueConstRef metaTagUri : metaTagsUriList) {
                 if (versionUris.contains(metaTagUri.toString())) {
@@ -513,7 +518,6 @@ bool QQmlPluginImporter::populatePluginDataVector(QVector<StaticPluginData> &res
                     break;
                 }
             }
-        }
     }
     return true;
 }
