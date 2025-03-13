@@ -212,7 +212,7 @@ public:
         return locale.toString(dateTime, format);
     }
 
-    Q_REVISION(6, 10) Q_INVOKABLE QString createSeparatedList(const QStringList &list) const
+    Q_INVOKABLE QString createSeparatedList(const QStringList &list) const
     {
         return locale.createSeparatedList(list);
     }
