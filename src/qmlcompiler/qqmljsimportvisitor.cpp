@@ -2733,13 +2733,23 @@ bool QQmlJSImportVisitor::visit(QQmlJS::AST::VariableDeclarationList *vdl)
             if (Type *type = annotation->type)
                 typeName = type->toString();
 
-        m_currentScope->insertJSIdentifier(
-                vdl->declaration->bindingIdentifier.toString(),
-                { (vdl->declaration->scope == QQmlJS::AST::VariableScope::Var)
-                          ? QQmlJSScope::JavaScriptIdentifier::FunctionScoped
-                          : QQmlJSScope::JavaScriptIdentifier::LexicalScoped,
-                  vdl->declaration->firstSourceLocation(), typeName,
-                  vdl->declaration->scope == QQmlJS::AST::VariableScope::Const });
+        using Kind = QQmlJSScope::JavaScriptIdentifier::Kind;
+        const Kind kind = (vdl->declaration->scope == QQmlJS::AST::VariableScope::Var)
+                ? Kind::FunctionScoped
+                : Kind::LexicalScoped;
+        const QString name = vdl->declaration->bindingIdentifier.toString();
+        const QQmlJS::SourceLocation location = vdl->declaration->firstSourceLocation();
+        if (kind == Kind::LexicalScoped) {
+            if (auto previousDeclaration = m_currentScope->ownJSIdentifier(name)) {
+                m_logger->log("Identifier '%1' has already been declared"_L1.arg(name), qmlSyntax,
+                              location);
+                m_logger->log("Note: previous declaration of '%1' here"_L1.arg(name), qmlSyntax,
+                              previousDeclaration->location);
+            }
+        }
+
+        const bool isConst = vdl->declaration->scope == QQmlJS::AST::VariableScope::Const;
+        m_currentScope->insertJSIdentifier(name, { kind, location, typeName, isConst });
         vdl = vdl->next;
     }
     return true;
