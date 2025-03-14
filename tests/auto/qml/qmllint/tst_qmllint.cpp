@@ -1107,6 +1107,13 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
                     QStringLiteral("Function without return type annotation returns double")
                } } };
 
+    QTest::newRow("annotatedDefaultParameter")
+            << QStringLiteral("annotatedDefaultParameter.qml")
+            << Result { { Message {
+                       QStringLiteral("Type annotations on default parameters are not supported")
+               } } };
+
+
     QTest::newRow("lowerCaseQualifiedImport")
             << QStringLiteral("lowerCaseQualifiedImport.qml")
             << Result{ {
