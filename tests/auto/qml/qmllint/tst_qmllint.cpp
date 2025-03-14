@@ -1324,6 +1324,20 @@ void TestQmllint::dirtyQmlCode()
             });
 }
 
+static void addLocationOffsetTo(TestQmllint::Result *result, qsizetype lineOffset,
+                                qsizetype columnOffset = 0)
+{
+    for (auto *messages :
+         { &result->expectedMessages, &result->badMessages, &result->expectedReplacements }) {
+        for (auto &message : *messages) {
+            if (message.line != 0)
+                message.line += lineOffset;
+            if (message.column != 0)
+                message.column += columnOffset;
+        }
+    }
+}
+
 void TestQmllint::dirtyQmlSnippet_data()
 {
     QTest::addColumn<QString>("code");
@@ -1331,6 +1345,11 @@ void TestQmllint::dirtyQmlSnippet_data()
 
     QTest::newRow("testSnippet") << u"property int qwer: \"Hello\""_s
                                  << Result{ { { "Cannot assign literal of type string to int"_L1 } } };
+
+    QTest::newRow("enum") << u"enum Hello { World, Kitty, World, dlrow }"_s
+                          << Result{ { { "Enum key 'World' has already been declared"_L1, 1, 28 },
+                                       { "Note: previous declaration of 'World' here"_L1, 1, 14 },
+                                       { "Enum keys should start with an uppercase"_L1, 1, 35 } } };
 }
 
 void TestQmllint::dirtyQmlSnippet()
@@ -1338,7 +1357,9 @@ void TestQmllint::dirtyQmlSnippet()
     QFETCH(QString, code);
     QFETCH(Result, result);
 
-    QString qmlCode = "import QtQuick\nItem {%1}"_L1.arg(code);
+    QString qmlCode = "import QtQuick\nItem {\n%1}"_L1.arg(code);
+
+    addLocationOffsetTo(&result, 2);
 
     QJsonArray warnings;
     callQmllint(QString(), result.flags.testFlag(Result::ExitsNormally), &warnings, {}, {}, {},
@@ -1353,6 +1374,7 @@ void TestQmllint::cleanQmlSnippet_data()
     QTest::addColumn<QString>("code");
 
     QTest::newRow("testSnippet") << u"property int qwer: 123"_s;
+    QTest::newRow("enum") << u"enum Hello { World, Kitty, DlroW }"_s;
 }
 
 void TestQmllint::cleanQmlSnippet()
@@ -1384,18 +1406,6 @@ void TestQmllint::dirtyJsSnippet_data()
                                         { { "Identifier 'x' has already been declared"_L1, 1, 20 },
                                           { "Note: previous declaration of 'x' here"_L1, 1, 7 } }
                                     };
-}
-
-static void addLocationOffsetTo(TestQmllint::Result *result, qsizetype lineOffset,
-                                qsizetype columnOffset = 0)
-{
-    for (auto *messages :
-         { &result->expectedMessages, &result->badMessages, &result->expectedReplacements }) {
-        for (auto &message : *messages) {
-            message.line += lineOffset;
-            message.column += columnOffset;
-        }
-    }
 }
 
 void TestQmllint::dirtyJsSnippet()

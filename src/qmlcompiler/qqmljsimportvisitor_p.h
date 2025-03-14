@@ -109,6 +109,8 @@ protected:
     bool visit(QQmlJS::AST::UiArrayBinding *) override;
     void endVisit(QQmlJS::AST::UiArrayBinding *) override;
     bool visit(QQmlJS::AST::UiEnumDeclaration *uied) override;
+    void handleDuplicateEnums(QQmlJS::AST::UiEnumMemberList *members, const QString &key,
+                              const QQmlJS::SourceLocation &location);
     bool visit(QQmlJS::AST::FunctionExpression *fexpr) override;
     void endVisit(QQmlJS::AST::FunctionExpression *) override;
     bool visit(QQmlJS::AST::UiSourceElement *) override;
