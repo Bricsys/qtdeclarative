@@ -599,35 +599,27 @@ QTypeRevision QQmlPluginImporter::importPlugins() {
             // populating pluginPairs with relevant plugins to cut the list short early on:
             const QStringList versionUris = versionUriList(uri, importVersion);
             const auto pluginPairs = staticPluginsFilteredByUris(versionUris);
-            if (errors && !errors->empty())
+            if (errors && !errors->empty()) {
                 return QTypeRevision();
+            }
 
-            for (const QString &versionUri : versionUris) {
-                int staticPluginsFound = 0;
-                for (const QStaticPluginData &pair : std::as_const(pluginPairs)) {
-                    for (const QJsonValueConstRef metaTagUri : pair.uriList) {
-                        if (versionUri == metaTagUri.toString()) {
-                            staticPluginsFound++;
-                            QObject *instance = pair.plugin.instance();
-                            importVersion = importStaticPlugin(
-                                        instance,
-                                        canUseUris ? uri : QString::asprintf("%p", instance));
-                            if (!importVersion.isValid()) {
-                                continue;
-                            }
-                            staticPluginsLoaded++;
-                            qCDebug(lcQmlImport)
-                                    << "importExtension" << "loaded static plugin " << versionUri;
-                            break;
-                        }
+            for (const QStaticPluginData &pair : std::as_const(pluginPairs)) {
+                for (const QJsonValueConstRef metaTagUri : pair.uriList) {
+                    QObject *instance = pair.plugin.instance();
+                    importVersion = importStaticPlugin(
+                            instance, canUseUris ? uri : QString::asprintf("%p", instance));
+                    if (!importVersion.isValid()) {
+                        continue;
                     }
-                }
-                if (staticPluginsLoaded > 0)
+                    staticPluginsLoaded++;
+                    qCDebug(lcQmlImport) << "importExtension" << "loaded static plugin "
+                                         << metaTagUri.toString();
                     break;
-                if (staticPluginsFound > 0) {
-                    // found matched plugins, but failed to load, early exit to preserve the error
-                    return QTypeRevision();
                 }
+            }
+            if (!pluginPairs.empty() && staticPluginsLoaded == 0) {
+                // found matched plugins, but failed to load, early exit to preserve the error
+                return QTypeRevision();
             }
         }
 
