@@ -1310,7 +1310,7 @@ void MemoryManager::runGC()
         t.start();
         gcStateMachine->step();
         qint64 markTime = t.nsecsElapsed()/1000;
-        t.restart();
+        t.start();
         const size_t usedAfter = getUsedMem();
         const size_t largeItemsAfter = getLargeItemsMem();
 
