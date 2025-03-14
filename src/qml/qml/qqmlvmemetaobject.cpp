@@ -1108,6 +1108,11 @@ int QQmlVMEMetaObject::metaCall(QObject *o, QMetaObject::Call c, int _id, void *
                     QQmlGadgetPtrWrapper *valueType = QQmlGadgetPtrWrapper::instance(
                                 ctxt->engine(), pd->propType());
                     if (valueType) {
+
+                        // For value type aliases, the core property provides the bindable.
+                        if (c == QMetaObject::BindableProperty)
+                            return QMetaObject::metacall(target, c, coreIndex, a);
+
                         removePendingBinding(target, coreIndex, encodedIndex);
                         valueType->read(target, coreIndex);
                         int rv = QMetaObject::metacall(valueType, c, valueTypePropertyIndex, a);
