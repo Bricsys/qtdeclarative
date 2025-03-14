@@ -1838,6 +1838,17 @@ void QQmlJSImportVisitor::visitFunctionExpressionHelper(QQmlJS::AST::FunctionExp
         bool anyFormalTyped = false;
         PendingMethodTypeAnnotations pending{ m_currentScope, name, {} };
 
+        // We potentially iterate twice over formals
+        for (auto formals = fexpr->formals; formals; formals = formals->next) {
+            PatternElement *e = formals->element;
+            if (!e)
+                continue;
+            if (e->typeAnnotation && (e->bindingTarget || e->initializer))
+                m_logger->log("Type annotations on default parameters are not supported"_L1,
+                              qmlSyntax,
+                              combine(e->firstSourceLocation(), e->lastSourceLocation()));
+        }
+
         if (const auto *formals = parseTypes ? fexpr->formals : nullptr) {
             const auto parameters = formals->formals();
             for (const auto &parameter : parameters) {
