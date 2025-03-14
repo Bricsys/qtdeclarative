@@ -2867,7 +2867,7 @@ DomItem Reference::field(const DomItem &self, QStringView name) const
 
 QList<QString> Reference::fields(const DomItem &) const
 {
-    return QList<QString>({QString::fromUtf16(Fields::referredObjectPath), QString::fromUtf16(Fields::get)});
+    return QList<QString>({Fields::referredObjectPath.toString(), Fields::get.toString()});
 }
 
 DomItem Reference::index(const DomItem &, index_type) const

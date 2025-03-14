@@ -829,9 +829,9 @@ static FieldFilter filterForFindUsages()
 {
     FieldFilter filter{ {},
                         {
-                                { QString(), QString::fromUtf16(Fields::propertyInfos) },
-                                { QString(), QString::fromUtf16(Fields::defaultPropertyName) },
-                                { QString(), QString::fromUtf16(Fields::get) },
+                                { QString(), Fields::propertyInfos.toString() },
+                                { QString(), Fields::defaultPropertyName.toString() },
+                                { QString(), Fields::get.toString() },
                         } };
     return filter;
 };

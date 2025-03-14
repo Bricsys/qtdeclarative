@@ -548,7 +548,7 @@ std::shared_ptr<OwningItem> LoadInfo::doCopy(const DomItem &self) const
     if (res->status() != Status::Done) {
         res->addErrorLocal(DomEnvironment::myErrors().warning(
                 u"This is a copy of a LoadInfo still in progress, artificially ending it, if you "
-                u"use this you will *not* resume loading"));
+                u"use this you will *not* resume loading"_sv));
         DomEnvironment::myErrors()
                 .warning([&self](const Sink &sink) {
                     sink(u"Copying an in progress LoadInfo, which is most likely an error (");
@@ -2115,7 +2115,7 @@ void DomEnvironment::loadPendingDependencies()
             loadInfo->advanceLoad(loadInfoObj);
         } else {
             self.addError(myErrors().error(u"DomEnvironment::loadPendingDependencies could not "
-                                           u"find loadInfo listed in m_loadsWithWork"));
+                                           u"find loadInfo listed in m_loadsWithWork"_sv));
             {
                 QMutexLocker l(mutex());
                 m_inProgress.removeOne(elToDo);

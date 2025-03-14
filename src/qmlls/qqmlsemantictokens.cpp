@@ -209,11 +209,11 @@ static FieldFilter highlightingFilter()
 {
     QMultiMap<QString, QString> fieldFilterAdd{};
     QMultiMap<QString, QString> fieldFilterRemove{
-        { QString(), QString::fromUtf16(Fields::propertyInfos) },
-        { QString(), QString::fromUtf16(Fields::fileLocationsTree) },
-        { QString(), QString::fromUtf16(Fields::importScope) },
-        { QString(), QString::fromUtf16(Fields::defaultPropertyName) },
-        { QString(), QString::fromUtf16(Fields::get) },
+        { QString(), Fields::propertyInfos.toString() },
+        { QString(), Fields::fileLocationsTree.toString() },
+        { QString(), Fields::importScope.toString() },
+        { QString(), Fields::defaultPropertyName.toString() },
+        { QString(), Fields::get.toString() },
     };
     return FieldFilter{ fieldFilterAdd, fieldFilterRemove };
 }

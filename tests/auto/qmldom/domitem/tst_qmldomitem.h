@@ -3342,7 +3342,7 @@ private slots:
                          });
         envPtr->loadPendingDependencies();
 
-        FieldFilter filter({}, { { QString(), QString::fromUtf16(Fields::propertyDefs) } });
+        FieldFilter filter({}, { { QString(), Fields::propertyDefs.toString() } });
 
         // check if propertyDefs is visited without the filter
         bool success = false;

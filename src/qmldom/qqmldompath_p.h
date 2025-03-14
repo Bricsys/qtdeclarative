@@ -365,7 +365,7 @@ public:
 
 } // namespace PathEls
 
-#define QMLDOM_USTRING(s) u##s
+#define QMLDOM_USTRING(s) QStringView(u##s)
 #define QMLDOM_FIELD(name) inline constexpr const auto name = QMLDOM_USTRING(#name)
 /*!
    \internal

@@ -423,12 +423,12 @@ bool QmlObject::iterateBaseDirectSubpaths(const DomItem &self, DirectVisitor vis
 QList<QString> QmlObject::fields() const
 {
     static QList<QString> myFields(
-            { QString::fromUtf16(Fields::comments), QString::fromUtf16(Fields::idStr),
-              QString::fromUtf16(Fields::name), QString::fromUtf16(Fields::prototypes),
-              QString::fromUtf16(Fields::nextScope), QString::fromUtf16(Fields::propertyDefs),
-              QString::fromUtf16(Fields::bindings), QString::fromUtf16(Fields::methods),
-              QString::fromUtf16(Fields::children), QString::fromUtf16(Fields::annotations),
-              QString::fromUtf16(Fields::propertyInfos) });
+            { Fields::comments.toString(), Fields::idStr.toString(),
+              Fields::name.toString(), Fields::prototypes.toString(),
+              Fields::nextScope.toString(), Fields::propertyDefs.toString(),
+              Fields::bindings.toString(), Fields::methods.toString(),
+              Fields::children.toString(), Fields::annotations.toString(),
+              Fields::propertyInfos.toString() });
     return myFields;
 }
 
@@ -491,7 +491,7 @@ DomItem QmlObject::field(const DomItem &self, QStringView name) const
         return self.subDataItem(PathEls::Field(Fields::defaultPropertyName),
                                 defaultPropertyName(self));
     }
-    static QStringList knownLookups({ QString::fromUtf16(Fields::fileLocationsTree) });
+    static QStringList knownLookups({ Fields::fileLocationsTree.toString() });
     if (!knownLookups.contains(name)) {
         qCWarning(domLog()) << "Asked non existing field " << name << " in QmlObject "
                             << pathFromOwner();
