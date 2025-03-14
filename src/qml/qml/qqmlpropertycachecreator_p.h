@@ -900,7 +900,7 @@ inline QQmlError QQmlPropertyCacheAliasCreator<ObjectContainer>::propertyDataFor
     *type = QMetaType();
     bool writable = false;
     bool resettable = false;
-    bool bindable = false;
+    bool notifiesViaBindable = false;
 
     propertyFlags->setIsAlias(true);
 
@@ -978,7 +978,7 @@ inline QQmlError QQmlPropertyCacheAliasCreator<ObjectContainer>::propertyDataFor
             *type = property->propType();
             writable = property->isWritable();
             resettable = property->isResettable();
-            bindable = property->isBindable();
+            notifiesViaBindable = property->notifiesViaBindable();
 
             if (property->isVarProperty())
                 propertyFlags->setType(QQmlPropertyData::Flags::QVariantType);
@@ -1026,7 +1026,8 @@ inline QQmlError QQmlPropertyCacheAliasCreator<ObjectContainer>::propertyDataFor
                 resettable = writable && valueTypeMetaProperty.isResettable();
                 writable = writable && valueTypeMetaProperty.isWritable();
 
-                // Do not update bindable. The core property counts for bindability
+                // Do not update notifiesViaBindable. The core property counts for notifications.
+                propertyFlags->setIsDeepAlias(true);
             }
         }
     }
@@ -1034,7 +1035,7 @@ inline QQmlError QQmlPropertyCacheAliasCreator<ObjectContainer>::propertyDataFor
     propertyFlags->setIsWritable(
             writable && !alias.hasFlag(QV4::CompiledData::Alias::IsReadOnly));
     propertyFlags->setIsResettable(resettable);
-    propertyFlags->setIsBindable(bindable);
+    propertyFlags->setIsBindable(notifiesViaBindable);
     return QQmlError();
 }
 

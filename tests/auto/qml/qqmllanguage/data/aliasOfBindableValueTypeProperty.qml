@@ -6,7 +6,16 @@ import Test
 
 BindablePoint {
     id: root
-    property int changes: 0
+    property int aaChanges: 0
+    property int bbChanges: 0
     property alias aa: root.point.x
-    onAaChanged: ++changes
+    property alias bb: root.point.y
+    onAaChanged: ++aaChanges
+    bb: objectName
+    onBbChanged: ++bbChanges
+    objectName: "14"
+
+    function reassign() {
+        bb = Qt.binding(function() { return 16 + 0.5 });
+    }
 }

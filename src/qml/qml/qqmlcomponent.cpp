@@ -360,7 +360,7 @@ static void removePendingQPropertyBinding(
     if (QQmlData *ddata = QQmlData::get(o)) {
         const QQmlPropertyData *propData = ddata->propertyCache->property(
             propertyName, o, ddata->outerContext);
-        if (propData && propData->isBindable())
+        if (propData && propData->acceptsQBinding())
             creator->removePendingBinding(o, propData->coreIndex());
         return;
     }

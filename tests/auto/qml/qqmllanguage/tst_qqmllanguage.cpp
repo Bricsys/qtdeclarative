@@ -9682,17 +9682,46 @@ void tst_qqmllanguage::aliasOfBindableValueTypeProperty()
     QVERIFY(!o.isNull());
 
     QCOMPARE(o->property("aa"), 101);
-    QCOMPARE(o->property("changes"), 0);
+    QCOMPARE(o->property("bb"), 14);
+    QCOMPARE(o->property("aaChanges"), 1);
+    QCOMPARE(o->property("bbChanges"), 1);
+
+    o->setObjectName("15");
+    QCOMPARE(o->property("aa"), 101);
+    QCOMPARE(o->property("bb"), 15);
+    QCOMPARE(o->property("aaChanges"), 2);
+    QCOMPARE(o->property("bbChanges"), 2);
 
     o->setProperty("point", QPointF(17, 18));
     QCOMPARE(o->property("aa"), 17);
-    QCOMPARE(o->property("changes"), 1);
+    QCOMPARE(o->property("bb"), 18);
+    QCOMPARE(o->property("aaChanges"), 3);
+    QCOMPARE(o->property("bbChanges"), 3);
 
     BindablePoint *b = qobject_cast<BindablePoint *>(o.data());
     QVERIFY(b);
     b->bindablePoint().setValue(QPointF(19, 20));
     QCOMPARE(o->property("aa"), 19);
-    QCOMPARE(o->property("changes"), 2);
+    QCOMPARE(o->property("bb"), 20);
+    QCOMPARE(o->property("aaChanges"), 4);
+    QCOMPARE(o->property("bbChanges"), 4);
+
+    QMetaObject::invokeMethod(o.data(), "reassign");
+    QCOMPARE(o->property("aa"), 19);
+    QCOMPARE(o->property("bb"), 16.5);
+    QCOMPARE(o->property("aaChanges"), 5);
+    QCOMPARE(o->property("bbChanges"), 5);
+
+    const QMetaObject *mo = o->metaObject();
+    const int aaIndex = mo->indexOfProperty("aa");
+    QVERIFY(aaIndex >= 0);
+
+    // Querying the bindable of a value type alias results in the bindable of the core property.
+    QUntypedBindable bindable;
+    void *args[] { &bindable };
+    QCOMPARE(o->metaObject()->metacall(o.data(), QMetaObject::BindableProperty, aaIndex, args), -1);
+    QVERIFY(bindable.isValid());
+    QCOMPARE(bindable.metaType(), QMetaType::fromType<QPointF>());
 }
 
 QTEST_MAIN(tst_qqmllanguage)
