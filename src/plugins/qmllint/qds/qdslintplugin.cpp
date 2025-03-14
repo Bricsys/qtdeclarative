@@ -247,8 +247,8 @@ void QdsElementValidator::run(const Element &element)
                 ? QSpan<const Element>(m_unsupportedElements)
                 : QSpan<const Element>(m_unsupportedRootElements);
         const QStringView message = warningType == ForElements
-                ? u"This type (%1) is not supported in a UI file (.ui.qml)."
-                : u"This type (%1) is not supported as a root element of a UI file (.ui.qml).";
+                ? u"This type (%1) is not supported in a UI file (.ui.qml)."_sv
+                : u"This type (%1) is not supported as a root element of a UI file (.ui.qml)."_sv;
         const LoggerWarningId &id = warningType == ForElements ? ErrUnsupportedTypeInQmlUi
                                                                : ErrUnsupportedRootTypeInQmlUi;
 

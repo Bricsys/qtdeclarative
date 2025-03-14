@@ -2103,7 +2103,7 @@ bool QQmlJSCodeGenerator::inlineConsoleMethod(const QString &name, int argc, int
     }
 
     m_body += u"    const QLoggingCategory *category = aotContext->resolveLoggingCategory(";
-    m_body += firstArgIsReference ? u"firstArg" : u"nullptr";
+    m_body += firstArgIsReference ? u"firstArg"_sv : u"nullptr"_sv;
     m_body += u", &firstArgIsCategory);\n";
     m_body += u"    if (category && category->isEnabled(" + type + u")) {\n";
 
