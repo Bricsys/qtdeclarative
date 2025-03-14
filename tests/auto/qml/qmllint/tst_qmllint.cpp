@@ -2993,6 +2993,24 @@ void TestQmllint::qdsPlugin_data()
                                u"This type (ListModel) is not supported as a root element of a UI file (.ui.qml)."_s,
                                4, 1 },
                } };
+
+    {
+        const QString functionError =
+                u"Arbitrary functions and function calls outside of a Connections object are not supported in a UI file (.ui.qml)"_s;
+        QTest::addRow("UnsupportedBlock") << u"qdsPlugin/UnsupportedBlock.ui.qml"_s
+                                          << Result{ {
+                                                     Message{ functionError, 5, 29 },
+                                                     Message{ functionError, 6, 30 },
+                                                     Message{ functionError, 8, 29 },
+                                                     Message{ functionError, 7, 32 },
+                                             } };
+        QTest::addRow("SupportedBlock") << u"qdsPlugin/SupportedBlock.ui.qml"_s << Result::clean();
+
+        QTest::addRow("UnsupportedFunction")
+                << u"qdsPlugin/UnsupportedFunction.ui.qml"_s
+                << Result{ { Message{ functionError, 4, 5 }, Message{ functionError, 13, 9 } },
+                           { Message{ functionError, 7, 9 }, Message{ functionError, 10, 9 } } };
+    }
 }
 
 void TestQmllint::qdsPlugin()

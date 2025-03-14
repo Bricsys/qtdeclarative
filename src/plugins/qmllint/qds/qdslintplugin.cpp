@@ -67,6 +67,7 @@ public:
     void run(const Element &element) override;
 
 private:
+    void complainAboutFunctions(const Element &element);
     static constexpr std::array s_unsupportedElementNames = {
         std::make_pair("QtQuick.Controls"_L1, "ApplicationWindow"_L1),
         std::make_pair("QtQuick.Controls"_L1, "Drawer"_L1),
@@ -82,6 +83,7 @@ private:
         std::make_pair("QtQml"_L1, "Timer"_L1),
     };
     std::array<Element, s_unsupportedRootNames.size()> m_unsupportedRootElements;
+    std::array<Element, 2> m_supportFunctions;
     Element m_qtObject;
 };
 
@@ -243,6 +245,30 @@ QdsElementValidator::QdsElementValidator(PassManager *manager) : ElementPass(man
     loadTypes(s_unsupportedElementNames, m_unsupportedElements);
     loadTypes(s_unsupportedRootNames, m_unsupportedRootElements);
     m_qtObject = resolveType("QtQml"_L1, "QtObject"_L1);
+    m_supportFunctions = { resolveType("QtQml"_L1, "Connections"_L1),
+                           resolveType("QtQuick"_L1, "ScriptAction"_L1) };
+}
+
+void QdsElementValidator::complainAboutFunctions(const Element &element)
+{
+    for (const auto &method : element.ownMethods()) {
+        if (method.methodType() != QQmlSA::MethodType::Method)
+            continue;
+
+        emitWarning(
+                u"Arbitrary functions and function calls outside of a Connections object are not "
+                u"supported in a UI file (.ui.qml)",
+                ErrFunctionsNotSupportedInQmlUi, method.sourceLocation());
+    }
+
+    for (const auto &binding : element.ownPropertyBindings()) {
+        if (!binding.hasFunctionScriptValue())
+            continue;
+        emitWarning(u"Arbitrary functions and function calls outside of a Connections object "
+                    u"are not "
+                    u"supported in a UI file (.ui.qml)",
+                    ErrFunctionsNotSupportedInQmlUi, binding.sourceLocation());
+    }
 }
 
 void QdsElementValidator::run(const Element &element)
@@ -305,6 +331,11 @@ void QdsElementValidator::run(const Element &element)
                             .arg(id),
                     ErrInvalidIdeInVisualDesigner, element.idSourceLocation());
         }
+    }
+
+    if (std::none_of(m_supportFunctions.cbegin(), m_supportFunctions.cend(),
+                     [&element](const Element &base) { return base && element.inherits(base); })) {
+        complainAboutFunctions(element);
     }
 }
 
