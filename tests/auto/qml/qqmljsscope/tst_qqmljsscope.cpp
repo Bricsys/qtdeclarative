@@ -90,6 +90,8 @@ private Q_SLOTS:
     void initTestCase() override;
 
     void orderedBindings();
+    void scriptBindingValueType_data();
+    void scriptBindingValueType();
     void signalCreationDifferences();
     void allTypesAvailable();
     void shadowing();
@@ -183,6 +185,32 @@ void tst_qqmljsscope::orderedBindings()
 
     QCOMPARE(itemsBindingsBegin->objectType()->baseTypeName(), u"Item"_s);
     QCOMPARE(std::next(itemsBindingsBegin)->objectType()->baseTypeName(), u"Text"_s);
+}
+
+void tst_qqmljsscope::scriptBindingValueType_data()
+{
+    QTest::addColumn<ScriptBindingValueType>("expectedType");
+
+    QTest::addRow("myInt") << ScriptBindingValueType::ScriptValue_Unknown;
+    QTest::addRow("block") << ScriptBindingValueType::ScriptValue_Function;
+    QTest::addRow("alsoABlock") << ScriptBindingValueType::ScriptValue_Function;
+    QTest::addRow("lambda") << ScriptBindingValueType::ScriptValue_Function;
+    QTest::addRow("namedFunction") << ScriptBindingValueType::ScriptValue_Function;
+    QTest::addRow("arrow") << ScriptBindingValueType::ScriptValue_Function;
+    QTest::addRow("myUndefined") << ScriptBindingValueType::ScriptValue_Undefined;
+    QTest::addRow("emptyBlock") << ScriptBindingValueType::ScriptValue_Function;
+    QTest::addRow("emptyObject") << ScriptBindingValueType::ScriptValue_Unknown;
+}
+void tst_qqmljsscope::scriptBindingValueType()
+{
+    QFETCH(ScriptBindingValueType, expectedType);
+
+    QQmlJSScope::ConstPtr root = run(u"scriptBindingValueType.qml"_s);
+    QVERIFY(root);
+
+    auto [start, end] = root->ownPropertyBindings(QTest::currentDataTag());
+    QCOMPARE(std::distance(start, end), 1);
+    QCOMPARE(start->scriptValueType(), expectedType);
 }
 
 void tst_qqmljsscope::signalCreationDifferences()

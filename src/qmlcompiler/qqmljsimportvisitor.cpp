@@ -2079,7 +2079,7 @@ QQmlJSImportVisitor::parseBindingExpression(const QString &name,
 
         QQmlJSMetaPropertyBinding binding(location, name);
         binding.setScriptBinding(addFunctionOrExpression(m_currentScope, name),
-                                 QQmlSA::ScriptBindingKind::PropertyBinding);
+                                 QQmlSA::ScriptBindingKind::PropertyBinding, ScriptValue_Function);
         m_bindings.append(UnfinishedBinding {
             m_currentScope,
             [binding = std::move(binding)]() { return binding; }
@@ -2092,7 +2092,7 @@ QQmlJSImportVisitor::parseBindingExpression(const QString &name,
                 combine(expr->firstSourceLocation(), expr->lastSourceLocation()),
                 name);
 
-    bool isUndefinedBinding = false;
+    ScriptBindingValueType scriptBindingValuetype = ScriptValue_Unknown;
 
     switch (expr->kind) {
     case Node::Kind_TrueLiteral:
@@ -2107,7 +2107,14 @@ QQmlJSImportVisitor::parseBindingExpression(const QString &name,
     case Node::Kind_IdentifierExpression: {
         auto idExpr = QQmlJS::AST::cast<QQmlJS::AST::IdentifierExpression *>(expr);
         Q_ASSERT(idExpr);
-        isUndefinedBinding = (idExpr->name == u"undefined");
+        if (idExpr->name == u"undefined")
+            scriptBindingValuetype = ScriptValue_Undefined;
+        break;
+    }
+    case Node::Kind_FunctionDeclaration:
+    case Node::Kind_FunctionExpression:
+    case Node::Kind_Block: {
+        scriptBindingValuetype = ScriptValue_Function;
         break;
     }
     case Node::Kind_NumericLiteral:
@@ -2149,8 +2156,7 @@ QQmlJSImportVisitor::parseBindingExpression(const QString &name,
         // consider this to be a script binding (see IRBuilder::setBindingValue)
         binding.setScriptBinding(addFunctionOrExpression(m_currentScope, name),
                                  QQmlSA::ScriptBindingKind::PropertyBinding,
-                                 isUndefinedBinding ? ScriptBindingValueType::ScriptValue_Undefined
-                                                    : ScriptBindingValueType::ScriptValue_Unknown);
+                                 scriptBindingValuetype);
     }
     m_bindings.append(UnfinishedBinding { m_currentScope, [=]() { return binding; } });
 
@@ -2369,7 +2375,7 @@ bool QQmlJSImportVisitor::visit(UiScriptBinding *scriptBinding)
             }
 
             QQmlJSMetaPropertyBinding binding(firstSourceLocation, name);
-            binding.setScriptBinding(index, kind);
+            binding.setScriptBinding(index, kind, ScriptValue_Function);
             return binding;
         };
         m_bindings.append(UnfinishedBinding { m_currentScope, createBinding });

@@ -43,6 +43,7 @@ QT_BEGIN_NAMESPACE
 
 enum ScriptBindingValueType : unsigned int {
     ScriptValue_Unknown,
+    ScriptValue_Function, // binding to a function, arrow, lambda or a {}-block
     ScriptValue_Undefined // property int p: undefined
 };
 

@@ -440,6 +440,19 @@ bool Binding::hasUndefinedScriptValue() const
 }
 
 /*!
+    Returns whether this binding has script value type function like when it
+    is assigned a (lambda) method, an arrow function or a statement block. If
+    the content type of this binding is not \l{QQmlSA::BindingType::Script},
+    returns \c false.
+ */
+bool Binding::hasFunctionScriptValue() const
+{
+    const auto &jsBinding = BindingPrivate::binding(*this);
+    return jsBinding.bindingType() == BindingType::Script
+            && jsBinding.scriptValueType() == ScriptValue_Function;
+}
+
+/*!
     Returns \c true if \a bindingType is a literal type, and \c false
     otherwise.
  */
