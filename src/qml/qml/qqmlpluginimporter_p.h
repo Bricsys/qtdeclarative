@@ -25,6 +25,8 @@
 
 QT_BEGIN_NAMESPACE
 
+struct QStaticPluginData;
+
 class QQmlPluginImporter
 {
     Q_DISABLE_COPY_MOVE(QQmlPluginImporter)
@@ -52,13 +54,8 @@ public:
     Q_AUTOTEST_EXPORT static QStringList plugins();
 
 private:
-    struct StaticPluginData {
-        QStaticPlugin plugin;
-        QJsonArray uriList;
-    };
-
     static QString truncateToDirectory(const QString &qmldirFilePath);
-    bool populatePluginDataVector(QVector<StaticPluginData> &result,
+    bool populatePluginDataVector(QVector<QStaticPluginData> &result,
                                   const QStringList &versionUris);
 
     QString resolvePlugin(const QString &qmldirPluginPath, const QString &baseName);
