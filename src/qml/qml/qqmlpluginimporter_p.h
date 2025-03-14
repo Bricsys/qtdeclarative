@@ -55,8 +55,7 @@ public:
 
 private:
     static QString truncateToDirectory(const QString &qmldirFilePath);
-    bool populatePluginDataVector(QVector<QStaticPluginData> &result,
-                                  const QStringList &versionUris);
+    QVector<QStaticPluginData> staticPluginsFilteredByUris(const QStringList &versionUris);
 
     QString resolvePlugin(const QString &qmldirPluginPath, const QString &baseName);
     void finalizePlugin(QObject *instance, const QString &path);

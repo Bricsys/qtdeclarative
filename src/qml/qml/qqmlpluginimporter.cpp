@@ -525,8 +525,8 @@ QString QQmlPluginImporter::resolvePlugin(const QString &qmldirPluginPath, const
     \a versionUris, which is a list of all possible versioned URI combinations - see versionUriList()
     above.
  */
-bool QQmlPluginImporter::populatePluginDataVector(QVector<QStaticPluginData> &result,
-                                                  const QStringList &versionUris)
+QVector<QStaticPluginData>
+QQmlPluginImporter::staticPluginsFilteredByUris(const QStringList &versionUris)
 {
     static const auto plugins = makePlugins(errors);
     if (errors && !errors->empty()) {
@@ -536,9 +536,10 @@ bool QQmlPluginImporter::populatePluginDataVector(QVector<QStaticPluginData> &re
                                      .arg(uri, poppedError.description()));
         error.setUrl(QUrl::fromLocalFile(qmldir->qmldirLocation()));
         errors->prepend(error);
-        return false;
+        return {};
     }
 
+    QVector<QStaticPluginData> result;
     for (const auto &plugin : plugins) {
         // A plugin can be set up to handle multiple URIs, so go through the list:
         for (const QJsonValueConstRef metaTagUri : plugin.uriList) {
@@ -548,7 +549,7 @@ bool QQmlPluginImporter::populatePluginDataVector(QVector<QStaticPluginData> &re
             }
         }
     }
-    return true;
+    return result;
 }
 
 QTypeRevision QQmlPluginImporter::importPlugins() {
@@ -597,8 +598,8 @@ QTypeRevision QQmlPluginImporter::importPlugins() {
             // If a module has several plugins, they must all have the same version. Start by
             // populating pluginPairs with relevant plugins to cut the list short early on:
             const QStringList versionUris = versionUriList(uri, importVersion);
-            QVector<QStaticPluginData> pluginPairs;
-            if (!populatePluginDataVector(pluginPairs, versionUris))
+            const auto pluginPairs = staticPluginsFilteredByUris(versionUris);
+            if (errors && !errors->empty())
                 return QTypeRevision();
 
             for (const QString &versionUri : versionUris) {
