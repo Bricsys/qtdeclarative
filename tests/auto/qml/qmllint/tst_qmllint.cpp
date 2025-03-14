@@ -1298,7 +1298,27 @@ void TestQmllint::dirtyJsSnippet_data()
     QTest::addColumn<Result>("result");
 
     QTest::newRow("doubleLet") << u"let x = 4; let x = 4;"_s
-                                 << Result{ { { "Identifier 'x' has already been declared"_L1 } } };
+                               << Result{
+                                      { { "Identifier 'x' has already been declared"_L1, 1, 16 },
+                                        { "Note: previous declaration of 'x' here"_L1, 1, 5 } }
+                                  };
+    QTest::newRow("doubleConst") << u"const x = 4; const x = 4;"_s
+                                 << Result{
+                                        { { "Identifier 'x' has already been declared"_L1, 1, 20 },
+                                          { "Note: previous declaration of 'x' here"_L1, 1, 7 } }
+                                    };
+}
+
+static void addLocationOffsetTo(TestQmllint::Result *result, qsizetype lineOffset,
+                                qsizetype columnOffset = 0)
+{
+    for (auto *messages :
+         { &result->expectedMessages, &result->badMessages, &result->expectedReplacements }) {
+        for (auto &message : *messages) {
+            message.line += lineOffset;
+            message.column += columnOffset;
+        }
+    }
 }
 
 void TestQmllint::dirtyJsSnippet()
@@ -1306,17 +1326,19 @@ void TestQmllint::dirtyJsSnippet()
     QFETCH(QString, code);
     QFETCH(Result, result);
 
-    const QString qmlCode = "import QtQuick\nItem { function f() {%1}}"_L1.arg(code);
+    static constexpr QLatin1StringView templateString =
+            "import QtQuick\nItem { function f() {\n%1}}"_L1;
 
+    // templateString adds 2 newlines before snippet
+    addLocationOffsetTo(&result, 2);
+
+    const QString qmlCode = templateString.arg(code);
     QJsonArray warnings;
-    QEXPECT_FAIL("doubleLet", "Not implemented yet", Abort);
     callQmllint(QString(), result.flags.testFlag(Result::ExitsNormally), &warnings, {}, {}, {},
                 UseDefaultImports, nullptr, result.flags.testFlag(Result::Flag::AutoFixable),
                 LintFile, &qmlCode);
 
-    checkResult(
-                warnings, result, [] { QEXPECT_FAIL("doubleLet", "Not implemented yet", Abort); },
-    [] {}, [] {});
+    checkResult(warnings, result, [] { }, [] { }, [] { });
 }
 
 void TestQmllint::cleanJsSnippet_data()
@@ -1324,6 +1346,8 @@ void TestQmllint::cleanJsSnippet_data()
     QTest::addColumn<QString>("code");
 
     QTest::newRow("testSnippet") << u"let x = 5"_s;
+    QTest::newRow("doubleVar") << u"var x = 5; var y = 5"_s;
+    QTest::newRow("doubleInDifferentScopes") << u"const a = 42; for (let a = 1; a < 10; ++a) {}"_s;
 }
 
 void TestQmllint::cleanJsSnippet()
