@@ -1185,6 +1185,23 @@ static EditingRecorder propertyTypoScenario(const QByteArray &fileUri)
     return propertyTypo;
 }
 
+static EditingRecorder inMemoryEnumScenario(const QByteArray &fileUri)
+{
+    EditingRecorder scenario;
+    scenario.lastFileUri = fileUri;
+
+    const QString enumWithTypo =
+            u"enum Hello { World, Qt, Kitty }\nproperty var xxx: SimpleItem.Q"_s;
+    // expect an error because of the missing "t"
+    scenario.changeText(5, 1, 5, 1, enumWithTypo);
+    scenario.setCurrentExpectedDiagnostic("Member \"Q\" not found");
+
+    // fix the typo and expect no more error, despite the enum not existing on the file on disk
+    scenario.changeText(6, 31, 6, 31, u"t"_s);
+
+    return scenario;
+}
+
 void tst_qmlls_modules::linting_data()
 {
     QTest::addColumn<QString>("filePath");
@@ -1193,6 +1210,10 @@ void tst_qmlls_modules::linting_data()
     QTest::addRow("property-typo")
             << u"linting/SimpleItem.qml"_s
             << propertyTypoScenario(testFileUrl(u"linting/SimpleItem.qml"_s).toEncoded());
+
+    QTest::addRow("in-memory-enum")
+            << u"linting/SimpleItem.qml"_s
+            << inMemoryEnumScenario(testFileUrl(u"linting/SimpleItem.qml"_s).toEncoded());
 }
 
 void tst_qmlls_modules::linting()
