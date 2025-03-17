@@ -48,7 +48,6 @@ private:
     void generatePathContainer(const StructureNodeInfo &info);
     void generatePropertyAnimation(const QQuickAnimatedProperty &property, QObject *target, const QString &propertyName);
     void generateAnimateTransform(const QList<QQuickTransform *> &transforms,
-                                  QQuickMatrix4x4 *mainTransform,
                                   const NodeInfo &info);
     QQuickItem *currentItem();
     void addCurrentItem(QQuickItem *item, const NodeInfo &info);

@@ -35,12 +35,13 @@ void QQuickItemGenerator::generateNodeBase(const NodeInfo &info)
 {
     auto xformProp = currentItem()->transform();
 
-    if (!info.transformAnimation.animationTypes.isEmpty()) {
+    if (info.transform.isAnimated()) {
         QList<QQuickTransform *> transforms;
 
-        for (int i = info.transformAnimation.animationTypes.size() - 1; i >= 0; --i) {
+        for (int i = info.transform.animationCount() - 1; i >= 0; --i) {
+            const auto &animation = info.transform.animation(i);
             QQuickTransform *transform = nullptr;
-            switch (info.transformAnimation.animationTypes.at(i)) {
+            switch (animation.subtype) {
             case QTransform::TxTranslate:
                 transform = new QQuickTranslate;
                 break;
@@ -57,8 +58,9 @@ void QQuickItemGenerator::generateNodeBase(const NodeInfo &info)
                 transform = new QQuickShear;
                 break;
             default:
-                Q_UNREACHABLE();
-            }
+                qCWarning(lcQuickVectorImage) << "Unhandled transform type" << animation.subtype;
+                break;
+            };
 
             xformProp.append(&xformProp, transform);
             transforms.prepend(transform);
@@ -66,34 +68,34 @@ void QQuickItemGenerator::generateNodeBase(const NodeInfo &info)
 
         QQuickMatrix4x4 *mainTransform = nullptr;
         if (!info.isDefaultTransform) {
-            const QMatrix4x4 m(info.transform);
+            const QMatrix4x4 m(info.transform.defaultValue().value<QTransform>());
             mainTransform = new QQuickMatrix4x4;
             mainTransform->setMatrix(m);
             xformProp.append(&xformProp, mainTransform);
         }
 
-        generateAnimateTransform(transforms,
-                                 mainTransform,
-                                 info);
+        generateAnimateTransform(transforms, info);
     } else if (!info.isDefaultTransform) {
-        auto sx = info.transform.m11();
-        auto sy = info.transform.m22();
-        auto x = info.transform.m31();
-        auto y = info.transform.m32();
+        const QTransform transform = info.transform.defaultValue().value<QTransform>();
 
-        if (info.transform.type() == QTransform::TxTranslate) {
+        auto sx = transform.m11();
+        auto sy = transform.m22();
+        auto x = transform.m31();
+        auto y = transform.m32();
+
+        if (transform.type() == QTransform::TxTranslate) {
             auto *translate = new QQuickTranslate;
             translate->setX(x);
             translate->setY(y);
             xformProp.append(&xformProp, translate);
-        } else if (info.transform.type() == QTransform::TxScale && !x && !y) {
+        } else if (transform.type() == QTransform::TxScale && !x && !y) {
             auto scale = new QQuickScale;
             scale->setParent(currentItem());
             scale->setXScale(sx);
             scale->setYScale(sy);
             xformProp.append(&xformProp, scale);
         } else {
-            const QMatrix4x4 m(info.transform);
+            const QMatrix4x4 m(transform);
             auto xform = new QQuickMatrix4x4;
             xform->setMatrix(m);
             xformProp.append(&xformProp, xform);
@@ -440,127 +442,203 @@ void QQuickItemGenerator::generatePathContainer(const StructureNodeInfo &info)
 }
 
 void QQuickItemGenerator::generateAnimateTransform(const QList<QQuickTransform *> &transforms,
-                                                   QQuickMatrix4x4 *mainTransform,
                                                    const NodeInfo &info)
 {
-    // Main animation which contains one animation for the finite part and optionally
-    // one animation for the infinite part
-    auto *mainAnimation = new QQuickSequentialAnimation(currentItem());
+    Q_ASSERT(info.transform.isAnimated());
+    Q_ASSERT(info.transform.animationCount() == transforms.size());
 
-    QQmlListProperty<QQuickAbstractAnimation> mainAnims = mainAnimation->animations();
+    for (int i = 0; i < info.transform.animationCount(); ++i) {
+        const QQuickAnimatedProperty::PropertyAnimation &animation = info.transform.animation(i);
+        QQuickTransform *xform = transforms.at(i);
 
-    auto *sequentialAnimation = new QQuickSequentialAnimation(mainAnimation);
-    sequentialAnimation->setLoops(1);
-    mainAnims.append(&mainAnims, sequentialAnimation);
+        // Skip past broken entries
+        if (xform == nullptr)
+            continue;
 
-    const auto &keyFrames = info.transformAnimation.keyFrames;
-    qreal previousTimeCode = 0.0;
-    for (auto it = keyFrames.constBegin(); it != keyFrames.constEnd(); ++it) {
-        const auto &keyFrame = it.value();
-        const qreal timeCode = it.key().toReal();
-        const qreal frameTime = timeCode - previousTimeCode;
-        previousTimeCode = timeCode;
-
-        if (keyFrame.indefiniteAnimation && sequentialAnimation->loops() == 1) {
-            sequentialAnimation = new QQuickSequentialAnimation(mainAnimation);
-            sequentialAnimation->setLoops(-1);
-            mainAnims.append(&mainAnims, sequentialAnimation);
-        }
-
+        QQuickSequentialAnimation *sequentialAnimation = new QQuickSequentialAnimation(currentItem());
         QQmlListProperty<QQuickAbstractAnimation> anims = sequentialAnimation->animations();
 
-        QQuickParallelAnimation *keyFrameAnimation = new QQuickParallelAnimation(sequentialAnimation);
+        if (animation.startOffset > 0) {
+            QQuickPauseAnimation *pauseAnimation = new QQuickPauseAnimation(sequentialAnimation);
+            pauseAnimation->setDuration(animation.startOffset);
+            anims.append(&anims, pauseAnimation);
+        }
+
+        QQuickSequentialAnimation *keyFrameAnimation = new QQuickSequentialAnimation(sequentialAnimation);
+        keyFrameAnimation->setLoops(animation.repeatCount);
         anims.append(&anims, keyFrameAnimation);
 
-        QQmlListProperty<QQuickAbstractAnimation> propertyAnims = keyFrameAnimation->animations();
+        anims = keyFrameAnimation->animations();
 
-        for (int i = 0; i < info.transformAnimation.animationTypes.size(); ++i) {
-            switch (info.transformAnimation.animationTypes.at(i)) {
+        QTransform::TransformationType transformType = QTransform::TransformationType(animation.subtype);
+        int previousTime = 0;
+        for (auto it = animation.frames.constBegin(); it != animation.frames.constEnd(); ++it) {
+            QQuickParallelAnimation *parallelAnimation = new QQuickParallelAnimation(keyFrameAnimation);
+            anims.append(&anims, parallelAnimation);
+
+            QQmlListProperty<QQuickAbstractAnimation> propertyAnims = parallelAnimation->animations();
+
+            const int time = it.key();
+            const int frameTime = time - previousTime;
+            const QVariantList &parameters = it.value().value<QVariantList>();
+            if (parameters.isEmpty())
+                continue;
+
+            switch (transformType) {
             case QTransform::TxTranslate:
-                {
-                    auto *transXAnimation = new QQuickPropertyAnimation(keyFrameAnimation);
-                    transXAnimation->setDuration(frameTime);
-                    transXAnimation->setTargetObject(transforms.at(i));
-                    transXAnimation->setProperty(QStringLiteral("x"));
-                    transXAnimation->setTo(keyFrame.values.at(i * 3));
-                    propertyAnims.append(&propertyAnims, transXAnimation);
+            {
+                const QPointF translation = parameters.first().value<QPointF>();
+                auto *transXAnimation = new QQuickPropertyAnimation(parallelAnimation);
+                transXAnimation->setDuration(frameTime);
+                transXAnimation->setTargetObject(xform);
+                transXAnimation->setProperty(QStringLiteral("x"));
+                transXAnimation->setTo(translation.x());
+                propertyAnims.append(&propertyAnims, transXAnimation);
 
-                    auto *transYAnimation = new QQuickPropertyAnimation(keyFrameAnimation);
-                    transYAnimation->setDuration(frameTime);
-                    transYAnimation->setTargetObject(transforms.at(i));
-                    transYAnimation->setProperty(QStringLiteral("y"));
-                    transYAnimation->setTo(keyFrame.values.at(i * 3 + 1));
-                    propertyAnims.append(&propertyAnims, transYAnimation);
-                }
+                auto *transYAnimation = new QQuickPropertyAnimation(parallelAnimation);
+                transYAnimation->setDuration(frameTime);
+                transYAnimation->setTargetObject(xform);
+                transYAnimation->setProperty(QStringLiteral("y"));
+                transYAnimation->setTo(translation.y());
+                propertyAnims.append(&propertyAnims, transYAnimation);
                 break;
+            }
             case QTransform::TxScale:
-                {
-                    auto *scaleXAnimation = new QQuickPropertyAnimation(keyFrameAnimation);
-                    scaleXAnimation->setDuration(frameTime);
-                    scaleXAnimation->setTargetObject(transforms.at(i));
-                    scaleXAnimation->setProperty(QStringLiteral("xScale"));
-                    scaleXAnimation->setTo(keyFrame.values.at(i * 3));
-                    propertyAnims.append(&propertyAnims, scaleXAnimation);
+            {
+                const QPointF scale = parameters.first().value<QPointF>();
+                auto *scaleXAnimation = new QQuickPropertyAnimation(parallelAnimation);
+                scaleXAnimation->setDuration(frameTime);
+                scaleXAnimation->setTargetObject(xform);
+                scaleXAnimation->setProperty(QStringLiteral("xScale"));
+                scaleXAnimation->setTo(scale.x());
+                propertyAnims.append(&propertyAnims, scaleXAnimation);
 
-                    auto *scaleYAnimation = new QQuickPropertyAnimation(keyFrameAnimation);
-                    scaleYAnimation->setDuration(frameTime);
-                    scaleYAnimation->setTargetObject(transforms.at(i));
-                    scaleYAnimation->setProperty(QStringLiteral("yScale"));
-                    scaleYAnimation->setTo(keyFrame.values.at(i * 3 + 1));
-                    propertyAnims.append(&propertyAnims, scaleYAnimation);
-                }
+                auto *scaleYAnimation = new QQuickPropertyAnimation(parallelAnimation);
+                scaleYAnimation->setDuration(frameTime);
+                scaleYAnimation->setTargetObject(xform);
+                scaleYAnimation->setProperty(QStringLiteral("yScale"));
+                scaleYAnimation->setTo(scale.y());
+                propertyAnims.append(&propertyAnims, scaleYAnimation);
                 break;
+            }
             case QTransform::TxRotate:
-                {
-                    auto *rotationOriginAnimation = new QQuickPropertyAnimation(keyFrameAnimation);
-                    rotationOriginAnimation->setDuration(frameTime);
-                    rotationOriginAnimation->setTargetObject(transforms.at(i));
-                    rotationOriginAnimation->setProperty(QStringLiteral("origin"));
-                    rotationOriginAnimation->setTo(QVector3D(keyFrame.values.at(i * 3),
-                                                             keyFrame.values.at(i * 3 + 1),
-                                                             0.0));
-                    propertyAnims.append(&propertyAnims, rotationOriginAnimation);
+            {
+                Q_ASSERT(parameters.size() == 2);
+                const QPointF center = parameters.at(0).value<QPointF>();
+                const qreal angle = parameters.at(1).toReal();
+                auto *rotationOriginAnimation = new QQuickPropertyAnimation(parallelAnimation);
+                rotationOriginAnimation->setDuration(frameTime);
+                rotationOriginAnimation->setTargetObject(xform);
+                rotationOriginAnimation->setProperty(QStringLiteral("origin"));
+                rotationOriginAnimation->setTo(QVector3D(center.x(),
+                                                         center.y(),
+                                                         0.0));
+                propertyAnims.append(&propertyAnims, rotationOriginAnimation);
 
-                    auto *rotationAngleAnimation = new QQuickPropertyAnimation(keyFrameAnimation);
-                    rotationAngleAnimation->setDuration(frameTime);
-                    rotationAngleAnimation->setTargetObject(transforms.at(i));
-                    rotationAngleAnimation->setProperty(QStringLiteral("angle"));
-                    rotationAngleAnimation->setTo(keyFrame.values.at(i * 3 + 2));
-                    propertyAnims.append(&propertyAnims, rotationAngleAnimation);
-                }
+                auto *rotationAngleAnimation = new QQuickPropertyAnimation(parallelAnimation);
+                rotationAngleAnimation->setDuration(frameTime);
+                rotationAngleAnimation->setTargetObject(xform);
+                rotationAngleAnimation->setProperty(QStringLiteral("angle"));
+                rotationAngleAnimation->setTo(angle);
+                propertyAnims.append(&propertyAnims, rotationAngleAnimation);
                 break;
+            }
             case QTransform::TxShear:
-                {
-                    auto *xSkewAnimation = new QQuickPropertyAnimation(keyFrameAnimation);
-                    xSkewAnimation->setDuration(frameTime);
-                    xSkewAnimation->setTargetObject(transforms.at(i));
-                    xSkewAnimation->setProperty(QStringLiteral("xAngle"));
-                    xSkewAnimation->setTo(keyFrame.values.at(i * 3));
-                    propertyAnims.append(&propertyAnims, xSkewAnimation);
+            {
+                const QPointF skew = parameters.first().value<QPointF>();
+                auto *xSkewAnimation = new QQuickPropertyAnimation(parallelAnimation);
+                xSkewAnimation->setDuration(frameTime);
+                xSkewAnimation->setTargetObject(xform);
+                xSkewAnimation->setProperty(QStringLiteral("xAngle"));
+                xSkewAnimation->setTo(skew.x());
+                propertyAnims.append(&propertyAnims, xSkewAnimation);
 
-                    auto *ySkewAnimation = new QQuickPropertyAnimation(keyFrameAnimation);
-                    ySkewAnimation->setDuration(frameTime);
-                    ySkewAnimation->setTargetObject(transforms.at(i));
-                    ySkewAnimation->setProperty(QStringLiteral("yAngle"));
-                    ySkewAnimation->setTo(keyFrame.values.at(i * 3 + 1));
-                    propertyAnims.append(&propertyAnims, ySkewAnimation);
-                }
+                auto *ySkewAnimation = new QQuickPropertyAnimation(parallelAnimation);
+                ySkewAnimation->setDuration(frameTime);
+                ySkewAnimation->setTargetObject(xform);
+                ySkewAnimation->setProperty(QStringLiteral("yAngle"));
+                ySkewAnimation->setTo(skew.y());
+                propertyAnims.append(&propertyAnims, ySkewAnimation);
                 break;
+            }
             default:
                 Q_UNREACHABLE();
+            };
+
+            previousTime = time;
+        }
+
+        if (!(animation.flags & QQuickAnimatedProperty::PropertyAnimation::FreezeAtEnd)) {
+            anims = sequentialAnimation->animations();
+
+            switch (transformType) {
+            case QTransform::TxTranslate:
+            {
+                QQuickPropertyAction *resetActionX = new QQuickPropertyAction(sequentialAnimation);
+                resetActionX->setTargetObject(xform);
+                resetActionX->setProperty(QStringLiteral("x"));
+                resetActionX->setValue(QVariant::fromValue(0.0));
+                anims.append(&anims, resetActionX);
+
+                QQuickPropertyAction *resetActionY = new QQuickPropertyAction(sequentialAnimation);
+                resetActionY->setTargetObject(xform);
+                resetActionY->setProperty(QStringLiteral("y"));
+                resetActionY->setValue(QVariant::fromValue(0.0));
+                anims.append(&anims, resetActionY);
+                break;
             }
+            case QTransform::TxScale:
+            {
+                QQuickPropertyAction *scaleActionX = new QQuickPropertyAction(sequentialAnimation);
+                scaleActionX->setTargetObject(xform);
+                scaleActionX->setProperty(QStringLiteral("xScale"));
+                scaleActionX->setValue(QVariant::fromValue(1.0));
+                anims.append(&anims, scaleActionX);
+
+                QQuickPropertyAction *scaleActionY = new QQuickPropertyAction(sequentialAnimation);
+                scaleActionY->setTargetObject(xform);
+                scaleActionY->setProperty(QStringLiteral("yScale"));
+                scaleActionY->setValue(QVariant::fromValue(1.0));
+                anims.append(&anims, scaleActionY);
+                break;
+            }
+            case QTransform::TxRotate:
+            {
+                QQuickPropertyAction *resetActionOrigin = new QQuickPropertyAction(sequentialAnimation);
+                resetActionOrigin->setTargetObject(xform);
+                resetActionOrigin->setProperty(QStringLiteral("origin"));
+                resetActionOrigin->setValue(QVariant::fromValue(QPointF{}));
+                anims.append(&anims, resetActionOrigin);
+
+                QQuickPropertyAction *resetActionAngle = new QQuickPropertyAction(sequentialAnimation);
+                resetActionAngle->setTargetObject(xform);
+                resetActionAngle->setProperty(QStringLiteral("angle"));
+                resetActionAngle->setValue(QVariant::fromValue(0.0));
+                anims.append(&anims, resetActionAngle);
+                break;
+            }
+            case QTransform::TxShear:
+            {
+                QQuickPropertyAction *resetActionXAngle = new QQuickPropertyAction(sequentialAnimation);
+                resetActionXAngle->setTargetObject(xform);
+                resetActionXAngle->setProperty(QStringLiteral("xAngle"));
+                resetActionXAngle->setValue(QVariant::fromValue(0.0));
+                anims.append(&anims, resetActionXAngle);
+
+                QQuickPropertyAction *resetActionYAngle = new QQuickPropertyAction(sequentialAnimation);
+                resetActionYAngle->setTargetObject(xform);
+                resetActionYAngle->setProperty(QStringLiteral("yAngle"));
+                resetActionYAngle->setValue(QVariant::fromValue(0.0));
+                anims.append(&anims, resetActionYAngle);
+                break;
+            }
+            default:
+                Q_UNREACHABLE();
+            };
         }
 
-        if (mainTransform != nullptr) {
-            auto *mainTransformUpdate = new QQuickPropertyAction(keyFrameAnimation);
-            mainTransformUpdate->setTargetObject(mainTransform);
-            mainTransformUpdate->setProperty(QStringLiteral("matrix"));
-            mainTransformUpdate->setValue(QMatrix4x4(keyFrame.baseMatrix));
-            propertyAnims.append(&propertyAnims, mainTransformUpdate);
-        }
+        sequentialAnimation->setRunning(true);
     }
-
-    mainAnimation->setRunning(true);
 }
 
 bool QQuickItemGenerator::generateStructureNode(const StructureNodeInfo &info)

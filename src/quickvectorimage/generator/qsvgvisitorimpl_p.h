@@ -57,7 +57,8 @@ private:
     typedef QPair<const QSvgAbstractAnimation *, const QSvgAbstractAnimatedProperty *> AnimationPair;
     QList<AnimationPair> collectAnimations(const QSvgNode *node, const QString &propertyName);
     void applyAnimationsToProperty(const QList<AnimationPair> &animations,
-                                   QQuickAnimatedProperty *property);
+                                   QQuickAnimatedProperty *property,
+                                   std::function<QVariant(const QSvgAbstractAnimatedProperty *, int index, int subtype)> calculateValue);
 
     void fillCommonNodeInfo(const QSvgNode *node, NodeInfo &info);
     void fillPathAnimationInfo(const QSvgNode *node, PathNodeInfo &info);

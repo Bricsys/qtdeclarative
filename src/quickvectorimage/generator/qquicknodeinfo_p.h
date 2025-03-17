@@ -30,27 +30,12 @@ struct NodeInfo
 {
     QString nodeId;
     QString typeName;
-    QTransform transform;
+    QQuickAnimatedProperty transform = QQuickAnimatedProperty(QVariant::fromValue(QTransform{}));
     QQuickAnimatedProperty opacity = QQuickAnimatedProperty(QVariant::fromValue(1.0));
     bool isDefaultTransform = true;
     bool isDefaultOpacity = true;
     bool isVisible = true;
     bool isDisplayed = true; // TODO: Map to display enum in QtSvg
-
-    struct TransformAnimation {
-        struct TransformKeyFrame {
-            TransformKeyFrame() = default;
-
-            QTransform baseMatrix;
-            QList<qreal> values; // animationTypes.size() * 3, content depends on each type
-            bool indefiniteAnimation = false;
-        };
-
-        QList<QTransform::TransformationType> animationTypes;
-        QMap<QFixed, TransformKeyFrame> keyFrames;
-    };
-
-    TransformAnimation transformAnimation;
 };
 
 struct ImageNodeInfo : NodeInfo

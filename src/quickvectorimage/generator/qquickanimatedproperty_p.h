@@ -29,6 +29,7 @@ public:
             FreezeAtEnd = 1
         };
 
+        int subtype = 0;
         QMap<int, QVariant> frames;
         int repeatCount = 1;
         int startOffset = 0;
