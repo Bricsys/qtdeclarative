@@ -944,7 +944,7 @@ ReturnedValue QQmlLocale::method_localeCompare(const QV4::FunctionObject *b, con
     Returns a string that represents a join of a given \a list of strings with a
     separator defined by the locale.
 
-    \sa QLocale::createSeparatedList(QStringList)
+    \sa QLocale::createSeparatedList()
 */
 
 /*!

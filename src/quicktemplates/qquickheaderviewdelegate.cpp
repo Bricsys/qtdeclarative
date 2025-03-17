@@ -18,7 +18,7 @@
 
     The HorizontalHeaderViewDelegate serves as the default delegate
     automatically assigned to the \l HorizontalHeaderView's
-    \l {HorizontalHeaderView::delegate} {delegate property}.
+    \l {TableView::delegate} {delegate property}.
     This delegate handles rendering every header cell using the
     application's predefined style specifications.
 
@@ -41,7 +41,7 @@
 
      The VerticalHeaderViewDelegate serves as the default delegate
      automatically assigned to the \l VerticalHeaderView's
-     \l {VerticalHeaderView::delegate} {delegate property}.
+     \l {TableView::delegate} {delegate property}.
      This delegate handles rendering every header cell using the
      application's predefined style specifications.
 
