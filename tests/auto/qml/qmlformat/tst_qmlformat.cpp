@@ -899,150 +899,104 @@ void TestQmlformat::qml_data()
 {
     QTest::addColumn<QString>("file");
     QTest::addColumn<QString>("fileFormatted");
-    QTest::addColumn<QStringList>("args");
-    QTest::addColumn<RunOption>("runOption");
 
     QTest::newRow("example1") << "Example1.qml"
-                              << "Example1.formatted.qml" << QStringList {} << RunOption::OnCopy;
+                              << "Example1.formatted.qml";
     QTest::newRow("annotation") << "Annotations.qml"
-                                << "Annotations.formatted.qml" << QStringList {}
-                                << RunOption::OnCopy;
+                                << "Annotations.formatted.qml";
     QTest::newRow("front inline") << "FrontInline.qml"
-                                  << "FrontInline.formatted.qml" << QStringList {}
-                                  << RunOption::OnCopy;
+                                  << "FrontInline.formatted.qml";
     QTest::newRow("if blocks") << "IfBlocks.qml"
-                               << "IfBlocks.formatted.qml" << QStringList {} << RunOption::OnCopy;
-    QTest::newRow("read-only properties")
-            << "readOnlyProps.qml"
-            << "readOnlyProps.formatted.qml" << QStringList {} << RunOption::OnCopy;
-    QTest::newRow("states and transitions")
-            << "statesAndTransitions.qml"
-            << "statesAndTransitions.formatted.qml" << QStringList {} << RunOption::OnCopy;
-    QTest::newRow("large bindings")
-            << "largeBindings.qml"
-            << "largeBindings.formatted.qml" << QStringList {} << RunOption::OnCopy;
-    QTest::newRow("verbatim strings")
-            << "verbatimString.qml"
-            << "verbatimString.formatted.qml" << QStringList {} << RunOption::OnCopy;
-    QTest::newRow("inline components")
-            << "inlineComponents.qml"
-            << "inlineComponents.formatted.qml" << QStringList {} << RunOption::OnCopy;
+                               << "IfBlocks.formatted.qml";
+    QTest::newRow("read-only properties") << "readOnlyProps.qml"
+                                          << "readOnlyProps.formatted.qml";
+    QTest::newRow("states and transitions") << "statesAndTransitions.qml"
+                                            << "statesAndTransitions.formatted.qml";
+    QTest::newRow("large bindings") << "largeBindings.qml"
+                                    << "largeBindings.formatted.qml";
+    QTest::newRow("verbatim strings") << "verbatimString.qml"
+                                      << "verbatimString.formatted.qml";
+    QTest::newRow("inline components") << "inlineComponents.qml"
+                                       << "inlineComponents.formatted.qml";
     QTest::newRow("nested ifs") << "nestedIf.qml"
-                                << "nestedIf.formatted.qml" << QStringList {} << RunOption::OnCopy;
+                                << "nestedIf.formatted.qml";
     QTest::newRow("QTBUG-85003") << "QtBug85003.qml"
-                                 << "QtBug85003.formatted.qml" << QStringList {}
-                                 << RunOption::OnCopy;
-    QTest::newRow("nested functions")
-            << "nestedFunctions.qml"
-            << "nestedFunctions.formatted.qml" << QStringList {} << RunOption::OnCopy;
-    QTest::newRow("multiline comments")
-            << "multilineComment.qml"
-            << "multilineComment.formatted.qml" << QStringList {} << RunOption::OnCopy;
+                                 << "QtBug85003.formatted.qml";
+    QTest::newRow("nested functions") << "nestedFunctions.qml"
+                                      << "nestedFunctions.formatted.qml";
+    QTest::newRow("multiline comments") << "multilineComment.qml"
+                                        << "multilineComment.formatted.qml";
     QTest::newRow("for of") << "forOf.qml"
-                            << "forOf.formatted.qml" << QStringList {} << RunOption::OnCopy;
-    QTest::newRow("property names")
-            << "propertyNames.qml"
-            << "propertyNames.formatted.qml" << QStringList {} << RunOption::OnCopy;
+                            << "forOf.formatted.qml";
+    QTest::newRow("property names") << "propertyNames.qml"
+                                    << "propertyNames.formatted.qml";
     QTest::newRow("empty object") << "emptyObject.qml"
-                                  << "emptyObject.formatted.qml" << QStringList {}
-                                  << RunOption::OnCopy;
-    QTest::newRow("arrow functions")
-            << "arrowFunctions.qml"
-            << "arrowFunctions.formatted.qml" << QStringList {} << RunOption::OnCopy;
-    QTest::newRow("forWithLet")
-            << "forWithLet.qml"
-            << "forWithLet.formatted.qml" << QStringList {} << RunOption::OnCopy;
-    QTest::newRow("dontRemoveComments")
-            << "dontRemoveComments.qml"
-            << "dontRemoveComments.formatted.qml" << QStringList {} << RunOption::OnCopy;
-    QTest::newRow("ecmaScriptClassInQml")
-            << "ecmaScriptClassInQml.qml"
-            << "ecmaScriptClassInQml.formatted.qml" << QStringList{} << RunOption::OnCopy;
-    QTest::newRow("arrowFunctionWithBinding")
-            << "arrowFunctionWithBinding.qml"
-            << "arrowFunctionWithBinding.formatted.qml" << QStringList{} << RunOption::OnCopy;
-    QTest::newRow("blanklinesAfterComment")
-            << "blanklinesAfterComment.qml"
-            << "blanklinesAfterComment.formatted.qml" << QStringList{} << RunOption::OnCopy;
-    QTest::newRow("pragmaValueList")
-            << "pragma.qml"
-            << "pragma.formatted.qml" << QStringList{} << RunOption::OnCopy;
-    QTest::newRow("objectDestructuring")
-            << "objectDestructuring.qml"
-            << "objectDestructuring.formatted.qml" << QStringList{} << RunOption::OnCopy;
+                                  << "emptyObject.formatted.qml";
+    QTest::newRow("arrow functions") << "arrowFunctions.qml"
+                                     << "arrowFunctions.formatted.qml";
+    QTest::newRow("forWithLet") << "forWithLet.qml"
+                                << "forWithLet.formatted.qml";
+    QTest::newRow("dontRemoveComments") << "dontRemoveComments.qml"
+                                        << "dontRemoveComments.formatted.qml";
+    QTest::newRow("ecmaScriptClassInQml") << "ecmaScriptClassInQml.qml"
+                                          << "ecmaScriptClassInQml.formatted.qml";
+    QTest::newRow("arrowFunctionWithBinding") << "arrowFunctionWithBinding.qml"
+                                              << "arrowFunctionWithBinding.formatted.qml";
+    QTest::newRow("blanklinesAfterComment") << "blanklinesAfterComment.qml"
+                                            << "blanklinesAfterComment.formatted.qml";
+    QTest::newRow("pragmaValueList") << "pragma.qml"
+                                     << "pragma.formatted.qml";
+    QTest::newRow("objectDestructuring") << "objectDestructuring.qml"
+                                         << "objectDestructuring.formatted.qml";
     QTest::newRow("destructuringFunctionParameter")
             << "destructuringFunctionParameter.qml"
-            << "destructuringFunctionParameter.formatted.qml" << QStringList{} << RunOption::OnCopy;
-    QTest::newRow("ellipsisFunctionArgument")
-            << "ellipsisFunctionArgument.qml"
-            << "ellipsisFunctionArgument.formatted.qml" << QStringList{} << RunOption::OnCopy;
-    QTest::newRow("importStatements")
-            << "importStatements.qml"
-            << "importStatements.formatted.qml" << QStringList{} << RunOption::OnCopy;
-    QTest::newRow("arrayEndComma")
-            << "arrayEndComma.qml"
-            << "arrayEndComma.formatted.qml" << QStringList{} << RunOption::OnCopy;
-    QTest::newRow("escapeChars")
-            << "escapeChars.qml"
-            << "escapeChars.formatted.qml" << QStringList{} << RunOption::OnCopy;
-    QTest::newRow("javascriptBlock")
-            << "javascriptBlock.qml"
-            << "javascriptBlock.formatted.qml" << QStringList{} << RunOption::OnCopy;
-    QTest::newRow("enumWithValues")
-            << "enumWithValues.qml"
-            << "enumWithValues.formatted.qml" << QStringList{} << RunOption::OnCopy;
-    QTest::newRow("typeAnnotatedSignal")
-            << "signal.qml"
-            << "signal.formatted.qml" << QStringList{} << RunOption::OnCopy;
-    //plainJS
-    QTest::newRow("nestedLambdaWithIfElse")
-            << "lambdaWithIfElseInsideLambda.js"
-            << "lambdaWithIfElseInsideLambda.formatted.js" << QStringList{} << RunOption::OnCopy;
-    QTest::newRow("noSuperfluousSpaceInsertions")
-            << "noSuperfluousSpaceInsertions.qml"
-            << "noSuperfluousSpaceInsertions.formatted.qml" << QStringList{} << RunOption::OnCopy;
+            << "destructuringFunctionParameter.formatted.qml";
+    QTest::newRow("ellipsisFunctionArgument") << "ellipsisFunctionArgument.qml"
+                                              << "ellipsisFunctionArgument.formatted.qml";
+    QTest::newRow("importStatements") << "importStatements.qml"
+                                      << "importStatements.formatted.qml";
+    QTest::newRow("arrayEndComma") << "arrayEndComma.qml"
+                                   << "arrayEndComma.formatted.qml";
+    QTest::newRow("escapeChars") << "escapeChars.qml"
+                                 << "escapeChars.formatted.qml";
+    QTest::newRow("javascriptBlock") << "javascriptBlock.qml"
+                                     << "javascriptBlock.formatted.qml";
+    QTest::newRow("enumWithValues") << "enumWithValues.qml"
+                                    << "enumWithValues.formatted.qml";
+    QTest::newRow("typeAnnotatedSignal") << "signal.qml"
+                                         << "signal.formatted.qml";
+    // plainJS
+    QTest::newRow("nestedLambdaWithIfElse") << "lambdaWithIfElseInsideLambda.js"
+                                            << "lambdaWithIfElseInsideLambda.formatted.js";
+    QTest::newRow("noSuperfluousSpaceInsertions") << "noSuperfluousSpaceInsertions.qml"
+                                                  << "noSuperfluousSpaceInsertions.formatted.qml";
     QTest::newRow("noSuperfluousSpaceInsertions.fail_id")
             << "noSuperfluousSpaceInsertions.fail_id.qml"
-            << "noSuperfluousSpaceInsertions.fail_id.formatted.qml"
-            << QStringList{} << RunOption::OnCopy;
+            << "noSuperfluousSpaceInsertions.fail_id.formatted.qml";
     QTest::newRow("noSuperfluousSpaceInsertions.fail_QtObject")
             << "noSuperfluousSpaceInsertions.fail_QtObject.qml"
-            << "noSuperfluousSpaceInsertions.fail_QtObject.formatted.qml"
-            << QStringList{} << RunOption::OnCopy;
+            << "noSuperfluousSpaceInsertions.fail_QtObject.formatted.qml";
     QTest::newRow("noSuperfluousSpaceInsertions.fail_signal")
             << "noSuperfluousSpaceInsertions.fail_signal.qml"
-            << "noSuperfluousSpaceInsertions.fail_signal.formatted.qml"
-            << QStringList{} << RunOption::OnCopy;
+            << "noSuperfluousSpaceInsertions.fail_signal.formatted.qml";
     QTest::newRow("noSuperfluousSpaceInsertions.fail_enum")
             << "noSuperfluousSpaceInsertions.fail_enum.qml"
-            << "noSuperfluousSpaceInsertions.fail_enum.formatted.qml"
-            << QStringList{} << RunOption::OnCopy;
+            << "noSuperfluousSpaceInsertions.fail_enum.formatted.qml";
     QTest::newRow("noSuperfluousSpaceInsertions.fail_parameters")
             << "noSuperfluousSpaceInsertions.fail_parameters.qml"
-            << "noSuperfluousSpaceInsertions.fail_parameters.formatted.qml"
-            << QStringList{} << RunOption::OnCopy;
+            << "noSuperfluousSpaceInsertions.fail_parameters.formatted.qml";
     QTest::newRow("nonInitializedPropertyInComponent")
             << "nonInitializedPropertyInComponent.qml"
-            << "nonInitializedPropertyInComponent.formatted.qml"
-            << QStringList{} << RunOption::OnCopy;
-    QTest::newRow("fromAsIdentifier")
-            << "fromAsIdentifier.qml"
-            << "fromAsIdentifier.formatted.qml"
-            << QStringList{} << RunOption::OnCopy;
-    QTest::newRow("finalProperties")
-            << "finalProperties.qml"
-            << "finalProperties.formatted.qml"
-            << QStringList{} << RunOption::OnCopy;
+            << "nonInitializedPropertyInComponent.formatted.qml";
+    QTest::newRow("fromAsIdentifier") << "fromAsIdentifier.qml"
+                                      << "fromAsIdentifier.formatted.qml";
+    QTest::newRow("finalProperties") << "finalProperties.qml"
+                                     << "finalProperties.formatted.qml";
 }
 void TestQmlformat::qml()
 {
     QFETCH(QString, file);
     QFETCH(QString, fileFormatted);
-    QFETCH(QStringList, args);
-    QFETCH(RunOption, runOption);
-
-    Q_UNUSED(args);
-    Q_UNUSED(runOption);
 
     bool wasSuccessful;
     LineWriterOptions opts;
