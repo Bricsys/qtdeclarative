@@ -597,6 +597,11 @@ void QQmlJSImporter::processImport(
         // Otherwise we have already done it in localFile2ScopeTree()
         if (!val.scope.factory() && val.scope->baseType().isNull()) {
 
+            // ignore the scope currently analyzed by QQmlJSImportVisitor, as its only populated
+            // after importing the implicit directory.
+            if (val.scope->baseTypeName() == "$InProcess$"_L1)
+                continue;
+
             // Composite types use QML names, and we should have resolved those already.
             // ... except that old qmltypes files might specify composite types with C++ names.
             // Warn about those.
@@ -885,6 +890,25 @@ QQmlJSScope::Ptr QQmlJSImporter::localFile2ScopeTree(const QString &filePath)
             { QQmlJSScope::create(),
               QSharedPointer<QDeferredFactory<QQmlJSScope>>(new QDeferredFactory<QQmlJSScope>(
                       this, sourceFolderFile)) });
+}
+
+/*!
+\internal
+Add scopes manually created and QQmlJSImportVisited to QQmlJSImporter.
+This allows theses scopes to not get loaded twice during linting, for example.
+
+Returns false if the importer contains a scope different than \a scope for the same
+QQmlJSScope::filePath.
+*/
+bool QQmlJSImporter::registerScope(const QQmlJSScope::Ptr &scope)
+{
+    Q_ASSERT(!scope.factory());
+
+    QQmlJSScope::Ptr &existing = m_importedFiles[scope->filePath()];
+    if (existing)
+        return existing == scope;
+    existing = scope;
+    return true;
 }
 
 QQmlJSScope::Ptr QQmlJSImporter::importFile(const QString &file)
