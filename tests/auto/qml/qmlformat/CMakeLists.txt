@@ -22,6 +22,7 @@ list(APPEND test_data ${test_data_glob})
 qt_internal_add_test(tst_qmlformat
     SOURCES
         tst_qmlformat.cpp
+        tst_qmlformat_base.h
     DEFINES
         SRCDIR="${CMAKE_CURRENT_SOURCE_DIR}"
     LIBRARIES
