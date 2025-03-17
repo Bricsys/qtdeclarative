@@ -89,6 +89,18 @@ bool QQuickDeliveryAgentPrivate::isWithinDoubleTapDistance(const QPoint &distanc
             square(QGuiApplication::styleHints()->touchDoubleTapDistance());
 }
 
+/*!
+    Returns \c true if \a globalPos magnitudes are reasonable-sized numbers.
+
+    QGuiApplicationPrivate::lastCursorPosition is initialized with large numbers,
+    to be obviously outside the desktop coordinate system, until the mouse cursor
+    is observed to move to a known location.
+*/
+bool QQuickDeliveryAgentPrivate::isReasonableGlobalPosition(const QPointF &globalPos)
+{
+    return qAbs(globalPos.x()) < qreal(1 << 23) && qAbs(globalPos.y()) < qreal(1 << 23);
+}
+
 bool QQuickDeliveryAgentPrivate::checkIfDoubleTapped(ulong newPressEventTimestamp, const QPoint &newPressPos)
 {
     const bool doubleClicked = isDeliveringTouchAsMouse() &&

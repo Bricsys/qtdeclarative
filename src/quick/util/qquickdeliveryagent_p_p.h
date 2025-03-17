@@ -155,6 +155,7 @@ public:
     static bool isSynthMouse(const QPointerEvent *ev);
     static bool isWithinDoubleClickInterval(ulong timeInterval);
     static bool isWithinDoubleTapDistance(const QPoint &distanceBetweenPresses);
+    static bool isReasonableGlobalPosition(const QPointF &globalPos);
     static bool isSinglePointDevice(const QInputDevice *dev);
     static QQuickPointingDeviceExtra *deviceExtra(const QInputDevice *device);
 
