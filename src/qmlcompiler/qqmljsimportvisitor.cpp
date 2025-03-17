@@ -38,6 +38,8 @@ static const QLatin1StringView wasNotFound
 static const QLatin1StringView didYouAddAllImports
         = "Did you add all imports and dependencies?"_L1;
 
+Q_STATIC_LOGGING_CATEGORY(lcImportVisitor, "qt.qml.importVisitor", QtWarningMsg);
+
 /*!
     \internal
     Returns if assigning \a assignedType to \a property would require an
@@ -120,6 +122,23 @@ QString buildName(const Node *node)
     return result;
 }
 
+/*!
+   \internal
+   Make sure that the importer does not recreate the target scope when trying to import it via
+   implicit directory import.
+*/
+void QQmlJSImportVisitor::registerTargetIntoImporter(const QQmlJSScope::Ptr &target)
+{
+    target->setScopeType(QQmlSA::ScopeType::QMLScope);
+    target->setBaseTypeName("$InProcess$"_L1);
+    target->setFilePath(m_logger->filePath());
+    target->setIsComposite(true);
+    if (!m_importer->registerScope(target)) {
+        qCDebug(lcImportVisitor)
+                << "Couldn't register scope into importer: scope will be created multiple times.";
+    }
+}
+
 QQmlJSImportVisitor::QQmlJSImportVisitor(
         const QQmlJSScope::Ptr &target, QQmlJSImporter *importer, QQmlJSLogger *logger,
         const QString &implicitImportDirectory, const QStringList &qmldirFiles)
@@ -135,6 +154,8 @@ QQmlJSImportVisitor::QQmlJSImportVisitor(
                       importer->builtinInternalNames().contextualTypes().arrayType()),
               {})
 {
+    registerTargetIntoImporter(target);
+
     m_currentScope->setScopeType(QQmlSA::ScopeType::JSFunctionScope);
     Q_ASSERT(logger); // must be valid
 

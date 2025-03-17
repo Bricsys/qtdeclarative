@@ -380,6 +380,7 @@ protected:
     QStringList m_seenModuleQualifiers;
 
 private:
+    void registerTargetIntoImporter(const QQmlJSScope::Ptr &target);
     void checkSignal(
             const QQmlJSScope::ConstPtr &signalScope, const QQmlJS::SourceLocation &location,
             const QString &handlerName, const QStringList &handlerParameters);
