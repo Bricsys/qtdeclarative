@@ -36,7 +36,6 @@ QT_BEGIN_NAMESPACE
 
 class QQuickCurve;
 class QQuickCurvePrivate;
-class QQuickPathElementPrivate;
 
 struct QQuickPathData
 {
@@ -54,9 +53,6 @@ public:
     QQuickPathElement(QObject *parent=nullptr) : QObject(parent) {}
 Q_SIGNALS:
     void changed();
-
-protected:
-    QQuickPathElement(QQuickPathElementPrivate &dd, QObject *parent = nullptr);
 };
 
 class Q_QUICK_EXPORT QQuickPathAttribute : public QQuickPathElement
