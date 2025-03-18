@@ -15,12 +15,19 @@ T.Menu {
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding)
 
+    leftInset: -config.background.leftShadow
+    topInset: -config.background.topShadow
+    rightInset: -config.background.rightShadow
+    bottomInset: -config.background.bottomShadow
+
     leftPadding: 5
     topPadding: 5
     rightPadding: 5
     bottomPadding: 5
     margins: 0
     overlap: 4
+
+    readonly property var config: Config.controls.popup["normal"]
 
     delegate: MenuItem { }
 
@@ -48,9 +55,10 @@ T.Menu {
     }
 
     background: Impl.StyleImage {
-        implicitWidth: 200
-        implicitHeight: 30
-        imageConfig: Config.controls.popup["normal"].background
+        implicitWidth: 200 + imageConfig.leftShadow + imageConfig.rightShadow
+        implicitHeight: 30 + imageConfig.topShadow + imageConfig.bottomShadow
+        imageConfig: config.background
+        drawShadowWithinBounds: true
     }
 
     T.Overlay.modal: Rectangle {
