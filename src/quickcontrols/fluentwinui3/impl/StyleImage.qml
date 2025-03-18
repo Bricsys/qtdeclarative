@@ -7,7 +7,7 @@ import QtQuick
 // or blur (or other effects) will be drawn outside its own bounds.
 // The effect is that users of this item won't have to take e.g shadows
 // into account when positioning it, as such effects will only be visual, and
-// not be a part of the geometry.
+// not be a part of the geometry, unless drawShadowWithinBounds is set to true.
 
 Item {
     id: root
@@ -21,18 +21,19 @@ Item {
     // the shadow ends up on the correct side. The implicit geometry of the
     // item will also be adjusted to match the rotated image.
     property bool horizontal: true
+    property bool drawShadowWithinBounds: false
 
     // The minimum size of the image should be at least 1px tall and wide, even without any offsets
     property real minimumWidth: Math.max(1, imageConfig.leftOffset + imageConfig.rightOffset)
     property real minimumHeight: Math.max(1, imageConfig.topOffset + imageConfig.bottomOffset)
 
     BorderImage {
-        x: -imageConfig.leftShadow
-        y: -imageConfig.topShadow
+        x: root.drawShadowWithinBounds ? 0 : -imageConfig.leftShadow
+        y: root.drawShadowWithinBounds ? 0 : -imageConfig.topShadow
         width: Math.max(root.minimumWidth, (root.horizontal ? root.width : root.height))
-               + imageConfig.leftShadow + imageConfig.rightShadow
+               + (root.drawShadowWithinBounds ? 0 : imageConfig.leftShadow + imageConfig.rightShadow)
         height: Math.max(root.minimumHeight, (root.horizontal ? root.height : root.width))
-                + imageConfig.topShadow + imageConfig.bottomShadow
+                + (root.drawShadowWithinBounds ? 0 : imageConfig.topShadow + imageConfig.bottomShadow)
         source: imageConfig.filePath ? `qrc:/qt-project.org/imports/QtQuick/Controls/FluentWinUI3/${imageConfig.filePath}` : ""
 
         border {
