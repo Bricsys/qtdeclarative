@@ -1260,7 +1260,7 @@ if(NOT QT_NO_CREATE_VERSIONLESS_FUNCTIONS)
 endif()
 
 function(_populate_qmlls_ini_file target qmlls_ini_file concatenated_build_dirs import_paths)
-    get_target_property(qtpaths ${QT_CMAKE_EXPORT_NAMESPACE}::qtpaths LOCATION)
+    set(qtpaths $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::qtpaths>)
     _qt_internal_get_tool_wrapper_script_path(tool_wrapper)
 
     string(REPLACE "\"" "\\\"" concatenated_build_dirs "${concatenated_build_dirs}")
