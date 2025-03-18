@@ -206,6 +206,39 @@ void tst_QQuickAccessible::quickAttachedProperties()
         }
     }
 
+    // Attached property: QTBUG-133564
+    {
+        QQmlEngine engine;
+
+        QQmlComponent component(&engine);
+        component.setData("import QtQuick\n"
+                          "Item {\n"
+                          "    Accessible.role: Accessible.Button\n"
+                          "    property int value: 0\n"
+                          "    property int cursorPosition: 0\n"
+                          "}",
+                          QUrl());
+
+        auto object = std::unique_ptr<QObject>(component.create());
+        QVERIFY(object != nullptr);
+
+        const auto attachedObject = qobject_cast<QQuickAccessibleAttached *>(
+                QQuickAccessibleAttached::attachedProperties(object.get()));
+        QVERIFY(attachedObject);
+
+        const auto events = QTestAccessibility::events();
+
+        // If the value interface is not implemented then
+        // the valueChanged() signal should not be connected.
+        object->setProperty("value", 1);
+        QCOMPARE(QTestAccessibility::events(), events);
+
+        // If the text interface is not implemented then
+        // the cursorPositionChanged() signal should not be connected.
+        object->setProperty("cursorPosition", 1);
+        QCOMPARE(QTestAccessibility::events(), events);
+    }
+
     // Attached property
     {
         QQmlEngine engine;

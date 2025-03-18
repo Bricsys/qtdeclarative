@@ -346,12 +346,19 @@ QQuickAccessibleAttached::QQuickAccessibleAttached(QObject *parent)
             return;
         };
         const QMetaObject &smo = staticMetaObject;
-        static const int valueChangedIndex = smo.indexOfSlot("valueChanged()");
-        connectPropertyChangeSignal("value", "valueChanged", valueChangedIndex);
 
-        static const int cursorPositionChangedIndex = smo.indexOfSlot("cursorPositionChanged()");
-        connectPropertyChangeSignal("cursorPosition", "cursorPositionChanged",
-                                    cursorPositionChangedIndex);
+        QAccessibleInterface *iface = ev.accessibleInterface();
+        if (iface && iface->valueInterface()) {
+            static const int valueChangedIndex = smo.indexOfSlot("valueChanged()");
+            connectPropertyChangeSignal("value", "valueChanged", valueChangedIndex);
+        }
+
+        if (iface && iface->textInterface()) {
+            static const int cursorPositionChangedIndex =
+                    smo.indexOfSlot("cursorPositionChanged()");
+            connectPropertyChangeSignal("cursorPosition", "cursorPositionChanged",
+                                        cursorPositionChangedIndex);
+        }
     }
 
     if (!sigPress.isValid()) {
