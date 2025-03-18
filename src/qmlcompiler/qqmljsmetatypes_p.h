@@ -342,7 +342,7 @@ public:
 
     friend size_t qHash(const QQmlJSMetaMethod &method, size_t seed = 0)
     {
-        QtPrivate::QHashCombine combine;
+        QtPrivate::QHashCombine combine(seed);
 
         seed = combine(seed, method.m_name);
         seed = combine(seed, method.m_sourceLocation);
