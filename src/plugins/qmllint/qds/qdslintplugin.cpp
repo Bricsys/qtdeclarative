@@ -179,7 +179,13 @@ void FunctionCallValidator::onCall(const Element &element, const QString &proper
                           u"toString"_s,
                           u"toLocaleString"_s,
                   } },
-                { globalJSObject, { u"isNaN"_s, u"isFinite"_s } },
+                { globalJSObject,
+                  {
+                          u"isNaN"_s, u"isFinite"_s,
+                          u"qsTr"_s, u"qsTrId"_s, u"qsTranslate"_s,
+                          u"QT_TRANSLATE_NOOP"_s, u"QT_TRID_NOOP"_s, u"QT_TR_NOOP"_s,
+                  }
+                },
                 { resolveBuiltinType(u"ArrayPrototype"_s), { u"indexOf"_s, u"lastIndexOf"_s } },
                 { resolveBuiltinType(u"NumberPrototype"_s),
                   {

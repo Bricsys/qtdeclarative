@@ -13,4 +13,9 @@ Item {
     property var myColorDarker: Qt.darker(myColor, 0.5)
     property var myQuaternion: Qt.quaternion(1, 2, 3, 4)
     property string myString: (1 + 1).toString()
+    // qmllint disable translation-function-mismatch
+    property string myTranslatedString: qsTr("hello", "greeting")
+    property string myTranslatedStringId: qsTrId("hello-id")
+    property string myTranslatedString2: QT_TR_NOOP("world")
+    // qmllint enable translation-function-mismatch
 }
