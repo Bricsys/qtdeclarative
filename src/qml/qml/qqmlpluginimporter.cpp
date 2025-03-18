@@ -58,81 +58,119 @@ private:
 
 Q_GLOBAL_STATIC(PluginMap, qmlPluginsById); // stores the uri and the PluginLoaders
 
-struct QStaticPluginData
+struct StaticPluginMapping
 {
     QStaticPlugin plugin;
-    QJsonArray uriList;
+    QString metadataURI;
 };
 
-QStaticPluginData tryConvertToStaticPluginData(const QStaticPlugin &plugin)
+struct VersionedURI
 {
-    const auto verifyIID = [](auto &&pluginMetadata) -> bool {
+    QString id;
+    QTypeRevision version;
+};
+
+/*
+ * This function verifies if staticPlugin is valid QML plugin by
+ * verifying the IID member of Metadata and
+ * checks whether the plugin instance has the correct parent plugin extension class.
+ * Checks the presence of URI member of Metadata and returns QJsonArray,
+ * which in majority cases contains only 1 element.
+ */
+static QJsonArray tryExtractQmlPluginURIs(const QStaticPlugin &plugin)
+{
+    const auto isQmlPlugin = [](const auto *pluginInstance, auto &&pluginMetadata) -> bool {
         const QString iid = pluginMetadata.value(QLatin1String("IID")).toString();
+        const bool isQmlExtensionIID = iid == QLatin1String(QQmlEngineExtensionInterface_iid)
+                || iid == QLatin1String(QQmlExtensionInterface_iid)
+                || iid == QLatin1String(QQmlExtensionInterface_iid_old);
         if (Q_UNLIKELY(iid == QLatin1String(QQmlExtensionInterface_iid_old))) {
-            qWarning() << "Found plugin with old IID, this will be unsupported in upcoming Qt "
-                          "releases:"
+            qWarning() << QQmlImports::tr(
+                    "Found plugin with old IID, this will be unsupported in upcoming Qt "
+                    "releases:")
                        << pluginMetadata;
-            return true;
         }
-        return iid == QLatin1String(QQmlEngineExtensionInterface_iid)
-                || iid == QLatin1String(QQmlExtensionInterface_iid);
-    };
-    const auto verifyInstance = [](const auto *pluginInstance) -> bool {
+        if (!isQmlExtensionIID) {
+            return false;
+        }
         return qobject_cast<const QQmlEngineExtensionPlugin *>(pluginInstance)
                 || qobject_cast<const QQmlExtensionPlugin *>(pluginInstance);
     };
 
     const auto &pluginMetadata = plugin.metaData();
     const auto *pluginInstance = plugin.instance();
-    if (!verifyIID(pluginMetadata) || !verifyInstance(pluginInstance)) {
-        return { plugin, {} };
+    if (!isQmlPlugin(pluginInstance, pluginMetadata)) {
+        return {};
     }
 
-    const QJsonArray metaTagsUriList = pluginMetadata.value(QStringLiteral("uri")).toArray();
-    if (metaTagsUriList.isEmpty()) {
-        qWarning() << QQmlImports::tr("static plugin with name \"%2\" has no metadata URI")
+    const QJsonArray metadataUriList = pluginMetadata.value(QStringLiteral("uri")).toArray();
+    if (metadataUriList.isEmpty()) {
+        qWarning() << QQmlImports::tr("qml static plugin with name \"%2\" has no metadata URI")
                               .arg(pluginInstance->metaObject()->className())
                    << pluginMetadata;
-        return { plugin, {} };
+        return {};
     }
-    return { plugin, metaTagsUriList };
+    return metadataUriList;
 }
 
-static QVector<QStaticPluginData> makePlugins()
+static QVector<StaticPluginMapping> staticQmlPlugins()
 {
-    QVector<QStaticPluginData> plugins;
-    // To avoid traversing all static plugins for all imports, we cut down
-    // the list the first time called to only contain QML plugins:
+    QVector<StaticPluginMapping> qmlPlugins;
     const auto staticPlugins = QPluginLoader::staticPlugins();
-    for (const QStaticPlugin &plugin : staticPlugins) {
-        const auto staticPluginData = tryConvertToStaticPluginData(plugin);
-        if (!staticPluginData.uriList.empty()) {
-            plugins.append(staticPluginData);
+    qmlPlugins.reserve(staticPlugins.size());
+
+    for (const auto &plugin : staticPlugins) {
+        // Filter out static plugins which are not Qml plugins
+        for (const QJsonValueConstRef &pluginURI : tryExtractQmlPluginURIs(plugin)) {
+            qmlPlugins.append({ plugin, pluginURI.toString() });
         }
     }
-    return plugins;
+    return qmlPlugins;
 }
 
 /*
     Returns the list of possible versioned URI combinations. For example, if \a uri is
-    QtQml.Models, \a vmaj is 2, and \a vmin is 0, this method returns the following:
+    (id = QtQml.Models, (vmaj = 2, vmin = 0)), this method returns the following:
     [QtQml.Models.2.0, QtQml.2.0.Models, QtQml.Models.2, QtQml.2.Models, QtQml.Models]
  */
-static QStringList versionUriList(const QString &uri, QTypeRevision version)
+static QStringList versionUriList(const VersionedURI &uri)
 {
     QStringList result;
     for (int mode = QQmlImports::FullyVersioned; mode <= QQmlImports::Unversioned; ++mode) {
-        int index = uri.size();
+        int index = uri.id.size();
         do {
-            QString versionUri = uri;
-            versionUri.insert(index, QQmlImports::versionString(
-                                  version, QQmlImports::ImportVersion(mode)));
+            QString versionUri = uri.id;
+            versionUri.insert(
+                    index,
+                    QQmlImports::versionString(uri.version, QQmlImports::ImportVersion(mode)));
             result += versionUri;
 
-            index = uri.lastIndexOf(u'.', index - 1);
+            index = uri.id.lastIndexOf(u'.', index - 1);
         } while (index > 0 && mode != QQmlImports::Unversioned);
     }
     return result;
+}
+
+/*
+    Get all static plugins that are QML plugins and has a meta data URI that matches with one of
+    \a versionUris, which is a list of all possible versioned URI combinations - see
+   versionUriList() above.
+ */
+static QVector<StaticPluginMapping> staticQmlPluginsMatchingURI(const VersionedURI &uri)
+{
+    static const auto qmlPlugins = staticQmlPlugins();
+
+    // Since plugin metadata URIs can be anything from
+    // fully versioned to unversioned, we need to compare with differnt version strings.
+    // If a module has several plugins, they must all have the same version. Start by
+    // populating pluginPairs with relevant plugins to cut the list short early on:
+    const QStringList versionedURIs = versionUriList(uri);
+    QVector<StaticPluginMapping> matches;
+    std::copy_if(qmlPlugins.begin(), qmlPlugins.end(), std::back_inserter(matches),
+                 [&](const auto &pluginMapping) {
+                     return versionedURIs.contains(pluginMapping.metadataURI);
+                 });
+    return matches;
 }
 
 static bool unloadPlugin(const std::pair<const QString, QmlPlugin> &plugin)
@@ -510,28 +548,6 @@ QString QQmlPluginImporter::resolvePlugin(const QString &qmldirPluginPath, const
     return QString();
 }
 
-/*
-    Get all static plugins that are QML plugins and has a meta data URI that matches with one of
-    \a versionUris, which is a list of all possible versioned URI combinations - see versionUriList()
-    above.
- */
-QVector<QStaticPluginData>
-QQmlPluginImporter::staticPluginsFilteredByUris(const QStringList &versionUris)
-{
-    static const auto plugins = makePlugins();
-    QVector<QStaticPluginData> result;
-    for (const auto &plugin : plugins) {
-        // A plugin can be set up to handle multiple URIs, so go through the list:
-        for (const QJsonValueConstRef metaTagUri : plugin.uriList) {
-            if (versionUris.contains(metaTagUri.toString())) {
-                result.append(plugin);
-                break;
-            }
-        }
-    }
-    return result;
-}
-
 QTypeRevision QQmlPluginImporter::importPlugins() {
     const auto qmldirPlugins = qmldir->plugins();
     const int qmldirPluginCount = qmldirPlugins.size();
@@ -545,81 +561,75 @@ QTypeRevision QQmlPluginImporter::importPlugins() {
             && qmldirPath.endsWith(u'/' + QString(uri).replace(u'.', u'/'));
     const QString moduleId = canUseUris ? uri : qmldir->qmldirLocation();
 
-    if (!typeLoader->isModulePluginProcessingDone(moduleId)) {
-        // First search for listed qmldir plugins dynamically. If we cannot resolve them all, we
-        // continue searching static plugins that has correct metadata uri. Note that since we
-        // only know the uri for a static plugin, and not the filename, we cannot know which
-        // static plugin belongs to which listed plugin inside qmldir. And for this reason,
-        // mixing dynamic and static plugins inside a single module is not recommended.
+    if (typeLoader->isModulePluginProcessingDone(moduleId)) {
+        return QQmlImports::validVersion(importVersion);
+    }
 
-        int dynamicPluginsFound = 0;
-        int staticPluginsLoaded = 0;
+    // First search for listed qmldir plugins dynamically. If we cannot resolve them all, we
+    // continue searching static plugins that has correct metadata uri. Note that since we
+    // only know the uri for a static plugin, and not the filename, we cannot know which
+    // static plugin belongs to which listed plugin inside qmldir. And for this reason,
+    // mixing dynamic and static plugins inside a single module is not recommended.
 
-        for (const QQmlDirParser::Plugin &plugin : qmldirPlugins) {
-            const QString resolvedFilePath = resolvePlugin(plugin.path, plugin.name);
+    int dynamicPluginsFound = 0;
+    int staticPluginsLoaded = 0;
 
-            if (!canUseUris && resolvedFilePath.isEmpty())
+    for (const QQmlDirParser::Plugin &plugin : qmldirPlugins) {
+        const QString resolvedFilePath = resolvePlugin(plugin.path, plugin.name);
+
+        if (!canUseUris && resolvedFilePath.isEmpty())
+            continue;
+
+        importVersion = importDynamicPlugin(
+                resolvedFilePath, canUseUris ? uri : QFileInfo(resolvedFilePath).absoluteFilePath(),
+                plugin.optional);
+        if (importVersion.isValid())
+            ++dynamicPluginsFound;
+        else if (!resolvedFilePath.isEmpty())
+            return QTypeRevision();
+    }
+
+    if (dynamicPluginsFound < qmldirPluginCount) {
+        // Check if the missing plugins can be resolved statically. We do this by looking at
+        // the URIs embedded in a plugins meta data.
+        const auto pluginPairs = staticQmlPluginsMatchingURI({ uri, importVersion });
+
+        for (const auto &pluginWithURI : std::as_const(pluginPairs)) {
+            QObject *instance = pluginWithURI.plugin.instance();
+            importVersion = importStaticPlugin(
+                    instance, canUseUris ? uri : QString::asprintf("%p", instance));
+            if (!importVersion.isValid()) {
                 continue;
-
-            importVersion = importDynamicPlugin(
-                        resolvedFilePath,
-                        canUseUris ? uri : QFileInfo(resolvedFilePath).absoluteFilePath(),
-                        plugin.optional);
-            if (importVersion.isValid())
-                ++dynamicPluginsFound;
-            else if (!resolvedFilePath.isEmpty())
-                return QTypeRevision();
+            }
+            staticPluginsLoaded++;
+            qCDebug(lcQmlImport) << "importExtension" << "loaded static plugin "
+                                 << pluginWithURI.metadataURI;
         }
-
-        if (dynamicPluginsFound < qmldirPluginCount) {
-            // Check if the missing plugins can be resolved statically. We do this by looking at
-            // the URIs embedded in a plugins meta data. Since those URIs can be anything from
-            // fully versioned to unversioned, we need to compare with differnt version strings.
-            // If a module has several plugins, they must all have the same version. Start by
-            // populating pluginPairs with relevant plugins to cut the list short early on:
-            const QStringList versionUris = versionUriList(uri, importVersion);
-            const auto pluginPairs = staticPluginsFilteredByUris(versionUris);
-
-            for (const QStaticPluginData &pair : std::as_const(pluginPairs)) {
-                for (const QJsonValueConstRef metaTagUri : pair.uriList) {
-                    QObject *instance = pair.plugin.instance();
-                    importVersion = importStaticPlugin(
-                            instance, canUseUris ? uri : QString::asprintf("%p", instance));
-                    if (!importVersion.isValid()) {
-                        continue;
-                    }
-                    staticPluginsLoaded++;
-                    qCDebug(lcQmlImport) << "importExtension" << "loaded static plugin "
-                                         << metaTagUri.toString();
-                    break;
-                }
-            }
-            if (!pluginPairs.empty() && staticPluginsLoaded == 0) {
-                // found matched plugins, but failed to load, early exit to preserve the error
-                return QTypeRevision();
-            }
-        }
-
-        if ((dynamicPluginsFound + staticPluginsLoaded) < qmldirPluginCount) {
-            if (errors) {
-                QQmlError error;
-                if (qmldirPluginCount > 1 && staticPluginsLoaded > 0) {
-                    error.setDescription(
-                            QQmlImports::tr("could not resolve all plugins for module \"%1\"")
-                                    .arg(uri));
-                } else {
-                    error.setDescription(
-                            QQmlImports::tr("module \"%1\" plugin \"%2\" not found")
-                                    .arg(uri, qmldirPlugins[dynamicPluginsFound].name));
-                }
-                error.setUrl(QUrl::fromLocalFile(qmldir->qmldirLocation()));
-                errors->prepend(error);
-            }
+        if (!pluginPairs.empty() && staticPluginsLoaded == 0) {
+            // found matched plugins, but failed to load, early exit to preserve the error
             return QTypeRevision();
         }
-
-        typeLoader->setModulePluginProcessingDone(moduleId);
     }
+
+    if ((dynamicPluginsFound + staticPluginsLoaded) < qmldirPluginCount) {
+        if (errors) {
+            QQmlError error;
+            if (qmldirPluginCount > 1 && staticPluginsLoaded > 0) {
+                error.setDescription(
+                        QQmlImports::tr("could not resolve all plugins for module \"%1\"")
+                                .arg(uri));
+            } else {
+                error.setDescription(QQmlImports::tr("module \"%1\" plugin \"%2\" not found")
+                                             .arg(uri, qmldirPlugins[dynamicPluginsFound].name));
+            }
+            error.setUrl(QUrl::fromLocalFile(qmldir->qmldirLocation()));
+            errors->prepend(error);
+        }
+        return QTypeRevision();
+    }
+
+    typeLoader->setModulePluginProcessingDone(moduleId);
+
     return QQmlImports::validVersion(importVersion);
 }
 
