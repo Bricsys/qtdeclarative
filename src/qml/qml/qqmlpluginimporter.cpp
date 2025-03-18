@@ -64,8 +64,7 @@ struct QStaticPluginData
     QJsonArray uriList;
 };
 
-QStaticPluginData tryConvertToStaticPluginData(const QStaticPlugin &plugin,
-                                               QList<QQmlError> *errors = nullptr)
+QStaticPluginData tryConvertToStaticPluginData(const QStaticPlugin &plugin)
 {
     const auto verifyIID = [](auto &&pluginMetadata) -> bool {
         const QString iid = pluginMetadata.value(QLatin1String("IID")).toString();
@@ -91,31 +90,22 @@ QStaticPluginData tryConvertToStaticPluginData(const QStaticPlugin &plugin,
 
     const QJsonArray metaTagsUriList = pluginMetadata.value(QStringLiteral("uri")).toArray();
     if (metaTagsUriList.isEmpty()) {
-        const auto error = QQmlImports::tr("static plugin with name \"%2\" has no metadata URI")
-                                   .arg(pluginInstance->metaObject()->className());
-        qWarning() << error << pluginMetadata;
-
-        if (errors) {
-            QQmlError error;
-            error.setDescription(
-                    QQmlImports::tr("static plugin with name \"%2\" "
-                                    "has no metadata URI")
-                            .arg(QString::fromUtf8(pluginInstance->metaObject()->className())));
-            errors->prepend(error);
-        }
+        qWarning() << QQmlImports::tr("static plugin with name \"%2\" has no metadata URI")
+                              .arg(pluginInstance->metaObject()->className())
+                   << pluginMetadata;
         return { plugin, {} };
     }
     return { plugin, metaTagsUriList };
 }
 
-static QVector<QStaticPluginData> makePlugins(QList<QQmlError> *errors = nullptr)
+static QVector<QStaticPluginData> makePlugins()
 {
     QVector<QStaticPluginData> plugins;
     // To avoid traversing all static plugins for all imports, we cut down
     // the list the first time called to only contain QML plugins:
     const auto staticPlugins = QPluginLoader::staticPlugins();
     for (const QStaticPlugin &plugin : staticPlugins) {
-        const auto staticPluginData = tryConvertToStaticPluginData(plugin, errors);
+        const auto staticPluginData = tryConvertToStaticPluginData(plugin);
         if (!staticPluginData.uriList.empty()) {
             plugins.append(staticPluginData);
         }
@@ -528,17 +518,7 @@ QString QQmlPluginImporter::resolvePlugin(const QString &qmldirPluginPath, const
 QVector<QStaticPluginData>
 QQmlPluginImporter::staticPluginsFilteredByUris(const QStringList &versionUris)
 {
-    static const auto plugins = makePlugins(errors);
-    if (errors && !errors->empty()) {
-        const QQmlError poppedError = errors->takeFirst();
-        QQmlError error;
-        error.setDescription(QQmlImports::tr("Static plugin for module \"%1\" has error: %2")
-                                     .arg(uri, poppedError.description()));
-        error.setUrl(QUrl::fromLocalFile(qmldir->qmldirLocation()));
-        errors->prepend(error);
-        return {};
-    }
-
+    static const auto plugins = makePlugins();
     QVector<QStaticPluginData> result;
     for (const auto &plugin : plugins) {
         // A plugin can be set up to handle multiple URIs, so go through the list:
@@ -599,9 +579,6 @@ QTypeRevision QQmlPluginImporter::importPlugins() {
             // populating pluginPairs with relevant plugins to cut the list short early on:
             const QStringList versionUris = versionUriList(uri, importVersion);
             const auto pluginPairs = staticPluginsFilteredByUris(versionUris);
-            if (errors && !errors->empty()) {
-                return QTypeRevision();
-            }
 
             for (const QStaticPluginData &pair : std::as_const(pluginPairs)) {
                 for (const QJsonValueConstRef metaTagUri : pair.uriList) {
