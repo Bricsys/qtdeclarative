@@ -1026,7 +1026,8 @@ void QQmlJSImportVisitor::checkRequiredProperties()
 
     for (const auto &[_, defScope] : m_scopesByIrLocation.asKeyValueRange()) {
         if (defScope->isFileRootComponent() || defScope->isInlineComponent()
-                || defScope->componentRootStatus() != QQmlJSScope::IsComponentRoot::No) {
+                || defScope->componentRootStatus() != QQmlJSScope::IsComponentRoot::No
+            || defScope->scopeType() != QQmlSA::ScopeType::QMLScope) {
             continue;
         }
 
