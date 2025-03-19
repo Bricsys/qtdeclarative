@@ -14,14 +14,14 @@ T.MenuBar {
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding)
 
-    spacing: config.spacing || 0
+    spacing: __config.spacing || 0
 
-    topPadding: SafeArea.margins.top + (config.topPadding || 0)
-    bottomPadding: SafeArea.margins.bottom + (config.bottomPadding || 0)
-    leftPadding: SafeArea.margins.left + (config.leftPadding || 0)
-    rightPadding: SafeArea.margins.right + (config.rightPadding || 0)
+    topPadding: SafeArea.margins.top + (__config.topPadding || 0)
+    bottomPadding: SafeArea.margins.bottom + (__config.bottomPadding || 0)
+    leftPadding: SafeArea.margins.left + (__config.leftPadding || 0)
+    rightPadding: SafeArea.margins.right + (__config.rightPadding || 0)
 
-    readonly property var config: Config.controls.toolbar["normal"] || {}
+    readonly property var __config: Config.controls.toolbar["normal"] || {}
 
     delegate: MenuBarItem { }
 
@@ -33,6 +33,6 @@ T.MenuBar {
     }
 
     background: Impl.StyleImage {
-        imageConfig: control.config.background
+        imageConfig: control.__config.background
     }
 }
