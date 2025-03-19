@@ -657,6 +657,7 @@ public:
     bool canEdit(const QModelIndex tappedIndex, bool warn);
     bool editFromKeyEvent(QKeyEvent *e);
     void closeEditorAndCommit();
+    QObject *installEventFilterOnFocusObjectInsideEditItem();
 
     // QQuickSelectable
     QQuickItem *selectionPointerHandlerTarget() const override;
