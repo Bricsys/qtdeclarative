@@ -13,24 +13,24 @@ T.ToolBar {
     implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
                              implicitContentHeight + topPadding + bottomPadding)
 
-    spacing: config.spacing || 0
+    spacing: __config.spacing || 0
 
-    topPadding: SafeArea.margins.top + (config.topPadding || 0)
-    bottomPadding: SafeArea.margins.bottom + (config.bottomPadding || 0)
-    leftPadding: SafeArea.margins.left + (config.leftPadding || 0)
-    rightPadding: SafeArea.margins.right + (config.rightPadding || 0)
+    topPadding: SafeArea.margins.top + (__config.topPadding || 0)
+    bottomPadding: SafeArea.margins.bottom + (__config.bottomPadding || 0)
+    leftPadding: SafeArea.margins.left + (__config.leftPadding || 0)
+    rightPadding: SafeArea.margins.right + (__config.rightPadding || 0)
 
-    topInset: -config.topInset || 0
-    bottomInset: -config.bottomInset || 0
-    leftInset: -config.leftInset || 0
-    rightInset: -config.rightInset || 0
+    topInset: -__config.topInset || 0
+    bottomInset: -__config.bottomInset || 0
+    leftInset: -__config.leftInset || 0
+    rightInset: -__config.rightInset || 0
 
     readonly property string __currentState: position === ToolBar.Header
         ? (enabled ? "normal" : "disabled")
         : (enabled ? "normal_footer" : "disabled_footer")
-    readonly property var config: Config.controls.toolbar[__currentState] || {}
+    readonly property var __config: Config.controls.toolbar[__currentState] || {}
 
     background: Impl.StyleImage {
-        imageConfig: control.config.background
+        imageConfig: control.__config.background
     }
 }
