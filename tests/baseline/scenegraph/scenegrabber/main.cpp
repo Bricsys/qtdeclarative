@@ -76,7 +76,7 @@ private slots:
             initDone = true;
             qCDebug(lcGrabber) << "Starting grabbing";
         }
-        grabTimer->start();
+        grab();
     }
 
     void grab()
@@ -85,8 +85,10 @@ private slots:
             qCDebug(lcGrabber) << "Already grabbing, skipping";
             return;
         }
-
         QScopedValueRollback grabGuard(isGrabbing, true);
+
+        if (grabNo > 0 && grabTimer->remainingTime() > grabTimer->interval() / 10)
+            return;
 
         grabNo++;
         qCDebug(lcGrabber) << "Starting grab no." << grabNo;
