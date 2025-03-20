@@ -2486,13 +2486,13 @@ void QQuickPathRectangle::setRadius(qreal newRadius)
         return;
     _extra->radius = newRadius;
     emit radiusChanged();
-    if (!(_extra->isCornerRadiusSet & (1 << Qt::TopLeftCorner)))
+    if (!(_extra->isRadiusSet(Qt::TopLeftCorner)))
         emit topLeftRadiusChanged();
-    if (!(_extra->isCornerRadiusSet & (1 << Qt::TopRightCorner)))
+    if (!(_extra->isRadiusSet(Qt::TopRightCorner)))
         emit topRightRadiusChanged();
-    if (!(_extra->isCornerRadiusSet & (1 << Qt::BottomLeftCorner)))
+    if (!(_extra->isRadiusSet(Qt::BottomLeftCorner)))
         emit bottomLeftRadiusChanged();
-    if (!(_extra->isCornerRadiusSet & (1 << Qt::BottomRightCorner)))
+    if (!(_extra->isRadiusSet(Qt::BottomRightCorner)))
         emit bottomRightRadiusChanged();
     emit changed();
 }
@@ -2504,7 +2504,7 @@ void QQuickPathRectangle::setRadius(qreal newRadius)
 qreal QQuickPathRectangle::cornerRadius(Qt::Corner corner) const
 {
     if (_extra.isAllocated())
-        return (_extra->isCornerRadiusSet & (1 << corner)) ? _extra->cornerRadii[corner] : _extra->radius;
+        return (_extra->isRadiusSet(corner)) ? _extra->cornerRadii[corner] : _extra->radius;
     else
         return 0;
 }
@@ -2512,19 +2512,19 @@ qreal QQuickPathRectangle::cornerRadius(Qt::Corner corner) const
 void QQuickPathRectangle::setCornerRadius(Qt::Corner corner, qreal newCornerRadius)
 {
     if (_extra.value().cornerRadii[corner] == newCornerRadius
-        && (_extra->isCornerRadiusSet & (1 << corner)))
+        && (_extra->isRadiusSet(corner)))
         return;
     _extra->cornerRadii[corner] = newCornerRadius;
-    _extra->isCornerRadiusSet |= (1 << corner);
+    _extra->cornerProperties |= (1 << corner);
 
     emitCornerRadiusChanged(corner);
 }
 
 void QQuickPathRectangle::resetCornerRadius(Qt::Corner corner)
 {
-    if (!_extra.isAllocated() || !(_extra->isCornerRadiusSet & (1 << corner)))
+    if (!_extra.isAllocated() || !(_extra->isRadiusSet(corner)))
         return;
-    _extra->isCornerRadiusSet &= ~(1 << corner);
+    _extra->cornerProperties &= ~(1 << corner);
     emitCornerRadiusChanged(corner);
 }
 
@@ -2556,22 +2556,26 @@ void QQuickPathRectangle::emitCornerRadiusChanged(Qt::Corner corner)
 
 bool QQuickPathRectangle::hasBevel() const
 {
-    return _extra.isAllocated() ? _extra->bevel : 0;
+    return _extra.isAllocated() ? (_extra->cornerProperties & (1 << 8)) != 0 : false;
 }
 
 void QQuickPathRectangle::setBevel(bool bevel)
 {
-    if (_extra.value().bevel == bevel)
+    if (((_extra.value().cornerProperties & (1 << 8)) != 0) == bevel)
         return;
-    _extra->bevel = bevel;
+    if (bevel)
+        _extra->cornerProperties |= (1 << 8);
+    else
+        _extra->cornerProperties &= ~(1 << 8);
+
     emit bevelChanged();
-    if (!_extra->cornerBevel[Qt::TopLeftCorner].has_value())
+    if (!(_extra->isBevelSet(Qt::TopLeftCorner)))
         emit topLeftBevelChanged();
-    if (!_extra->cornerBevel[Qt::TopRightCorner].has_value())
+    if (!(_extra->isBevelSet(Qt::TopRightCorner)))
         emit topRightBevelChanged();
-    if (!_extra->cornerBevel[Qt::BottomLeftCorner].has_value())
+    if (!(_extra->isBevelSet(Qt::BottomLeftCorner)))
         emit bottomLeftBevelChanged();
-    if (!_extra->cornerBevel[Qt::BottomRightCorner].has_value())
+    if (!(_extra->isBevelSet(Qt::BottomRightCorner)))
         emit bottomRightBevelChanged();
     emit changed();
 }
@@ -2583,24 +2587,28 @@ void QQuickPathRectangle::setBevel(bool bevel)
 bool QQuickPathRectangle::cornerBevel(Qt::Corner corner) const
 {
     if (_extra.isAllocated())
-        return !_extra->cornerBevel[corner].has_value() ? _extra->bevel : _extra->cornerBevel[corner].value();
+        return _extra->isBevelSet(corner);
     else
         return false;
 }
 
 void QQuickPathRectangle::setCornerBevel(Qt::Corner corner, bool newCornerBevel)
 {
-    if (_extra.value().cornerBevel[corner] == newCornerBevel)
+    if ((_extra.value().isBevelSet(corner)) == newCornerBevel)
         return;
-    _extra->cornerBevel[corner] = newCornerBevel;
+    if (!newCornerBevel) {
+        resetCornerBevel(corner);
+        return;
+    }
+    _extra->cornerProperties |= (1 << (corner + 4));
     emitCornerBevelChanged(corner);
 }
 
 void QQuickPathRectangle::resetCornerBevel(Qt::Corner corner)
 {
-    if (!_extra.isAllocated() || !_extra->cornerBevel[corner].has_value())
+    if (!_extra.isAllocated() || !(_extra->isBevelSet(corner)))
         return;
-    _extra->cornerBevel[corner].reset();
+    _extra->cornerProperties &= ~(1 << (corner + 4));
     emitCornerBevelChanged(corner);
 }
 
@@ -2641,7 +2649,7 @@ void QQuickPathRectangle::addToPath(QPainterPath &path, const QQuickPathData &da
         const qreal generalDiameter = qMax(qreal(0), qMin(maxDiameter, 2 * _extra->radius));
         auto effectiveDiameter = [&](Qt::Corner corner) {
             qreal radius = _extra->cornerRadii[corner];
-            return (_extra->isCornerRadiusSet & ( 1 << corner)) ? qMin(maxDiameter, 2 * radius) : generalDiameter;
+            return (_extra->isRadiusSet(corner)) ? qMin(maxDiameter, 2 * radius) : generalDiameter;
         };
         const qreal diamTL = effectiveDiameter(Qt::TopLeftCorner);
         const qreal diamTR = effectiveDiameter(Qt::TopRightCorner);

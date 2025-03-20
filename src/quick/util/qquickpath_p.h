@@ -511,14 +511,17 @@ private:
     {
         ExtraData() {
             std::fill_n(cornerRadii, 4, 0);
-            std::fill_n(cornerBevel, 4, std::optional<bool>());
-            isCornerRadiusSet = 0;
+            cornerProperties = 0;
         }
         qreal radius = 0;
         qreal cornerRadii[4];
-        unsigned isCornerRadiusSet : 4;
-        bool bevel = false;
-        std::optional<bool> cornerBevel[4];
+        unsigned cornerProperties :9;
+        inline bool isRadiusSet(Qt::Corner corner) {
+            return cornerProperties & (1 << corner);
+        };
+        inline bool isBevelSet(Qt::Corner corner) {
+            return cornerProperties & (1 << (corner + 4));
+        };
     };
     QLazilyAllocated<ExtraData> _extra;
 };

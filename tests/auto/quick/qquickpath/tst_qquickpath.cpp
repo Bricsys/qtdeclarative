@@ -28,6 +28,7 @@ private slots:
     void rectangleRadii();
     void appendRemove();
     void asynchronous();
+    void cornerProperties();
 
 private:
     void arc(QSizeF scale);
@@ -482,6 +483,71 @@ void tst_QuickPath::asynchronous()
     QCOMPARE(pathElements.count(), 2);
     QTRY_VERIFY(!path->path().isEmpty());
     QCOMPARE(changedSpy.count(), 1);
+}
+
+void tst_QuickPath::cornerProperties()
+{
+    QQuickPathRectangle pathRectangle;
+
+    // Bevel
+    QVERIFY(!pathRectangle.hasBevel());
+    QCOMPARE(pathRectangle.hasTopLeftBevel(), false);
+    QCOMPARE(pathRectangle.hasTopRightBevel(), false);
+    QCOMPARE(pathRectangle.hasBottomLeftBevel(), false);
+    QCOMPARE(pathRectangle.hasBottomRightBevel(), false);
+
+    pathRectangle.setBevel(true);
+    QVERIFY(pathRectangle.hasBevel());
+    QCOMPARE(pathRectangle.hasTopLeftBevel(), false);
+    QCOMPARE(pathRectangle.hasTopRightBevel(), false);
+    QCOMPARE(pathRectangle.hasBottomLeftBevel(), false);
+    QCOMPARE(pathRectangle.hasBottomRightBevel(), false);
+
+    pathRectangle.setBottomLeftBevel(true);
+    QCOMPARE(pathRectangle.hasTopLeftBevel(), false);
+    QCOMPARE(pathRectangle.hasTopRightBevel(), false);
+    QCOMPARE(pathRectangle.hasBottomLeftBevel(), true);
+    QCOMPARE(pathRectangle.hasBottomRightBevel(), false);
+
+    pathRectangle.setBottomLeftBevel(false);
+    pathRectangle.setTopRightBevel(true);
+    QCOMPARE(pathRectangle.hasTopLeftBevel(), false);
+    QCOMPARE(pathRectangle.hasTopRightBevel(), true);
+    QCOMPARE(pathRectangle.hasBottomLeftBevel(), false);
+    QCOMPARE(pathRectangle.hasBottomRightBevel(), false);
+
+    pathRectangle.resetTopRightBevel();
+    QCOMPARE(pathRectangle.hasTopRightBevel(), false);
+    QCOMPARE(pathRectangle.hasTopLeftBevel(), false);
+    QCOMPARE(pathRectangle.hasBottomLeftBevel(), false);
+    QCOMPARE(pathRectangle.hasBottomRightBevel(), false);
+
+    // Radius
+    pathRectangle.setRadius(10.0);
+    QCOMPARE(pathRectangle.radius(), 10.0);
+    QCOMPARE(pathRectangle.topRightRadius(), 10.0);
+    QCOMPARE(pathRectangle.topLeftRadius(), 10.0);
+    QCOMPARE(pathRectangle.bottomLeftRadius(), 10.0);
+    QCOMPARE(pathRectangle.bottomRightRadius(), 10.0);
+
+    pathRectangle.setTopRightRadius(3.0);
+    QCOMPARE(pathRectangle.topRightRadius(), 3.0);
+    QCOMPARE(pathRectangle.radius(), 10.0);
+    QCOMPARE(pathRectangle.topLeftRadius(), 10.0);
+    QCOMPARE(pathRectangle.bottomLeftRadius(), 10.0);
+    QCOMPARE(pathRectangle.bottomRightRadius(), 10.0);
+
+    pathRectangle.setRadius(0.0);
+    QCOMPARE(pathRectangle.topRightRadius(), 3.0);
+    QCOMPARE(pathRectangle.topLeftRadius(), 0.0);
+    QCOMPARE(pathRectangle.bottomLeftRadius(), 0.0);
+    QCOMPARE(pathRectangle.bottomRightRadius(), 0.0);
+
+    pathRectangle.resetTopRightRadius();
+    QCOMPARE(pathRectangle.topRightRadius(), 0.0);
+    QCOMPARE(pathRectangle.topLeftRadius(), 0.0);
+    QCOMPARE(pathRectangle.bottomLeftRadius(), 0.0);
+    QCOMPARE(pathRectangle.bottomRightRadius(), 0.0);
 }
 
 QTEST_MAIN(tst_QuickPath)
