@@ -3060,4 +3060,16 @@ bool QQmlJSImportVisitor::visit(QQmlJS::AST::PatternElement *element)
     return true;
 }
 
+bool QQmlJSImportVisitor::visit(IfStatement *statement)
+{
+    if (BinaryExpression *binary = cast<BinaryExpression *>(statement->expression)) {
+        if (binary->op == QSOperator::Assign) {
+            m_logger->log(
+                    "Assignment in condition: did you meant to use \"===\" or \"==\" instead of \"=\"?"_L1,
+                    qmlAssignmentInCondition, binary->operatorToken);
+        }
+    }
+    return true;
+}
+
 QT_END_NAMESPACE

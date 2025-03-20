@@ -1415,6 +1415,12 @@ void TestQmllint::dirtyJsSnippet_data()
                                         { { "Identifier 'x' has already been declared"_L1, 1, 20 },
                                           { "Note: previous declaration of 'x' here"_L1, 1, 7 } }
                                     };
+
+    QTest::newRow("assignmentInCondition")
+            << u"let xxx = 3; if (xxx=3) return;"_s
+            << Result{ { { "Assignment in condition: did you meant to use \"===\" or \"==\" "
+                           "instead of \"=\"?"_L1,
+                           1, 21 } } };
 }
 
 void TestQmllint::dirtyJsSnippet()
@@ -1444,6 +1450,8 @@ void TestQmllint::cleanJsSnippet_data()
     QTest::newRow("testSnippet") << u"let x = 5"_s;
     QTest::newRow("doubleVar") << u"var x = 5; var y = 5"_s;
     QTest::newRow("doubleInDifferentScopes") << u"const a = 42; for (let a = 1; a < 10; ++a) {}"_s;
+
+    QTest::newRow("notAssignmentInCondition") << u"let x = 3; if (x==3) return;"_s;
 }
 
 void TestQmllint::cleanJsSnippet()

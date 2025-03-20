@@ -103,7 +103,9 @@ using namespace Qt::StringLiterals;
     X(qmlUncreatableType, "uncreatable-type", "UncreatableType",                                   \
       "Warn if uncreatable types are created", QtWarningMsg, false, false)                         \
     X(qmlMissingEnumEntry, "missing-enum-entry", "MissingEnumEntry",                               \
-      "Warn about using missing enum values.", QtWarningMsg, false, false)
+      "Warn about using missing enum values.", QtWarningMsg, false, false)                         \
+    X(qmlAssignmentInCondition, "assignment-in-condition", "AssignmentInCondition",                \
+      "Warn about using assignment in conditions.", QtWarningMsg, false, false)
 
 #define X(category, name, setting, description, level, ignored, isDefault) \
     const QQmlSA::LoggerWarningId category{ name };

@@ -77,6 +77,7 @@ extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlTopLevelComponent;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlTranslationFunctionMismatch;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUncreatableType;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlMissingEnumEntry;
+extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlAssignmentInCondition;
 
 QT_END_NAMESPACE
 

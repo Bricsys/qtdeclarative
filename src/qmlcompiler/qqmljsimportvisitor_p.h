@@ -155,6 +155,8 @@ protected:
 
     bool visit(QQmlJS::AST::PatternElement *) override;
 
+    bool visit(QQmlJS::AST::IfStatement *) override;
+
     void throwRecursionDepthError() override;
 
     QString m_implicitImportDirectory;
