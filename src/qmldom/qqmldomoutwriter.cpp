@@ -12,61 +12,44 @@ QT_BEGIN_NAMESPACE
 namespace QQmlJS {
 namespace Dom {
 
-OutWriterState::OutWriterState(const Path &itCanonicalPath, const DomItem &it)
-    : itemCanonicalPath(itCanonicalPath), item(it)
+static inline OutWriter::RegionToCommentMap extractComments(const DomItem &it)
 {
-    DomItem cRegions = it.field(Fields::comments);
-    if (const RegionComments *cRegionsPtr = cRegions.as<RegionComments>())
-        pendingComments = cRegionsPtr->regionComments();
-}
-
-void OutWriterState::closeState(OutWriter &w)
-{
-    if (!w.skipComments && !pendingComments.isEmpty())
-        qCWarning(writeOutLog) << "PendingComments when closing item "
-                               << item.canonicalPath().toString() << "for regions"
-                               << pendingComments.keys();
-}
-
-OutWriterState &OutWriter::state(int i)
-{
-    return states[states.size() - 1 - i];
+    OutWriter::RegionToCommentMap comments;
+    if (const RegionComments *cRegionsPtr = it.field(Fields::comments).as<RegionComments>()) {
+        comments = cRegionsPtr->regionComments();
+    }
+    return comments;
 }
 
 void OutWriter::itemStart(const DomItem &it)
 {
-    if (!topLocation->path())
-        topLocation->setPath(it.canonicalPath());
-    Path itP = it.canonicalPath();
-
-    states.append(OutWriterState(itP, it));
-
+    pendingComments.push(extractComments(it));
     regionStart(MainRegion);
 }
 
-void OutWriter::itemEnd(const DomItem &it)
+void OutWriter::itemEnd()
 {
-    Q_ASSERT(states.size() > 0);
-    Q_ASSERT(state().item == it);
+    Q_ASSERT(!pendingComments.isEmpty());
     regionEnd(MainRegion);
-    state().closeState(*this);
-    states.removeLast();
+    pendingComments.pop();
 }
 
 void OutWriter::regionStart(FileLocationRegion region)
 {
-    if (!skipComments && state().pendingComments.contains(region)) {
-        state().pendingComments[region].writePre(*this);
+    const auto &comments = pendingComments.top();
+    if (!skipComments && comments.contains(region)) {
+        comments[region].writePre(*this);
     }
 }
 
 void OutWriter::regionEnd(FileLocationRegion region)
 {
-    if (state().pendingComments.contains(region)) {
+    auto &comments = pendingComments.top();
+    if (comments.contains(region)) {
         if (!skipComments) {
-            state().pendingComments[region].writePost(*this);
+            comments[region].writePost(*this);
         }
-        state().pendingComments.remove(region);
+        comments.remove(region);
     }
 }
 

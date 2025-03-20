@@ -17,7 +17,6 @@
 
 #include "qqmldom_global.h"
 #include "qqmldom_fwd_p.h"
-#include "qqmldomfilelocations_p.h"
 #include "qqmldomlinewriter_p.h"
 #include "qqmldomcomments_p.h"
 
@@ -28,18 +27,6 @@ QT_BEGIN_NAMESPACE
 namespace QQmlJS {
 namespace Dom {
 
-class QMLDOM_EXPORT OutWriterState
-{
-public:
-    OutWriterState(const Path &itPath, const DomItem &it);
-
-    void closeState(OutWriter &);
-
-    Path itemCanonicalPath;
-    DomItem item;
-    QMap<FileLocationRegion, CommentedElement> pendingComments;
-};
-
 class QMLDOM_EXPORT OutWriter
 {
 public:
@@ -49,12 +36,11 @@ public:
     bool skipComments = false;
     LineWriter &lineWriter;
     Path currentPath;
-    FileLocations::Tree topLocation;
     QString writtenStr;
-    QList<OutWriterState> states;
+    using RegionToCommentMap = QMap<FileLocationRegion, CommentedElement>;
+    QStack<RegionToCommentMap> pendingComments;
 
-    explicit OutWriter(LineWriter &lw)
-        : lineWriter(lw), topLocation(FileLocations::createTree(Path()))
+    explicit OutWriter(LineWriter &lw) : lineWriter(lw)
     {
         lineWriter.addInnerSink([this](QStringView s) { writtenStr.append(s); });
         indenterId =
@@ -65,8 +51,6 @@ public:
                     return true;
                 });
     }
-
-    OutWriterState &state(int i = 0);
 
     int increaseIndent(int level = 1)
     {
@@ -82,7 +66,7 @@ public:
     }
 
     void itemStart(const DomItem &it);
-    void itemEnd(const DomItem &it);
+    void itemEnd();
     void regionStart(FileLocationRegion region);
     void regionEnd(FileLocationRegion regino);
 

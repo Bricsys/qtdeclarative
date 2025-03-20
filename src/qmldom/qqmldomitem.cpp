@@ -1231,7 +1231,7 @@ void DomItem::writeOut(OutWriter &ow) const
 
 void DomItem::writeOutPost(OutWriter &ow) const
 {
-    ow.itemEnd(*this);
+    ow.itemEnd();
 }
 
 DomItem::WriteOutCheckResult DomItem::performWriteOutChecks(const DomItem &reformatted,

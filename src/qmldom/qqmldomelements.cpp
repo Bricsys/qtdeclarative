@@ -1912,7 +1912,7 @@ QString MethodInfo::preCode(const DomItem &self) const
     }
     ow.writeRegion(RightParenthesisRegion);
     ow.ensureSpace().writeRegion(LeftBraceRegion);
-    ow.itemEnd(standin);
+    ow.itemEnd();
     ow.eof();
     return res;
 }
@@ -1992,7 +1992,7 @@ QString MethodInfo::signature(const DomItem &self) const
 
     writeOutReturnType(ow);
 
-    ow.itemEnd(self);
+    ow.itemEnd();
     lw.eof(false);
     res.flush();
     return resultStr.simplified();
