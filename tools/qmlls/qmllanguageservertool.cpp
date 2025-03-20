@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
 #include <private/qmllsmain_p.h>
+#include <QtCore/qcoreapplication.h>
 
 // To debug:
 //
@@ -27,7 +28,11 @@
 // * statup can be slowed down to have the time to attach via the
 //   -w <nSeconds> flag.
 
+using namespace Qt::StringLiterals;
+
 int main(int argv, char *argc[])
 {
+    QCoreApplication::setApplicationVersion(QLatin1String(QT_VERSION_STR));
+    QCoreApplication::setApplicationName("qmlls"_L1);
     return QmlLsp::qmllsMain(argv, argc);
 }

@@ -213,8 +213,6 @@ int qmllsMain(int argv, char *argc[])
 
     QHashSeed::setDeterministicGlobalSeed();
     QCoreApplication app(argv, argc);
-    QCoreApplication::setApplicationName("qmlls"_L1);
-    QCoreApplication::setApplicationVersion(QLatin1String(QT_VERSION_STR));
 
     QCommandLineParser parser;
     QQmlToolingSettings settings("qmlls"_L1);
@@ -289,7 +287,16 @@ int qmllsMain(int argv, char *argc[])
     const QString qmlImportNoDefaultSetting = "DisableDefaultImports"_L1;
     settings.addOption(qmlImportNoDefaultSetting, false);
 
+    // we can't use parser.addVersionOption() because we already have one '-v' option for verbose...
+    QCommandLineOption versionOption("version"_L1, "Displays version information."_L1);
+    parser.addOption(versionOption);
+
     parser.process(app);
+
+    if (parser.isSet(versionOption)) {
+        parser.showVersion();
+        return EXIT_SUCCESS;
+    }
 
     if (parser.isSet(writeDefaultsOption)) {
         return settings.writeDefaults() ? 0 : 1;
