@@ -14,9 +14,8 @@ QT_BEGIN_NAMESPACE
 namespace QQmlJS {
 namespace Dom {
 
-OutWriterState::OutWriterState(
-        const Path &itCanonicalPath, const DomItem &it, const FileLocations::Tree &fLoc)
-    : itemCanonicalPath(itCanonicalPath), item(it), currentMap(fLoc)
+OutWriterState::OutWriterState(const Path &itCanonicalPath, const DomItem &it)
+    : itemCanonicalPath(itCanonicalPath), item(it)
 {
     DomItem cRegions = it.field(Fields::comments);
     if (const RegionComments *cRegionsPtr = cRegions.as<RegionComments>())
@@ -50,10 +49,9 @@ void OutWriter::itemStart(const DomItem &it)
 {
     if (!topLocation->path())
         topLocation->setPath(it.canonicalPath());
-    FileLocations::Tree newFLoc = topLocation;
     Path itP = it.canonicalPath();
 
-    states.append(OutWriterState(itP, it, newFLoc));
+    states.append(OutWriterState(itP, it));
 
     regionStart(MainRegion);
 }
@@ -70,7 +68,6 @@ void OutWriter::itemEnd(const DomItem &it)
 void OutWriter::regionStart(FileLocationRegion region)
 {
     Q_ASSERT(!state().pendingRegions.contains(region));
-    FileLocations::Tree fMap = state().currentMap;
     if (!skipComments && state().pendingComments.contains(region)) {
         state().pendingComments[region].writePre(*this);
     }
@@ -80,7 +77,6 @@ void OutWriter::regionStart(FileLocationRegion region)
 void OutWriter::regionEnd(FileLocationRegion region)
 {
     Q_ASSERT(state().pendingRegions.contains(region));
-    FileLocations::Tree fMap = state().currentMap;
     lineWriter.endSourceLocation(state().pendingRegions.value(region));
     state().pendingRegions.remove(region);
     if (state().pendingComments.contains(region)) {

@@ -31,14 +31,13 @@ namespace Dom {
 class QMLDOM_EXPORT OutWriterState
 {
 public:
-    OutWriterState(const Path &itPath, const DomItem &it, const FileLocations::Tree &fLoc);
+    OutWriterState(const Path &itPath, const DomItem &it);
 
     void closeState(OutWriter &);
 
     Path itemCanonicalPath;
     DomItem item;
     PendingSourceLocationId fullRegionId;
-    FileLocations::Tree currentMap;
     QMap<FileLocationRegion, PendingSourceLocationId> pendingRegions;
     QMap<FileLocationRegion, CommentedElement> pendingComments;
 };
