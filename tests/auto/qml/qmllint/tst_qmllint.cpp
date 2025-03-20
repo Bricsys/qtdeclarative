@@ -1376,6 +1376,10 @@ void TestQmllint::dirtyQmlSnippet_data()
                                 << Result{ { { "Invalid color"_L1, 1, 25 } } };
     QTest::newRow("color-hex6") << u"property color myColor: \"#1234567\""_s
                                 << Result{ { { "Invalid color"_L1, 1, 25 } } };
+
+    QTest::newRow("upperCaseId")
+            << u"id: Root"_s
+            << Result{ { { "Id must start with a lower case letter or an '_'"_L1, 1, 5 } } };
 }
 
 void TestQmllint::dirtyQmlSnippet()
@@ -1407,6 +1411,9 @@ void TestQmllint::cleanQmlSnippet_data()
     QTest::newRow("color-hex") << u"property color myColor: \"#123456\""_s;
     QTest::newRow("color-hex2") << u"property color myColor: \"#FFFFFFFF\""_s;
     QTest::newRow("color-hex3") << u"property color myColor: \"#A0AAff1f\""_s;
+
+    QTest::newRow("lowerCaseId") << u"id: root"_s;
+    QTest::newRow("underScoreId") << u"id: _Root"_s;
 }
 
 void TestQmllint::cleanQmlSnippet()

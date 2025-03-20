@@ -2145,6 +2145,12 @@ void QQmlJSImportVisitor::handleIdDeclaration(QQmlJS::AST::UiScriptBinding *scri
                       statement->expression->firstSourceLocation());
         return QString();
     }();
+
+    if (!name.isEmpty() && !name.front().isLower() && name.front() != u'_') {
+        m_logger->log(u"Id must start with a lower case letter or an '_'"_s, qmlSyntax,
+                      statement->expression->firstSourceLocation());
+    }
+
     m_currentScope->setIdSourceLocation(combine(scriptBinding->statement->firstSourceLocation(),
                                                 scriptBinding->statement->lastSourceLocation()));
     if (m_scopesById.existsAnywhereInDocument(name)) {
