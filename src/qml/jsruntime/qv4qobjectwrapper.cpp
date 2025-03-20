@@ -1678,7 +1678,8 @@ static ReturnedValue CallMethod(const QQmlObjectOrGadget &object, int index, QMe
         for (int ii = 0; ii < argCount; ++ii) {
             if (!args[ii + 1].fromValue(argTypes[ii], engine,
                                         callArgs->args[ii].asValue<Value>())) {
-                qWarning() << QString::fromLatin1("Could not convert argument %1 at").arg(ii);
+                qWarning() << QString::fromLatin1("Could not convert argument %1 from %2 to %3")
+                    .arg(ii).arg(callArgs->args[ii].asValue<Value>().toQStringNoThrow()).arg(argTypes[ii].name());
                 const StackTrace stack = engine->stackTrace();
                 for (const StackFrame &frame : stack) {
                     qWarning() << "\t" << frame.function + QLatin1Char('@') + frame.source
