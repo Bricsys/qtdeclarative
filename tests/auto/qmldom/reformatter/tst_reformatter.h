@@ -89,72 +89,6 @@ private:
     }
 
 private slots:
-    void reindent_data()
-    {
-        QTest::addColumn<QString>("inFile");
-        QTest::addColumn<QString>("outFile");
-
-        QTest::newRow("file1") << QStringLiteral(u"file1.qml") << QStringLiteral(u"file1.qml");
-        QTest::newRow("file1 unindented")
-                << QStringLiteral(u"file1Unindented.qml") << QStringLiteral(u"file1.qml");
-    }
-
-    void reindent()
-    {
-        QFETCH(QString, inFile);
-        QFETCH(QString, outFile);
-
-        QFile fIn(QLatin1String(QT_QMLTEST_DATADIR) + QLatin1String("/reformatter/") + inFile);
-        QVERIFY(fIn.open(QIODevice::ReadOnly | QIODevice::Text));
-        QFile fOut(QLatin1String(QT_QMLTEST_DATADIR) + QLatin1String("/reformatter/") + outFile);
-        QVERIFY(fOut.open(QIODevice::ReadOnly | QIODevice::Text));
-        QTextStream in(&fIn);
-        QTextStream out(&fOut);
-        QString resultStr;
-        QTextStream res(&resultStr);
-        QString line = in.readLine();
-        IndentingLineWriter lw([&res](QStringView s) { res << s; }, QLatin1String("*testStream*"));
-        QList<SourceLocation *> sourceLocations;
-        while (!line.isNull()) {
-            SourceLocation *loc = new SourceLocation;
-            sourceLocations.append(loc);
-            auto pLoc = lw.startSourceLocation([loc](SourceLocation val) { *loc = val; });
-            lw.write(line);
-            lw.endSourceLocation(pLoc);
-            lw.write(u"\n");
-            line = in.readLine();
-        }
-        lw.eof();
-        res.flush();
-        QString fullRes = resultStr;
-        res.seek(0);
-        line = out.readLine();
-        QString resLine = res.readLine();
-        int iLoc = 0;
-        int nextLoc = 0;
-        while (!line.isNull() && !resLine.isNull()) {
-            QCOMPARE(resLine, line);
-            if (iLoc == nextLoc && iLoc < sourceLocations.size()) {
-                QString l2 =
-                        fullRes.mid(sourceLocations[iLoc]->offset, sourceLocations[iLoc]->length);
-                if (!l2.contains(QLatin1Char('\n'))) {
-                    QCOMPARE(l2, line);
-                } else {
-                    qDebug() << "skip checks of multiline location (line was split)" << l2;
-                    iLoc -= l2.count(QLatin1Char('\n'));
-                }
-                ++nextLoc;
-            } else {
-                qDebug() << "skip multiline recover";
-            }
-            ++iLoc;
-            line = out.readLine();
-            resLine = res.readLine();
-        }
-        QCOMPARE(resLine.isNull(), line.isNull());
-        for (auto sLoc : sourceLocations)
-            delete sLoc;
-    }
 
     void lineByLineReformatter_data()
     {
@@ -167,6 +101,9 @@ private slots:
 
         QTest::newRow("file1") << QStringLiteral(u"file1.qml")
                                << QStringLiteral(u"file1Reformatted.qml") << defaultOptions;
+        QTest::newRow("file1 unindented")
+                << QStringLiteral(u"file1Unindented.qml") << QStringLiteral(u"file1Reformatted.qml")
+                << defaultOptions;
 
         QTest::newRow("file2") << QStringLiteral(u"file2.qml")
                                << QStringLiteral(u"file2Reformatted.qml") << defaultOptions;

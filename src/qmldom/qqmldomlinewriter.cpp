@@ -42,12 +42,6 @@ void PendingSourceLocation::changeAtOffset(quint32 offset, qint32 change, qint32
     }
 }
 
-void PendingSourceLocation::commit()
-{
-    if (updater)
-        updater(value);
-}
-
 LineWriter::LineWriter(
         const SinkF &innerSink, const QString &fileName, const LineWriterOptions &options,
         int lineNr, int columnNr, int utf16Offset, const QString &currentLine)
@@ -210,12 +204,11 @@ SourceLocation LineWriter::committedLocation() const
     return SourceLocation(m_utf16Offset, 0, m_lineNr, m_lineUtf16Offset);
 }
 
-PendingSourceLocationId LineWriter::startSourceLocation(std::function<void(SourceLocation)> updater)
+PendingSourceLocationId LineWriter::startSourceLocation()
 {
     PendingSourceLocation res;
     res.id = ++m_lastSourceLocationId;
     res.value = currentSourceLocation();
-    res.updater = updater;
     m_pendingSourceLocations.insert(res.id, res);
     return res.id;
 }
@@ -427,7 +420,6 @@ void LineWriter::commitLine(const QString &eol, TextAddType tType, int untilChar
     while (i != iEnd) {
         auto &pLoc = i.value();
         if (!pLoc.open && pLoc.utf16End() <= endCommit) {
-            pLoc.commit();
             i = m_pendingSourceLocations.erase(i);
         } else {
             ++i;

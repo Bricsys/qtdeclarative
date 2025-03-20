@@ -110,10 +110,8 @@ public:
     quint32 utf16Start() const;
     quint32 utf16End() const;
     void changeAtOffset(quint32 offset, qint32 change, qint32 colChange, qint32 lineChange);
-    void commit();
     PendingSourceLocationId id;
     SourceLocation value;
-    std::function<void(SourceLocation)> updater = nullptr;
     bool open = true;
 };
 
@@ -162,7 +160,7 @@ public:
     void flush();
     void eof(bool ensureNewline = true);
     SourceLocation committedLocation() const;
-    PendingSourceLocationId startSourceLocation(std::function<void(SourceLocation)>);
+    PendingSourceLocationId startSourceLocation();
     void endSourceLocation(PendingSourceLocationId);
     quint32 counter() const { return m_counter; }
     int addTextAddCallback(std::function<bool(LineWriter &, TextAddType)> callback);

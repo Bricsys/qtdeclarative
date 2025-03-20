@@ -74,8 +74,7 @@ void OutWriter::regionStart(FileLocationRegion region)
     if (!skipComments && state().pendingComments.contains(region)) {
         state().pendingComments[region].writePre(*this);
     }
-    state().pendingRegions[region] = lineWriter.startSourceLocation(
-            [region, fMap](SourceLocation l) { FileLocations::addRegion(fMap, region, l); });
+    state().pendingRegions[region] = lineWriter.startSourceLocation();
 }
 
 void OutWriter::regionEnd(FileLocationRegion region)
