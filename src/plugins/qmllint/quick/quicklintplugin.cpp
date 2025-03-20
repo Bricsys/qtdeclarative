@@ -3,6 +3,8 @@
 
 #include "quicklintplugin.h"
 #include "qquickliteralbindingcheck_p.h"
+#include <QtQmlCompiler/private/qqmlsasourcelocation_p.h>
+#include <QtQmlCompiler/private/qqmljsutils_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -16,6 +18,7 @@ static constexpr QQmlSA::LoggerWarningId quickUnexpectedVarType { "Quick.unexpec
 static constexpr QQmlSA::LoggerWarningId quickPropertyChangesParsed { "Quick.property-changes-parsed" };
 static constexpr QQmlSA::LoggerWarningId quickControlsAttachedPropertyReuse { "Quick.controls-attached-property-reuse" };
 static constexpr QQmlSA::LoggerWarningId quickAttachedPropertyReuse { "Quick.attached-property-reuse" };
+static constexpr QQmlSA::LoggerWarningId quickColor { "Quick.color" };
 
 ForbiddenChildrenPropertyValidatorPass::ForbiddenChildrenPropertyValidatorPass(
         QQmlSA::PassManager *manager)
@@ -520,6 +523,203 @@ void VarBindingTypeValidatorPass::onBinding(const QQmlSA::Element &element,
     }
 }
 
+class ColorValidatorPass : public QQmlSA::PropertyPass
+{
+public:
+    ColorValidatorPass(QQmlSA::PassManager *manager);
+
+    void onBinding(const QQmlSA::Element &element, const QString &propertyName,
+                   const QQmlSA::Binding &binding, const QQmlSA::Element &bindingScope,
+                   const QQmlSA::Element &value) override;
+private:
+    QQmlSA::Element m_colorType;
+
+    static inline const QRegularExpression s_hexPattern{ "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"_L1 };
+    // list taken from https://doc.qt.io/qt-6/qcolor.html#fromString
+    QStringList m_colorNames = {
+        u"aliceblue"_s,
+        u"antiquewhite"_s,
+        u"aqua"_s,
+        u"aquamarine"_s,
+        u"azure"_s,
+        u"beige"_s,
+        u"bisque"_s,
+        u"black"_s,
+        u"blanchedalmond"_s,
+        u"blue"_s,
+        u"blueviolet"_s,
+        u"brown"_s,
+        u"burlywood"_s,
+        u"cadetblue"_s,
+        u"chartreuse"_s,
+        u"chocolate"_s,
+        u"coral"_s,
+        u"cornflowerblue"_s,
+        u"cornsilk"_s,
+        u"crimson"_s,
+        u"cyan"_s,
+        u"darkblue"_s,
+        u"darkcyan"_s,
+        u"darkgoldenrod"_s,
+        u"darkgray"_s,
+        u"darkgreen"_s,
+        u"darkgrey"_s,
+        u"darkkhaki"_s,
+        u"darkmagenta"_s,
+        u"darkolivegreen"_s,
+        u"darkorange"_s,
+        u"darkorchid"_s,
+        u"darkred"_s,
+        u"darksalmon"_s,
+        u"darkseagreen"_s,
+        u"darkslateblue"_s,
+        u"darkslategray"_s,
+        u"darkslategrey"_s,
+        u"darkturquoise"_s,
+        u"darkviolet"_s,
+        u"deeppink"_s,
+        u"deepskyblue"_s,
+        u"dimgray"_s,
+        u"dimgrey"_s,
+        u"dodgerblue"_s,
+        u"firebrick"_s,
+        u"floralwhite"_s,
+        u"forestgreen"_s,
+        u"fuchsia"_s,
+        u"gainsboro"_s,
+        u"ghostwhite"_s,
+        u"gold"_s,
+        u"goldenrod"_s,
+        u"gray"_s,
+        u"green"_s,
+        u"greenyellow"_s,
+        u"grey"_s,
+        u"honeydew"_s,
+        u"hotpink"_s,
+        u"indianred"_s,
+        u"indigo"_s,
+        u"ivory"_s,
+        u"khaki"_s,
+        u"lavender"_s,
+        u"lavenderblush"_s,
+        u"lawngreen"_s,
+        u"lemonchiffon"_s,
+        u"lightblue"_s,
+        u"lightcoral"_s,
+        u"lightcyan"_s,
+        u"lightgoldenrodyellow"_s,
+        u"lightgray"_s,
+        u"lightgreen"_s,
+        u"lightgrey"_s,
+        u"lightpink"_s,
+        u"lightsalmon"_s,
+        u"lightseagreen"_s,
+        u"lightskyblue"_s,
+        u"lightslategray"_s,
+        u"lightslategrey"_s,
+        u"lightsteelblue"_s,
+        u"lightyellow"_s,
+        u"lime"_s,
+        u"limegreen"_s,
+        u"linen"_s,
+        u"magenta"_s,
+        u"maroon"_s,
+        u"mediumaquamarine"_s,
+        u"mediumblue"_s,
+        u"mediumorchid"_s,
+        u"mediumpurple"_s,
+        u"mediumseagreen"_s,
+        u"mediumslateblue"_s,
+        u"mediumspringgreen"_s,
+        u"mediumturquoise"_s,
+        u"mediumvioletred"_s,
+        u"midnightblue"_s,
+        u"mintcream"_s,
+        u"mistyrose"_s,
+        u"moccasin"_s,
+        u"navajowhite"_s,
+        u"navy"_s,
+        u"oldlace"_s,
+        u"olive"_s,
+        u"olivedrab"_s,
+        u"orange"_s,
+        u"orangered"_s,
+        u"orchid"_s,
+        u"palegoldenrod"_s,
+        u"palegreen"_s,
+        u"paleturquoise"_s,
+        u"palevioletred"_s,
+        u"papayawhip"_s,
+        u"peachpuff"_s,
+        u"peru"_s,
+        u"pink"_s,
+        u"plum"_s,
+        u"powderblue"_s,
+        u"purple"_s,
+        u"red"_s,
+        u"rosybrown"_s,
+        u"royalblue"_s,
+        u"saddlebrown"_s,
+        u"salmon"_s,
+        u"sandybrown"_s,
+        u"seagreen"_s,
+        u"seashell"_s,
+        u"sienna"_s,
+        u"silver"_s,
+        u"skyblue"_s,
+        u"slateblue"_s,
+        u"slategray"_s,
+        u"slategrey"_s,
+        u"snow"_s,
+        u"springgreen"_s,
+        u"steelblue"_s,
+        u"tan"_s,
+        u"teal"_s,
+        u"thistle"_s,
+        u"tomato"_s,
+        u"turquoise"_s,
+        u"violet"_s,
+        u"wheat"_s,
+        u"white"_s,
+        u"whitesmoke"_s,
+        u"yellow"_s,
+        u"yellowgreen"_s,
+    };
+};
+
+
+ColorValidatorPass::ColorValidatorPass(QQmlSA::PassManager *manager)
+    : PropertyPass(manager), m_colorType(resolveType("QtQuick"_L1, "color"_L1))
+{
+    Q_ASSERT_X(std::is_sorted(m_colorNames.cbegin(), m_colorNames.cend()), "ColorValidatorPass",
+               "m_colorNames should be sorted!");
+}
+
+void ColorValidatorPass::onBinding(const QQmlSA::Element &element, const QString &propertyName,
+                                   const QQmlSA::Binding &binding, const QQmlSA::Element &,
+                                   const QQmlSA::Element &)
+{
+    if (binding.bindingType() != QQmlSA::BindingType::StringLiteral)
+        return;
+    const auto propertyType = element.property(propertyName).type();
+    if (!propertyType || propertyType != m_colorType)
+        return;
+
+    const QString colorName = binding.stringValue();
+    if (s_hexPattern.match(colorName).hasMatch())
+        return;
+
+    if (std::binary_search(m_colorNames.cbegin(), m_colorNames.cend(), colorName))
+        return;
+
+    auto suggestion = QQmlJSUtils::didYouMean(
+            colorName, m_colorNames,
+            QQmlSA::SourceLocationPrivate::sourceLocation(binding.sourceLocation()));
+
+    emitWarningWithOptionalFix(*this, "Invalid color \"%1\"."_L1.arg(colorName), quickColor,
+                               binding.sourceLocation(), suggestion);
+}
+
 void AttachedPropertyReuse::onRead(const QQmlSA::Element &element, const QString &propertyName,
                                    const QQmlSA::Element &readScope,
                                    QQmlSA::SourceLocation location)
@@ -625,6 +825,8 @@ void QmlLintQuickPlugin::registerPasses(QQmlSA::PassManager *manager,
         manager->registerElementPass(std::make_unique<AnchorsValidatorPass>(manager));
         manager->registerElementPass(std::make_unique<PropertyChangesValidatorPass>(manager));
         manager->registerPropertyPass(std::make_unique<QQuickLiteralBindingCheck>(manager),
+                                      QAnyStringView(), QAnyStringView());
+        manager->registerPropertyPass(std::make_unique<ColorValidatorPass>(manager),
                                       QAnyStringView(), QAnyStringView());
 
         auto forbiddenChildProperty =

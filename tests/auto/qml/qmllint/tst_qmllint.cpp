@@ -1359,6 +1359,23 @@ void TestQmllint::dirtyQmlSnippet_data()
                           << Result{ { { "Enum key 'World' has already been declared"_L1, 1, 28 },
                                        { "Note: previous declaration of 'World' here"_L1, 1, 14 },
                                        { "Enum keys should start with an uppercase"_L1, 1, 35 } } };
+
+    QTest::newRow("color-name") << u"property color myColor: \"lbue\""_s
+                                << Result{ { { "Invalid color \"lbue\""_L1, 1, 25 } },
+                                           {},
+                                           { { "Did you mean \"blue\"?", 1, 25 } } };
+    QTest::newRow("color-hex") << u"property color myColor: \"#12345\""_s
+                               << Result{ { { "Invalid color"_L1, 1, 25 } } };
+    QTest::newRow("color-hex2") << u"property color myColor: \"#123456789\""_s
+                                << Result{ { { "Invalid color"_L1, 1, 25 } } };
+    QTest::newRow("color-hex3") << u"property color myColor: \"##123456\""_s
+                                << Result{ { { "Invalid color"_L1, 1, 25 } } };
+    QTest::newRow("color-hex4") << u"property color myColor: \"#123456#\""_s
+                                << Result{ { { "Invalid color"_L1, 1, 25 } } };
+    QTest::newRow("color-hex5") << u"property color myColor: \"#HELLOL\""_s
+                                << Result{ { { "Invalid color"_L1, 1, 25 } } };
+    QTest::newRow("color-hex6") << u"property color myColor: \"#1234567\""_s
+                                << Result{ { { "Invalid color"_L1, 1, 25 } } };
 }
 
 void TestQmllint::dirtyQmlSnippet()
@@ -1384,6 +1401,12 @@ void TestQmllint::cleanQmlSnippet_data()
 
     QTest::newRow("testSnippet") << u"property int qwer: 123"_s;
     QTest::newRow("enum") << u"enum Hello { World, Kitty, DlroW }"_s;
+
+    QTest::newRow("color-name") << u"property color myColor: \"blue\""_s;
+    QTest::newRow("color-name2") << u"property color myColor\nmyColor: \"green\""_s;
+    QTest::newRow("color-hex") << u"property color myColor: \"#123456\""_s;
+    QTest::newRow("color-hex2") << u"property color myColor: \"#FFFFFFFF\""_s;
+    QTest::newRow("color-hex3") << u"property color myColor: \"#A0AAff1f\""_s;
 }
 
 void TestQmllint::cleanQmlSnippet()
