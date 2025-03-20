@@ -102,9 +102,10 @@ using namespace Qt::StringLiterals;
     X(qmlTopLevelComponent, "top-level-component", "TopLevelComponent",                            \
       "Fail when a top level Component are encountered", QtWarningMsg, false, false)               \
     X(qmlUncreatableType, "uncreatable-type", "UncreatableType",                                   \
-      "Warn if uncreatable types are created", QtWarningMsg, false, false)
+      "Warn if uncreatable types are created", QtWarningMsg, false, false)                         \
+    X(qmlMissingEnumEntry, "missing-enum-entry", "MissingEnumEntry",                               \
+      "Warn about using missing enum values.", QtWarningMsg, false, false)
 
-const QQmlSA::LoggerWarningId qmlMissingEnumEntry{ "missing-enum-entry" }; // TODO: fix me
 #define X(category, name, setting, description, level, ignored, isDefault) \
     const QQmlSA::LoggerWarningId category{ name };
 QMLLINT_DEFAULT_CATEGORIES
