@@ -2183,6 +2183,22 @@ bool FixSuggestion::operatorEqualsImpl(const FixSuggestion &lhs, const FixSugges
     return lhs.d_func()->m_fixSuggestion == rhs.d_func()->m_fixSuggestion;
 }
 
+void emitWarningWithOptionalFix(GenericPass &pass, QAnyStringView diagnostic,
+                                const LoggerWarningId &id,
+                                const QQmlSA::SourceLocation &srcLocation,
+                                const std::optional<QQmlJSFixSuggestion> &fix)
+{
+    if (!fix.has_value()) {
+        pass.emitWarning(diagnostic, id, srcLocation);
+        return;
+    }
+
+    const QQmlSA::SourceLocation location =
+            QQmlSA::SourceLocationPrivate::createQQmlSASourceLocation(fix->location());
+    const QQmlSA::FixSuggestion saFix{ fix->fixDescription(), location, fix->replacement() };
+    pass.emitWarning(diagnostic, id, srcLocation, saFix);
+}
+
 } // namespace QQmlSA
 
 QT_END_NAMESPACE

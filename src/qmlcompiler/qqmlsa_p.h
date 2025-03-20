@@ -17,6 +17,7 @@
 #include <qtqmlcompilerexports.h>
 
 #include <private/qqmljslogger_p.h>
+#include <private/qqmlsasourcelocation_p.h>
 #include "qqmljsmetatypes_p.h"
 
 #include <unordered_map>
@@ -265,6 +266,11 @@ private:
     QQmlJSFixSuggestion m_fixSuggestion;
     QQmlSA::FixSuggestion *q_ptr = nullptr;
 };
+
+Q_QMLCOMPILER_EXPORT void emitWarningWithOptionalFix(GenericPass &pass, QAnyStringView diagnostic,
+                                                     const LoggerWarningId &id,
+                                                     const QQmlSA::SourceLocation &srcLocation,
+                                                     const std::optional<QQmlJSFixSuggestion> &fix);
 
 } // namespace QQmlSA
 
