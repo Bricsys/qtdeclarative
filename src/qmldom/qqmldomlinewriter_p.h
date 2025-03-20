@@ -99,21 +99,7 @@ public:
     bool sortImports = false;
 };
 
-using PendingSourceLocationId = int;
-using PendingSourceLocationIdAtomic = QAtomicInt;
 class LineWriter;
-
-class QMLDOM_EXPORT PendingSourceLocation
-{
-    Q_GADGET
-public:
-    quint32 utf16Start() const;
-    quint32 utf16End() const;
-    void changeAtOffset(quint32 offset, qint32 change, qint32 colChange, qint32 lineChange);
-    PendingSourceLocationId id;
-    SourceLocation value;
-    bool open = true;
-};
 
 class QMLDOM_EXPORT LineWriter
 {
@@ -160,8 +146,6 @@ public:
     void flush();
     void eof(bool ensureNewline = true);
     SourceLocation committedLocation() const;
-    PendingSourceLocationId startSourceLocation();
-    void endSourceLocation(PendingSourceLocationId);
     quint32 counter() const { return m_counter; }
     int addTextAddCallback(std::function<bool(LineWriter &, TextAddType)> callback);
     bool removeTextAddCallback(int i) { return m_textAddCallbacks.remove(i); }
@@ -178,7 +162,6 @@ public:
 private:
     Q_DISABLE_COPY_MOVE(LineWriter)
 protected:
-    void changeAtOffset(quint32 offset, qint32 change, qint32 colChange, qint32 lineChange);
     QString eolToWrite() const;
     SourceLocation currentSourceLocation() const;
     int column(int localIndex);
@@ -194,8 +177,6 @@ protected:
     int m_utf16Offset = 0; // utf16 offset since start for committed data
     QString m_currentLine;
     LineWriterOptions m_options;
-    PendingSourceLocationIdAtomic m_lastSourceLocationId;
-    QMap<PendingSourceLocationId, PendingSourceLocation> m_pendingSourceLocations;
     QAtomicInt m_lastCallbackId;
     QMap<int, std::function<bool(LineWriter &, TextAddType)>> m_textAddCallbacks;
     quint32 m_counter = 0;

@@ -5,8 +5,6 @@
 #include "qqmldomlinewriter_p.h"
 #include "qqmldomitem_p.h"
 #include "qqmldomcomments_p.h"
-#include "qqmldomexternalitems_p.h"
-#include "qqmldomtop_p.h"
 
 #include <QtCore/QLoggingCategory>
 
@@ -24,16 +22,6 @@ OutWriterState::OutWriterState(const Path &itCanonicalPath, const DomItem &it)
 
 void OutWriterState::closeState(OutWriter &w)
 {
-    if (!pendingRegions.isEmpty()) {
-        qCWarning(writeOutLog) << "PendingRegions non empty when closing item"
-                               << pendingRegions.keys();
-        auto iend = pendingRegions.end();
-        auto it = pendingRegions.begin();
-        while (it == iend) {
-            w.lineWriter.endSourceLocation(it.value());
-            ++it;
-        }
-    }
     if (!w.skipComments && !pendingComments.isEmpty())
         qCWarning(writeOutLog) << "PendingComments when closing item "
                                << item.canonicalPath().toString() << "for regions"
@@ -67,18 +55,13 @@ void OutWriter::itemEnd(const DomItem &it)
 
 void OutWriter::regionStart(FileLocationRegion region)
 {
-    Q_ASSERT(!state().pendingRegions.contains(region));
     if (!skipComments && state().pendingComments.contains(region)) {
         state().pendingComments[region].writePre(*this);
     }
-    state().pendingRegions[region] = lineWriter.startSourceLocation();
 }
 
 void OutWriter::regionEnd(FileLocationRegion region)
 {
-    Q_ASSERT(state().pendingRegions.contains(region));
-    lineWriter.endSourceLocation(state().pendingRegions.value(region));
-    state().pendingRegions.remove(region);
     if (state().pendingComments.contains(region)) {
         if (!skipComments) {
             state().pendingComments[region].writePost(*this);
@@ -95,6 +78,7 @@ Helper method for writeRegion(FileLocationRegion region) that allows to use
 */
 OutWriter &OutWriter::writeRegion(FileLocationRegion region)
 {
+    using namespace Qt::Literals::StringLiterals;
     QString codeForRegion;
     switch (region) {
     case ComponentKeywordRegion:

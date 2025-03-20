@@ -37,8 +37,6 @@ public:
 
     Path itemCanonicalPath;
     DomItem item;
-    PendingSourceLocationId fullRegionId;
-    QMap<FileLocationRegion, PendingSourceLocationId> pendingRegions;
     QMap<FileLocationRegion, CommentedElement> pendingComments;
 };
 
