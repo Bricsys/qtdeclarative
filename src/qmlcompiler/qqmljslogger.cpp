@@ -99,7 +99,7 @@ using namespace Qt::StringLiterals;
     X(qmlAccessSingleton, "access-singleton-via-object", "AccessSingletonViaObject",               \
       "Warn if a singleton is accessed via an object", QtWarningMsg, false, false)                 \
     X(qmlTopLevelComponent, "top-level-component", "TopLevelComponent",                            \
-      "Fail when a top level Component are encountered", QtWarningMsg, false, false)               \
+      "Warn if a top level Component is encountered", QtWarningMsg, false, false)                  \
     X(qmlUncreatableType, "uncreatable-type", "UncreatableType",                                   \
       "Warn if uncreatable types are created", QtWarningMsg, false, false)                         \
     X(qmlMissingEnumEntry, "missing-enum-entry", "MissingEnumEntry",                               \
