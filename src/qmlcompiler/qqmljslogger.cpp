@@ -53,8 +53,8 @@ using namespace Qt::StringLiterals;
       QtWarningMsg, false, false)                                                                  \
     X(qmlPrefixedImportType, "prefixed-import-type", "PrefixedImportType",                         \
       "Warn about prefixed import types", QtWarningMsg, false, false)                              \
-    X(qmlIncompatibleType, "incompatible-type", "IncompatibleType", "Warn about missing types",    \
-      QtWarningMsg, false, false)                                                                  \
+    X(qmlIncompatibleType, "incompatible-type", "IncompatibleType",                                \
+      "Warn about incompatible types", QtWarningMsg, false, false)                                 \
     X(qmlTranslationFunctionMismatch, "translation-function-mismatch",                             \
       "TranslationFunctionMismatch",                                                               \
       "Warn about usages of ID and non-ID translation functions in the same file.", QtWarningMsg,  \
@@ -111,6 +111,36 @@ using namespace Qt::StringLiterals;
     const QQmlSA::LoggerWarningId category{ name };
 QMLLINT_DEFAULT_CATEGORIES
 #undef X
+
+
+#define X(category, name, setting, description, level, ignored, isDefault) ++i;
+constexpr size_t numCategories = [] { size_t i = 0; QMLLINT_DEFAULT_CATEGORIES return i; }();
+#undef X
+
+constexpr bool isUnique(const std::array<std::string_view, numCategories>& fields) {
+    for (std::size_t i = 0; i < fields.size(); ++i) {
+        for (std::size_t j = i + 1; j < fields.size(); ++j) {
+            if (!fields[i].empty() && fields[i] == fields[j]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+#define X(category, name, setting, description, level, ignored, isDefault) std::string_view(name),
+static_assert(isUnique(std::array{ QMLLINT_DEFAULT_CATEGORIES }), "Duplicate names found!");
+#undef X
+
+#define X(category, name, setting, description, level, ignored, isDefault) std::string_view(setting),
+static_assert(isUnique(std::array{ QMLLINT_DEFAULT_CATEGORIES }), "Duplicate settings found!");
+#undef X
+
+#define X(category, name, setting, description, level, ignored, isDefault) std::string_view(description),\
+
+static_assert(isUnique(std::array{ QMLLINT_DEFAULT_CATEGORIES }), "Duplicate description found!");
+#undef X
+
 
 QQmlJSLogger::QQmlJSLogger()
 {
