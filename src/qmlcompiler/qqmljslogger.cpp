@@ -183,7 +183,7 @@ const QList<QQmlJS::LoggerCategory> &QQmlJSLogger::defaultCategories()
                 QStringLiteral("Warn if a singleton is accessed via an object"), QtWarningMsg },
         QQmlJS::LoggerCategory{
                 qmlTopLevelComponent.name().toString(), QStringLiteral("TopLevelComponent"),
-                QStringLiteral("Fail when a top level Component are encountered"), QtWarningMsg },
+                QStringLiteral("Warn if a top level Component is encountered"), QtWarningMsg },
         QQmlJS::LoggerCategory{
                 qmlUncreatableType.name().toString(), QStringLiteral("UncreatableType"),
                 QStringLiteral("Warn if uncreatable types are created"), QtWarningMsg }
