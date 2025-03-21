@@ -213,7 +213,7 @@ private:
 
     QStringList m_defaultImportPaths;
     QQmlJSLinter m_linter;
-    QList<QQmlJS::LoggerCategory> m_categories;
+    QList<QQmlJS::LoggerCategory> m_categories = QQmlJSLogger::defaultCategories();
 };
 
 Q_DECLARE_METATYPE(TestQmllint::Result)
@@ -1278,6 +1278,14 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
     QTest::newRow("missingRequiredOnObjectDefinitionBinding")
             << QStringLiteral("missingRequiredPropertyOnObjectDefinitionBinding.qml")
             << Result{ { { uR"(Component is missing required property i from here)"_s, 4, 26 } } };
+
+    QTest::newRow("PropertyAliasCycles") << QStringLiteral("settings/propertyAliasCycle/file.qml")
+                                         << Result::cleanWithSettings();
+    // make sure that warnings are triggered without settings:
+    QTest::newRow("PropertyAliasCycles2")
+            << QStringLiteral("settings/propertyAliasCycle/file.qml")
+            << Result{ { { "\"cycle1\" is part of an alias cycle"_L1 },
+                         { "\"cycle1\" is part of an alias cycle"_L1 } } };
 }
 
 void TestQmllint::dirtyQmlCode()
@@ -1300,7 +1308,8 @@ void TestQmllint::dirtyQmlCode()
                  "Translation macros are currently invisible to QQmlJSTypePropagator", Abort);
 
     callQmllint(filename, result.flags.testFlag(Result::ExitsNormally), &warnings, {}, {}, {},
-                UseDefaultImports, nullptr, result.flags.testFlag(Result::Flag::AutoFixable));
+                UseDefaultImports, nullptr, result.flags.testFlag(Result::Flag::AutoFixable),
+                LintFile, result.flags.testFlag(Result::Flag::UseSettings));
 
     checkResult(
             warnings, result,

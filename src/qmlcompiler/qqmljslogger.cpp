@@ -28,10 +28,10 @@ using namespace Qt::StringLiterals;
 #define QMLLINT_DEFAULT_CATEGORIES                                                                 \
     X(qmlRequired, "required", "RequiredProperty", "Warn about required properties", QtWarningMsg, \
       false, false)                                                                                \
-    X(qmlAliasCycle, "alias-cycle", "PropertyAliasCycles", "Warn about alias cycles",              \
+    X(qmlAliasCycle, "alias-cycle", "AliasCycle", "Warn about alias cycles", QtWarningMsg, false,  \
+      false)                                                                                       \
+    X(qmlUnresolvedAlias, "unresolved-alias", "UnresolvedAlias", "Warn about unresolved aliases",  \
       QtWarningMsg, false, false)                                                                  \
-    X(qmlUnresolvedAlias, "unresolved-alias", "PropertyAliasCycles",                               \
-      "Warn about unresolved aliases", QtWarningMsg, false, false)                                 \
     X(qmlImport, "import", "ImportFailure", "Warn about failing imports and deprecated qmltypes",  \
       QtWarningMsg, false, false)                                                                  \
     X(qmlRecursionDepthErrors, "recursion-depth-errors", "ImportFailure",                          \

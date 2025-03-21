@@ -201,6 +201,9 @@ All warnings can be set to three levels:
     const QString maxWarningsSetting = QLatin1String("MaxWarnings");
     settings.addOption(maxWarningsSetting, -1);
 
+    // QTBUG-135020: don't break existing user configs and still accept PropertyAliasCycles
+    settings.addOption("PropertyAliasCycles"_L1);
+
     auto addCategory = [&](const QQmlJS::LoggerCategory &category) {
         categories.push_back(category);
         if (category.isDefault())

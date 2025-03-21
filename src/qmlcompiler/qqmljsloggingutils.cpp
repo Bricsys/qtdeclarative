@@ -173,6 +173,25 @@ static QStringList settingsNamesForCategory(const LoggerCategory &category)
     return result;
 }
 
+static QString lookInSettings(const LoggerCategory &category, const QQmlToolingSettings &settings,
+                              const QString &settingsName)
+{
+    if (settings.isSet(settingsName))
+        return settings.value(settingsName).toString();
+    static constexpr QLatin1String propertyAliasCyclesKey = "Warnings/PropertyAliasCycles"_L1;
+
+    // keep compatibility to deprecated settings
+    if (category.name() == qmlAliasCycle.name() || category.name() == qmlUnresolvedAlias.name()) {
+        if (settings.isSet(propertyAliasCyclesKey)) {
+            qWarning()
+                    << "Detected deprecated setting name \"PropertyAliasCycles\". Use %1 or %2 instead."_L1
+                               .arg(qmlAliasCycle.name(), qmlUnresolvedAlias.name());
+            return settings.value(propertyAliasCyclesKey).toString();
+        }
+    }
+    return {};
+}
+
 static QString levelValueForCategory(const LoggerCategory &category,
                                      const QQmlToolingSettings &settings,
                                      QCommandLineParser *parser)
@@ -183,9 +202,9 @@ static QString levelValueForCategory(const LoggerCategory &category,
 
     const QStringList settingsName = settingsNamesForCategory(category);
     for (const QString &settingsName : settingsName) {
-        if (!settings.isSet(settingsName))
+        const QString value = lookInSettings(category, settings, settingsName);
+        if (value.isEmpty())
             continue;
-        const QString value = settings.value(settingsName).toString();
 
         // Do not try to set the levels if it's due to a default config option.
         // This way we can tell which options have actually been overwritten by the user.
