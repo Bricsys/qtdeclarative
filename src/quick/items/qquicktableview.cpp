@@ -1478,8 +1478,7 @@
     \l QAbstractItemModel::flags(), and return \c Qt::ItemIsEditable.
 
     You can also open and close the edit delegate manually by calling \l edit()
-    and \l closeEditor(), respectively. The \c Qt::ItemIsEditable flag will
-    then be ignored.
+    and \l closeEditor(), respectively.
 
     Editing ends when the user presses \c Qt::Key_Enter or \c Qt::Key_Return
     (and also \c Qt::Key_Tab or \c Qt::Key_Backtab, if TableView has
