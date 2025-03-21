@@ -56,6 +56,7 @@ set(qml_files
     "ToolTip.qml"
     "ToolSeparator.qml"
     "ApplicationWindow.qml"
+    "SearchField.qml"
 )
 
 set_source_files_properties(Slider.qml PROPERTIES
