@@ -7,7 +7,6 @@
 #include "qqmljsimporter_p.h"
 #include "qqmljsutils_p.h"
 #include "qqmlsa.h"
-#include "qqmlsa_p.h"
 
 #include <QtCore/qqueue.h>
 #include <QtCore/qsharedpointer.h>
@@ -15,7 +14,6 @@
 #include <private/qduplicatetracker_p.h>
 
 #include <algorithm>
-#include <type_traits>
 
 QT_BEGIN_NAMESPACE
 

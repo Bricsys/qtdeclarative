@@ -23,8 +23,6 @@
 
 #include <QtCore/qstring.h>
 
-#include <memory>
-
 QT_BEGIN_NAMESPACE
 
 class Q_QMLCOMPILER_EXPORT QQmlJSCodeGenerator : public QQmlJSCompilePass

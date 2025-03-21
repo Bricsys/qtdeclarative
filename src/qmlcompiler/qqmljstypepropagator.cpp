@@ -2094,7 +2094,8 @@ void QQmlJSTypePropagator::generate_DeadTemporalZoneCheck(int name)
 
     const QQmlJSRegisterContent in = m_state.accumulatorIn();
     if (in.isConversion()) {
-        for (QQmlJSRegisterContent origin : in.conversionOrigins()) {
+        const auto &inConversionOrigins = in.conversionOrigins();
+        for (QQmlJSRegisterContent origin : inConversionOrigins) {
             if (!origin.contains(m_typeResolver->emptyType()))
                 continue;
             fail();

@@ -798,7 +798,7 @@ public:
 
     QString regExpValue() const;
 
-    QQmlTranslation translationDataValue(QString qmlFileNameForContext = QStringLiteral("")) const;
+    QQmlTranslation translationDataValue(QString qmlFileNameForContext = QString()) const;
 
     QSharedPointer<const QQmlJSScope> literalType(const QQmlJSTypeResolver *resolver) const;
 

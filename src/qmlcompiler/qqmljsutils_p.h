@@ -17,7 +17,6 @@
 #include <qtqmlcompilerexports.h>
 
 #include "qqmljslogger_p.h"
-#include "qqmljsregistercontent_p.h"
 #include "qqmljsresourcefilemapper_p.h"
 #include "qqmljsscope_p.h"
 #include "qqmljsmetatypes_p.h"

@@ -85,7 +85,7 @@ AotStats AotStats::fromJsonDocument(const QJsonDocument &document)
     QJsonArray modulesArray = document.array();
 
     QQmlJS::AotStats result;
-    for (const auto &modulesArrayEntry : modulesArray) {
+    for (const auto &modulesArrayEntry : std::as_const(modulesArray)) {
         const auto &moduleObject = modulesArrayEntry.toObject();
         QString moduleId = moduleObject[u"moduleId"_s].toString();
         const QJsonArray &filesArray = moduleObject[u"moduleFiles"_s].toArray();

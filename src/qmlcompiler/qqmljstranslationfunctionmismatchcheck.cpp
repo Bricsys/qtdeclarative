@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only WITH Qt-GPL-exception-1.0
 
 #include "qqmljstranslationfunctionmismatchcheck_p.h"
-#include "qqmljslogger_p.h"
 
 QT_BEGIN_NAMESPACE
 

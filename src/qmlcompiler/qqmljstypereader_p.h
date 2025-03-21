@@ -16,7 +16,6 @@
 
 #include "qqmljsscope_p.h"
 #include "qqmljsimporter_p.h"
-#include "qqmljsresourcefilemapper_p.h"
 
 #include <QtQml/private/qqmljsastfwd_p.h>
 #include <QtQml/private/qqmljsdiagnosticmessage_p.h>

@@ -22,11 +22,11 @@ void QQmlJSBasicBlocks::dumpBasicBlocks()
         debug << "Block " << (blockOffset < 0 ? "Function prolog"_L1 : QString::number(blockOffset))
               << ":\n";
         debug << "  jumpOrigins[" << block.jumpOrigins.size() << "]: ";
-        for (auto origin : block.jumpOrigins) {
+        for (auto origin : std::as_const(block.jumpOrigins)) {
             debug << origin << ", ";
         }
         debug << "\n  readRegisters[" << block.readRegisters.size() << "]: ";
-        for (auto reg : block.readRegisters) {
+        for (auto reg : std::as_const(block.readRegisters)) {
             debug << reg << ", ";
         }
         debug << "\n  jumpTarget: " << block.jumpTarget;
@@ -47,7 +47,7 @@ void QQmlJSBasicBlocks::dumpDOTGraph()
 
     QFlatMap<int, BasicBlock> blocks{ m_basicBlocks };
     for (const auto &[blockOffset, block] : blocks) {
-        for (int originOffset : block.jumpOrigins) {
+        for (int originOffset : std::as_const(block.jumpOrigins)) {
             const auto originBlockIt = basicBlockForInstruction(blocks, originOffset);
             const auto isBackEdge = originOffset > blockOffset && originBlockIt->second.jumpIsUnconditional;
             s << "    %1 -> %2%3\n"_L1.arg(QString::number(originBlockIt.key()))

@@ -685,7 +685,6 @@ void QQmlJSCodeGenerator::generate_LoadQmlContextPropertyLookup(int index)
     AccumulatorConverter registers(this);
 
     const int nameIndex = m_jsUnitGenerator->lookupNameIndex(index);
-    const QString name = m_jsUnitGenerator->stringForIndex(nameIndex);
     if (m_state.accumulatorOut().scope().contains(m_typeResolver->jsGlobalObject())) {
         // This produces a QJSValue. The QQmlJSMetaProperty used to analyze it may have more details
         // but the QQmlJSAotContext API does not reflect them.
@@ -2655,7 +2654,6 @@ void QQmlJSCodeGenerator::generate_IteratorNext(int value, int offset)
     }
 
     const QQmlJSScope::ConstPtr iteratorType = iteratorContent.storedType();
-    const QString iteratorTypeName = iteratorType->internalName();
     const QString listName = m_state.accumulatorVariableIn
             + u"List" + QString::number(iteratorContent.baseLookupIndex());
     QString qjsList;

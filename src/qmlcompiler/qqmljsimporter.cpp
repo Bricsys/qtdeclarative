@@ -816,7 +816,7 @@ bool QQmlJSImporter::importHelper(const QString &module, AvailableTypes *types,
         modulePaths = qQmlResolveImportPaths(module, m_importPaths, version);
     }
 
-    for (auto const &modulePath : modulePaths) {
+    for (auto const &modulePath : std::as_const(modulePaths)) {
         QString qmldirPath = modulePath + SlashQmldir;
         if (modulePath.startsWith(u':')) {
             if (module == "QML"_L1) {

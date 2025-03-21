@@ -305,7 +305,7 @@ bool qCompileQmlFile(QmlIR::Document &irDocument, const QString &inputFileName,
                         std::variant<QQmlJSAotFunction, QList<QQmlJS::DiagnosticMessage>> innerResult
                                 = aotCompiler->compileBinding(innerContext, *binding, inner);
                         if (auto *errors = std::get_if<QList<QQmlJS::DiagnosticMessage>>(&innerResult)) {
-                            for (const auto &error : *errors) {
+                            for (const auto &error : std::as_const(*errors)) {
                                 qCDebug(lcAotCompiler) << "Compilation failed:"
                                                        << diagnosticErrorMessage(inputFileName, error);
                             }
@@ -334,7 +334,7 @@ bool qCompileQmlFile(QmlIR::Document &irDocument, const QString &inputFileName,
                 }
 
                 if (auto *errors = std::get_if<QList<QQmlJS::DiagnosticMessage>>(&result)) {
-                    for (const auto &error : *errors) {
+                    for (const auto &error : std::as_const(*errors)) {
                         qCDebug(lcAotCompiler) << "Compilation failed:"
                                                << diagnosticErrorMessage(inputFileName, error);
                     }

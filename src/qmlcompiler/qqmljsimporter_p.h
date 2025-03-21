@@ -22,8 +22,6 @@
 #include <QtQml/private/qqmldirparser_p.h>
 #include <QtQml/private/qqmljsast_p.h>
 
-#include <memory>
-
 QT_BEGIN_NAMESPACE
 
 namespace QQmlJS {

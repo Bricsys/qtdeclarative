@@ -27,7 +27,6 @@
 #include <QtCore/qscopedpointer.h>
 
 #include <vector>
-#include <optional>
 
 QT_BEGIN_NAMESPACE
 

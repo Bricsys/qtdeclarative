@@ -330,8 +330,8 @@ void QQmlJSOptimizations::adjustTypes()
     // Handle the array definitions first.
     // Changing the array type changes the expected element types.
     auto adjustArray = [&](int instructionOffset, int mode) {
-        auto it = m_readerLocations.find(instructionOffset);
-        if (it == m_readerLocations.end())
+        auto it = m_readerLocations.constFind(instructionOffset);
+        if (it == m_readerLocations.cend())
             return;
 
         const InstructionAnnotation &annotation = m_annotations[instructionOffset];
@@ -439,7 +439,7 @@ void QQmlJSOptimizations::adjustTypes()
         }
     }
 
-    for (auto it = m_readerLocations.begin(), end = m_readerLocations.end(); it != end; ++it) {
+    for (auto it = m_readerLocations.cbegin(), end = m_readerLocations.cend(); it != end; ++it) {
         handleRegisterReadersAndConversions(it);
 
         // There is always one first occurrence of any tracked type. Conversions don't change

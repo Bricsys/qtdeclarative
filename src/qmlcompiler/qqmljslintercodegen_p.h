@@ -19,7 +19,6 @@
 #include <QList>
 
 #include <variant>
-#include <memory>
 #include <private/qqmljsdiagnosticmessage_p.h>
 #include <private/qqmlirbuilder_p.h>
 #include <private/qqmljsscope_p.h>

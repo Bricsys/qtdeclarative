@@ -480,19 +480,20 @@ bool QQmlJSImportVisitor::visit(QQmlJS::AST::UiProgram *)
 
 void QQmlJSImportVisitor::endVisit(UiProgram *)
 {
-    for (const auto &scope : m_objectBindingScopes) {
+    for (const auto &scope : std::as_const(m_objectBindingScopes)) {
         breakInheritanceCycles(scope);
         checkDeprecation(scope);
     }
 
-    for (const auto &scope : m_objectDefinitionScopes) {
+    for (const auto &scope : std::as_const(m_objectDefinitionScopes)) {
         if (m_pendingDefaultProperties.contains(scope))
             continue; // We're going to check this one below.
         breakInheritanceCycles(scope);
         checkDeprecation(scope);
     }
 
-    for (const auto &scope : m_pendingDefaultProperties.keys()) {
+    const auto &keys = m_pendingDefaultProperties.keys();
+    for (const auto &scope : keys) {
         breakInheritanceCycles(scope);
         checkDeprecation(scope);
     }
@@ -500,7 +501,7 @@ void QQmlJSImportVisitor::endVisit(UiProgram *)
     resolveAliases();
     resolveGroupProperties();
 
-    for (const auto &scope : m_objectDefinitionScopes)
+    for (const auto &scope : std::as_const(m_objectDefinitionScopes))
         checkGroupedAndAttachedScopes(scope);
 
     setAllBindings();
@@ -512,8 +513,9 @@ void QQmlJSImportVisitor::endVisit(UiProgram *)
     checkRequiredProperties();
 
     auto unusedImports = m_importLocations;
-    for (const QString &type : m_usedTypes) {
-        for (const auto &importLocation : m_importTypeLocationMap.values(type))
+    for (const QString &type : std::as_const(m_usedTypes)) {
+        const auto &importLocations = m_importTypeLocationMap.values(type);
+        for (const auto &importLocation : importLocations)
             unusedImports.remove(importLocation);
 
         // If there are no more unused imports left we can abort early
@@ -521,7 +523,8 @@ void QQmlJSImportVisitor::endVisit(UiProgram *)
             break;
     }
 
-    for (const QQmlJS::SourceLocation &import : m_importStaticModuleLocationMap.values())
+    const auto &imports = m_importStaticModuleLocationMap.values();
+    for (const QQmlJS::SourceLocation &import : imports)
         unusedImports.remove(import);
 
     for (const auto &import : unusedImports) {
@@ -695,7 +698,7 @@ void QQmlJSImportVisitor::processDefaultProperties()
 
 void QQmlJSImportVisitor::processPropertyTypes()
 {
-    for (const PendingPropertyType &type : m_pendingPropertyTypes) {
+    for (const PendingPropertyType &type : std::as_const(m_pendingPropertyTypes)) {
         Q_ASSERT(type.scope->hasOwnProperty(type.name));
 
         auto property = type.scope->ownProperty(type.name);
@@ -713,7 +716,7 @@ void QQmlJSImportVisitor::processPropertyTypes()
 
 void QQmlJSImportVisitor::processMethodTypes()
 {
-    for (const auto &method : m_pendingMethodTypeAnnotations) {
+    for (const auto &method : std::as_const(m_pendingMethodTypeAnnotations)) {
         for (auto [it, end] = method.scope->mutableOwnMethodsRange(method.methodName); it != end; ++it) {
             const auto [parameterBegin, parameterEnd] = it->mutableParametersRange();
             for (auto parameter = parameterBegin; parameter != parameterEnd; ++parameter) {
@@ -1422,7 +1425,7 @@ QQmlJSImportVisitor::addFunctionOrExpression(const QQmlJSScope::ConstPtr &scope,
     // add it to every level and let further logic take care of that. this
     // matches what m_innerFunctions represents as function at each level just
     // got a new inner function
-    for (const auto &function : m_functionStack)
+    for (const auto &function : std::as_const(m_functionStack))
         m_innerFunctions[function]++;
     m_functionStack.push({ scope, name }); // create new function
 
@@ -1472,7 +1475,6 @@ int QQmlJSImportVisitor::synthesizeCompilationUnitRuntimeFunctionIndices(
     if (!suitableScope(scope))
         return count;
 
-    QList<QQmlJSMetaMethod::AbsoluteFunctionIndex> indices;
     auto it = m_functionsAndExpressions.constFind(scope);
     if (it == m_functionsAndExpressions.cend()) // scope has no runtime functions
         return count;
@@ -2550,7 +2552,7 @@ bool QQmlJSImportVisitor::visit(QQmlJS::AST::UiImport *import)
         addImportWithLocation(*it, import->firstSourceLocation(), !warnings.isEmpty());
 
     if (prefix.isEmpty()) {
-        for (const QString &staticModule : staticModulesProvided) {
+        for (const QString &staticModule : std::as_const(staticModulesProvided)) {
             // Always prefer a direct import of static module to it being imported as a dependency
             if (path != staticModule && m_importStaticModuleLocationMap.contains(staticModule))
                 continue;
@@ -2773,7 +2775,8 @@ bool QQmlJSImportVisitor::visit(QQmlJS::AST::VariableDeclarationList *vdl)
 
 bool QQmlJSImportVisitor::visit(QQmlJS::AST::FormalParameterList *fpl)
 {
-    for (auto const &boundName : fpl->boundNames()) {
+    const auto &boundedNames = fpl->boundNames();
+    for (auto const &boundName : boundedNames) {
 
         std::optional<QString> typeName;
         if (TypeAnnotation *annotation = boundName.typeAnnotation.data())
@@ -3017,7 +3020,7 @@ bool QQmlJSImportVisitor::visit(QQmlJS::AST::PatternElement *element)
     if (element->isVariableDeclaration()) {
         QQmlJS::AST::BoundNames names;
         element->boundNames(&names);
-        for (const auto &name : names) {
+        for (const auto &name : std::as_const(names)) {
             std::optional<QString> typeName;
             if (TypeAnnotation *annotation = name.typeAnnotation.data())
                 if (Type *type = annotation->type)

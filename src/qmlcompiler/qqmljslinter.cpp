@@ -160,7 +160,7 @@ bool QQmlJSLinter::Plugin::parseMetaData(const QJsonObject &metaData, QString pl
 
     QJsonArray categories = pluginMetaData[u"loggingCategories"].toArray();
 
-    for (const QJsonValue value : categories) {
+    for (const QJsonValue &value : std::as_const(categories)) {
         if (!value.isObject()) {
             qWarning() << pluginName << "has invalid loggingCategories entries, skipping";
             return false;
@@ -210,7 +210,8 @@ std::vector<QQmlJSLinter::Plugin> QQmlJSLinter::loadPlugins(QStringList extraPlu
 
     QDuplicateTracker<QString> seenPlugins;
 
-    for (const QStaticPlugin &staticPlugin : QPluginLoader::staticPlugins()) {
+    const auto &staticPlugins = QPluginLoader::staticPlugins();
+    for (const QStaticPlugin &staticPlugin : staticPlugins) {
         Plugin plugin(staticPlugin);
         if (!plugin.isValid())
             continue;
@@ -298,7 +299,8 @@ void QQmlJSLinter::parseComments(QQmlJSLogger *logger,
         }
 
         if (categories.isEmpty()) {
-            for (const auto &option : logger->categories())
+            const auto &loggerCategories = logger->categories();
+            for (const auto &option : loggerCategories)
                 categories << option.id().name().toString();
         }
 
@@ -726,7 +728,8 @@ QQmlJSLinter::LintResult QQmlJSLinter::lintModule(
             if (!partiallyResolvedTypes.contains(name))
                 partiallyResolvedTypes[name] = {};
         }
-        for (const auto &property : scope->ownProperties()) {
+        const auto &ownProperties = scope->ownProperties();
+        for (const auto &property : ownProperties) {
             if (property.typeName().isEmpty()) {
                 // If the type name is empty, then it's an intentional vaguery i.e. for some
                 // builtins
@@ -747,7 +750,8 @@ QQmlJSLinter::LintResult QQmlJSLinter::lintModule(
                           qmlUnresolvedType, scope->sourceLocation());
         }
 
-        for (const auto &method : scope->ownMethods()) {
+        const auto &ownMethods = scope->ownMethods();
+        for (const auto &method : ownMethods) {
             if (method.returnTypeName().isEmpty())
                 continue;
             if (method.returnType().isNull()) {
@@ -872,7 +876,7 @@ QQmlJSLinter::FixResult QQmlJSLinter::applyFixes(QString *fixedCode, bool silent
 
     int offsetChange = 0;
 
-    for (const auto &fix : fixesToApply) {
+    for (const auto &fix : std::as_const(fixesToApply)) {
         const QQmlJS::SourceLocation fixLocation = fix.location();
         qsizetype cutLocation = fixLocation.offset + offsetChange;
         const QString before = code.left(cutLocation);
