@@ -914,6 +914,13 @@ Check https://doc.qt.io/qt-6/qt-cmake-policy-qtp0001.html for policy details."
         endif()
     endif()
 
+    # Ensure that a top-level target-tooling that accumulates the target sources
+    # Before 3.19 interface targets could not have sources, so a different approach is used
+    # for that.
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
+        _qt_internal_ensure_tooling_target("${target}_tooling" DEPENDENT_TARGET "${target}")
+    endif()
+
     set(cache_target)
     qt6_target_qml_sources(${target}
         __QT_INTERNAL_FORCE_DEFER_QMLDIR
@@ -923,6 +930,20 @@ Check https://doc.qt.io/qt-6/qt-cmake-policy-qtp0001.html for policy details."
         PREFIX "${qt_qml_module_resource_prefix}"
     )
     list(APPEND output_targets ${cache_target})
+
+    # Setup the qml/resource files copy instructions
+    _qt_internal_qml_copy_files_to_build_dir("${target}"
+        CUSTOM_TARGET_SUFFIX qml
+        PROP_WITH_ENTRIES _qt_qml_files_to_copy
+        PROP_WITH_SRCS _qt_qml_files_absolute_src_paths
+        FILE_TYPE "sources"
+    )
+    _qt_internal_qml_copy_files_to_build_dir("${target}"
+        CUSTOM_TARGET_SUFFIX res
+        PROP_WITH_ENTRIES _qt_qml_resources_to_copy
+        PROP_WITH_SRCS _qt_qml_resources_absolute_src_paths
+        FILE_TYPE "resources"
+    )
 
     # Build an init object library for static plugins and propagate it along with the plugin
     # target.
@@ -2798,7 +2819,10 @@ function(_qt_internal_qml_copy_files_to_build_dir target)
     # Protect against multiple calls of qt6_add_qml_sources. It's enough to setup once,
     # because we use generator expressions to get all the files.
     if(copy_files_setup_done)
-        return()
+        message(FATAL_ERROR
+            "_qt_internal_qml_copy_files_to_build_dir was called more than once for "
+            "target ${target} CUSTOM_TARGET_SUFFIX ${arg_CUSTOM_TARGET_SUFFIX}."
+        )
     endif()
 
     set_property(TARGET "${target}" PROPERTY "${setup_done_prop}" TRUE)
@@ -3585,7 +3609,6 @@ function(qt6_target_qml_sources target)
             # system target from CMake 3.19 onward, and we can add the sources
             # progressively over multiple calls.
             set(tooling_target "${target}_tooling")
-            _qt_internal_ensure_tooling_target("${tooling_target}" DEPENDENT_TARGET "${target}")
 
             # If the tooling target was created in another directory scope, we must create another
             # interface library in this directory scope to drive the custom target. A dependency
@@ -3614,19 +3637,6 @@ function(qt6_target_qml_sources target)
             )
         endif()
     endif()
-
-    _qt_internal_qml_copy_files_to_build_dir("${target}"
-        CUSTOM_TARGET_SUFFIX qml
-        PROP_WITH_ENTRIES _qt_qml_files_to_copy
-        PROP_WITH_SRCS _qt_qml_files_absolute_src_paths
-        FILE_TYPE "sources"
-    )
-    _qt_internal_qml_copy_files_to_build_dir("${target}"
-        CUSTOM_TARGET_SUFFIX res
-        PROP_WITH_ENTRIES _qt_qml_resources_to_copy
-        PROP_WITH_SRCS _qt_qml_resources_absolute_src_paths
-        FILE_TYPE "resources"
-    )
 
     # Batch all the non-compiled qml sources into a single resource for this
     # call. Subsequent calls for the same target will be in their own separate
