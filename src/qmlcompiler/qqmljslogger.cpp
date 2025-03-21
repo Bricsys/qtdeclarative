@@ -34,8 +34,7 @@ using namespace Qt::StringLiterals;
       QtWarningMsg, false, false)                                                                  \
     X(qmlImport, "import", "ImportFailure", "Warn about failing imports and deprecated qmltypes",  \
       QtWarningMsg, false, false)                                                                  \
-    X(qmlRecursionDepthErrors, "recursion-depth-errors", "ImportFailure",                          \
-      "Warn about failing imports and deprecated qmltypes", QtWarningMsg, false, true)             \
+    X(qmlRecursionDepthErrors, "recursion-depth-errors", "", "", QtWarningMsg, false, true)        \
     X(qmlWith, "with", "WithStatement",                                                            \
       "Warn about with statements as they can cause false "                                        \
       "positives when checking for unqualified access",                                            \
