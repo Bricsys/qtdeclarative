@@ -514,6 +514,9 @@ private slots:
 
     void aliasOfBindableValueTypeProperty();
 
+    void argumentsUsageInBindings_data();
+    void argumentsUsageInBindings();
+
 private:
     QQmlEngine engine;
     QStringList defaultImportPathList;
@@ -9722,6 +9725,30 @@ void tst_qqmllanguage::aliasOfBindableValueTypeProperty()
     QCOMPARE(o->metaObject()->metacall(o.data(), QMetaObject::BindableProperty, aaIndex, args), -1);
     QVERIFY(bindable.isValid());
     QCOMPARE(bindable.metaType(), QMetaType::fromType<QPointF>());
+}
+
+void tst_qqmllanguage::argumentsUsageInBindings_data() {
+    QTest::addColumn<QString>("file");
+
+    QTest::newRow("signalBindingOnArrowUsingArguments") << "signalBindingOnArrowUsingArguments.qml";
+    QTest::newRow("signalBindingOnFunctionUsingArguments") << "signalBindingOnFunctionUsingArguments.qml";
+    QTest::newRow("signalBindingOnFunctionWithInnerArrowUsingArguments") << "signalBindingOnFunctionWithInnerArrowUsingArguments.qml";
+    QTest::newRow("signalBindingOnFunctionWithInnerFunctionUsingArguments") << "signalBindingOnFunctionWithInnerFunctionUsingArguments.qml";
+    QTest::newRow("nonSignalBindingOnFunctionUsingArguments") << "nonSignalBindingOnFunctionUsingArguments.qml";
+}
+
+void tst_qqmllanguage::argumentsUsageInBindings() {
+    QFETCH(QString, file);
+
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl(file));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+
+    auto *object = o.data();
+    QVERIFY(object);
+
+    QCOMPARE(object->property("result").toString(), object->property("expected").toString());
 }
 
 QTEST_MAIN(tst_qqmllanguage)
