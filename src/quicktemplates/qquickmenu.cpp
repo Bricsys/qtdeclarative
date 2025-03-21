@@ -76,84 +76,23 @@ static const int SUBMENU_DELAY = 225;
     the mouse cursor on desktop platforms that have a mouse cursor available, and
     otherwise centered over its parent item.
 
-    \code
-    MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: {
-            if (mouse.button === Qt.RightButton)
-                contextMenu.popup()
-        }
-        onPressAndHold: {
-            if (mouse.source === Qt.MouseEventNotSynthesized)
-                contextMenu.popup()
-        }
-
-        Menu {
-            id: contextMenu
-            MenuItem { text: "Cut" }
-            MenuItem { text: "Copy" }
-            MenuItem { text: "Paste" }
-        }
-    }
-    \endcode
+    \snippet qtquickcontrols-menu-contextmenu.qml root
 
     When used as a popup menu, it is easiest to specify the position by specifying
     the desired \l {Popup::}{x} and \l {Popup::}{y} coordinates using the respective
     properties, and call \l {Popup::}{open()} to open the menu.
 
-    \code
-    Button {
-        id: fileButton
-        text: "File"
-        onClicked: menu.open()
-
-        Menu {
-            id: menu
-            y: fileButton.height
-
-            MenuItem {
-                text: "New..."
-            }
-            MenuItem {
-                text: "Open..."
-            }
-            MenuItem {
-                text: "Save"
-            }
-        }
-    }
-    \endcode
+    \snippet qtquickcontrols-menu-button-menu.qml root
 
     If the button should also close the menu when clicked, use the
     \c Popup.CloseOnPressOutsideParent flag:
-    \code
-    onClicked: menu.visible = !menu.visible
 
-    Menu {
-        // ...
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
-    \endcode
+    \snippet qtquickcontrols-menu-closepolicy.qml closePolicy
 
     Since QtQuick.Controls 2.3 (Qt 5.10), it is also possible to create sub-menus
     and declare Action objects inside Menu:
 
-    \code
-    Menu {
-        Action { text: "Cut" }
-        Action { text: "Copy" }
-        Action { text: "Paste" }
-
-        MenuSeparator { }
-
-        Menu {
-            title: "Find/Replace"
-            Action { text: "Find Next" }
-            Action { text: "Find Previous" }
-            Action { text: "Replace" }
-        }
-    }
-    \endcode
+    \snippet qtquickcontrols-menu-submenus-and-actions.qml root
 
     Sub-menus are \l {cascade}{cascading} by default on desktop platforms
     that have a mouse cursor available. Non-cascading menus are shown one
