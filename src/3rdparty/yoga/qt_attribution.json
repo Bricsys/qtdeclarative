@@ -1,0 +1,13 @@
+{
+    "Id": "yoga",
+    "Name": "Yoga",
+    "QDocModule": "qtquick",
+    "QtUsage": "Used in Qt Quick.Layouts",
+
+    "Homepage": "https://www.yogalayout.dev/",
+    "License": "MIT License",
+    "LicenseId": "MIT",
+    "LicenseFile": "LICENSE",
+    "Copyright": ["Copyright (c) Facebook, Inc. and its affiliates.",
+    "Copyright (c) Meta Platforms, Inc. and affiliates."]
+}

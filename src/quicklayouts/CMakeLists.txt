@@ -25,3 +25,26 @@ qt_internal_add_qml_module(QuickLayouts
         Qt::QuickPrivate
         Qt::Qml
     )
+
+qt_internal_extend_target(QuickLayouts CONDITION NOT INTEGRITY
+    INCLUDE_DIRECTORIES
+        ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty
+    SOURCES
+        # Qt flexbox layout (uses inernally yoga engine to layout quick items)
+        qquickflexboxlayout.cpp qquickflexboxlayout_p.h
+        qquickflexboxlayoutengine.cpp qquickflexboxlayoutengine_p.h
+        qquickflexboxlayoutitem_p.h qquickflexboxlayoutitem.cpp
+        # Yoga library source
+        ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/Yoga.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/event/event.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/YGValue.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/YGStyle.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/YGEnums.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/YGNodePrint.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/YGNode.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/YGLayout.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/YGEnums.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/YGConfig.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/Utils.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/log.cpp
+    )
