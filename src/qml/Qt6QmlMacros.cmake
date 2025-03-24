@@ -2946,6 +2946,7 @@ function(qt6_target_qml_sources target)
         set(actual_${file_set} "")
         set(actual_${file_set}_absolute "")
         set(duplicate_in_${file_set} "")
+        set(duplicate_input_in_${file_set} "")
         get_target_property(current_${file_set} ${target} QT_QML_MODULE_${file_set})
         foreach(file_src IN LISTS arg_${file_set})
             # TODO: For now we check against absolute path to avoid surprises with other
@@ -2953,7 +2954,7 @@ function(qt6_target_qml_sources target)
             get_filename_component(file_absolute ${file_src} ABSOLUTE)
             # Check for duplicates in the current list
             if(file_absolute IN_LIST actual_${file_set}_absolute)
-                # We can silently ignore these because they have the same function parameters
+                list(APPEND duplicate_input_in_${file_set})
                 continue()
             endif()
             # Check for duplicates in the target property added so far
@@ -2984,8 +2985,26 @@ function(qt6_target_qml_sources target)
         endforeach()
 
         # Display warnings for all invalid files
-        # Warn about duplicated files
-        if(duplicate_in_${file_set})
+        # Warn about duplicated files in input
+        if(NOT QT_QML_IGNORE_DUPLICATE_FILES AND duplicate_input_in_${file_set})
+            # We trigger a warning here because it was added before with potentially different
+            # parameters, properties
+            set(warning_message
+                "The following files are passed more than once ${file_set}:"
+            )
+            list(JOIN duplicate_input_in_${file_set}
+                "\n${warning_message_file_prefix}"
+                warning_file_set
+            )
+            string(APPEND warning_message
+                "\n${warning_message_file_prefix}"
+                "${warning_file_set}\n"
+                "(this message can be suppressed by setting QT_QML_IGNORE_DUPLICATE_FILES=ON)"
+            )
+            message(WARNING "${warning_message}")
+        endif()
+        # Warn about duplicated files overall
+        if(NOT QT_QML_IGNORE_DUPLICATE_FILES AND duplicate_in_${file_set})
             # We trigger a warning here because it was added before with potentially different
             # parameters, properties
             set(warning_message
@@ -2997,7 +3016,8 @@ function(qt6_target_qml_sources target)
             )
             string(APPEND warning_message
                 "\n${warning_message_file_prefix}"
-                "${warning_file_set}"
+                "${warning_file_set}\n"
+                "(this message can be suppressed by setting QT_QML_IGNORE_DUPLICATE_FILES=ON)"
             )
             message(WARNING "${warning_message}")
         endif()
