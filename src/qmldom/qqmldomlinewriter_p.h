@@ -81,6 +81,10 @@ public:
     Q_ENUM(TrailingSpace)
     enum class AttributesSequence { Normalize, Preserve };
     Q_ENUM(AttributesSequence)
+    // Always: always add a semicolon at the end of statement
+    // Essential: adds semicolon only when ASI would not insert for us
+    enum class SemicolonRule { Always, Essential };
+    Q_ENUM(SemicolonRule)
 
     int maxLineLength = -1; // -1 means no limit
     int minContentLength = 10;
@@ -97,6 +101,7 @@ public:
     bool objectsSpacing = false;
     bool functionsSpacing = false;
     bool sortImports = false;
+    SemicolonRule semicolonRule = SemicolonRule::Always;
 };
 
 class LineWriter;
@@ -130,6 +135,7 @@ public:
     LineWriter &ensureNewline(int nNewlines = 1, TextAddType t = TextAddType::Extra);
     LineWriter &ensureSpace(TextAddType t = TextAddType::Extra);
     LineWriter &ensureSpace(QStringView space, TextAddType t = TextAddType::Extra);
+    LineWriter &ensureSemicolon(TextAddType t = TextAddType::Extra);
 
     LineWriter &newline()
     {

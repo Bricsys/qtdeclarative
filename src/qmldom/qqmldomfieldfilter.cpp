@@ -190,6 +190,7 @@ FieldFilter FieldFilter::compareNoCommentsFilter()
         { QLatin1String("QmlObject"), QLatin1String("prototypes") },
         { QLatin1String(), QLatin1String("code") },
         { QLatin1String("ScriptExpression"), QLatin1String("localOffset") },
+        { QLatin1String("ScriptExpression"), QLatin1String("astRelocatableDump") },
         { QLatin1String("FileLocationsNode"), QLatin1String("parent") },
         { QString(), QLatin1String("fileLocationsTree") },
         { QString(), QLatin1String("preCode") },

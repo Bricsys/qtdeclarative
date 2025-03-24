@@ -46,6 +46,13 @@ LineWriter &LineWriter::ensureSpace(TextAddType t)
     return *this;
 }
 
+LineWriter &LineWriter::ensureSemicolon(TextAddType t)
+{
+    if (!m_currentLine.isEmpty() && m_currentLine.back() != u';')
+        write(u";", t);
+    return *this;
+}
+
 LineWriter &LineWriter::ensureSpace(QStringView space, TextAddType t)
 {
     int tabSize = m_options.formatOptions.tabSize;

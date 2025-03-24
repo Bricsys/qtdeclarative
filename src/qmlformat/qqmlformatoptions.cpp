@@ -180,6 +180,13 @@ QQmlFormatOptions QQmlFormatOptions::buildCommandLineOptions(const QStringList &
                                QStringLiteral("Sort imports alphabetically "
                                               "(Warning: this might change semantics if a given "
                                               "name identifies types in multiple modules!).")));
+    QCommandLineOption semicolonRuleOption(
+            QStringList() << "semicolon-rule"_L1,
+            QStringLiteral("Specify the semicolon rule to use (always, essential).\n"
+                           "always: always adds semicolon [default].\n"
+                           "essential: adds only when ASI wouldn't be relied on."),
+            "rule"_L1, "always"_L1);
+    parser.addOption(semicolonRuleOption);
 
     parser.addPositionalArgument("filenames"_L1, "files to be processed by qmlformat"_L1);
 
@@ -276,6 +283,19 @@ QQmlFormatOptions QQmlFormatOptions::buildCommandLineOptions(const QStringList &
     if (parser.isSet("newline"_L1)) {
         options.mark(Settings::NewlineType);
         options.setNewline(QQmlFormatOptions::parseEndings(parser.value("newline"_L1)));
+    }
+
+    if (parser.isSet(semicolonRuleOption)) {
+        options.mark(Settings::SemicolonRule);
+        const auto value = parser.value(semicolonRuleOption);
+        if (value == "always"_L1) {
+            options.setSemicolonRule(QQmlJS::Dom::LineWriterOptions::SemicolonRule::Always);
+        } else if (value == "essential"_L1) {
+            options.setSemicolonRule(QQmlJS::Dom::LineWriterOptions::SemicolonRule::Essential);
+        } else {
+            options.addError("Error: Invalid value passed to --semicolon-rule."_L1);
+            return options;
+        }
     }
     options.setFiles(files);
     options.setArguments(parser.positionalArguments());

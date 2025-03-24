@@ -1825,13 +1825,13 @@ QString ScriptExpression::astRelocatableDump() const
 
 void ScriptExpression::writeOut(const DomItem &, OutWriter &lw) const
 {
-    reformatAst(
-            lw, m_astComments,
-            [this](SourceLocation astL) {
-                SourceLocation l = this->locationToLocal(astL); // use engine->code() instead?
-                return this->code().mid(l.offset, l.length);
-            },
-            ast());
+    reformatAst(lw, this);
+}
+
+QStringView ScriptExpression::loc2Str(SourceLocation astL) const
+{
+    SourceLocation l = this->locationToLocal(astL); // use engine->code() instead?
+    return this->code().mid(l.offset, l.length);
 }
 
 SourceLocation ScriptExpression::globalLocation(const DomItem &self) const

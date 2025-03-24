@@ -43,6 +43,9 @@ private Q_SLOTS:
     void qml_data();
     void qml();
 
+    void semicolonRule_data();
+    void semicolonRule();
+
 private:
     QString formatInMemory(const QString &fileToFormat, bool *didSucceed = nullptr,
                            LineWriterOptions options = LineWriterOptions(),
@@ -387,6 +390,54 @@ void TestQmlformat::qml()
     QEXPECT_FAIL("noSuperfluousSpaceInsertions.fail_parameters",
                  "Not all cases have been covered yet (QTBUG-133315, QTBUG-123386)", Abort);
     QCOMPARE(output, exp);
+}
+
+void TestQmlformat::semicolonRule_data()
+{
+    QTest::addColumn<QString>("file");
+    QTest::addColumn<QString>("formattedFile");
+    QTest::addColumn<LineWriterOptions>("opts");
+    {
+        LineWriterOptions opts;
+        opts.semicolonRule = LineWriterOptions::SemicolonRule::Always;
+        QTest::newRow("keywords-always") << "semicolon/keywords.js"
+                                         << "semicolon/keywords.always.formatted.js" << opts;
+        QTest::newRow("restrictedChars-always")
+                << "semicolon/restrictedChars.js"
+                << "semicolon/restrictedChars.always.formatted.js" << opts;
+        QTest::newRow("emptyStatements-always")
+                << "semicolon/emptyStatements.qml"
+                << "semicolon/emptyStatements.always.formatted.qml" << opts;
+    }
+    {
+        LineWriterOptions opts;
+        opts.semicolonRule = LineWriterOptions::SemicolonRule::Essential;
+        QTest::newRow("keywords-essential") << "semicolon/keywords.js"
+                                            << "semicolon/keywords.essential.formatted.js" << opts;
+        QTest::newRow("restrictedChars-essential")
+                << "semicolon/restrictedChars.js"
+                << "semicolon/restrictedChars.essential.formatted.js" << opts;
+        QTest::newRow("emptyStatements-essential")
+                << "semicolon/emptyStatements.qml"
+                << "semicolon/emptyStatements.essential.formatted.qml" << opts;
+    }
+}
+
+void TestQmlformat::semicolonRule()
+{
+    QFETCH(QString, file);
+    QFETCH(QString, formattedFile);
+    QFETCH(LineWriterOptions, opts);
+
+    bool wasSuccessful = false;
+
+#ifdef Q_OS_WIN
+    opts.lineEndings = QQmlJS::Dom::LineWriterOptions::LineEndings::Windows;
+#endif
+    QString output = formatInMemory(testFile(file), &wasSuccessful, opts, WriteOutCheck::None);
+
+    QVERIFY(wasSuccessful && !output.isEmpty());
+    QCOMPARE(output, readTestFile(formattedFile));
 }
 
 QTEST_MAIN(TestQmlformat)

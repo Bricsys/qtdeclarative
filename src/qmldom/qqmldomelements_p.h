@@ -467,6 +467,7 @@ public:
         QMutexLocker l(mutex());
         return m_engine;
     }
+    QStringView loc2Str(SourceLocation) const;
     std::shared_ptr<AstComments> astComments() const { return m_astComments; }
     void writeOut(const DomItem &self, OutWriter &lw) const override;
     SourceLocation globalLocation(const DomItem &self) const;
