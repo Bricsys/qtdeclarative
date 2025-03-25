@@ -126,7 +126,6 @@ private slots:
 
 private:
     bool nativeMenuSupported = false;
-    bool popupWindowsSupported = false;
 };
 
 // This allows us to use QQuickMenuItem's more descriptive operator<< output
@@ -143,9 +142,6 @@ tst_QQuickMenu::tst_QQuickMenu()
 {
     std::unique_ptr<QPlatformMenu> platformMenu(QGuiApplicationPrivate::platformTheme()->createPlatformMenu());
     nativeMenuSupported = platformMenu != nullptr;
-#if defined(Q_OS_WINDOWS) || defined (Q_OS_MACOS)
-    popupWindowsSupported = QGuiApplicationPrivate::platformIntegration()->hasCapability(QPlatformIntegration::Capability::MultipleWindows);
-#endif
 }
 
 void tst_QQuickMenu::init()
@@ -212,7 +208,7 @@ void tst_QQuickMenu::mouse_data()
 {
     QTest::addColumn<QQuickPopup::PopupType>("popupType");
     QTest::newRow("Popup.Item") << QQuickPopup::Item;
-    if (popupWindowsSupported)
+    if (arePopupWindowsSupported())
         QTest::newRow("Popup.Window") << QQuickPopup::Window;
 }
 
@@ -1508,7 +1504,7 @@ void tst_QQuickMenu::subMenuMouse_data()
 
     QTest::newRow("cascading, in-scene") << true << QQuickPopup::Item;
     QTest::newRow("non-cascading, in-scene") << false << QQuickPopup::Item;
-    if (popupWindowsSupported) {
+    if (arePopupWindowsSupported()) {
         QTest::newRow("cascading, popup windows") << true << QQuickPopup::Window;
         QTest::newRow("non-cascading, popup windows") << false << QQuickPopup::Window;
     }
@@ -2156,7 +2152,7 @@ void tst_QQuickMenu::subMenuFlipsPositionWhenOutOfBounds_data()
 {
     QTest::addColumn<QQuickPopup::PopupType>("popupType");
     QTest::newRow("PopupType::Item") << QQuickPopup::Item;
-    if (popupWindowsSupported)
+    if (arePopupWindowsSupported())
         QTest::newRow("PopupType::Window") << QQuickPopup::Window;
 }
 
@@ -2316,7 +2312,7 @@ void tst_QQuickMenu::addRemoveSubMenus()
 
 void tst_QQuickMenu::subMenuPopupType()
 {
-    if (!popupWindowsSupported)
+    if (!arePopupWindowsSupported())
         QSKIP("The platform doesn't support popup windows. Skipping test.");
 
     // Undo the setting of AA_DontUseNativeMenuWindows to true from init()
@@ -3240,7 +3236,7 @@ void tst_QQuickMenu::effectivePosition_data()
     QTest::addColumn<QQuickPopup::PopupType>("popupType");
 
     QTest::newRow("Item") << QQuickPopup::Item;
-    if (popupWindowsSupported)
+    if (arePopupWindowsSupported())
         QTest::newRow("Window") << QQuickPopup::Window;
 }
 

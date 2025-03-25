@@ -37,6 +37,7 @@
 #include <QtQuickControlsTestUtils/private/controlstestutils_p.h>
 #include <QtQuickControlsTestUtils/private/qtest_quickcontrols_p.h>
 
+using namespace Qt::StringLiterals;
 using namespace QQuickVisualTestUtils;
 using namespace QQuickControlsTestUtils;
 
@@ -137,17 +138,11 @@ private slots:
 
 private:
     QScopedPointer<QPointingDevice> touchScreen = QScopedPointer<QPointingDevice>(QTest::createTouchDevice());
-    bool popupWindowsSupported = false;
 };
-
-using namespace Qt::StringLiterals;
 
 tst_QQuickPopup::tst_QQuickPopup()
     : QQmlDataTest(QT_QMLTEST_DATADIR)
 {
-#if defined(Q_OS_WINDOWS) || defined(Q_OS_MACOS)
-    popupWindowsSupported = QGuiApplicationPrivate::platformIntegration()->hasCapability(QPlatformIntegration::Capability::MultipleWindows);
-#endif
 }
 
 void tst_QQuickPopup::cleanup()
@@ -2528,7 +2523,7 @@ void tst_QQuickPopup::pointerEventsNotBlockedForNonPopupChildrenOfOverlayWithHig
 
 void tst_QQuickPopup::popupWindowPositioning()
 {
-    if (!popupWindowsSupported)
+    if (!arePopupWindowsSupported())
         QSKIP("The platform doesn't support popup windows. Skipping test.");
 
     QQuickApplicationHelper helper(this, "simplepopup.qml");
@@ -2620,7 +2615,7 @@ void tst_QQuickPopup::popupWindowAnchorsCenterIn()
 {
     QFETCH(bool, centerInParent);
 
-    if (!popupWindowsSupported)
+    if (!arePopupWindowsSupported())
         QSKIP("The platform doesn't support popup windows. Skipping test.");
 
     QQuickApplicationHelper helper(this, "popupCenterIn.qml");
@@ -2655,7 +2650,7 @@ void tst_QQuickPopup::popupWindowModality()
 {
     QSKIP("The behavior isn't correctly implemented yet. Waiting for patch in qtbase");
 
-    if (!popupWindowsSupported)
+    if (!arePopupWindowsSupported())
         QSKIP("The platform doesn't support popup windows. Skipping test.");
 
     QQuickApplicationHelper helper(this, "popupWithButtonInBackground.qml");
@@ -2709,7 +2704,7 @@ void tst_QQuickPopup::popupWindowModality()
 void tst_QQuickPopup::popupWindowClosesOnParentWindowClosing()
 {
     QSKIP("The behavior isn't correctly implemented yet. Waiting for patch in qtbase");
-    if (!popupWindowsSupported)
+    if (!arePopupWindowsSupported())
         QSKIP("The platform doesn't support popup windows. Skipping test.");
 
     QQuickApplicationHelper helper(this, "simplepopup.qml");
@@ -2742,7 +2737,7 @@ void tst_QQuickPopup::popupWindowClosesOnParentWindowClosing()
 
 void tst_QQuickPopup::popupWindowClosingPolicy()
 {
-    if (!popupWindowsSupported)
+    if (!arePopupWindowsSupported())
         QSKIP("The platform doesn't support popup windows. Skipping test.");
 
     QQuickApplicationHelper helper(this, "simplepopup.qml");
@@ -2840,7 +2835,7 @@ void tst_QQuickPopup::initialPopupSize_data()
     QTest::addColumn<QQuickPopup::PopupType>("popupType");
 
     QTest::newRow("Item") << QQuickPopup::Item;
-    if (popupWindowsSupported)
+    if (arePopupWindowsSupported())
         QTest::newRow("Window") << QQuickPopup::Window;
 }
 
@@ -2883,7 +2878,7 @@ void tst_QQuickPopup::initialPopupSize()
 
 void tst_QQuickPopup::popupWindowChangingParent()
 {
-    if (!popupWindowsSupported)
+    if (!arePopupWindowsSupported())
         QSKIP("The platform doesn't support popup windows. Skipping test.");
 
     QQuickApplicationHelper helper(this, "reparentingPopup.qml");
@@ -2943,7 +2938,7 @@ void tst_QQuickPopup::popupWindowChangingParent()
 
 void tst_QQuickPopup::popupWindowChangingParentWindow()
 {
-    if (!popupWindowsSupported)
+    if (!arePopupWindowsSupported())
         QSKIP("The platform doesn't support popup windows. Skipping test.");
 
     QQuickApplicationHelper helper(this, "reparentingPopupToDifferentWindows.qml");
@@ -3003,7 +2998,7 @@ void tst_QQuickPopup::popupWindowFocus()
     QSKIP("This test doesn't pass on QNX. It needs more investigation before it can be enabled");
 #endif
 
-    if (!popupWindowsSupported)
+    if (!arePopupWindowsSupported())
         QSKIP("The platform doesn't support popup windows. Skipping test.");
 
     QQuickApplicationHelper helper(this, "popupWindowFocusHandling.qml");
@@ -3067,7 +3062,7 @@ void tst_QQuickPopup::popupWindowFocus()
 
 void tst_QQuickPopup::popupTypeChangeFromWindowToItem()
 {
-    if (!popupWindowsSupported)
+    if (!arePopupWindowsSupported())
         QSKIP("The platform doesn't support native popup windows. Skipping test.");
 
     QQuickApplicationHelper helper(this, "simplepopup.qml");
@@ -3112,7 +3107,7 @@ void tst_QQuickPopup::popupTypeChangeFromWindowToItem()
 
 void tst_QQuickPopup::popupTypeChangeFromItemToWindow()
 {
-    if (!popupWindowsSupported)
+    if (!arePopupWindowsSupported())
         QSKIP("The platform doesn't support popup windows. Skipping test.");
 
     QQuickApplicationHelper helper(this, "simplepopup.qml");
@@ -3218,7 +3213,7 @@ void tst_QQuickPopup::noInfiniteRecursionOnParentWindowDestruction()
 
 void tst_QQuickPopup::popupWindowDestructedBeforeQQuickPopup()
 {
-    if (!popupWindowsSupported)
+    if (!arePopupWindowsSupported())
         QSKIP("The platform doesn't support popup windows. Skipping test.");
 
     QQuickControlsApplicationHelper helper(this, "simplepopup.qml");
@@ -3272,7 +3267,7 @@ void tst_QQuickPopup::popupWindowPositionerRespectingScreenBounds_data()
 {
     QTest::addColumn<QQuickPopup::PopupType>("popupType");
     QTest::newRow("Popup.Item") << QQuickPopup::Item;
-    if (popupWindowsSupported &&
+    if (arePopupWindowsSupported() &&
         QGuiApplicationPrivate::platformIntegration()->hasCapability(QPlatformIntegration::WindowActivation))
         QTest::newRow("Popup.Window") << QQuickPopup::Window;
 }
