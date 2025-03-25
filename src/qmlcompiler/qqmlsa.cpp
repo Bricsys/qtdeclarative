@@ -1505,6 +1505,27 @@ bool PassManagerPrivate::registerPropertyPass(std::shared_ptr<PropertyPass> pass
     return true;
 }
 
+bool PassManagerPrivate::registerPropertyPassOnBuiltinType(std::shared_ptr<PropertyPass> pass,
+                                                           QAnyStringView builtinTypeName,
+                                                           QAnyStringView propertyName,
+                                                           bool allowInheritance)
+{
+    auto typeImporter = m_visitor->importer();
+    const auto scope = typeImporter->builtinInternalNames().type(builtinTypeName.toString()).scope;
+    const auto element = QQmlJSScope::createQQmlSAElement(scope);
+
+    if (element.isNull())
+        return false;
+
+    const QString name = lookupName(element, Register);
+
+    const QQmlSA::PropertyPassInvocation passInfo{ propertyName.toString(), std::move(pass),
+                                                   allowInheritance };
+    m_propertyPasses.insert({ name, passInfo });
+
+    return true;
+}
+
 void PassManagerPrivate::addBindingSourceLocations(const Element &element, const Element &scope,
                                                    const QString prefix, bool isAttached)
 {

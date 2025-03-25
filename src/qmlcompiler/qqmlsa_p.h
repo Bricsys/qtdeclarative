@@ -201,6 +201,11 @@ public:
                               QAnyStringView typeName,
                               QAnyStringView propertyName = QAnyStringView(),
                               bool allowInheritance = true);
+    bool registerPropertyPassOnBuiltinType(std::shared_ptr<PropertyPass> pass,
+                                           QAnyStringView typeName,
+                                           QAnyStringView propertyName = QAnyStringView(),
+                                           bool allowInheritance = true);
+
     void analyze(const Element &root);
 
     bool hasImportedModule(QAnyStringView name) const;
@@ -271,6 +276,122 @@ Q_QMLCOMPILER_EXPORT void emitWarningWithOptionalFix(GenericPass &pass, QAnyStri
                                                      const LoggerWarningId &id,
                                                      const QQmlSA::SourceLocation &srcLocation,
                                                      const std::optional<QQmlJSFixSuggestion> &fix);
+
+struct GenericPropertyPass : public PropertyPass
+{
+    using PropertyPass::PropertyPass;
+
+    static void onBindingDefault(PropertyPass *, const Element &, const QString &, const Binding &,
+                                 const Element &, const Element &)
+    {
+    }
+    static void onReadDefault(PropertyPass *, const Element &, const QString &, const Element &,
+                              SourceLocation)
+    {
+    }
+    static void onCallDefault(PropertyPass *, const Element &, const QString &, const Element &,
+                              SourceLocation)
+    {
+    }
+    static void onWriteDefault(PropertyPass *, const Element &, const QString &, const Element &,
+                               const Element &, SourceLocation)
+    {
+    }
+
+    using OnBinding = decltype(&onBindingDefault);
+    using OnRead = decltype(&onReadDefault);
+    using OnCall = decltype(&onCallDefault);
+    using OnWrite = decltype(&onWriteDefault);
+
+    void onBinding(const Element &element, const QString &propertyName, const Binding &binding,
+                   const Element &bindingScope, const Element &value) override
+    {
+        m_onBinding(this, element, propertyName, binding, bindingScope, value);
+    }
+    void onRead(const Element &element, const QString &propertyName, const Element &readScope,
+                SourceLocation location) override
+    {
+        m_onRead(this, element, propertyName, readScope, location);
+    }
+    void onCall(const Element &element, const QString &propertyName, const Element &readScope,
+                SourceLocation location) override
+    {
+        m_onCall(this, element, propertyName, readScope, location);
+    }
+    void onWrite(const Element &element, const QString &propertyName, const Element &value,
+                 const Element &writeScope, SourceLocation location) override
+    {
+        m_onWrite(this, element, propertyName, value, writeScope, location);
+    }
+
+    OnBinding m_onBinding = &onBindingDefault;
+    OnRead m_onRead = &onReadDefault;
+    OnCall m_onCall = &onCallDefault;
+    OnWrite m_onWrite = &onWriteDefault;
+};
+
+class PropertyPassBuilder
+{
+public:
+    PropertyPassBuilder(PassManager *passManager)
+        : m_pass(std::make_unique<GenericPropertyPass>(passManager)), m_passManager(passManager)
+    {
+        Q_ASSERT(m_passManager);
+    }
+
+    PropertyPassBuilder() = delete;
+    Q_DISABLE_COPY_MOVE(PropertyPassBuilder)
+    ~PropertyPassBuilder()
+    {
+        Q_ASSERT_X(!m_pass, "GenericPropertyPassBuilder", "Built PropertyPass was not registered!");
+    }
+
+    PropertyPassBuilder &withOnBinding(GenericPropertyPass::OnBinding onBinding)
+    {
+        Q_ASSERT_X(m_pass, "GenericPropertyPassBuilder",
+                   "PropertyPasses can't be modified after registration");
+        m_pass->m_onBinding = onBinding;
+        return *this;
+    }
+    PropertyPassBuilder &withOnRead(GenericPropertyPass::OnRead onRead)
+    {
+        Q_ASSERT_X(m_pass, "GenericPropertyPassBuilder",
+                   "PropertyPasses can't be modified after registration");
+        m_pass->m_onRead = onRead;
+        return *this;
+    }
+    PropertyPassBuilder &withOnCall(GenericPropertyPass::OnCall onCall)
+    {
+        Q_ASSERT_X(m_pass, "GenericPropertyPassBuilder",
+                   "PropertyPasses can't be modified after registration");
+        m_pass->m_onCall = onCall;
+        return *this;
+    }
+    PropertyPassBuilder &withOnWrite(GenericPropertyPass::OnWrite onWrite)
+    {
+        Q_ASSERT_X(m_pass, "GenericPropertyPassBuilder",
+                   "PropertyPasses can't be modified after registration");
+        m_pass->m_onWrite = onWrite;
+        return *this;
+    }
+    void registerOn(QAnyStringView module, QAnyStringView type, QAnyStringView property)
+    {
+        Q_ASSERT_X(m_pass, "GenericPropertyPassBuilder",
+                   "Current PropertyPass was already registered");
+        m_passManager->registerPropertyPass(std::move(m_pass), module, type, property);
+    }
+    void registerOnBuiltin(QAnyStringView type, QAnyStringView property)
+    {
+        Q_ASSERT_X(m_pass, "GenericPropertyPassBuilder",
+                   "Current PropertyPass was already registered");
+        PassManagerPrivate::get(m_passManager)
+                ->registerPropertyPassOnBuiltinType(std::move(m_pass), type, property);
+    }
+
+private:
+    std::unique_ptr<GenericPropertyPass> m_pass;
+    PassManager *m_passManager;
+};
 
 } // namespace QQmlSA
 
