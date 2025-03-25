@@ -1452,6 +1452,8 @@ void TestQmllint::cleanJsSnippet_data()
     QTest::newRow("doubleInDifferentScopes") << u"const a = 42; for (let a = 1; a < 10; ++a) {}"_s;
 
     QTest::newRow("notAssignmentInCondition") << u"let x = 3; if (x==3) return;"_s;
+    QTest::newRow("eval") << u"eval()"_s;
+    QTest::newRow("eval2") << u"eval(\"1 + 1\")"_s;
 }
 
 void TestQmllint::cleanJsSnippet()
