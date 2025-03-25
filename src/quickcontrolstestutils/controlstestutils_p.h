@@ -96,6 +96,8 @@ namespace QQuickControlsTestUtils
     private:
         Qt::ColorScheme m_colorScheme = QGuiApplication::styleHints()->colorScheme();
     };
+
+    [[nodiscard]] bool arePopupWindowsSupported();
 }
 
 #define VERIFY_VISUAL_FOCUS(control) \

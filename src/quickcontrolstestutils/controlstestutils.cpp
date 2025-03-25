@@ -198,3 +198,12 @@ QString QQuickControlsTestUtils::visualFocusFailureMessage(QQuickControl *contro
         << " activeFocusItem: " << activeFocusItemStr;
     return message;
 }
+
+bool QQuickControlsTestUtils::arePopupWindowsSupported()
+{
+#if defined(Q_OS_WINDOWS) || defined(Q_OS_MACOS)
+    return QGuiApplicationPrivate::platformIntegration()->hasCapability(QPlatformIntegration::Capability::MultipleWindows);
+#else
+    return false;
+#endif
+}
