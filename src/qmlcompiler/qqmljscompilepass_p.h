@@ -33,6 +33,7 @@ public:
         InvalidRegister = -1,
         Accumulator = QV4::CallData::Accumulator,
         This = QV4::CallData::This,
+        NewTarget = QV4::CallData::NewTarget,
         FirstArgument = QV4::CallData::OffsetCount
     };
 

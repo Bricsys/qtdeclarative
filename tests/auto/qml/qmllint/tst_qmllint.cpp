@@ -1393,6 +1393,9 @@ void TestQmllint::cleanJsSnippet_data()
     QTest::newRow("testSnippet") << u"let x = 5"_s;
     QTest::newRow("doubleVar") << u"var x = 5; var y = 5"_s;
     QTest::newRow("doubleInDifferentScopes") << u"const a = 42; for (let a = 1; a < 10; ++a) {}"_s;
+
+    QTest::newRow("eval") << u"eval()"_s;
+    QTest::newRow("eval2") << u"eval(\"1 + 1\")"_s;
 }
 
 void TestQmllint::cleanJsSnippet()
