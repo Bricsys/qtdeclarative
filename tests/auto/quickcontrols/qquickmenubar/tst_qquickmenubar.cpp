@@ -82,7 +82,6 @@ private slots:
 
 private:
     bool nativeMenuBarSupported = false;
-    bool popupWindowsSupported = false;
     QScopedPointer<QPointingDevice> touchScreen = QScopedPointer<QPointingDevice>(QTest::createTouchDevice());
 };
 
@@ -97,9 +96,6 @@ tst_qquickmenubar::tst_qquickmenubar()
     qputenv("QML_NO_TOUCH_COMPRESSION", "1");
     QQuickMenuBar mb;
     nativeMenuBarSupported = QQuickMenuBarPrivate::get(&mb)->useNativeMenuBar();
-#if defined(Q_OS_WINDOWS) || defined(Q_OS_MACOS)
-    popupWindowsSupported = QGuiApplicationPrivate::platformIntegration()->hasCapability(QPlatformIntegration::Capability::MultipleWindows);
-#endif
 }
 
 void tst_qquickmenubar::init()
@@ -137,7 +133,7 @@ void tst_qquickmenubar::mouse_data()
     QTest::addColumn<QQuickPopup::PopupType>("popupType");
     QTest::newRow("Popup.Item") << QQuickPopup::Item;
     // Uncomment when popup windows work 100% (QTBUG-128479)
-    // if (popupWindowsSupported)
+    // if (arePopupWindowsSupported())
     //     QTest::newRow("Popup.Window") << QQuickPopup::Window;
 }
 
@@ -363,7 +359,7 @@ void tst_qquickmenubar::keys_data()
     QTest::addColumn<QQuickPopup::PopupType>("popupType");
     QTest::newRow("Popup.Item") << QQuickPopup::Item;
     // Uncomment when popup windows work 100% (QTBUG-128479)
-    // if (popupWindowsSupported)
+    // if (arePopupWindowsSupported())
     //     QTest::newRow("Popup.Window") << QQuickPopup::Window;
 }
 
@@ -570,7 +566,7 @@ void tst_qquickmenubar::mnemonics_data()
     QTest::addColumn<QQuickPopup::PopupType>("popupType");
     QTest::newRow("Popup.Item") << QQuickPopup::Item;
     // Uncomment when popup windows work 100% (QTBUG-128479)
-    // if (popupWindowsSupported)
+    // if (arePopupWindowsSupported())
     //     QTest::newRow("Popup.Window") << QQuickPopup::Window;
 }
 
@@ -1098,7 +1094,7 @@ void tst_qquickmenubar::addRemoveExistingMenus_data()
     if (nativeMenuBarSupported)
         QTest::newRow("native, native") << true << true;
     // Uncomment when popup windows work 100%
-    // if (popupWindowsSupported)
+    // if (arePopupWindowsSupported())
     //     QTest::newRow("non-native, popup window") << false << true;
 }
 
@@ -1135,7 +1131,7 @@ void tst_qquickmenubar::checkHighlightWhenMenuDismissed_data()
     QTest::addColumn<QQuickPopup::PopupType>("popupType");
     QTest::newRow("Popup.Item") << QQuickPopup::Item;
     // Uncomment when popup windows work 100% (QTBUG-128479)
-    // if (popupWindowsSupported)
+    // if (arePopupWindowsSupported())
     //     QTest::newRow("Popup.Window") << QQuickPopup::Window;
 }
 
@@ -1207,7 +1203,7 @@ void tst_qquickmenubar::hoverAfterClosingWithEscape_data()
     QTest::addColumn<bool>("usePopupWindow");
     QTest::newRow("in-scene popup") << false;
     // Uncomment when popup windows work 100%
-    // if (popupWindowsSupported)
+    // if (arePopupWindowsSupported())
     //     QTest::newRow("popup window") << true;
 }
 
@@ -1576,7 +1572,7 @@ void tst_qquickmenubar::menuPosition_data()
 {
     QTest::addColumn<QQuickPopup::PopupType>("popupType");
     QTest::newRow("Popup.Item") << QQuickPopup::Item;
-    if (popupWindowsSupported)
+    if (arePopupWindowsSupported())
         QTest::newRow("Popup.Window") << QQuickPopup::Window;
 }
 
@@ -1815,7 +1811,7 @@ void tst_qquickmenubar::panMenuBar_data()
     QTest::addColumn<bool>("usePopupWindow");
     QTest::newRow("in-scene popup") << false;
     // Uncomment when popup windows work 100%
-    // if (popupWindowsSupported)
+    // if (arePopupWindowsSupported())
     //     QTest::newRow("popup window") << true;
 }
 
