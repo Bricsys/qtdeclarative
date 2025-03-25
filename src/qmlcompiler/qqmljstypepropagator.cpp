@@ -1899,6 +1899,21 @@ void QQmlJSTypePropagator::generate_CallPossiblyDirectEval(int argc, int argv)
     m_state.setHasSideEffects(true);
     Q_UNUSED(argc)
     Q_UNUSED(argv)
+
+    // qmllint needs to be able to warn about eval calls
+    if (m_passManager) {
+        const QQmlSA::SourceLocation saLocation{
+            QQmlSA::SourceLocationPrivate::createQQmlSASourceLocation(currentSourceLocation())
+        };
+        const QQmlSA::Element saBaseType{ QQmlJSScope::createQQmlSAElement(
+                m_typeResolver->jsGlobalObject()) };
+        const QQmlSA::Element saContainedType{ QQmlJSScope::createQQmlSAElement(
+                m_function->qmlScope.containedType()) };
+
+        QQmlSA::PassManagerPrivate::get(m_passManager)
+                ->analyzeCall(saBaseType, "eval"_L1, saContainedType, saLocation);
+    }
+
     INSTR_PROLOGUE_NOT_IMPLEMENTED_POPULATES_ACC();
 }
 

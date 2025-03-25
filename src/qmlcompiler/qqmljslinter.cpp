@@ -583,6 +583,14 @@ QQmlJSLinter::LintResult QQmlJSLinter::lintFile(const QString &filename,
                     std::make_unique<QQmlJSTranslationFunctionMismatchCheck>(passMan.get()),
                     QString(), QString(), QString());
 
+            QQmlSA::PropertyPassBuilder(passMan.get())
+                    .withOnCall([](QQmlSA::PropertyPass *self, const QQmlSA::Element &,
+                                   const QString &, const QQmlSA::Element &,
+                                   QQmlSA::SourceLocation location) {
+                        self->emitWarning("Do not use 'eval'", qmlEval, location);
+                    })
+                    .registerOnBuiltin("GlobalObject", "eval");
+
             if (m_enablePlugins) {
                 for (const Plugin &plugin : m_plugins) {
                     if (!plugin.isValid() || !plugin.isEnabled())

@@ -1451,6 +1451,13 @@ void TestQmllint::dirtyJsSnippet_data()
             << Result{ { { "Assignment in condition: did you meant to use \"===\" or \"==\" "
                            "instead of \"=\"?"_L1,
                            1, 21 } } };
+    QTest::newRow("eval") << u"let x = eval();"_s << Result{ { { "Do not use 'eval'"_L1, 1, 9 } } };
+    QTest::newRow("eval2") << u"let x = eval(\"1 + 1\");"_s
+                           << Result{ { { "Do not use 'eval'"_L1, 1, 9 } } };
+    QTest::newRow("indirectEval") << u"let x = (1, eval)();"_s
+                                  << Result{ { { "Do not use 'eval'"_L1, 1, 13 } } };
+    QTest::newRow("indirectEval2") << u"let x = (1, eval)(\"1 + 1\");"_s
+                                   << Result{ { { "Do not use 'eval'"_L1, 1, 13 } } };
 }
 
 void TestQmllint::dirtyJsSnippet()
@@ -1482,8 +1489,6 @@ void TestQmllint::cleanJsSnippet_data()
     QTest::newRow("doubleInDifferentScopes") << u"const a = 42; for (let a = 1; a < 10; ++a) {}"_s;
 
     QTest::newRow("notAssignmentInCondition") << u"let x = 3; if (x==3) return;"_s;
-    QTest::newRow("eval") << u"eval()"_s;
-    QTest::newRow("eval2") << u"eval(\"1 + 1\")"_s;
 }
 
 void TestQmllint::cleanJsSnippet()
