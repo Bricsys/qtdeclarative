@@ -1532,6 +1532,8 @@ void TestQmllint::cleanQmlCode_data()
     QTest::newRow("setRequiredTroughAlias") << QStringLiteral("setRequiredPropertyThroughAlias.qml");
     QTest::newRow("setRequiredTroughAliasOfAlias")
             << QStringLiteral("setRequiredPropertyThroughAliasOfAlias.qml");
+    QTest::newRow("evals")
+            << QStringLiteral("evals.qml");
 }
 
 void TestQmllint::cleanQmlCode()
