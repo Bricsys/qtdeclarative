@@ -1490,7 +1490,7 @@ void TestQmllint::cleanJsSnippet()
 {
     QFETCH(QString, code);
 
-    const QString qmlCode = "import QtQuick\nItem { function f() {%1}}"_L1.arg(code);
+    const QString qmlCode = "import QtQuick\nItem { function f() {\n%1}}"_L1.arg(code);
     const Result result = Result::clean();
 
     QJsonArray warnings;
