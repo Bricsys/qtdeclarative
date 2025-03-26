@@ -20,6 +20,7 @@ public:
 
     QString name() const override;
     void initializeTheme(QQuickTheme *theme) override;
+    void updateTheme() override;
 
     QQuickBasicTheme theme;
 };
@@ -38,6 +39,11 @@ QString QtQuickControls2BasicStylePlugin::name() const
 void QtQuickControls2BasicStylePlugin::initializeTheme(QQuickTheme *theme)
 {
     this->theme.initialize(theme);
+}
+
+void QtQuickControls2BasicStylePlugin::updateTheme()
+{
+    this->theme.updateTheme();
 }
 
 QT_END_NAMESPACE

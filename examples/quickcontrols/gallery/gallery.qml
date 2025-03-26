@@ -279,7 +279,7 @@ ApplicationWindow {
                 id: colorSchemes
                 // Some Qt Quick styles prioritize the respective design system guidelines
                 // over the system palette.
-                enabled: ["FluentWinUI3", "Fusion", "iOS"].includes(styleBox.currentText)
+                enabled: ["FluentWinUI3", "Fusion", "iOS", "Basic"].includes(styleBox.currentText)
                 CheckBox {
                     id: autoColorScheme
                     checked: true
