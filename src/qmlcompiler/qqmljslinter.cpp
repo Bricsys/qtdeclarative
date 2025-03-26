@@ -39,10 +39,70 @@ QT_BEGIN_NAMESPACE
 
 using namespace Qt::StringLiterals;
 
+class HasFunctionDefinitionVisitor final : public QQmlJS::AST::Visitor
+{
+public:
+    bool visit(QQmlJS::AST::FunctionDeclaration *functionDeclaration) override
+    {
+        m_result = !functionDeclaration->name.isEmpty();
+        return false;
+    }
+
+    void throwRecursionDepthError() override { }
+    bool result() const { return m_result; }
+    void reset() { m_result = false; }
+
+private:
+    bool m_result = false;
+};
+
+class UnreachableVisitor final : public QQmlJS::AST::Visitor
+{
+public:
+    UnreachableVisitor(QQmlJSLogger *logger) : m_logger(logger) { }
+
+    bool containsFunctionDeclaration(QQmlJS::AST::Node *node)
+    {
+        m_hasFunctionDefinition.reset();
+        node->accept(&m_hasFunctionDefinition);
+        return m_hasFunctionDefinition.result();
+    }
+
+    bool visit(QQmlJS::AST::StatementList *unreachable) override
+    {
+        QQmlJS::SourceLocation location;
+        auto report = [this, &location]() {
+            if (location.isValid()) {
+                m_logger->log(u"Unreachable code"_s, qmlUnreachableCode, location);
+            }
+            location = QQmlJS::SourceLocation{};
+        };
+
+        for (auto it = unreachable; it && it->statement; it = it->next) {
+            if (containsFunctionDeclaration(it->statement)) {
+                report();
+                continue; // don't warn about the location of the function declaration
+            }
+            location = combine(location,
+                               combine(it->statement->firstSourceLocation(),
+                                       it->statement->lastSourceLocation()));
+        }
+        report();
+        return false;
+    }
+    void throwRecursionDepthError() override { }
+
+private:
+    QQmlJSLogger *m_logger = nullptr;
+    HasFunctionDefinitionVisitor m_hasFunctionDefinition;
+};
+
 class CodegenWarningInterface final : public QV4::Compiler::CodegenWarningInterface
 {
 public:
-    CodegenWarningInterface(QQmlJSLogger *logger) : m_logger(logger) { }
+    CodegenWarningInterface(QQmlJSLogger *logger) : m_logger(logger), m_unreachableVisitor(logger)
+    {
+    }
 
     void reportVarUsedBeforeDeclaration(const QString &name, const QString &fileName,
                                         QQmlJS::SourceLocation declarationLocation,
@@ -68,8 +128,11 @@ public:
                       qmlFunctionUsedBeforeDeclaration, declarationLocation);
     }
 
+    UnreachableVisitor *unreachableVisitor() override { return &m_unreachableVisitor; }
+
 private:
     QQmlJSLogger *m_logger;
+    UnreachableVisitor m_unreachableVisitor;
 };
 
 QQmlJSLinter::QQmlJSLinter(const QStringList &importPaths, const QStringList &extraPluginPaths,

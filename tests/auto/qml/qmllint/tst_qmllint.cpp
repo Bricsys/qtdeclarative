@@ -1548,6 +1548,36 @@ void TestQmllint::dirtyJsSnippet_data()
                 }
                 << options;
     }
+
+    QTest::newRow("codeAfterReturn")
+            << u"return 1; return 2;"_s << Result{ { { "Unreachable code"_L1, 1, 11 } } }
+            << defaultOptions;
+
+    QTest::newRow("codeAfterBreak")
+            << u"for (;;) { break; return 1;}"_s << Result{ { { "Unreachable code"_L1, 1, 19 } } }
+            << defaultOptions;
+    QTest::newRow("codeAfterContinue")
+            << u"for (;;) { continue; return 1;}"_s
+            << Result{ { { "Unreachable code"_L1, 1, 22 } } } << defaultOptions;
+    QTest::newRow("codeAfterThrow")
+            << u"for (;;) { throw 1; return 1;}"_s << Result{ { { "Unreachable code"_L1, 1, 21 } } }
+            << defaultOptions;
+
+    QTest::newRow("functionAfterThrow")
+            << u"throw 1; function f() {}; let x = 1; function g() {}; let y = 1;"_s
+            << Result{ {
+                       { "Unreachable code"_L1, 1, 27 },
+                       { "Unreachable code"_L1, 1, 55 },
+               } }
+            << defaultOptions;
+
+    QTest::newRow("functionAfterThrow2")
+            << u"throw 1; if (x) { function f() {}; } let x = 1; if (x) { function g() {};} let y = 1;"_s
+            << Result{ {
+                       { "Unreachable code"_L1, 1, 38 },
+                       { "Unreachable code"_L1, 1, 76 },
+               } }
+            << defaultOptions;
 }
 
 void TestQmllint::dirtyJsSnippet()
@@ -1594,6 +1624,15 @@ void TestQmllint::cleanJsSnippet_data()
                "// qmllint enable var-used-before-declaration\n"
                "let x = 3;"_s
             << defaultOptions;
+
+    QTest::newRow("codeAfterReturn") << u"if (x) return 1; return 2;"_s << defaultOptions;
+    QTest::newRow("codeAfterReturn2")
+            << u"switch (1) { case 1: break; default: return 4;} return 3;"_s << defaultOptions;
+    QTest::newRow("codeAfterBreak") << u"for (;;) { if (x) break; return 1;}"_s << defaultOptions;
+    QTest::newRow("codeAfterContinue")
+            << u"for (;;) { if (x) continue; return 1;}"_s << defaultOptions;
+    QTest::newRow("codeAfterThrow") << u"for (;;) { if (x) throw 1; return 1;}"_s << defaultOptions;
+    QTest::newRow("functionAfterThrow") << u"throw 1; function f() {}"_s << defaultOptions;
 }
 
 void TestQmllint::cleanJsSnippet()

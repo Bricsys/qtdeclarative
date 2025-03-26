@@ -56,6 +56,8 @@ public:
     virtual void reportFunctionUsedBeforeDeclaration(const QString &name, const QString &fileName,
                                                      QQmlJS::SourceLocation declarationLocation,
                                                      QQmlJS::SourceLocation accessLocation);
+
+    virtual QQmlJS::AST::Visitor *unreachableVisitor() { return nullptr; }
     virtual ~CodegenWarningInterface() = default;
 };
 

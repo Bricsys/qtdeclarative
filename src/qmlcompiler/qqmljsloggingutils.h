@@ -81,6 +81,7 @@ extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlMissingEnumEntry;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlAssignmentInCondition;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlEval;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlRedundantOptionalChaining;
+extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUnreachableCode;
 
 QT_END_NAMESPACE
 

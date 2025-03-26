@@ -605,12 +605,15 @@ void Codegen::statementList(StatementList *ast)
             statement(static_cast<ExpressionNode *>(it->statement));
         if (it->statement == needsCompletion)
             requiresReturnValue = false;
-        if (it->statement->kind == Statement::Kind_ThrowStatement ||
-            it->statement->kind == Statement::Kind_BreakStatement ||
-            it->statement->kind == Statement::Kind_ContinueStatement ||
-            it->statement->kind == Statement::Kind_ReturnStatement)
-            // any code after those statements is unreachable
+        if (it->statement->kind == Statement::Kind_ThrowStatement
+            || it->statement->kind == Statement::Kind_BreakStatement
+            || it->statement->kind == Statement::Kind_ContinueStatement
+            || it->statement->kind == Statement::Kind_ReturnStatement) {
+
+            if (Visitor *visitor = _interface->unreachableVisitor())
+                Node::accept(it->next, visitor);
             break;
+        }
     }
     requiresReturnValue = _requiresReturnValue;
     insideSwitch = _insideSwitch;
