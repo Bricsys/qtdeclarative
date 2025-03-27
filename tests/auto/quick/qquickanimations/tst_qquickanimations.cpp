@@ -1302,7 +1302,7 @@ void tst_qquickanimations::startStopSignals()
 
     root->setProperty("alwaysRunToEnd", true);
 
-    timer.restart();
+    timer.start();
     QMetaObject::invokeMethod(root, "start");
 
     QCOMPARE(root->property("startedCount").toInt(), 3);
