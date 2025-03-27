@@ -47,8 +47,8 @@ private slots:
     void dragVsPinch();
 
 private:
-    QScopedPointer<QPointingDevice> touchscreen = QScopedPointer<QPointingDevice>(QTest::createTouchDevice());
-    QScopedPointer<QPointingDevice> touchpad = QScopedPointer<QPointingDevice>(QTest::createTouchDevice(QInputDevice::DeviceType::TouchPad));
+    std::unique_ptr<QPointingDevice> touchscreen{QTest::createTouchDevice()};
+    std::unique_ptr<QPointingDevice> touchpad{QTest::createTouchDevice(QInputDevice::DeviceType::TouchPad)};
 };
 
 void tst_QQuickPinchHandler::cleanupTestCase()
