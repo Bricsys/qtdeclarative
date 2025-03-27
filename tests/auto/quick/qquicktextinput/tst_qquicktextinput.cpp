@@ -218,7 +218,7 @@ private:
     QQmlEngine engine;
     QStringList standard;
     QStringList colorStrings;
-    QScopedPointer<QPointingDevice> touchscreen = QScopedPointer<QPointingDevice>(QTest::createTouchDevice());
+    std::unique_ptr<QPointingDevice> touchscreen{QTest::createTouchDevice()};
 };
 
 typedef QList<int> IntList;
@@ -7173,9 +7173,9 @@ void tst_qquicktextinput::touchscreenDoesNotSelect()
     int x1 = 10;
     int x2 = 70;
     int y = textInputObject->height() / 2;
-    QTest::touchEvent(&window, touchscreen.data()).press(0, QPoint(x1,y), &window);
-    QTest::touchEvent(&window, touchscreen.data()).move(0, QPoint(x2,y), &window);
-    QTest::touchEvent(&window, touchscreen.data()).release(0, QPoint(x2,y), &window);
+    QTest::touchEvent(&window, touchscreen.get()).press(0, QPoint(x1,y), &window);
+    QTest::touchEvent(&window, touchscreen.get()).move(0, QPoint(x2,y), &window);
+    QTest::touchEvent(&window, touchscreen.get()).release(0, QPoint(x2,y), &window);
     QQuickTouchUtils::flush(&window);
     QVERIFY(textInputObject->selectedText().isEmpty());
 
@@ -7184,8 +7184,8 @@ void tst_qquicktextinput::touchscreenDoesNotSelect()
     // with new API, it remains selected, and the cursor remains at the end
     textInputObject->selectAll();
     const int cursorPos = textInputObject->cursorPosition();
-    QTest::touchEvent(&window, touchscreen.data()).press(0, QPoint(x2,y), &window);
-    QTest::touchEvent(&window, touchscreen.data()).release(0, QPoint(x2,y), &window);
+    QTest::touchEvent(&window, touchscreen.get()).press(0, QPoint(x2,y), &window);
+    QTest::touchEvent(&window, touchscreen.get()).release(0, QPoint(x2,y), &window);
     QQuickTouchUtils::flush(&window);
     QCOMPARE(textInputObject->selectedText().isEmpty(), true);
     QCOMPARE_NE(textInputObject->cursorPosition(), cursorPos);
@@ -7209,7 +7209,7 @@ void tst_qquicktextinput::touchscreenSetsFocusAndMovesCursor()
     // tap the bottom field
     int x1 = 10;
     int y = bottom->position().y() + bottom->height() / 2;
-    QTest::touchEvent(&window, touchscreen.data()).press(0, QPoint(x1,y), &window);
+    QTest::touchEvent(&window, touchscreen.get()).press(0, QPoint(x1,y), &window);
     QQuickTouchUtils::flush(&window);
     QCOMPARE(qApp->focusObject(), bottom);
     // text cursor is at the end by default, on press
@@ -7220,7 +7220,7 @@ void tst_qquicktextinput::touchscreenSetsFocusAndMovesCursor()
     QTest::keyClick(&window, Qt::Key_Q);
     QVERIFY(bottom->text().endsWith('q'));
     QCOMPARE(bottom->text().size(), len + 1);
-    QTest::touchEvent(&window, touchscreen.data()).release(0, QPoint(x1,y), &window);
+    QTest::touchEvent(&window, touchscreen.get()).release(0, QPoint(x1,y), &window);
     QQuickTouchUtils::flush(&window);
     // the cursor gets moved on release, as long as TextInput's grab wasn't stolen (e.g. by Flickable)
     QVERIFY(bottom->cursorPosition() < 5);
@@ -7228,9 +7228,9 @@ void tst_qquicktextinput::touchscreenSetsFocusAndMovesCursor()
     // press-drag-and-release from x1 to x2 on the top field
     int x2 = 70;
     y = top->position().y() + top->height() / 2;
-    QTest::touchEvent(&window, touchscreen.data()).press(0, QPoint(x1,y), &window);
-    QTest::touchEvent(&window, touchscreen.data()).move(0, QPoint(x2,y), &window);
-    QTest::touchEvent(&window, touchscreen.data()).release(0, QPoint(x2,y), &window);
+    QTest::touchEvent(&window, touchscreen.get()).press(0, QPoint(x1,y), &window);
+    QTest::touchEvent(&window, touchscreen.get()).move(0, QPoint(x2,y), &window);
+    QTest::touchEvent(&window, touchscreen.get()).release(0, QPoint(x2,y), &window);
     QQuickTouchUtils::flush(&window);
     QCOMPARE(qApp->focusObject(), top);
     QVERIFY(top->selectedText().isEmpty());

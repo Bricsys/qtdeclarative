@@ -54,7 +54,7 @@ private slots:
 private:
     void createView(QScopedPointer<QQuickView> &window, const char *fileName);
 
-    QScopedPointer<QPointingDevice> touchscreen = QScopedPointer<QPointingDevice>(QTest::createTouchDevice());
+    std::unique_ptr<QPointingDevice> touchscreen{QTest::createTouchDevice()};
 };
 
 void tst_HoverHandler::createView(QScopedPointer<QQuickView> &window, const char *fileName)
