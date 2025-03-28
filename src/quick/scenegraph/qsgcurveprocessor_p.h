@@ -16,7 +16,7 @@
 //
 
 #include <QtQuick/qtquickexports.h>
-#include "util/qquadpath_p.h"
+#include <QtQuick/private/qquadpath_p.h>
 #include "qsgcurvestrokenode_p.h"
 
 #include <QtCore/qloggingcategory.h>
