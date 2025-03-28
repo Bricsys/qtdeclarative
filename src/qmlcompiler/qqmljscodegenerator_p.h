@@ -261,6 +261,13 @@ protected:
     void generateReturnError();
     void reject(const QString &thing);
 
+    template<typename T>
+    T reject(const QString &thing)
+    {
+        reject(thing);
+        return T();
+    }
+
     QString metaTypeFromType(const QQmlJSScope::ConstPtr &type) const;
     QString metaTypeFromName(const QQmlJSScope::ConstPtr &type) const;
     QString compositeMetaType(const QString &elementName) const;
