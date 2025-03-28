@@ -2487,6 +2487,7 @@ void QQuickFlickable::setTopMargin(qreal m)
     d->vData.startMargin = m;
     d->vData.markExtentsDirty();
     if (!d->pressed && !d->hData.moving && !d->vData.moving) {
+        // FIXME: We're not consistently updating the contentY, see QTBUG-131478
         d->fixupMode = QQuickFlickablePrivate::Immediate;
         d->fixupY();
     }
@@ -2508,6 +2509,7 @@ void QQuickFlickable::setBottomMargin(qreal m)
     d->vData.endMargin = m;
     d->vData.markExtentsDirty();
     if (!d->pressed && !d->hData.moving && !d->vData.moving) {
+        // FIXME: We're not consistently updating the contentY, see QTBUG-131478
         d->fixupMode = QQuickFlickablePrivate::Immediate;
         d->fixupY();
     }
@@ -2529,6 +2531,7 @@ void QQuickFlickable::setLeftMargin(qreal m)
     d->hData.startMargin = m;
     d->hData.markExtentsDirty();
     if (!d->pressed && !d->hData.moving && !d->vData.moving) {
+        // FIXME: We're not consistently updating the contentX, see QTBUG-131478
         d->fixupMode = QQuickFlickablePrivate::Immediate;
         d->fixupX();
     }
@@ -2550,6 +2553,7 @@ void QQuickFlickable::setRightMargin(qreal m)
     d->hData.endMargin = m;
     d->hData.markExtentsDirty();
     if (!d->pressed && !d->hData.moving && !d->vData.moving) {
+        // FIXME: We're not consistently updating the contentX, see QTBUG-131478
         d->fixupMode = QQuickFlickablePrivate::Immediate;
         d->fixupX();
     }
