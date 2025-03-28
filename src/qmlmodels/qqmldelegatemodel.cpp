@@ -2422,8 +2422,7 @@ void QQmlDelegateModelItem::childContextObjectDestroyed(QObject *childContextObj
 
     for (QQmlRefPointer<QQmlContextData> ctxt = contextData->childContexts(); ctxt;
          ctxt = ctxt->nextChild()) {
-        if (ctxt->contextObject() == childContextObject)
-            ctxt->setContextObject(nullptr);
+        ctxt->deepClearContextObject(childContextObject);
     }
 }
 
@@ -2514,9 +2513,8 @@ void QQmlDelegateModelItem::destroyObject()
     Q_ASSERT(data);
     if (data->ownContext) {
         data->ownContext->clearContext();
-        if (data->ownContext->contextObject() == object)
-            data->ownContext->setContextObject(nullptr);
-        data->ownContext = nullptr;
+        data->ownContext->deepClearContextObject(object);
+        data->ownContext.reset();
         data->context = nullptr;
     }
     /* QTBUG-87228: when destroying object at the application exit, the deferred
