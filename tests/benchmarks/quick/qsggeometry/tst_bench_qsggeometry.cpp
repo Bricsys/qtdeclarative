@@ -3,6 +3,7 @@
 
 #include <qtest.h>
 #include <QtCore/QVector>
+#include <QElapsedTimer>
 #include <QtQuick/QSGGeometry>
 #include <numeric>
 
