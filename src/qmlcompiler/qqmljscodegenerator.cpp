@@ -2506,7 +2506,7 @@ void QQmlJSCodeGenerator::generate_ConstructWithSpread(int func, int argc, int a
 void QQmlJSCodeGenerator::generate_SetUnwindHandler(int offset)
 {
     Q_UNUSED(offset)
-    reject(u"SetUnwindHandlerh"_s);
+    reject(u"SetUnwindHandler"_s);
 }
 
 void QQmlJSCodeGenerator::generate_UnwindDispatch()
