@@ -19,6 +19,7 @@ set(cpp_sources
     invisible.h
     largeValueType.h
     listprovider.h
+    listsingleton.h
     multiforeign.h
     objectwithmethod.h
     person.cpp person.h
@@ -193,6 +194,7 @@ set(qml_files
     invisibleListElementType.qml
     invisibleTypes.qml
     isnan.qml
+    iterateUnknownValue.qml
     iteration.qml
     javaScriptArgument.qml
     jsArrayMethods.qml

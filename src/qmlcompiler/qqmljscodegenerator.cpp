@@ -2665,7 +2665,8 @@ void QQmlJSCodeGenerator::generate_IteratorNext(int value, int offset)
     m_body += u"if (" + m_state.accumulatorVariableIn + u"->hasNext(" + qjsList + u")) {\n    ";
 
     // We know that this works because we can do ->next() below.
-    QQmlJSRegisterContent iteratorValue = m_typeResolver->valueType(iteratorContent);
+    QQmlJSRegisterContent iteratorValue = m_typeResolver->extractNonVoidFromOptionalType(
+            m_typeResolver->original(m_state.changedRegister()));
     iteratorValue = m_pool->storedIn(iteratorValue, iteratorValue.containedType());
 
     m_body += changedRegisterVariable() + u" = "
