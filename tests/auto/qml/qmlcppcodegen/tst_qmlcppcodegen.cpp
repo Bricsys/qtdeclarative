@@ -156,6 +156,7 @@ private slots:
     void invisibleListElementType();
     void invisibleSingleton();
     void invisibleTypes();
+    void iterateUnknownValue();
     void iteration();
     void javaScriptArgument();
     void jsArrayMethods();
@@ -2912,6 +2913,20 @@ void tst_QmlCppCodegen::invisibleTypes()
 //    const QMetaObject *meta = qvariant_cast<const QMetaObject *>(o->property("metaobject"));
 //    QVERIFY(meta != nullptr);
 //    QCOMPARE(meta->className(), "DerivedFromInvisible");
+}
+
+void tst_QmlCppCodegen::iterateUnknownValue()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, QUrl(u"qrc:/qt/qml/TestTypes/iterateUnknownValue.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+
+    QTest::ignoreMessage(QtDebugMsg, "one");
+    QTest::ignoreMessage(QtDebugMsg, "two");
+    QTest::ignoreMessage(QtDebugMsg, "three");
+
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
 }
 
 void tst_QmlCppCodegen::iteration()
