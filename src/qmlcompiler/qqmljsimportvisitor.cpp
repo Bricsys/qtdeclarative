@@ -1918,10 +1918,14 @@ void QQmlJSImportVisitor::visitFunctionExpressionHelper(QQmlJS::AST::FunctionExp
         m_currentScope->addOwnMethod(method);
 
         if (m_currentScope->scopeType() != QQmlSA::ScopeType::QMLScope) {
+            // note: lambda methods have no identifier token
+            const QQmlJS::SourceLocation functionLocation = fexpr->identifierToken.isValid()
+                    ? fexpr->identifierToken
+                    : fexpr->functionToken;
             m_currentScope->insertJSIdentifier(name,
                                                { QQmlJSScope::JavaScriptIdentifier::LexicalScoped,
-                                                 fexpr->firstSourceLocation(),
-                                                 method.returnTypeName(), false });
+                                                 functionLocation, method.returnTypeName(),
+                                                 false });
         }
         enterEnvironment(QQmlSA::ScopeType::JSFunctionScope, name, fexpr->firstSourceLocation());
     } else {
@@ -1951,6 +1955,15 @@ bool QQmlJSImportVisitor::visit(QQmlJS::AST::UiSourceElement *srcElement)
 
 bool QQmlJSImportVisitor::visit(QQmlJS::AST::FunctionDeclaration *fdecl)
 {
+    if (!fdecl->name.isEmpty()) {
+        const QString name = fdecl->name.toString();
+        if (auto previousDeclaration = m_currentScope->ownJSIdentifier(name)) {
+            m_logger->log("Identifier '%1' has already been declared"_L1.arg(name), qmlSyntax,
+                          fdecl->identifierToken);
+            m_logger->log("Note: previous declaration of '%1' here"_L1.arg(name), qmlSyntax,
+                          previousDeclaration->location);
+        }
+    }
     visitFunctionExpressionHelper(fdecl);
     return true;
 }

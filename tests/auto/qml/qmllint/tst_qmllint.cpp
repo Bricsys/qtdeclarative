@@ -1466,6 +1466,19 @@ void TestQmllint::dirtyJsSnippet_data()
             << u"/a/?.flags"_s
             << Result{ { { "Redundant optional chaining for lookup on non-voidable and "_L1
                            "non-nullable type QRegularExpression"_L1, 1, 6 } } };
+
+    QTest::newRow("shadowArgument")
+            << u"function f(a) { const a = 33; }"_s
+            << Result{ { { "Identifier 'a' has already been declared"_L1, 1, 23 },
+                         { "Note: previous declaration of 'a' here"_L1, 1, 12 } } };
+    QTest::newRow("shadowFunction")
+            << u"function f() {} const f = 33"_s
+            << Result{ { { "Identifier 'f' has already been declared"_L1, 1, 23 },
+                         { "Note: previous declaration of 'f' here"_L1, 1, 10 } } };
+    QTest::newRow("shadowFunction2")
+            << u"const f = 33; function f() {}"_s
+            << Result{ { { "Identifier 'f' has already been declared"_L1, 1, 24 },
+                         { "Note: previous declaration of 'f' here"_L1, 1, 7 } } };
 }
 
 void TestQmllint::dirtyJsSnippet()
@@ -1497,6 +1510,9 @@ void TestQmllint::cleanJsSnippet_data()
     QTest::newRow("doubleInDifferentScopes") << u"const a = 42; for (let a = 1; a < 10; ++a) {}"_s;
 
     QTest::newRow("notAssignmentInCondition") << u"let x = 3; if (x==3) return;"_s;
+
+    QTest::newRow("shadowArgument") << u"function f(a) { if (1){ const a = 33; } }"_s;
+    QTest::newRow("shadowFunction") << u"function f() { function f() {} }"_s;
 }
 
 void TestQmllint::cleanJsSnippet()
