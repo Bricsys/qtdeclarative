@@ -173,7 +173,6 @@ qt_internal_add_qml_module(QuickControls2Basic
     NO_PLUGIN_OPTIONAL
     NO_GENERATE_PLUGIN_SOURCE
     SOURCES
-        qquickbasicstyle.cpp qquickbasicstyle_p.h
         qquickbasictheme.cpp qquickbasictheme_p.h
         qtquickcontrols2basicforeign.cpp qtquickcontrols2basicforeign_p.h
     QML_FILES
