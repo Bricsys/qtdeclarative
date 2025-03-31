@@ -631,10 +631,10 @@ void TestQmllint::dirtyQmlCode_data()
                        "Member \"foobar\" not found on type \"QQuickScreenAttached\"") } } };
     QTest::newRow("VariableUsedBeforeDeclaration")
             << QStringLiteral("useBeforeDeclaration.qml")
-            << Result { { Message {
-                       QStringLiteral("Variable \"argq\" is used here before its declaration. "
-                                      "The declaration is at 6:13."),
-                       5, 9 } } };
+            << Result{ {
+                       Message{ "Identifier 'argq' is used here before its declaration"_L1, 5, 9 },
+                       Message{ "Note: declaration of 'argq' here"_L1, 6, 13 },
+               } };
     QTest::newRow("SignalParameterMismatch")
             << QStringLiteral("namedSignalParameters.qml")
             << Result { { Message { QStringLiteral(
@@ -1513,6 +1513,12 @@ void TestQmllint::cleanJsSnippet_data()
 
     QTest::newRow("shadowArgument") << u"function f(a) { if (1){ const a = 33; } }"_s;
     QTest::newRow("shadowFunction") << u"function f() { function f() {} }"_s;
+
+    QTest::newRow("varUsedBeforeDeclarationWithIgnore")
+            << u"// qmllint disable var-used-before-declaration\n"
+               "f(x);\n"
+               "// qmllint enable var-used-before-declaration\n"
+               "let x = 3;"_s;
 }
 
 void TestQmllint::cleanJsSnippet()

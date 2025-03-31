@@ -49,12 +49,11 @@ public:
                                         QQmlJS::SourceLocation accessLocation) override
     {
         Q_UNUSED(fileName)
-        m_logger->log(
-                u"Variable \"%1\" is used here before its declaration. The declaration is at %2:%3."_s
-                        .arg(name)
-                        .arg(declarationLocation.startLine)
-                        .arg(declarationLocation.startColumn),
-                qmlVarUsedBeforeDeclaration, accessLocation);
+
+        m_logger->log("Identifier '%1' is used here before its declaration."_L1.arg(name),
+                      qmlVarUsedBeforeDeclaration, accessLocation);
+        m_logger->log("Note: declaration of '%1' here"_L1.arg(name), qmlVarUsedBeforeDeclaration,
+                      declarationLocation, true, true, {}, {}, accessLocation.startLine);
     }
 
 private:
