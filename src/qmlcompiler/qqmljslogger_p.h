@@ -110,6 +110,9 @@ struct Message : public QQmlJS::DiagnosticMessage
     QAnyStringView id;
     std::optional<QQmlJSFixSuggestion> fixSuggestion;
     bool isCompileError = false;
+    std::optional<quint32> customLineForDisabling = std::nullopt;
+
+    quint32 lineForDisabling() const { return customLineForDisabling.value_or(loc.startLine); }
 };
 
 class Q_QMLCOMPILER_EXPORT QQmlJSLogger
@@ -198,17 +201,19 @@ public:
     void log(const QString &message, QQmlJS::LoggerWarningId id,
              const QQmlJS::SourceLocation &srcLocation, bool showContext = true,
              bool showFileName = true, const std::optional<QQmlJSFixSuggestion> &suggestion = {},
-             const QString overrideFileName = QString())
+             const QString overrideFileName = QString(),
+             std::optional<quint32> customLineForDisabling = std::nullopt)
     {
         log(Message {
                 QQmlJS::DiagnosticMessage {
                     message,
                     m_categoryLevels[id.name().toString()],
-                    srcLocation
+                    srcLocation,
                 },
                 id.name(),
                 suggestion,
-                false // isCompileError
+                false, // isCompileError
+                customLineForDisabling
             }, showContext, showFileName, overrideFileName);
     }
 

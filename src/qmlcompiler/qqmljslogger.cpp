@@ -222,7 +222,7 @@ void QQmlJSLogger::log(
     // Note: assume \a type is the type we should prefer for logging
 
     if (diagMsg.loc.isValid()
-            && m_ignoredWarnings[diagMsg.loc.startLine].contains(diagMsg.id.toString())) {
+        && m_ignoredWarnings[diagMsg.lineForDisabling()].contains(diagMsg.id.toString())) {
         return;
     }
 
