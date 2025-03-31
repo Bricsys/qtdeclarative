@@ -46,7 +46,7 @@ ApplicationWindow {
     }
 
     Shortcut {
-        sequence: StandardKey.HelpContents
+        sequences: [StandardKey.HelpContents]
         onActivated: window.help()
     }
 
