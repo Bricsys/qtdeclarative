@@ -201,6 +201,7 @@ private:
         QList<QQmlJS::LoggerCategory> *categories = nullptr;
         LintType type = LintFile;
         bool readSettings = false;
+        QStringList enableCategories = {};
     };
 
     QJsonArray callQmllintImpl(const QString &fileToLint, const QString &fileCpntent,
@@ -1980,6 +1981,19 @@ QJsonArray TestQmllint::callQmllintImpl(const QString &fileToLint, const QString
     if (options.type == LintFile) {
         QList<QQmlJS::LoggerCategory> resolvedCategories =
                 options.categories != nullptr ? *options.categories : m_categories;
+
+        for (const QString &name : options.enableCategories) {
+            for (QQmlJS::LoggerCategory &category : resolvedCategories) {
+                if (category.name() != name)
+                    continue;
+
+                [&category]() {
+                    QVERIFY2(category.isIgnored(), "Can't enable already enabled category!");
+                }();
+                category.setIgnored(false);
+                break;
+            }
+        }
 
         if (options.readSettings) {
             QQmlToolingSettings settings(QLatin1String("qmllint"));
