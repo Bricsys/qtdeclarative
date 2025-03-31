@@ -337,6 +337,7 @@ struct Context {
             Import
         };
         Type type = Unresolved;
+        Context::MemberType memberType = UndefinedMember;
         bool isArgOrEval = false;
         bool isConst = false;
         bool requiresTDZCheck = false;

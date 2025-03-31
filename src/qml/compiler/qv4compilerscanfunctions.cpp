@@ -655,7 +655,8 @@ bool ScanFunctions::enterFunction(
         outerContext->hasNestedFunctions = true;
         // The identifier of a function expression cannot be referenced from the enclosing environment.
         if (nameContext == FunctionNameContext::Outer) {
-            if (!outerContext->addLocalVar(name, Context::FunctionDefinition, VariableScope::Var, expr)) {
+            if (!outerContext->addLocalVar(name, Context::FunctionDefinition, VariableScope::Var,
+                                           expr, expr->identifierToken)) {
                 _cg->throwSyntaxError(ast->firstSourceLocation(), QStringLiteral("Identifier %1 has already been declared").arg(name));
                 return false;
             }

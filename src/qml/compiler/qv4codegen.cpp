@@ -51,6 +51,13 @@ void CodegenWarningInterface::reportVarUsedBeforeDeclaration(
             << declarationLocation.startLine << ":" << declarationLocation.startColumn << ".";
 }
 
+void CodegenWarningInterface::reportFunctionUsedBeforeDeclaration(const QString &, const QString &,
+                                                                  QQmlJS::SourceLocation,
+                                                                  QQmlJS::SourceLocation)
+{
+    // we don't report this by default, only when using qmllint.
+}
+
 static inline void setJumpOutLocation(QV4::Moth::BytecodeGenerator *bytecodeGenerator,
                                       const Statement *body, const SourceLocation &fallback)
 {
@@ -2680,8 +2687,13 @@ Codegen::Reference Codegen::referenceForName(const QString &name, bool isLhs, co
         if (resolved.declarationLocation.isValid() && accessLocation.isValid()
                 && resolved.declarationLocation.begin() > accessLocation.end()) {
             Q_ASSERT(_interface);
-            _interface->reportVarUsedBeforeDeclaration(
-                    name, url().toLocalFile(), resolved.declarationLocation, accessLocation);
+            if (resolved.memberType == Context::FunctionDefinition) {
+                _interface->reportFunctionUsedBeforeDeclaration(
+                        name, url().toLocalFile(), resolved.declarationLocation, accessLocation);
+            } else {
+                _interface->reportVarUsedBeforeDeclaration(
+                        name, url().toLocalFile(), resolved.declarationLocation, accessLocation);
+            }
             if (resolved.type == Context::ResolvedName::Stack && resolved.requiresTDZCheck)
                 throwsReferenceError = true;
         }

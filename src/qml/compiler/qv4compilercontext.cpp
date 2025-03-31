@@ -108,6 +108,7 @@ Context::ResolvedName Context::resolveName(const QString &name, const QQmlJS::So
 
         if (m.type != Context::UndefinedMember) {
             result.type = m.canEscape ? ResolvedName::Local : ResolvedName::Stack;
+            result.memberType = m.type;
             result.scope = scope;
             result.index = m.index;
             result.isConst = (m.scope == VariableScope::Const);

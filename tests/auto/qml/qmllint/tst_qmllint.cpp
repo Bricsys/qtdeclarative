@@ -1536,6 +1536,18 @@ void TestQmllint::dirtyJsSnippet_data()
             << u"console.log(a = 1)"_s
             << Result{ { { "Unqualified access"_L1, 1, 13 } } }
             << defaultOptions;
+    {
+        CallQmllintOptions options;
+        options.enableCategories.append("function-used-before-declaration"_L1);
+        QTest::newRow("functionUsedBeforeDeclaration")
+                << u"fff(); function fff() {}"_s
+                << Result{ {
+                                   { "Function 'fff' is used here before its declaration"_L1, 1, 1 },
+                                   { "Note: declaration of 'fff' here"_L1, 1, 17 },
+                           },
+                }
+                << options;
+    }
 }
 
 void TestQmllint::dirtyJsSnippet()

@@ -70,6 +70,7 @@ extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlCompiler;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlAttachedPropertyReuse;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlPlugin;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlVarUsedBeforeDeclaration;
+extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlFunctionUsedBeforeDeclaration;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlInvalidLintDirective;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUseProperFunction;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlAccessSingleton;

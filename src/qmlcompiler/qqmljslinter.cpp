@@ -56,6 +56,18 @@ public:
                       declarationLocation, true, true, {}, {}, accessLocation.startLine);
     }
 
+    void reportFunctionUsedBeforeDeclaration(const QString &name, const QString &fileName,
+                                             QQmlJS::SourceLocation declarationLocation,
+                                             QQmlJS::SourceLocation accessLocation) override
+    {
+        Q_UNUSED(fileName)
+
+        m_logger->log("Function '%1' is used here before its declaration."_L1.arg(name),
+                      qmlFunctionUsedBeforeDeclaration, accessLocation);
+        m_logger->log("Note: declaration of '%1' here"_L1.arg(name),
+                      qmlFunctionUsedBeforeDeclaration, declarationLocation);
+    }
+
 private:
     QQmlJSLogger *m_logger;
 };

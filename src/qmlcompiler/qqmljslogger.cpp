@@ -92,6 +92,9 @@ using namespace Qt::StringLiterals;
       QtWarningMsg, true, false)                                                                   \
     X(qmlVarUsedBeforeDeclaration, "var-used-before-declaration", "VarUsedBeforeDeclaration",      \
       "Warn if a variable is used before declaration", QtWarningMsg, false, false)                 \
+    X(qmlFunctionUsedBeforeDeclaration, "function-used-before-declaration",                        \
+      "FunctionUsedBeforeDeclaration", "Warn if a function is used before declaration",            \
+      QtWarningMsg, true, false)                                                                   \
     X(qmlInvalidLintDirective, "invalid-lint-directive", "InvalidLintDirective",                   \
       "Warn if an invalid qmllint comment is found", QtWarningMsg, false, false)                   \
     X(qmlUseProperFunction, "use-proper-function", "UseProperFunction",                            \

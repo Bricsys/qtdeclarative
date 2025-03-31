@@ -53,6 +53,9 @@ public:
     virtual void reportVarUsedBeforeDeclaration(const QString &name, const QString &fileName,
                                                 QQmlJS::SourceLocation declarationLocation,
                                                 QQmlJS::SourceLocation accessLocation);
+    virtual void reportFunctionUsedBeforeDeclaration(const QString &name, const QString &fileName,
+                                                     QQmlJS::SourceLocation declarationLocation,
+                                                     QQmlJS::SourceLocation accessLocation);
     virtual ~CodegenWarningInterface() = default;
 };
 
