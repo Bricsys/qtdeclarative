@@ -69,6 +69,16 @@ public:
         return m_assetFilePrefix;
     }
 
+    void setUrlPrefix(const QString &prefix)
+    {
+        m_urlPrefix = prefix;
+    }
+
+    QString urlPrefix() const
+    {
+        return m_urlPrefix;
+    }
+
 protected:
     void generateNodeBase(const NodeInfo &info) override;
     bool generateDefsNode(const NodeInfo &info) override;
@@ -95,9 +105,11 @@ private:
     QTextStream &stream(int flags = NoFlags);
     const char *shapeName() const;
 
+protected:
+    QBuffer m_result;
+
 private:
     int m_indentLevel = 0;
-    QBuffer m_result;
     QTextStream m_stream;
     QString outputFileName;
     int m_inShapeItemLevel = 0;
@@ -106,6 +118,7 @@ private:
     bool m_retainFilePaths = false;
     QString m_assetFileDirectory;
     QString m_assetFilePrefix;
+    QString m_urlPrefix;
 };
 
 QT_END_NAMESPACE

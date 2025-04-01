@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
                 QCoreApplication::exit(-1);
             if (obj) {
                 auto *containerItem = obj->findChild<QQuickItem*>(QStringLiteral("svg_item"));
-                QQuickItemGenerator generator(inFileName, flags, containerItem);
+                QQuickItemGenerator generator(inFileName, flags, containerItem, engine.rootContext());
                 generator.generate();
             }
         });

@@ -68,19 +68,18 @@ void QQuickVectorImagePrivate::loadSvg()
         svgItem->deleteLater();
 
     svgItem = new QQuickItem(q);
+    svgItem->setParentItem(q);
 
     QQuickVectorImageGenerator::GeneratorFlags flags;
     if (preferredRendererType == QQuickVectorImage::CurveRenderer)
         flags.setFlag(QQuickVectorImageGenerator::CurveRenderer);
-    QQuickItemGenerator generator(localFile, flags, svgItem);
+    QQuickItemGenerator generator(localFile, flags, svgItem, qmlContext(q));
     generator.generate();
 
-    svgItem->setParentItem(q);
     q->setImplicitWidth(svgItem->width());
     q->setImplicitHeight(svgItem->height());
 
     q->updateSvgItemScale();
-
     q->update();
 }
 

@@ -40,7 +40,6 @@ bool QQuickQmlGenerator::save()
             qCWarning(lcQuickVectorImage) << "Failed to create path" << dir.absolutePath();
             res = false;
         } else {
-            stream().flush(); // Add a final newline and flush the stream to m_result
             QFile outFile(outputFileName);
             if (outFile.open(QIODevice::WriteOnly)) {
                 outFile.write(m_result.data());
@@ -190,7 +189,7 @@ void QQuickQmlGenerator::generateImageNode(const ImageNodeInfo &info)
     stream() << "y: " << info.rect.y();
     stream() << "width: " << info.rect.width();
     stream() << "height: " << info.rect.height();
-    stream() << "source: \"" << outputDir.relativeFilePath(assetFileInfo.absoluteFilePath()) <<"\"";
+    stream() << "source: \"" << m_urlPrefix << outputDir.relativeFilePath(assetFileInfo.absoluteFilePath()) <<"\"";
 
     m_indentLevel--;
 
@@ -924,6 +923,7 @@ bool QQuickQmlGenerator::generateRootNode(const StructureNodeInfo &info)
 
         m_indentLevel--;
         stream() << "}";
+        stream().flush();
     }
 
     return true;
