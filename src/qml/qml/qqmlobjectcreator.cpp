@@ -1842,7 +1842,6 @@ bool QQmlObjectCreator::populateInstance(int index, QObject *instance, QObject *
         const auto originalAlias = alias;
         while (alias->isAliasToLocalAlias())
             alias = _compiledObject->aliasesBegin() + alias->localAliasIndex;
-        Q_ASSERT(alias->hasFlag(QV4::CompiledData::Alias::Resolved));
         if (!context->isIdValueSet(0)) // TODO: Do we really want 0 here?
             continue;
         QObject *target = context->idValue(alias->targetObjectId());
@@ -1851,7 +1850,14 @@ bool QQmlObjectCreator::populateInstance(int index, QObject *instance, QObject *
         QQmlData *targetDData = QQmlData::get(target, /*create*/false);
         if (targetDData == nullptr || targetDData->propertyCache.isNull())
             continue;
-        int coreIndex = QQmlPropertyIndex::fromEncoded(alias->encodedMetaPropertyIndex).coreIndex();
+
+        const QQmlPropertyData *aliasProperty =
+                _propertyCache->property(_vmeMetaObject->aliasOffset() + aliasIndex);
+        if (!aliasProperty)
+            continue;
+        const int targetPropertyIndex = aliasProperty->aliasTarget();
+        int coreIndex = QQmlPropertyIndex::fromEncoded(targetPropertyIndex).coreIndex();
+
         const QQmlPropertyData *const targetProperty = targetDData->propertyCache->property(coreIndex);
         if (!targetProperty)
             continue;

@@ -221,18 +221,23 @@ void QQmlPropertyCache::appendProperty(const QString &name, QQmlPropertyData::Fl
     data.setFlags(flags);
     data.setTypeVersion(version);
 
-    QQmlPropertyData *old = findNamedProperty(name);
-    const OverrideResult overrideResult = handleOverride(name, &data, old);
-    if (overrideResult == InvalidOverride) {
-        // Insert the overridden member once more, to keep the counts in sync
-        propertyIndexCache.append(*old);
-        return;
-    }
+    doAppendPropertyData(name, std::move(data));
+}
 
-    int index = propertyIndexCache.size();
-    propertyIndexCache.append(data);
+void QQmlPropertyCache::appendAlias(
+        const QString &name, QQmlPropertyData::Flags flags, int coreIndex, QMetaType propType,
+        QTypeRevision version, int notifyIndex, int encodedTargetIndex)
+{
+    QQmlPropertyData data;
+    data.setPropType(propType);
+    data.setCoreIndex(coreIndex);
+    data.setNotifyIndex(notifyIndex);
+    flags.setIsAlias(true);
+    data.setFlags(flags);
+    data.setAliasTarget(encodedTargetIndex);
+    data.setTypeVersion(version);
 
-    setNamedProperty(name, index + propertyOffset(), propertyIndexCache.data() + index);
+    doAppendPropertyData(name, std::move(data));
 }
 
 void QQmlPropertyCache::appendSignal(const QString &name, QQmlPropertyData::Flags flags,
@@ -569,7 +574,7 @@ void QQmlPropertyCache::append(const QMetaObject *metaObject,
         }
 
         // otherwise always dispatch over a 'normal' meta-call so the QQmlValueType can intercept
-        if (!isGadget)
+        if (!isGadget && !data->isAlias())
             data->trySetStaticMetaCallFunction(metaObject->d.static_metacall, ii - propOffset);
     }
 }

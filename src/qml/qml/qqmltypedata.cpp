@@ -219,28 +219,104 @@ void QQmlComponentAndAliasResolver<QV4::CompiledData::CompilationUnit>::resolveG
 template<>
 typename QQmlComponentAndAliasResolver<QV4::CompiledData::CompilationUnit>::AliasResolutionResult
 QQmlComponentAndAliasResolver<QV4::CompiledData::CompilationUnit>::resolveAliasesInObject(
-        const CompiledObject &component, int objectIndex, QQmlError *error)
+        const CompiledObject &component, int objectIndex,
+        QQmlPropertyCacheAliasCreator<QV4::CompiledData::CompilationUnit> *aliasCacheCreator,
+        QQmlError *error)
 {
     const CompiledObject *obj = m_compiler->objectAt(objectIndex);
+    int aliasIndex = 0;
+    const auto doAppendAlias = [&](const QV4::CompiledData::Alias *alias, int encodedIndex) {
+        return appendAliasToPropertyCache(
+                &component, alias, objectIndex, aliasIndex++, encodedIndex, aliasCacheCreator,
+                error);
+    };
+
     for (auto alias = obj->aliasesBegin(), end = obj->aliasesEnd(); alias != end; ++alias) {
-        if (!alias->hasFlag(QV4::CompiledData::Alias::Resolved)) {
-            *error = qQmlCompileError(alias->referenceLocation,
-                                      QQmlComponentAndAliasResolverBase::tr("Unresolved alias found"));
-            return NoAliasResolved;
+        if (resolvedAliases.contains(alias)) {
+            ++aliasIndex;
+            continue;
         }
 
-        if (alias->isAliasToLocalAlias() || alias->encodedMetaPropertyIndex == -1)
-            continue;
+        if (alias->isAliasToLocalAlias()) {
+            if (doAppendAlias(alias, -1))
+                continue;
+            return SomeAliasesResolved;
+        }
 
         const int targetObjectIndex
                 = objectForId(m_compiler, component, alias->targetObjectId());
-        const int coreIndex
-                = QQmlPropertyIndex::fromEncoded(alias->encodedMetaPropertyIndex).coreIndex();
+        const QV4::CompiledData::Object *targetObject = m_compiler->objectAt(targetObjectIndex);
 
+        QStringView property;
+        QStringView subProperty;
+
+        const QString aliasPropertyValue = stringAt(alias->propertyNameIndex);
+        const int propertySeparator = aliasPropertyValue.indexOf(QLatin1Char('.'));
+        if (propertySeparator != -1) {
+            property = QStringView{aliasPropertyValue}.left(propertySeparator);
+            subProperty = QStringView{aliasPropertyValue}.mid(propertySeparator + 1);
+        } else {
+            property = QStringView(aliasPropertyValue);
+        }
+
+        if (property.isEmpty()) {
+            if (doAppendAlias(alias, -1))
+                continue;
+            return SomeAliasesResolved;
+        }
+
+        Q_ASSERT(!property.isEmpty());
         QQmlPropertyCache::ConstPtr targetCache = m_propertyCaches->at(targetObjectIndex);
         Q_ASSERT(targetCache);
 
-        if (!targetCache->property(coreIndex))
+        const QQmlPropertyResolver resolver(targetCache);
+        const QQmlPropertyData *targetProperty = resolver.property(property.toString());
+        if (!targetProperty)
+            return SomeAliasesResolved;
+
+        const int coreIndex = targetProperty->coreIndex();
+        if (subProperty.isEmpty()) {
+            if (doAppendAlias(alias, QQmlPropertyIndex(coreIndex).toEncoded()))
+                continue;
+            return SomeAliasesResolved;
+        }
+
+        if (const QMetaObject *valueTypeMetaObject
+                = QQmlMetaType::metaObjectForValueType(targetProperty->propType())) {
+            const int valueTypeIndex = valueTypeMetaObject->indexOfProperty(
+                    subProperty.toString().toUtf8().constData());
+            if (valueTypeIndex == -1)
+                return SomeAliasesResolved;
+
+            if (doAppendAlias(alias, QQmlPropertyIndex(coreIndex, valueTypeIndex).toEncoded()))
+                continue;
+
+            return SomeAliasesResolved;
+        }
+
+        Q_ASSERT(subProperty.at(0).isLower());
+
+        bool isDeepAlias = false;
+        for (auto it = targetObject->bindingsBegin(); it != targetObject->bindingsEnd(); ++it) {
+            if (m_compiler->stringAt(it->propertyNameIndex) != property)
+                continue;
+
+            const QQmlPropertyResolver resolver
+                    = QQmlPropertyResolver(m_propertyCaches->at(it->value.objectIndex));
+            const QQmlPropertyData *actualProperty = resolver.property(subProperty.toString());
+            if (!actualProperty)
+                continue;
+
+            if (doAppendAlias(
+                        alias, QQmlPropertyIndex(coreIndex, actualProperty->coreIndex()).toEncoded())) {
+                isDeepAlias = true;
+                break;
+            }
+
+            return SomeAliasesResolved;
+        }
+
+        if (!isDeepAlias)
             return SomeAliasesResolved;
     }
 

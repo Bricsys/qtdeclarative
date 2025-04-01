@@ -221,14 +221,19 @@ void QQmlVMEMetaObjectEndpoint::tryConnect()
         int sigIdx = aliasId + metaObject->propCount();
         metaObject->activate(metaObject->object, sigIdx, nullptr);
     } else if (const QV4::CompiledData::Object *compiledObject = metaObject->findCompiledObject()) {
-        const QV4::CompiledData::Alias *aliasData = &compiledObject->aliasTable()[aliasId];
-        if (!aliasData->isObjectAlias()) {
+        const QQmlPropertyData *aliasProperty
+                = metaObject->cache->property(metaObject->aliasOffset() + aliasId);
+        const int targetPropertyIndex = aliasProperty ? aliasProperty->aliasTarget() : -1;
+
+        if (targetPropertyIndex != -1) {
+            const QV4::CompiledData::Alias *aliasData = &compiledObject->aliasTable()[aliasId];
+
             QQmlRefPointer<QQmlContextData> ctxt = metaObject->ctxt;
             QObject *target = ctxt->idValue(aliasData->targetObjectId());
             if (!target)
                 return;
 
-            QQmlPropertyIndex encodedIndex = QQmlPropertyIndex::fromEncoded(aliasData->encodedMetaPropertyIndex);
+            QQmlPropertyIndex encodedIndex = QQmlPropertyIndex::fromEncoded(targetPropertyIndex);
             int coreIndex = encodedIndex.coreIndex();
             int valueTypeIndex = encodedIndex.valueTypeIndex();
             const QQmlPropertyData *pd = QQmlData::ensurePropertyCache(target)->property(coreIndex);
@@ -1076,7 +1081,10 @@ int QQmlVMEMetaObject::metaCall(QObject *o, QMetaObject::Call c, int _id, void *
 
                 connectAlias(compiledObject, id);
 
-                if (aliasData->isObjectAlias()) {
+                const QQmlPropertyData *aliasProperty = cache->property(aliasOffset() + id);
+                const int targetPropertyIndex = aliasProperty ? aliasProperty->aliasTarget() : -1;
+
+                if (targetPropertyIndex == -1) {
                     *reinterpret_cast<QObject **>(a[0]) = target;
                     return -1;
                 }
@@ -1085,7 +1093,8 @@ int QQmlVMEMetaObject::metaCall(QObject *o, QMetaObject::Call c, int _id, void *
                 if (!targetDData)
                     return -1;
 
-                QQmlPropertyIndex encodedIndex = QQmlPropertyIndex::fromEncoded(aliasData->encodedMetaPropertyIndex);
+                QQmlPropertyIndex encodedIndex
+                        = QQmlPropertyIndex::fromEncoded(targetPropertyIndex);
                 int coreIndex = encodedIndex.coreIndex();
                 const int valueTypePropertyIndex = encodedIndex.valueTypeIndex();
 
@@ -1433,8 +1442,11 @@ bool QQmlVMEMetaObject::aliasTarget(int index, QObject **target, int *coreIndex,
     if (!*target)
         return false;
 
-    if (!aliasData->isObjectAlias()) {
-        QQmlPropertyIndex encodedIndex = QQmlPropertyIndex::fromEncoded(aliasData->encodedMetaPropertyIndex);
+    const QQmlPropertyData *aliasProperty = cache->property(aliasOffset() + aliasId);
+    const int targetPropertyIndex = aliasProperty ? aliasProperty->aliasTarget() : -1;
+
+    if (targetPropertyIndex != -1) {
+        QQmlPropertyIndex encodedIndex = QQmlPropertyIndex::fromEncoded(targetPropertyIndex);
         *coreIndex = encodedIndex.coreIndex();
         *valueTypeIndex = encodedIndex.valueTypeIndex();
     }

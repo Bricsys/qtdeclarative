@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 // Also change the comment behind the number to describe the latest change. This has the added
 // benefit that if another patch changes the version too, it will result in a merge conflict, and
 // not get removed silently.
-#define QV4_DATA_STRUCTURE_VERSION 0x45 // Removed Qt version and compile hash checks
+#define QV4_DATA_STRUCTURE_VERSION 0x46 // Removed property indices from aliases
 
 class QIODevice;
 class QQmlTypeNameCache;
@@ -871,8 +871,8 @@ public:
 
     enum Flag : unsigned int {
         IsReadOnly = 0x1,
-        Resolved = 0x2,
-        AliasPointsToPointerObject = 0x4
+        AliasPointsToPointerObject = 0x2,
+        // One bit vacant
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -882,7 +882,6 @@ public:
 
     union {
         quint32_le propertyNameIndex; // string index
-        qint32_le encodedMetaPropertyIndex;
         quint32_le localAliasIndex; // index in list of aliases local to the object (if targetObjectId == objectId)
     };
     Location location;
@@ -911,12 +910,6 @@ public:
     void setNameIndex(quint32 nameIndex)
     {
         nameIndexAndFlags.set<NameIndexField>(nameIndex);
-    }
-
-    bool isObjectAlias() const
-    {
-        Q_ASSERT(hasFlag(Resolved));
-        return encodedMetaPropertyIndex == -1;
     }
 
     quint32 idIndex() const

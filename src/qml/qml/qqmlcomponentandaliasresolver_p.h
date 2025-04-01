@@ -63,7 +63,20 @@ private:
     void setObjectId(int index) const;
     [[nodiscard]] bool markAsComponent(int index) const;
     [[nodiscard]] AliasResolutionResult resolveAliasesInObject(
-            const CompiledObject &component, int objectIndex, QQmlError *error);
+            const CompiledObject &component, int objectIndex,
+            QQmlPropertyCacheAliasCreator<ObjectContainer> *aliasCacheCreator, QQmlError *error);
+    [[nodiscard]] bool appendAliasToPropertyCache(
+            const CompiledObject *component, const QV4::CompiledData::Alias *alias, int objectIndex,
+            int aliasIndex, int encodedPropertyIndex,
+            QQmlPropertyCacheAliasCreator<ObjectContainer> *aliasCacheCreator, QQmlError *error)
+    {
+        *error = aliasCacheCreator->appendAliasToPropertyCache(
+                *component, *alias, objectIndex, aliasIndex, encodedPropertyIndex);
+        resolvedAliases.insert(alias);
+        return !error->isValid();
+    }
+
+
     void resolveGeneralizedGroupProperty(const CompiledObject &component, CompiledBinding *binding);
     [[nodiscard]] bool wrapImplicitComponent(CompiledBinding *binding);
 
@@ -122,6 +135,7 @@ private:
     QVector<quint32> m_componentRoots;
     QVector<int> m_objectsWithAliases;
     QVector<CompiledBinding *> m_generalizedGroupProperties;
+    QSet<const QV4::CompiledData::Alias *> resolvedAliases;
     typename ObjectContainer::IdToObjectMap m_idToObjectIndex;
 };
 
@@ -435,15 +449,12 @@ QQmlError QQmlComponentAndAliasResolver<ObjectContainer>::resolveAliases(int com
 
             QQmlError error;
             const auto &component = *m_compiler->objectAt(componentIndex);
-            const auto result = resolveAliasesInObject(component, objectIndex, &error);
+            const auto result
+                    = resolveAliasesInObject(component, objectIndex, &aliasCacheCreator, &error);
             if (error.isValid())
                 return error;
 
             if (result == AllAliasesResolved) {
-                QQmlError error = aliasCacheCreator.appendAliasesToPropertyCache(
-                            component, objectIndex);
-                if (error.isValid())
-                    return error;
                 atLeastOneAliasResolved = true;
             } else if (result == SomeAliasesResolved) {
                 atLeastOneAliasResolved = true;
@@ -458,7 +469,7 @@ QQmlError QQmlComponentAndAliasResolver<ObjectContainer>::resolveAliases(int com
     if (!atLeastOneAliasResolved && !m_objectsWithAliases.isEmpty()) {
         const CompiledObject *obj = m_compiler->objectAt(m_objectsWithAliases.first());
         for (auto alias = obj->aliasesBegin(), end = obj->aliasesEnd(); alias != end; ++alias) {
-            if (!alias->hasFlag(QV4::CompiledData::Alias::Resolved))
+            if (!resolvedAliases.contains(alias))
                 return error(alias->location, QQmlComponentAndAliasResolverBase::tr("Circular alias reference detected"));
         }
     }

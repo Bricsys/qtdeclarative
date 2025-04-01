@@ -831,22 +831,30 @@ void QQmlComponentAndAliasResolver<QQmlTypeCompiler>::resolveGeneralizedGroupPro
 template<>
 typename QQmlComponentAndAliasResolver<QQmlTypeCompiler>::AliasResolutionResult
 QQmlComponentAndAliasResolver<QQmlTypeCompiler>::resolveAliasesInObject(
-        const CompiledObject &component, int objectIndex, QQmlError *error)
+        const CompiledObject &component, int objectIndex,
+        QQmlPropertyCacheAliasCreator<QQmlTypeCompiler> *aliasCacheCreator, QQmlError *error)
 {
+    // TODO: This method should not modify the aliases themselves. Rather, all information
+    //       needed for handling them later should be stored in the property cache.
+    //       Some of the information calculated here could be calculated already at compile time.
+    //       See QTBUG-136572.
+
     Q_UNUSED(component);
 
     const QmlIR::Object * const obj = m_compiler->objectAt(objectIndex);
     if (!obj->aliasCount())
         return AllAliasesResolved;
 
-    int numResolvedAliases = 0;
-    bool seenUnresolvedAlias = false;
+    int aliasIndex = 0;
+    int numSkippedAliases = 0;
 
     for (QmlIR::Alias *alias = obj->firstAlias(); alias; alias = alias->next) {
-        if (alias->hasFlag(QV4::CompiledData::Alias::Resolved))
+        if (resolvedAliases.contains(alias)) {
+            ++aliasIndex;
+            ++numSkippedAliases;
             continue;
+        }
 
-        seenUnresolvedAlias = true;
 
         const int idIndex = alias->idIndex();
         const int targetObjectIndex = m_idToObjectIndex.value(idIndex, -1);
@@ -906,14 +914,19 @@ QQmlComponentAndAliasResolver<QQmlTypeCompiler>::resolveAliasesInObject(
                     if (targetObjectIndex == objectIndex) {
                         alias->localAliasIndex = localAliasIndex;
                         alias->setIsAliasToLocalAlias(true);
-                        alias->setFlag(QV4::CompiledData::Alias::Resolved);
-                        ++numResolvedAliases;
+                        if (!appendAliasToPropertyCache(
+                                    &component, alias, objectIndex, aliasIndex++, -1,
+                                    aliasCacheCreator, error)) {
+                            break;
+                        }
                         continue;
                     }
 
                     // restore
                     alias->setIdIndex(idIndex);
                     // Try again later and resolve the target alias first.
+                    ++numSkippedAliases;
+                    ++aliasIndex;
                     break;
                 }
             }
@@ -972,13 +985,18 @@ QQmlComponentAndAliasResolver<QQmlTypeCompiler>::resolveAliasesInObject(
             }
         }
 
-        alias->encodedMetaPropertyIndex = propIdx.toEncoded();
-        alias->setFlag(QV4::CompiledData::Alias::Resolved);
-        numResolvedAliases++;
+        if (!appendAliasToPropertyCache(
+                    &component, alias, objectIndex, aliasIndex++, propIdx.toEncoded(),
+                    aliasCacheCreator, error)) {
+            break;
+        }
     }
 
-    if (numResolvedAliases == 0)
-        return seenUnresolvedAlias ? NoAliasResolved : AllAliasesResolved;
+    if (numSkippedAliases == aliasIndex)
+        return NoAliasResolved;
+
+    if (aliasIndex == obj->aliasCount())
+        return AllAliasesResolved;
 
     return SomeAliasesResolved;
 }
