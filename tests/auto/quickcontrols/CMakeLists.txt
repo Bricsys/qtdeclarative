@@ -8,7 +8,9 @@ if(NOT ANDROID) # temporarily disabled until QTBUG-100991 is fixed
 add_subdirectory(controls)
 endif()
 add_subdirectory(cursor)
+if(BUILD_SHARED_LIBS) # serious performance issues when built statically QTBUG-133755
 add_subdirectory(customization)
+endif()
 add_subdirectory(deferred)
 if(QT_FEATURE_quick_designer)
     add_subdirectory(designer)
