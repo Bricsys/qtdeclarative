@@ -5331,17 +5331,7 @@ void QQuickItem::setState(const QString &state)
     This property is specified as a list of \l {Transform}-derived objects.
     For example:
 
-    \qml
-    import QtQuick
-
-    Item {
-        width: 100; height: 100
-        transform: [
-            Scale { origin.x: 25; origin.y: 25; xScale: 3},
-            Rotation { origin.x: 25; origin.y: 25; angle: 45}
-        ]
-    }
-    \endqml
+    \snippet qml/two-transforms.qml entire
 
     For more information see \l Transform.
 */
