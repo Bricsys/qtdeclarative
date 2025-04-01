@@ -96,9 +96,16 @@ private:
     void generateTransform(const QTransform &xf);
     void generatePathContainer(const StructureNodeInfo &info);
     void generateAnimateTransform(const QString &targetName, const NodeInfo &info);
+
+    enum class AnimationType {
+        Auto = 0,
+        ColorOpacity = 1
+    };
+
     void generatePropertyAnimation(const QQuickAnimatedProperty &property,
                                    const QString &targetName,
-                                   const QString &propertyName);
+                                   const QString &propertyName,
+                                   AnimationType animationType = AnimationType::Auto);
 
     QStringView indent();
     enum StreamFlags { NoFlags = 0x0, SameLine = 0x1 };

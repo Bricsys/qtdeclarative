@@ -940,9 +940,21 @@ void QSvgVisitorImpl::visitTextNode(const QSvgText *node)
         }
 
         {
+            QList<AnimationPair> animations = collectAnimations(node, QStringLiteral("fill-opacity"));
+            if (!animations.isEmpty())
+                applyAnimationsToProperty(animations, &info.fillOpacity, calculateInterpolatedValue);
+        }
+
+        {
             QList<AnimationPair> animations = collectAnimations(node, QStringLiteral("stroke"));
             if (!animations.isEmpty())
                 applyAnimationsToProperty(animations, &info.strokeColor, calculateInterpolatedValue);
+        }
+
+        {
+            QList<AnimationPair> animations = collectAnimations(node, QStringLiteral("stroke-opacity"));
+            if (!animations.isEmpty())
+                applyAnimationsToProperty(animations, &info.strokeOpacity, calculateInterpolatedValue);
         }
 
         info.position = node->position();
@@ -1215,9 +1227,21 @@ void QSvgVisitorImpl::fillColorAnimationInfo(const QSvgNode *node, PathNodeInfo 
     }
 
     {
+        QList<AnimationPair> animations = collectAnimations(node, QStringLiteral("fill-opacity"));
+        if (!animations.isEmpty())
+            applyAnimationsToProperty(animations, &info.fillOpacity, calculateInterpolatedValue);
+    }
+
+    {
         QList<AnimationPair> animations = collectAnimations(node, QStringLiteral("stroke"));
         if (!animations.isEmpty())
             applyAnimationsToProperty(animations, &info.strokeStyle.color, calculateInterpolatedValue);
+    }
+
+    {
+        QList<AnimationPair> animations = collectAnimations(node, QStringLiteral("stroke-opacity"));
+        if (!animations.isEmpty())
+            applyAnimationsToProperty(animations, &info.strokeStyle.opacity, calculateInterpolatedValue);
     }
 }
 

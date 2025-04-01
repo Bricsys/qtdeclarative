@@ -53,6 +53,7 @@ struct StrokeStyle
     qreal dashOffset = 0;
     QList<qreal> dashArray;
     QQuickAnimatedProperty color = QQuickAnimatedProperty(QVariant::fromValue(QColorConstants::Transparent));
+    QQuickAnimatedProperty opacity = QQuickAnimatedProperty(QVariant::fromValue(qreal(1.0)));
     qreal width = 1.0;
 
     static StrokeStyle fromPen(const QPen &p)
@@ -74,6 +75,7 @@ struct PathNodeInfo : NodeInfo
     QPainterPath painterPath;
     Qt::FillRule fillRule = Qt::FillRule::WindingFill;
     QQuickAnimatedProperty fillColor = QQuickAnimatedProperty(QVariant::fromValue(QColor{}));
+    QQuickAnimatedProperty fillOpacity = QQuickAnimatedProperty(QVariant::fromValue(qreal(1.0)));
     StrokeStyle strokeStyle;
     QGradient grad;
     QTransform fillTransform;
@@ -89,7 +91,9 @@ struct TextNodeInfo : NodeInfo
     QFont font;
     Qt::Alignment alignment;
     QQuickAnimatedProperty fillColor = QQuickAnimatedProperty(QVariant::fromValue(QColor{}));
+    QQuickAnimatedProperty fillOpacity = QQuickAnimatedProperty(QVariant::fromValue(qreal(1.0)));
     QQuickAnimatedProperty strokeColor = QQuickAnimatedProperty(QVariant::fromValue(QColor{}));
+    QQuickAnimatedProperty strokeOpacity = QQuickAnimatedProperty(QVariant::fromValue(qreal(1.0)));
 };
 
 struct AnimateColorNodeInfo : NodeInfo
