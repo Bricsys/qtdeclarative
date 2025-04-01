@@ -62,7 +62,8 @@ public:
 private:
     QQmlSA::PassManager *m_passManager = nullptr;
 
-    void analyzeFunction(QQmlJSCompilePass::Function *function);
+    void analyzeFunction(const QV4::Compiler::Context *context,
+                         QQmlJSCompilePass::Function *function);
 };
 
 QT_END_NAMESPACE

@@ -9,6 +9,7 @@
 #include <QtQmlCompiler/private/qqmljsstorageinitializer_p.h>
 #include <QtQmlCompiler/private/qqmljstypepropagator_p.h>
 #include <QtQmlCompiler/private/qqmljsfunctioninitializer_p.h>
+#include <QtQmlCompiler/private/qqmljsbasicblocks_p.h>
 
 #include <QFileInfo>
 
@@ -48,7 +49,7 @@ QQmlJSLinterCodegen::compileBinding(const QV4::Compiler::Context *context,
 
     m_logger->setCompileErrorPrefix(u"Could not compile binding for %1: "_s.arg(name));
 
-    analyzeFunction(&function);
+    analyzeFunction(context, &function);
     if (const auto errors = finalizeBindingOrFunction())
         return *errors;
 
@@ -70,7 +71,7 @@ QQmlJSLinterCodegen::compileFunction(const QV4::Compiler::Context *context,
     });
 
     m_logger->setCompileErrorPrefix(u"Could not compile function %1: "_s.arg(name));
-    analyzeFunction(&function);
+    analyzeFunction(context, &function);
 
     if (const auto errors = finalizeBindingOrFunction())
         return *errors;
@@ -85,30 +86,40 @@ void QQmlJSLinterCodegen::setPassManager(QQmlSA::PassManager *passManager)
     managerPriv->m_typeResolver = typeResolver();
 }
 
-void QQmlJSLinterCodegen::analyzeFunction(QQmlJSCompilePass::Function *function)
+void QQmlJSLinterCodegen::analyzeFunction(const QV4::Compiler::Context *context,
+                                          QQmlJSCompilePass::Function *function)
 {
-    QQmlJSTypePropagator propagator(
-            m_unitGenerator, &m_typeResolver, m_logger, {}, {}, m_passManager);
-    auto [basicBlocks, annotations] = propagator.run(function);
+    bool dummy = false;
+    QQmlJSCompilePass::BlocksAndAnnotations blocksAndAnnotations =
+            QQmlJSBasicBlocks(context, m_unitGenerator, &m_typeResolver, m_logger)
+                    .run(function, ValidateBasicBlocks, dummy);
+
+    blocksAndAnnotations = QQmlJSTypePropagator(m_unitGenerator, &m_typeResolver, m_logger,
+                                                blocksAndAnnotations.basicBlocks,
+                                                blocksAndAnnotations.annotations, m_passManager)
+            .run(function);
 
     if (m_logger->isCategoryIgnored(qmlCompiler))
         return;
 
     if (!m_logger->currentFunctionHasCompileError()) {
-        QQmlJSShadowCheck shadowCheck(
-                m_unitGenerator, &m_typeResolver, m_logger, basicBlocks, annotations);
+        QQmlJSShadowCheck shadowCheck(m_unitGenerator, &m_typeResolver, m_logger,
+                                      blocksAndAnnotations.basicBlocks,
+                                      blocksAndAnnotations.annotations);
         shadowCheck.run(function);
     }
 
     if (!m_logger->currentFunctionHasCompileError()) {
-        QQmlJSStorageInitializer initializer(
-                m_unitGenerator, &m_typeResolver, m_logger, basicBlocks, annotations);
+        QQmlJSStorageInitializer initializer(m_unitGenerator, &m_typeResolver, m_logger,
+                                             blocksAndAnnotations.basicBlocks,
+                                             blocksAndAnnotations.annotations);
         initializer.run(function);
     }
 
     if (!m_logger->currentFunctionHasCompileError()) {
-        QQmlJSStorageGeneralizer generalizer(
-                m_unitGenerator, &m_typeResolver, m_logger, basicBlocks, annotations);
+        QQmlJSStorageGeneralizer generalizer(m_unitGenerator, &m_typeResolver, m_logger,
+                                             blocksAndAnnotations.basicBlocks,
+                                             blocksAndAnnotations.annotations);
         generalizer.run(function);
     }
 }
