@@ -71,6 +71,7 @@ void QQmlJSBasicBlocks::dumpDOTGraph()
                 m_context->lineAndStatementNumberMapping);
         dump = dump.replace(" "_L1, "&#160;"_L1); // prevent collapse of extra whitespace for formatting
         dump = dump.replace("\n"_L1, "\\l"_L1); // new line + left aligned
+        dump = dump.replace("<"_L1, "\\<"_L1).replace(">"_L1, "\\>"_L1); // escape < and > for "SetUnwindHandler <null>" instruction
         s << "    %1 [shape=record, fontname=\"Monospace\", label=\"{Block %1: | %2}\"]\n"_L1
                         .arg(QString::number(blockOffset))
                         .arg(dump);
