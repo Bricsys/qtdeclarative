@@ -512,147 +512,138 @@ QQmlJSLinter::LintResult QQmlJSLinter::lintFile(const QString &filename,
         return success;
     }
 
-    if (!isJavaScript) {
-        const auto check = [&](QQmlJSResourceFileMapper *mapper) {
-            if (m_importer.importPaths() != qmlImportPaths)
-                m_importer.setImportPaths(qmlImportPaths);
+    if (isJavaScript)
+        return success;
 
-            m_importer.setResourceFileMapper(mapper);
+    if (m_importer.importPaths() != qmlImportPaths)
+        m_importer.setImportPaths(qmlImportPaths);
 
-            m_logger.reset(new QQmlJSLogger);
-            m_logger->setFilePath(m_useAbsolutePath ? info.absoluteFilePath() : filename);
-            m_logger->setCode(code);
-            m_logger->setSilent(silent || json);
-            QQmlJSScope::Ptr target = QQmlJSScope::create();
-            QQmlJSImportVisitor v { target, &m_importer, m_logger.get(),
-                                    QQmlJSImportVisitor::implicitImportDirectory(
-                                            m_logger->filePath(), m_importer.resourceFileMapper()),
-                                    qmldirFiles };
+    std::optional<QQmlJSResourceFileMapper> mapper;
+    if (!resourceFiles.isEmpty())
+        mapper.emplace(resourceFiles);
+    m_importer.setResourceFileMapper(mapper.has_value() ? &*mapper : nullptr);
 
-            if (m_enablePlugins) {
-                for (const Plugin &plugin : m_plugins) {
-                    for (const QQmlJS::LoggerCategory &category : plugin.categories())
-                        m_logger->registerCategory(category);
-                }
-            }
+    m_logger.reset(new QQmlJSLogger);
+    m_logger->setFilePath(m_useAbsolutePath ? info.absoluteFilePath() : filename);
+    m_logger->setCode(code);
+    m_logger->setSilent(silent || json);
 
-            for (auto it = categories.cbegin(); it != categories.cend(); ++it) {
-                if (auto logger = *it; !QQmlJS::LoggerCategoryPrivate::get(&logger)->hasChanged())
-                    continue;
+    QQmlJSScope::Ptr target = QQmlJSScope::create();
+    QQmlJSImportVisitor v{ target, &m_importer, m_logger.get(),
+                           QQmlJSImportVisitor::implicitImportDirectory(
+                                   m_logger->filePath(), m_importer.resourceFileMapper()),
+                           qmldirFiles };
 
-                m_logger->setCategoryIgnored(it->id(), it->isIgnored());
-                m_logger->setCategoryLevel(it->id(), it->level());
-            }
-
-            parseComments(m_logger.get(), engine.comments());
-
-            QQmlJSTypeResolver typeResolver(&m_importer);
-
-            // Type resolving is using document parent mode here so that it produces fewer false
-            // positives on the "parent" property of QQuickItem. It does produce a few false
-            // negatives this way because items can be reparented. Furthermore, even if items are
-            // not reparented, the document parent may indeed not be their visual parent. See
-            // QTBUG-95530. Eventually, we'll need cleverer logic to deal with this.
-            typeResolver.setParentMode(QQmlJSTypeResolver::UseDocumentParent);
-            // We don't need to create tracked types and such as we are just linting the code here
-            // and not actually compiling it. The duplicated scopes would cause issues during
-            // linting.
-            typeResolver.setCloneMode(QQmlJSTypeResolver::DoNotCloneTypes);
-
-            typeResolver.init(&v, parser.rootNode());
-
-            const QStringList resourcePaths = mapper
-                    ? mapper->resourcePaths(QQmlJSResourceFileMapper::localFileFilter(filename))
-                    : QStringList();
-            const QString resolvedPath =
-                    (resourcePaths.size() == 1) ? u':' + resourcePaths.first() : filename;
-
-            QQmlJSLinterCodegen codegen{ &m_importer, resolvedPath, qmldirFiles, m_logger.get() };
-            codegen.setTypeResolver(std::move(typeResolver));
-
-            using PassManagerPtr = std::unique_ptr<
-                    QQmlSA::PassManager, decltype(&QQmlSA::PassManagerPrivate::deletePassManager)>;
-            PassManagerPtr passMan(
-                    QQmlSA::PassManagerPrivate::createPassManager(&v, codegen.typeResolver()),
-                    &QQmlSA::PassManagerPrivate::deletePassManager);
-            passMan->registerPropertyPass(
-                    std::make_unique<QQmlJSLiteralBindingCheck>(passMan.get()), QString(),
-                    QString(), QString());
-            passMan->registerPropertyPass(
-                    std::make_unique<QQmlJSTranslationFunctionMismatchCheck>(passMan.get()),
-                    QString(), QString(), QString());
-
-            QQmlSA::PropertyPassBuilder(passMan.get())
-                    .withOnCall([](QQmlSA::PropertyPass *self, const QQmlSA::Element &,
-                                   const QString &, const QQmlSA::Element &,
-                                   QQmlSA::SourceLocation location) {
-                        self->emitWarning("Do not use 'eval'", qmlEval, location);
-                    })
-                    .registerOnBuiltin("GlobalObject", "eval");
-
-            if (m_enablePlugins) {
-                for (const Plugin &plugin : m_plugins) {
-                    if (!plugin.isValid() || !plugin.isEnabled())
-                        continue;
-
-                    QQmlSA::LintPlugin *instance = plugin.m_instance;
-                    Q_ASSERT(instance);
-                    instance->registerPasses(passMan.get(),
-                                             QQmlJSScope::createQQmlSAElement(v.result()));
-                }
-            }
-            passMan->analyze(QQmlJSScope::createQQmlSAElement(v.result()));
-
-            if (m_logger->hasErrors()) {
-                success = HasErrors;
-                if (json)
-                    processMessages(warnings);
-                return;
-            } else if (m_logger->hasWarnings())
-                success = HasWarnings;
-
-            if (passMan) {
-                // passMan now has a pointer to the moved from type resolver
-                // we fix this in setPassManager
-                codegen.setPassManager(passMan.get());
-            }
-            QQmlJSSaveFunction saveFunction = [](const QV4::CompiledData::SaveableUnitPointer &,
-                                                 const QQmlJSAotFunctionMap &,
-                                                 QString *) { return true; };
-
-            QQmlJSCompileError error;
-
-            QLoggingCategory::setFilterRules(u"qt.qml.compiler=false"_s);
-
-            CodegenWarningInterface interface(m_logger.get());
-            qCompileQmlFile(filename, saveFunction, &codegen, &error, true, &interface,
-                            fileContents);
-
-            QList<QQmlJS::DiagnosticMessage> globalWarnings = m_importer.takeGlobalWarnings();
-
-            if (!globalWarnings.isEmpty()) {
-                m_logger->log(QStringLiteral("Type warnings occurred while evaluating file:"),
-                              qmlImport, QQmlJS::SourceLocation());
-                m_logger->processMessages(globalWarnings, qmlImport);
-            }
-
-            if (m_logger->hasErrors())
-                success = HasErrors;
-            else if (m_logger->hasWarnings())
-                success = HasWarnings;
-
-            if (json)
-                processMessages(warnings);
-        };
-
-        if (resourceFiles.isEmpty()) {
-            check(nullptr);
-        } else {
-            QQmlJSResourceFileMapper mapper(resourceFiles);
-            check(&mapper);
+    if (m_enablePlugins) {
+        for (const Plugin &plugin : m_plugins) {
+            for (const QQmlJS::LoggerCategory &category : plugin.categories())
+                m_logger->registerCategory(category);
         }
     }
 
+    for (auto it = categories.cbegin(); it != categories.cend(); ++it) {
+        if (auto logger = *it; !QQmlJS::LoggerCategoryPrivate::get(&logger)->hasChanged())
+            continue;
+
+        m_logger->setCategoryIgnored(it->id(), it->isIgnored());
+        m_logger->setCategoryLevel(it->id(), it->level());
+    }
+
+    parseComments(m_logger.get(), engine.comments());
+
+    QQmlJSTypeResolver typeResolver(&m_importer);
+
+    // Type resolving is using document parent mode here so that it produces fewer false
+    // positives on the "parent" property of QQuickItem. It does produce a few false
+    // negatives this way because items can be reparented. Furthermore, even if items
+    // are not reparented, the document parent may indeed not be their visual parent.
+    // See QTBUG-95530. Eventually, we'll need cleverer logic to deal with this.
+    typeResolver.setParentMode(QQmlJSTypeResolver::UseDocumentParent);
+    // We don't need to create tracked types and such as we are just linting the code
+    // here and not actually compiling it. The duplicated scopes would cause issues
+    // during linting.
+    typeResolver.setCloneMode(QQmlJSTypeResolver::DoNotCloneTypes);
+
+    typeResolver.init(&v, parser.rootNode());
+
+    const QStringList resourcePaths = mapper
+            ? mapper->resourcePaths(QQmlJSResourceFileMapper::localFileFilter(filename))
+            : QStringList();
+    const QString resolvedPath =
+            (resourcePaths.size() == 1) ? u':' + resourcePaths.first() : filename;
+
+    QQmlJSLinterCodegen codegen{ &m_importer, resolvedPath, qmldirFiles, m_logger.get() };
+    codegen.setTypeResolver(std::move(typeResolver));
+
+    using PassManagerPtr =
+            std::unique_ptr<QQmlSA::PassManager,
+                            decltype(&QQmlSA::PassManagerPrivate::deletePassManager)>;
+    PassManagerPtr passMan(
+            QQmlSA::PassManagerPrivate::createPassManager(&v, codegen.typeResolver()),
+            &QQmlSA::PassManagerPrivate::deletePassManager);
+    passMan->registerPropertyPass(std::make_unique<QQmlJSLiteralBindingCheck>(passMan.get()),
+                                  QString(), QString(), QString());
+    passMan->registerPropertyPass(
+            std::make_unique<QQmlJSTranslationFunctionMismatchCheck>(passMan.get()), QString(),
+            QString(), QString());
+
+    QQmlSA::PropertyPassBuilder(passMan.get())
+            .withOnCall([](QQmlSA::PropertyPass *self, const QQmlSA::Element &, const QString &,
+                           const QQmlSA::Element &, QQmlSA::SourceLocation location) {
+                self->emitWarning("Do not use 'eval'", qmlEval, location);
+            })
+            .registerOnBuiltin("GlobalObject", "eval");
+
+    if (m_enablePlugins) {
+        for (const Plugin &plugin : m_plugins) {
+            if (!plugin.isValid() || !plugin.isEnabled())
+                continue;
+
+            QQmlSA::LintPlugin *instance = plugin.m_instance;
+            Q_ASSERT(instance);
+            instance->registerPasses(passMan.get(), QQmlJSScope::createQQmlSAElement(v.result()));
+        }
+    }
+    passMan->analyze(QQmlJSScope::createQQmlSAElement(v.result()));
+
+    if (m_logger->hasErrors()) {
+        success = HasErrors;
+        if (json)
+            processMessages(warnings);
+        return success;
+    } else if (m_logger->hasWarnings())
+        success = HasWarnings;
+
+    if (passMan) {
+        // passMan now has a pointer to the moved from type resolver
+        // we fix this in setPassManager
+        codegen.setPassManager(passMan.get());
+    }
+    QQmlJSSaveFunction saveFunction = [](const QV4::CompiledData::SaveableUnitPointer &,
+                                         const QQmlJSAotFunctionMap &, QString *) { return true; };
+
+    QQmlJSCompileError error;
+
+    QLoggingCategory::setFilterRules(u"qt.qml.compiler=false"_s);
+
+    CodegenWarningInterface interface(m_logger.get());
+    qCompileQmlFile(filename, saveFunction, &codegen, &error, true, &interface, fileContents);
+
+    QList<QQmlJS::DiagnosticMessage> globalWarnings = m_importer.takeGlobalWarnings();
+
+    if (!globalWarnings.isEmpty()) {
+        m_logger->log(QStringLiteral("Type warnings occurred while evaluating file:"), qmlImport,
+                      QQmlJS::SourceLocation());
+        m_logger->processMessages(globalWarnings, qmlImport);
+    }
+
+    if (m_logger->hasErrors())
+        success = HasErrors;
+    else if (m_logger->hasWarnings())
+        success = HasWarnings;
+
+    if (json)
+        processMessages(warnings);
     return success;
 }
 
