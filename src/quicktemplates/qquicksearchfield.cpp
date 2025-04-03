@@ -416,10 +416,18 @@ void QQuickSearchFieldPrivate::updateText()
             emit q->searchTriggered();
     }
 
-    if (!text.isEmpty() && !isPopupVisible())
-        showPopup();
-    else if (text.isEmpty() && isPopupVisible())
-        hidePopup();
+    if (text.isEmpty()) {
+        if (isPopupVisible())
+            hidePopup();
+    } else {
+        if (delegateModel && delegateModel->count() > 0) {
+            if (!isPopupVisible())
+                showPopup();
+        } else {
+            if (isPopupVisible())
+                hidePopup();
+        }
+    }
 }
 
 void QQuickSearchFieldPrivate::updateDisplayText()
@@ -885,7 +893,7 @@ bool QQuickSearchField::eventFilter(QObject *object, QEvent *event)
     case QEvent::MouseButtonRelease: {
         QQuickTextInput *input = qobject_cast<QQuickTextInput *>(d->contentItem);
         if (input->hasFocus()) {
-            if (!d->text.isEmpty() && !d->isPopupVisible())
+            if (!d->text.isEmpty() && !d->isPopupVisible() && (d->delegateModel && d->delegateModel->count() > 0))
                 d->showPopup();
         }
         break;

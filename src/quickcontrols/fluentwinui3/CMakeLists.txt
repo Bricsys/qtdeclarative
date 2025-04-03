@@ -30,6 +30,7 @@ set(qml_files
     "RadioDelegate.qml"
     "RangeSlider.qml"
     "RoundButton.qml"
+    "SearchField.qml"
     "Slider.qml"
     "SpinBox.qml"
     "SwipeDelegate.qml"
