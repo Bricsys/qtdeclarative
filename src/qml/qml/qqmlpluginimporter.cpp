@@ -79,7 +79,7 @@ struct VersionedURI
  */
 static QJsonArray tryExtractQmlPluginURIs(const QStaticPlugin &plugin)
 {
-    const auto isQmlPlugin = [](const auto *pluginInstance, auto &&pluginMetadata) -> bool {
+    const auto isQmlPlugin = [](const QStaticPlugin &plugin, auto &&pluginMetadata) -> bool {
         const QString iid = pluginMetadata.value(QLatin1String("IID")).toString();
         const bool isQmlExtensionIID = iid == QLatin1String(QQmlEngineExtensionInterface_iid)
                 || iid == QLatin1String(QQmlExtensionInterface_iid)
@@ -93,20 +93,24 @@ static QJsonArray tryExtractQmlPluginURIs(const QStaticPlugin &plugin)
         if (!isQmlExtensionIID) {
             return false;
         }
+
+        // plugin.instance must not be called earlier to avoid instantiating
+        // non-QML plugins, potentially from an unexpected thread(typeloader vs
+        // main thread)
+        const auto *pluginInstance = plugin.instance();
         return qobject_cast<const QQmlEngineExtensionPlugin *>(pluginInstance)
                 || qobject_cast<const QQmlExtensionPlugin *>(pluginInstance);
     };
 
     const auto &pluginMetadata = plugin.metaData();
-    const auto *pluginInstance = plugin.instance();
-    if (!isQmlPlugin(pluginInstance, pluginMetadata)) {
+    if (!isQmlPlugin(plugin, pluginMetadata)) {
         return {};
     }
 
     const QJsonArray metadataUriList = pluginMetadata.value(QStringLiteral("uri")).toArray();
     if (metadataUriList.isEmpty()) {
         qWarning() << QQmlImports::tr("qml static plugin with name \"%2\" has no metadata URI")
-                              .arg(pluginInstance->metaObject()->className())
+                              .arg(plugin.instance()->metaObject()->className())
                    << pluginMetadata;
         return {};
     }
