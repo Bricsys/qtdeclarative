@@ -761,7 +761,7 @@ QVariant QQmlTableModel::data(const QModelIndex &index, int role) const
     const ColumnMetadata columnMetadata = mColumnMetadata.at(column);
     const QString roleName = QString::fromUtf8(mRoleNames.value(role));
     if (!columnMetadata.roles.contains(roleName)) {
-        qmlWarning(this) << "setData(): no role named " << roleName
+        qmlWarning(this) << "data(): no role named " << roleName
             << " at column index " << column << ". The available roles for that column are: "
             << columnMetadata.roles.keys();
         return QVariant();
