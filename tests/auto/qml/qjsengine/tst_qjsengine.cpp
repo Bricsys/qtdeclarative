@@ -956,7 +956,7 @@ void tst_QJSEngine::newQObjectRace()
         void run() override
         {
             int newObjectCount = 1000;
-#if defined(Q_OS_QNX)
+#if defined(Q_OS_QNX) || defined(Q_OS_VXWORKS)
             newObjectCount = 128;
 #endif
             for (int i=0;i<newObjectCount;++i)
