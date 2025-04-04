@@ -103,24 +103,24 @@ void QQmlJSLinterCodegen::analyzeFunction(const QV4::Compiler::Context *context,
         return;
 
     if (!m_logger->currentFunctionHasCompileError()) {
-        QQmlJSShadowCheck shadowCheck(m_unitGenerator, &m_typeResolver, m_logger,
-                                      blocksAndAnnotations.basicBlocks,
-                                      blocksAndAnnotations.annotations);
-        shadowCheck.run(function);
+        blocksAndAnnotations = QQmlJSShadowCheck(m_unitGenerator, &m_typeResolver, m_logger,
+                                                 blocksAndAnnotations.basicBlocks,
+                                                 blocksAndAnnotations.annotations)
+                                       .run(function);
     }
 
     if (!m_logger->currentFunctionHasCompileError()) {
-        QQmlJSStorageInitializer initializer(m_unitGenerator, &m_typeResolver, m_logger,
-                                             blocksAndAnnotations.basicBlocks,
-                                             blocksAndAnnotations.annotations);
-        initializer.run(function);
+        blocksAndAnnotations = QQmlJSStorageInitializer(m_unitGenerator, &m_typeResolver, m_logger,
+                                                        blocksAndAnnotations.basicBlocks,
+                                                        blocksAndAnnotations.annotations)
+                                       .run(function);
     }
 
     if (!m_logger->currentFunctionHasCompileError()) {
-        QQmlJSStorageGeneralizer generalizer(m_unitGenerator, &m_typeResolver, m_logger,
-                                             blocksAndAnnotations.basicBlocks,
-                                             blocksAndAnnotations.annotations);
-        generalizer.run(function);
+        blocksAndAnnotations = QQmlJSStorageGeneralizer(m_unitGenerator, &m_typeResolver, m_logger,
+                                                        blocksAndAnnotations.basicBlocks,
+                                                        blocksAndAnnotations.annotations)
+                                       .run(function);
     }
 }
 
