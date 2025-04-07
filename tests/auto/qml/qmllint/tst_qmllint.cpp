@@ -7,6 +7,7 @@
 #include <QString>
 #include <QtQuickTestUtils/private/qmlutils_p.h>
 #include <QtQmlCompiler/private/qqmljslinter_p.h>
+#include <QtQmlCompiler/private/qqmljscontextproperties_p.h>
 #include <QtQmlCompiler/private/qqmlsa_p.h>
 #include <QtQmlToolingSettings/private/qqmltoolingsettings_p.h>
 #include <QtCore/qplugin.h>
@@ -84,6 +85,9 @@ private Q_SLOTS:
 
     void cleanJsSnippet_data();
     void cleanJsSnippet();
+
+    void contextPropertiesFromRootUrls_data();
+    void contextPropertiesFromRootUrls();
 
     void compilerWarnings_data();
     void compilerWarnings();
@@ -1619,6 +1623,44 @@ void TestQmllint::cleanJsSnippet()
     checkResult(warnings, result, [] { }, [] { }, [] { });
 }
 
+using ExpectedProperties = QHash<QString, int>;
+
+void TestQmllint::contextPropertiesFromRootUrls_data()
+{
+    QTest::addColumn<QStringList>("rootUrls");
+    QTest::addColumn<ExpectedProperties>("expectedProperties");
+    QTest::addColumn<bool>("disableGrep");
+
+    for (const bool disableGrep : { false, true }) {
+        QTest::addRow("grep%s", disableGrep ? "-fallback" : "")
+                << QStringList{ testFile("ContextProperties/src"_L1) }
+                << ExpectedProperties{ { "myContextProperty1", 1 },
+                                       { "myContextProperty2", 1 },
+                                       { "myContextProperty3", 1 },
+                                       { "myContextProperty4", 2 } }
+                << disableGrep;
+    }
+}
+
+void TestQmllint::contextPropertiesFromRootUrls()
+{
+    QFETCH(QStringList, rootUrls);
+    QFETCH(ExpectedProperties, expectedProperties);
+    QFETCH(bool, disableGrep);
+
+    if (disableGrep)
+        qputenv("QT_QML_NO_GREP", "1");
+    const auto properties = QQmlJS::ContextProperty::collectAllFrom(rootUrls);
+    if (disableGrep)
+        qunsetenv("QT_QML_NO_GREP");
+
+    QCOMPARE(properties.size(), expectedProperties.size());
+
+    for (auto [key, value] : properties.asKeyValueRange()) {
+        QVERIFY(expectedProperties.contains(key));
+        QCOMPARE(value.size(), expectedProperties[key]);
+    }
+}
 
 void TestQmllint::cleanQmlCode_data()
 {
