@@ -59,6 +59,13 @@ private slots:
     void renameUsages();
     void linting_data();
     void linting();
+
+private:
+    struct ExpectedWarnings
+    {
+        QStringList warnings;
+    };
+private slots:
     void warnings_data();
     void warnings();
     void rangeFormatting_data();

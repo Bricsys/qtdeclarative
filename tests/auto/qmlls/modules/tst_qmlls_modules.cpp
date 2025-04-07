@@ -1297,29 +1297,32 @@ void tst_qmlls_modules::linting()
 void tst_qmlls_modules::warnings_data()
 {
     QTest::addColumn<QString>("filePath");
-    QTest::addColumn<QStringList>("expectedWarnings");
+    QTest::addColumn<ExpectedWarnings>("expectedWarnings");
 
-    QTest::addRow("unqualifiedAccess") << u"warnings/withoutQmllintIni/unqualifiedAccess.qml"_s
-                                       << QStringList{ u"Unqualified access [unqualified]"_s };
+    QTest::addRow("unqualifiedAccess")
+            << u"warnings/withoutQmllintIni/unqualifiedAccess.qml"_s
+            << ExpectedWarnings{ { u"Unqualified access [unqualified]"_s } };
 
     QTest::addRow("disableUnqualifiedEnabledCompiler")
             << u"warnings/disableUnqualifiedEnableCompiler/unqualifiedAccess.qml"_s
-            << QStringList { u"Could not compile binding for i: Cannot access value for name unqualifiedAccess [compiler]"_s };
+            << ExpectedWarnings{
+                   { u"Could not compile binding for i: Cannot access value for name unqualifiedAccess [compiler]"_s }
+               };
 
     QTest::addRow("enableQmllsGenerationIniViaCMake")
             << u"warnings/InvalidImport.qml"_s
-            << QStringList{
-                   u"Warnings occurred while importing module \"foobar\": [import]"_s,
-                   u"Failed to import foobar. Are your import paths set up properly? Did you build your project? If yes, did you set the \"QT_QML_GENERATE_QMLLS_INI\" CMake variable on your project to \"ON\"? [import]"_s,
-                   u"Warnings occurred while importing module \"foobaz\": [import]"_s,
-                   u"Failed to import foobaz. Are your import paths set up properly? Did you build your project? If yes, did you set the \"QT_QML_GENERATE_QMLLS_INI\" CMake variable on your project to \"ON\"? [import]"_s,
-               };
+            << ExpectedWarnings{ {
+                       u"Warnings occurred while importing module \"foobar\": [import]"_s,
+                       u"Failed to import foobar. Are your import paths set up properly? Did you build your project? If yes, did you set the \"QT_QML_GENERATE_QMLLS_INI\" CMake variable on your project to \"ON\"? [import]"_s,
+                       u"Warnings occurred while importing module \"foobaz\": [import]"_s,
+                       u"Failed to import foobaz. Are your import paths set up properly? Did you build your project? If yes, did you set the \"QT_QML_GENERATE_QMLLS_INI\" CMake variable on your project to \"ON\"? [import]"_s,
+               } };
 }
 
 void tst_qmlls_modules::warnings()
 {
     QFETCH(QString, filePath);
-    QFETCH(QStringList, expectedWarnings);
+    QFETCH(ExpectedWarnings, expectedWarnings);
 
     bool diagnosticOk = false;
     const auto uri = openFile(filePath);
@@ -1330,7 +1333,7 @@ void tst_qmlls_modules::warnings()
                 if (p.uri != *uri || !p.version)
                     return;
 
-                if (expectedWarnings.isEmpty()) {
+                if (expectedWarnings.warnings.isEmpty()) {
                     for (const auto& x: p.diagnostics)
                         qDebug() << "Received unexpected message:" << x.message;
                     QCOMPARE(p.diagnostics.size(), 0);
@@ -1338,9 +1341,9 @@ void tst_qmlls_modules::warnings()
                     return;
                 }
 
-                QCOMPARE(p.diagnostics.size(), expectedWarnings.size());
+                QCOMPARE(p.diagnostics.size(), expectedWarnings.warnings.size());
                 for (qsizetype i = 0; i < p.diagnostics.size(); ++i) {
-                    QCOMPARE(p.diagnostics[i].message, expectedWarnings[i].toUtf8());
+                    QCOMPARE(p.diagnostics[i].message, expectedWarnings.warnings[i].toUtf8());
                 }
                 diagnosticOk = true;
             });
