@@ -31,7 +31,7 @@ void QQuickBasicTheme::initialize(QQuickTheme *theme)
     const QRgb midlight(isDarkSystemTheme ? 0xFF2C2C2C : 0xFFE4E4E4);
     const QRgb text(isDarkSystemTheme ? 0xFFEFF0F2 : 0xFF353637);
     const QRgb disabledText(isDarkSystemTheme ? 0x7FC8C9CB : 0x7F353637);
-    const QRgb shadow(isDarkSystemTheme ? 0xFF28282A : 0xFF28282A);
+    const QRgb shadow(0xFF28282A); // using the same color for dark and light
     const QRgb toolTipBase(isDarkSystemTheme ? 0xFF000000 : 0xFFFFFFFF);
     const QRgb toolTipText(isDarkSystemTheme ? 0xFFFFFFFF : 0xFF000000);
     const QRgb window(isDarkSystemTheme ? 0xFF000000 : 0xFFFFFFFF);
