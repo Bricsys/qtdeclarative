@@ -118,6 +118,15 @@ ContextProperties ContextProperty::collectAllFrom(const QList<QString> &rootUrls
     return grepFallback(rootUrls);
 }
 
+bool ContextProperty::isWarningEnabled(const QList<QQmlJS::LoggerCategory> &categories)
+{
+    auto it = std::find_if(
+            categories.cbegin(), categories.cend(),
+            [](const QQmlJS::LoggerCategory &c) { return c.id() == qmlContextProperties.name(); });
+
+    return it != categories.cend() && !it->isIgnored();
+}
+
 } // namespace QQmlJS
 
 QT_END_NAMESPACE

@@ -22,6 +22,8 @@
 
 #include <QtQml/private/qqmljssourcelocation_p.h>
 
+#include "qqmljsloggingutils_p.h"
+
 QT_BEGIN_NAMESPACE
 
 namespace QQmlJS {
@@ -36,6 +38,7 @@ struct Q_QMLCOMPILER_EXPORT ContextProperty
     QQmlJS::SourceLocation location;
 
     static ContextProperties collectAllFrom(const QList<QString> &rootUrls);
+    static bool isWarningEnabled(const QList<QQmlJS::LoggerCategory> &categories);
 };
 
 } // namespace QQmlJS
