@@ -1268,8 +1268,6 @@ void tst_qmlls_modules::warnings_data()
     QTest::addColumn<QString>("filePath");
     QTest::addColumn<QStringList>("expectedWarnings");
 
-    const QString noWarningExpected;
-
     QTest::addRow("unqualifiedAccess") << u"warnings/withoutQmllintIni/unqualifiedAccess.qml"_s
                                        << QStringList{ u"Unqualified access [unqualified]"_s };
 
