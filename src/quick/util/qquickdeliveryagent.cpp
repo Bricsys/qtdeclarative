@@ -1553,6 +1553,8 @@ bool QQuickDeliveryAgentPrivate::isTabletEvent(const QPointerEvent *ev)
     default:
         break;
     }
+#else
+    Q_UNUSED(ev);
 #endif // tabletevent
     return false;
 }
