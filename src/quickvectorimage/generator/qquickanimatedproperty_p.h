@@ -17,6 +17,7 @@
 
 #include <QPair>
 #include <QMap>
+#include <QVariant>
 
 QT_BEGIN_NAMESPACE
 
