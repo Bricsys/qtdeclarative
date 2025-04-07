@@ -61,6 +61,7 @@ set(qml_files
     Enums.qml
     FinalProperty.qml
     Foozle.qml
+    GetOptionalLookupNonVoidableBase.qml
     GetOptionalLookupOnQJSValueNonStrict.qml
     GetOptionalLookupShadowed.qml
     Loopy.qml

@@ -131,6 +131,7 @@ private slots:
     void getLookupOfScript();
     void getOptionalLookup();
     void getOptionalLookup_data();
+    void getOptionalLookupNonVoidableBase();
     void getOptionalLookupOnQJSValueNonStrict();
     void getOptionalLookupShadowed();
     void globals();
@@ -2388,6 +2389,16 @@ void tst_QmlCppCodegen::getOptionalLookup()
 
     QVariant actual = o->property(propertyName.toLocal8Bit());
     QCOMPARE(actual, expected);
+}
+
+void tst_QmlCppCodegen::getOptionalLookupNonVoidableBase()
+{
+    QQmlEngine engine;
+    const QUrl document(u"qrc:/qt/qml/TestTypes/GetOptionalLookupNonVoidableBase.qml"_s);
+    QQmlComponent c(&engine, document);
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(o);
 }
 
 void tst_QmlCppCodegen::getOptionalLookupOnQJSValueNonStrict()

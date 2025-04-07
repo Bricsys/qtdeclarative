@@ -1547,6 +1547,8 @@ void QQmlJSCodeGenerator::generate_GetOptionalLookup(int index, int offset)
     } else if (accumulatorIn.isStoredIn(m_typeResolver->jsValueType())) {
         m_body += u"if (%1.isNull() || %1.isUndefined())\n"_s.arg(accumulatorVarIn);
         generateJumpCodeWithTypeConversions(offset);
+    } else if (!m_typeResolver->canHoldUndefined(accumulatorIn.storage())) {
+        // The base cannot hold undefined and isn't a reference type, generate a regular get lookup
     } else {
         Q_UNREACHABLE(); // No other accumulatorIn stored types should be possible
     }
