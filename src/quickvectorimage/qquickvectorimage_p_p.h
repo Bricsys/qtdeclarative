@@ -32,6 +32,11 @@ public:
     void setSource(const QUrl &source);
     void loadSvg();
 
+    static QQuickVectorImagePrivate *get(QQuickVectorImage *q)
+    {
+        return q->d_func();
+    }
+
     enum Format {
         Unknown,
         Svg
@@ -42,6 +47,7 @@ public:
     QQuickItem *svgItem = nullptr;
     QQuickVectorImage::FillMode fillMode = QQuickVectorImage::Stretch;
     QQuickVectorImage::RendererType preferredRendererType = QQuickVectorImage::GeometryRenderer;
+    QQuickVectorImageAnimations *animations = nullptr;
 };
 
 QT_END_NAMESPACE

@@ -77,7 +77,7 @@ QString QQuickQmlGenerator::commentString() const
     return m_commentString;
 }
 
-void QQuickQmlGenerator::generateNodeBase(const NodeInfo &info)
+QString QQuickQmlGenerator::generateNodeBase(const NodeInfo &info)
 {
     if (!info.nodeId.isEmpty())
         stream() << "objectName: \"" << info.nodeId << "\"";
@@ -134,6 +134,8 @@ void QQuickQmlGenerator::generateNodeBase(const NodeInfo &info)
 
     if (info.opacity.isAnimated())
         generatePropertyAnimation(info.opacity, idString, QStringLiteral("opacity"));
+
+    return idString;
 }
 
 bool QQuickQmlGenerator::generateDefsNode(const NodeInfo &info)
@@ -258,25 +260,46 @@ void QQuickQmlGenerator::generateGradient(const QGradient *grad)
     }
 }
 
+void QQuickQmlGenerator::generateAnimationBindings()
+{
+    stream() << "loops: " << m_topLevelIdString << ".animations.loops";
+    stream() << "paused: " << m_topLevelIdString << ".animations.paused";
+    stream() << "running: true";
+
+    stream() << "property bool wasRunning: false";
+
+    // We need to reset the animation when the loop count changes
+    stream() << "onLoopsChanged: { if (running) { restart() } }";
+}
+
 void QQuickQmlGenerator::generatePropertyAnimation(const QQuickAnimatedProperty &property,
                                                    const QString &targetName,
                                                    const QString &propertyName,
                                                    AnimationType animationType)
 {
-    if (property.animationCount() > 1) {
-        stream() << "ParallelAnimation {";
-        m_indentLevel++;
-        stream() << "running: true";
-    }
+    if (!property.isAnimated())
+        return;
+
+    QString mainAnimationId = targetName
+                              + QStringLiteral("_")
+                              + propertyName
+                              + QStringLiteral("_animation");
+    mainAnimationId.replace(QLatin1Char('.'), QLatin1Char('_'));
+
+    stream() << "Connections { target: " << m_topLevelIdString << ".animations; function onRestart() {" << mainAnimationId << ".restart() } }";
+
+    stream() << "ParallelAnimation {";
+    m_indentLevel++;
+
+    stream() << "id: " << mainAnimationId;
+
+    generateAnimationBindings();
 
     for (int i = 0; i < property.animationCount(); ++i) {
         const QQuickAnimatedProperty::PropertyAnimation &animation = property.animation(i);
 
         stream() << "SequentialAnimation {";
         m_indentLevel++;
-
-        if (property.animationCount() == 1)
-            stream() << "running: true";
 
         const int startOffset = animation.startOffset;
         if (startOffset > 0)
@@ -354,10 +377,8 @@ void QQuickQmlGenerator::generatePropertyAnimation(const QQuickAnimatedProperty 
         stream() << "}";
     }
 
-    if (property.animationCount() > 1) {
-        m_indentLevel--;
-        stream() << "}";
-    }
+    m_indentLevel--;
+    stream() << "}";
 }
 
 void QQuickQmlGenerator::generateTransform(const QTransform &xf)
@@ -649,20 +670,25 @@ void QQuickQmlGenerator::generatePathContainer(const StructureNodeInfo &info)
 
 void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, const NodeInfo &info)
 {
-    if (info.transform.animationCount() > 1) {
-        stream() << "ParallelAnimation {";
-        m_indentLevel++;
-        stream() << "running: true";
-    }
+    if (!info.transform.isAnimated())
+        return;
+
+    const QString mainAnimationId = targetName
+                                    + QStringLiteral("_transform_animation");
+    stream() << "Connections { target: " << m_topLevelIdString << ".animations; function onRestart() {" << mainAnimationId << ".restart() } }";
+
+    stream() << "ParallelAnimation {";
+    m_indentLevel++;
+
+    stream() << "id:" << mainAnimationId;
+
+    generateAnimationBindings();
 
     for (int i = 0; i < info.transform.animationCount(); ++i) {
         const QQuickAnimatedProperty::PropertyAnimation &animation = info.transform.animation(i);
 
         stream() << "SequentialAnimation {";
         m_indentLevel++;
-
-        if (info.transform.animationCount() == 1)
-            stream() << "running: true";
 
         const int startOffset = animation.startOffset;
         if (startOffset > 0)
@@ -838,10 +864,8 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
         stream() << "}";
     }
 
-    if (info.transform.animationCount() > 1) {
-        m_indentLevel--;
-        stream() << "}";
-    }
+    m_indentLevel--;
+    stream() << "}";
 }
 
 bool QQuickQmlGenerator::generateStructureNode(const StructureNodeInfo &info)
@@ -924,6 +948,7 @@ bool QQuickQmlGenerator::generateRootNode(const StructureNodeInfo &info)
                 stream() << "// " << comment;
 
         stream() << "import QtQuick";
+        stream() << "import QtQuick.VectorImage";
         stream() << "import QtQuick.VectorImage.Helpers";
         stream() << "import QtQuick.Shapes" << Qt::endl;
         stream() << "Item {";
@@ -935,6 +960,19 @@ bool QQuickQmlGenerator::generateRootNode(const StructureNodeInfo &info)
             stream() << "implicitWidth: " << w;
         if (h > 0)
             stream() << "implicitHeight: " << h;
+
+        stream() << "component AnimationsInfo : QtObject";
+        stream() << "{";
+        m_indentLevel++;
+
+        stream() << "property bool paused: false";
+        stream() << "property int loops: 1";
+        stream() << "signal restart()";
+
+        m_indentLevel--;
+        stream() << "}";
+
+        stream() << "property AnimationsInfo animations : AnimationsInfo {}";
 
         if (!info.viewBox.isEmpty()) {
             stream() << "transform: [";
@@ -948,11 +986,16 @@ bool QQuickQmlGenerator::generateRootNode(const StructureNodeInfo &info)
         }
 
         if (!info.forceSeparatePaths && info.isPathContainer) {
+            m_topLevelIdString = QStringLiteral("__qt_toplevel");
+            stream() << "id: " << m_topLevelIdString;
+
             generatePathContainer(info);
             m_indentLevel++;
-        }
 
-        generateNodeBase(info);
+            generateNodeBase(info);
+        } else {
+            m_topLevelIdString = generateNodeBase(info);
+        }
     } else {
         if (m_inShapeItemLevel > 0) {
             m_inShapeItemLevel--;

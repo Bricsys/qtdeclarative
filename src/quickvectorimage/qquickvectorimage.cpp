@@ -79,6 +79,7 @@ void QQuickVectorImagePrivate::loadSvg()
     q->setImplicitWidth(svgItem->width());
     q->setImplicitHeight(svgItem->height());
 
+    q->updateAnimationProperties();
     q->updateSvgItemScale();
     q->update();
 }
@@ -186,6 +187,35 @@ void QQuickVectorImage::updateSvgItemScale()
     }
 }
 
+void QQuickVectorImage::updateAnimationProperties()
+{
+    Q_D(QQuickVectorImage);
+    if (Q_UNLIKELY(d->svgItem == nullptr || d->svgItem->childItems().isEmpty()))
+        return;
+
+    QQuickItem *childItem = d->svgItem->childItems().first();
+    if (Q_UNLIKELY(d->animations != nullptr)) {
+        QObject *animationsInfo = childItem->property("animations").value<QObject*>();
+        if (Q_UNLIKELY(animationsInfo != nullptr)) {
+            animationsInfo->setProperty("loops", d->animations->loops());
+            animationsInfo->setProperty("paused", d->animations->paused());
+        }
+    }
+}
+
+QQuickVectorImageAnimations *QQuickVectorImage::animations()
+{
+    Q_D(QQuickVectorImage);
+    if (d->animations == nullptr) {
+        d->animations = new QQuickVectorImageAnimations;
+        QQml_setParent_noEvent(d->animations, this);
+        QObject::connect(d->animations, &QQuickVectorImageAnimations::loopsChanged, this, &QQuickVectorImage::updateAnimationProperties);
+        QObject::connect(d->animations, &QQuickVectorImageAnimations::pausedChanged, this, &QQuickVectorImage::updateAnimationProperties);
+    }
+
+    return d->animations;
+}
+
 /*!
     \qmlproperty enumeration QtQuick.VectorImage::VectorImage::fillMode
 
@@ -250,6 +280,73 @@ void QQuickVectorImage::setPreferredRendererType(RendererType newPreferredRender
     d->preferredRendererType = newPreferredRendererType;
     d->loadSvg();
     emit preferredRendererTypeChanged();
+}
+
+/*!
+    \qmlpropertygroup QtQuick.VectorImage::VectorImage::animations
+    \qmlproperty bool QtQuick.VectorImage::VectorImage::animations.paused
+    \qmlproperty int QtQuick.VectorImage::VectorImage::animations.loops
+    \since 6.10
+
+    These properties can be used to control animations in the image, if it contains any.
+
+    The \c paused property can be set to true to temporarily pause all animations. When the
+    property is reset to \c false, the animations will resume where they were. By default this
+    property is \c false.
+
+    The \c loops property defines the number of times the animations in the document will repeat.
+    By default this property is 1. Any animations that is set to loop indefinitely in the source
+    image will be unaffected by this property. To make all animations in the document repeat
+    indefinitely, the \c loops property can be set to \c{Animation.Infinite}.
+*/
+int QQuickVectorImageAnimations::loops() const
+{
+    return m_loops;
+}
+
+void QQuickVectorImageAnimations::setLoops(int loops)
+{
+    if (m_loops == loops)
+        return;
+    m_loops = loops;
+    emit loopsChanged();
+}
+
+bool QQuickVectorImageAnimations::paused() const
+{
+    return m_paused;
+}
+
+void QQuickVectorImageAnimations::setPaused(bool paused)
+{
+    if (m_paused == paused)
+        return;
+    m_paused = paused;
+    emit pausedChanged();
+}
+
+void QQuickVectorImageAnimations::restart()
+{
+    QQuickVectorImage *parentVectorImage = qobject_cast<QQuickVectorImage *>(parent());
+    if (Q_UNLIKELY(parentVectorImage == nullptr)) {
+        qCWarning(lcQuickVectorImage) << Q_FUNC_INFO << "Parent is not a VectorImage";
+        return;
+    }
+
+    QQuickVectorImagePrivate *d = QQuickVectorImagePrivate::get(parentVectorImage);
+
+    if (Q_UNLIKELY(d->svgItem == nullptr || d->svgItem->childItems().isEmpty()))
+        return;
+
+    QQuickItem *childItem = d->svgItem->childItems().first();
+    QObject *animationsInfo = childItem->property("animations").value<QObject*>();
+
+    if (Q_UNLIKELY(animationsInfo == nullptr)) {
+        qCWarning(lcQuickVectorImage) << Q_FUNC_INFO << "Item does not have animations property";
+        return;
+    }
+
+    QMetaObject::invokeMethod(animationsInfo, "restart");
 }
 
 QT_END_NAMESPACE

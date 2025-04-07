@@ -80,7 +80,7 @@ public:
     }
 
 protected:
-    void generateNodeBase(const NodeInfo &info) override;
+    QString generateNodeBase(const NodeInfo &info) override;
     bool generateDefsNode(const NodeInfo &info) override;
     void generateImageNode(const ImageNodeInfo &info) override;
     void generatePath(const PathNodeInfo &info, const QRectF &overrideBoundingRect) override;
@@ -96,6 +96,7 @@ private:
     void generateTransform(const QTransform &xf);
     void generatePathContainer(const StructureNodeInfo &info);
     void generateAnimateTransform(const QString &targetName, const NodeInfo &info);
+    void generateAnimationBindings();
 
     enum class AnimationType {
         Auto = 0,
@@ -126,6 +127,7 @@ private:
     QString m_assetFileDirectory;
     QString m_assetFilePrefix;
     QString m_urlPrefix;
+    QString m_topLevelIdString;
 };
 
 QT_END_NAMESPACE
