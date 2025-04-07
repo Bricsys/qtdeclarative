@@ -33,7 +33,9 @@
 #include <QtQuick/private/qquicktextinput_p.h>
 #include <QtQuick/private/qquicklistview_p.h>
 #include <QtQuick/private/qquicktextedit_p.h>
+#if QT_CONFIG(draganddrop)
 #include <QtQuick/private/qquickdroparea_p.h>
+#endif
 #include <QtQuickControlsTestUtils/private/controlstestutils_p.h>
 #include <QtQuickControlsTestUtils/private/qtest_quickcontrols_p.h>
 
@@ -81,7 +83,9 @@ private slots:
     void nested();
 #if QT_CONFIG(wheelevent)
     void nestedWheel();
+#if QT_CONFIG(draganddrop)
     void nestedWheelWithOverlayParent();
+#endif
 #endif
     void modelessOnModalOnModeless();
     void grabber();
@@ -1279,6 +1283,7 @@ void tst_QQuickPopup::nestedWheel()
     QTRY_COMPARE_GT(vbar->property("position").toDouble(), startPosition);
 }
 
+#if QT_CONFIG(draganddrop)
 void tst_QQuickPopup::nestedWheelWithOverlayParent()
 {
     QQuickControlsApplicationHelper helper(this, QStringLiteral("nested-wheel-overlay-parent.qml"));
@@ -1313,7 +1318,8 @@ void tst_QQuickPopup::nestedWheelWithOverlayParent()
     // Wheel over the list view, verify that it scrolls
     QTRY_COMPARE(listView->contentY(), 72.);
 }
-#endif
+#endif // QT_CONFIG(draganddrop)
+#endif // QT_CONFIG(wheelevent)
 
 void tst_QQuickPopup::modelessOnModalOnModeless()
 {
