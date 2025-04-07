@@ -60,6 +60,7 @@ set(qml_files
     EditConstraint.qml
     Enums.qml
     Foozle.qml
+    GetOptionalLookupNonVoidableBase.qml
     GetOptionalLookupOnQJSValueNonStrict.qml
     GetOptionalLookupShadowed.qml
     Loopy.qml
