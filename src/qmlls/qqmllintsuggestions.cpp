@@ -333,8 +333,9 @@ void QmlLintSuggestions::diagnoseHelper(const QByteArray &url,
         QQmlJS::LoggingUtils::updateLogLevels(categories, settings, nullptr);
     }
 
-    linter.lintFile(filename, &fileContents, silent, nullptr, imports, qmltypesFiles,
-                    resourceFiles, categories);
+    // TODO: pass the workspace folders to QQmlJSLinter
+    linter.lintFile(filename, &fileContents, silent, nullptr, imports, qmltypesFiles, resourceFiles,
+                    categories);
 
     // ###  TODO: C++20 replace with bind_front
     auto advancePositionPastLocation = [&fileContents](const QQmlJS::SourceLocation &location, Position &position)

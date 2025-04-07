@@ -428,9 +428,11 @@ All warnings can be set to three levels:
             lintResult = linter.lintModule(filename, silent, useJson ? &jsonFiles : nullptr,
                                            qmlImportPaths, resourceFiles);
         } else {
+            // TODO: collect root urls here
+            const QQmlJS::ContextProperties contextProperties;
             lintResult = linter.lintFile(filename, nullptr, silent || isFixing,
                                          useJson ? &jsonFiles : nullptr, qmlImportPaths,
-                                         qmldirFiles, resourceFiles, categories);
+                                         qmldirFiles, resourceFiles, categories, contextProperties);
         }
         success &= (lintResult == QQmlJSLinter::LintSuccess || lintResult == QQmlJSLinter::HasWarnings);
         if (success) {

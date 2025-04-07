@@ -18,8 +18,10 @@ QT_BEGIN_NAMESPACE
 using namespace Qt::StringLiterals;
 
 QQmlJSLinterCodegen::QQmlJSLinterCodegen(QQmlJSImporter *importer, const QString &fileName,
-                                         const QStringList &qmldirFiles, QQmlJSLogger *logger)
-    : QQmlJSAotCompiler(importer, fileName, qmldirFiles, logger)
+                                         const QStringList &qmldirFiles, QQmlJSLogger *logger,
+                                         const QQmlJS::ContextProperties &knownContextProperties)
+    : QQmlJSAotCompiler(importer, fileName, qmldirFiles, logger),
+      m_knownContextProperties(knownContextProperties)
 {
 }
 
@@ -96,10 +98,11 @@ void QQmlJSLinterCodegen::analyzeFunction(const QV4::Compiler::Context *context,
             QQmlJSBasicBlocks(context, m_unitGenerator, &m_typeResolver, m_logger)
                     .run(function, ValidateBasicBlocks, dummy);
 
-    blocksAndAnnotations = QQmlJSTypePropagator(m_unitGenerator, &m_typeResolver, m_logger,
-                                                blocksAndAnnotations.basicBlocks,
-                                                blocksAndAnnotations.annotations, m_passManager)
-            .run(function);
+    blocksAndAnnotations =
+            QQmlJSTypePropagator(m_unitGenerator, &m_typeResolver, m_logger,
+                                 blocksAndAnnotations.basicBlocks, blocksAndAnnotations.annotations,
+                                 m_passManager, m_knownContextProperties)
+                    .run(function);
 
     if (m_logger->isCategoryIgnored(qmlCompiler))
         return;

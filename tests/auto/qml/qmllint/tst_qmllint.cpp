@@ -206,6 +206,7 @@ private:
         LintType type = LintFile;
         bool readSettings = false;
         QStringList enableCategories = {};
+        QStringList rootUrls = {};
     };
 
     QJsonArray callQmllintImpl(const QString &fileToLint, const QString &fileCpntent,
@@ -1245,6 +1246,125 @@ void TestQmllint::dirtyQmlSnippet_data()
                        {},
                        { { "Did you mean \"blue\"?", 1, 25 } } }
             << defaultOptions;
+    {
+        CallQmllintOptions options;
+        options.rootUrls.append(testFile("ContextProperties/src"_L1));
+
+        static constexpr QLatin1StringView warningHead =
+                "Potential context property access detected. Context properties are discouraged in "
+                "QML: use normal, required, or singleton properties instead.\n"_L1;
+
+        static constexpr QLatin1StringView warningRequiredPropertyBit =
+                "Note: '%1' assumed to be a potential context property because it "
+                "is not declared as required property.\n"_L1;
+
+        const QString cppFile = testFile("ContextProperties/src/main.cpp");
+        const QString cppFileInSubfolder =
+                testFile("ContextProperties/src/Sub/Sub2/Sub3/register.cpp");
+
+        const QString warning =
+                QString(warningHead)
+                        .append("Note: candidate context property declaration '%1' at %2:%3:%4"_L1);
+        const QString myContextProperty1Warning = warning.arg(
+                "myContextProperty1"_L1, cppFile, QString::number(14), QString::number(45));
+        const QString myContextProperty1WarningWithRequiredProperty =
+                QString(warningHead)
+                        .append(warningRequiredPropertyBit)
+                        .append("Note: candidate context property declaration '%1' at %5:%6:%7"_L1)
+                        .arg("myContextProperty1"_L1, cppFile, QString::number(14),
+                             QString::number(45));
+
+        const QString unqualifiedAccessWarning = "Unqualified access"_L1;
+
+        QTest::newRow("contextProperties")
+                << uR"(required property int myRequired
+                       property var a: myContextProperty1
+                       property var b: myContextProperty2
+                       property var c: myContextProperty3)"_s
+                << Result{ {
+                           Message{ myContextProperty1Warning, 2, 40 },
+                           Message{ warning.arg("myContextProperty2"_L1, cppFile,
+                                                QString::number(16), QString::number(19)),
+                                    3, 40 },
+                           Message{ warning.arg("myContextProperty3"_L1, cppFileInSubfolder,
+                                                QString::number(14), QString::number(21)),
+                                    4, 40 },
+                   } }
+                << options;
+
+        QTest::newRow("contextProperties2")
+                << u"property var d: myContextProperty4"_s
+                << Result{ {
+                           { QString(warningHead)
+                                     .append(warningRequiredPropertyBit)
+                                     .append("Note: candidate context property declaration '%1' at "
+                                             "%2:%3:%4\n"
+                                             "Note: candidate context property declaration '%1' at %5:%6:%7"_L1)
+                                     .arg("myContextProperty4"_L1, cppFileInSubfolder,
+                                          QString::number(18), QString::number(55),
+                                          cppFileInSubfolder, QString::number(21),
+                                          QString::number(53)),
+                             1, 17 },
+                   } }
+                << options;
+
+        QTest::newRow("contextPropertiesImplicitWrapping")
+                << u"property Component c: Item { function f() { return myContextProperty1; } }"_s
+                << Result{ { Message{ unqualifiedAccessWarning, 1, 52 },
+                             Message{ myContextProperty1WarningWithRequiredProperty, 1, 52 } } }
+                << options;
+
+        QTest::newRow("contextPropertiesImplicitWrappingWithRequired")
+                << u"property Component c: Item { required property int i;"
+                   u"function f() { return myContextProperty1; } }"_s
+                << Result{ { Message{ unqualifiedAccessWarning, 1, 76 },
+                             Message{ myContextProperty1Warning, 1, 76 } } }
+                << options;
+
+        QTest::newRow("contextPropertiesInlineComponent")
+                << u"component IC: Item { function f() { return myContextProperty1; } }"_s
+                << Result{ { Message{ unqualifiedAccessWarning, 1, 44 },
+                             Message{ myContextProperty1WarningWithRequiredProperty, 1, 44 } } }
+                << options;
+
+        QTest::newRow("contextPropertiesInlineComponentWithRequired")
+                << u"component IC: Item { required property int i;"
+                   u"function f() { return myContextProperty1; } }"_s
+                << Result{ { Message{ unqualifiedAccessWarning, 1, 68 },
+                             Message{ myContextProperty1Warning, 1, 68 } } }
+                << options;
+
+        QTest::newRow("contextPropertiesRootElement")
+                << u"function f() { return myContextProperty1; }"_s
+                << Result{ { Message{ unqualifiedAccessWarning, 1, 23 },
+                             Message{ myContextProperty1WarningWithRequiredProperty, 1, 23 } } }
+                << options;
+
+        QTest::newRow("contextPropertiesRootElementWithRequired")
+                << u"required property int i; function f() { return myContextProperty1; }"_s
+                << Result{ { Message{ unqualifiedAccessWarning, 1, 48 },
+                             Message{ myContextProperty1Warning, 1, 48 } } }
+                << options;
+
+        QTest::newRow("contextPropertiesNotHidden")
+                << u"required property int myContextProperty2; function f() { return myContextProperty1; }"_s
+                << Result{ { Message{ unqualifiedAccessWarning, 1, 65 },
+                             Message{ myContextProperty1Warning, 1, 65 } } }
+                << options;
+
+        QTest::newRow("contextPropertiesNotHidden2")
+                << u"required property int unrelated; function f() { return myContextProperty1; }"_s
+                << Result{ { Message{ unqualifiedAccessWarning, 1, 56 },
+                             Message{ myContextProperty1Warning, 1, 56 } } }
+                << options;
+
+        QTest::newRow("contextPropertiesWithoutRequired")
+                << u"property var a: myContextProperty1"_s
+                << Result{ { Message{ unqualifiedAccessWarning, 1, 17 },
+                             Message{ myContextProperty1WarningWithRequiredProperty, 1, 17 } } }
+                << options;
+    }
+
     QTest::newRow("duplicateBinding")
             << u"property int i; i: 42; i: 43;"_s
             << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 27 },
@@ -1324,6 +1444,7 @@ void TestQmllint::dirtyQmlSnippet_data()
             << u"property int qwer: \"Hello\""_s
             << Result{ { { "Cannot assign literal of type string to int"_L1 } } }
             << defaultOptions;
+
     QTest::newRow("upperCaseId")
             << u"id: Root"_s
             << Result{ { { "Id must start with a lower case letter or an '_'"_L1, 1, 5 } } }
@@ -1359,6 +1480,14 @@ void TestQmllint::cleanQmlSnippet_data()
     QTest::newRow("color-name") << u"property color myColor: \"blue\""_s << defaultOptions;
     QTest::newRow("color-name2") << u"property color myColor\nmyColor: \"green\""_s
                                  << defaultOptions;
+    {
+        CallQmllintOptions options;
+        options.rootUrls.append(testFile("ContextProperties/src"_L1));
+
+        QTest::newRow("contextPropertiesHidden")
+                << u"required property int myContextProperty1: 42; property var a: myContextProperty1"_s
+                << options;
+    }
     QTest::newRow("duplicateList") << u"Item {} Item {}"_s << defaultOptions;
     QTest::newRow("duplicateList2")
             << u"property list<Item> myList; myList: Item {} myList: Item {}"_s << defaultOptions;
@@ -2097,9 +2226,11 @@ QJsonArray TestQmllint::callQmllintImpl(const QString &fileToLint, const QString
                 QQmlJS::LoggingUtils::updateLogLevels(resolvedCategories, settings, nullptr);
         }
 
+        const QQmlJS::ContextProperties contextProperties =
+                QQmlJS::ContextProperty::collectAllFrom(options.rootUrls);
         lintResult = m_linter.lintFile(lintedFile, content.isEmpty() ? nullptr : &content, true,
                                        &jsonOutput, resolvedImportPaths, options.qmldirFiles,
-                                       options.resources, resolvedCategories);
+                                       options.resources, resolvedCategories, contextProperties);
     } else {
         lintResult = m_linter.lintModule(fileToLint, true, &jsonOutput, resolvedImportPaths,
                                          options.resources);

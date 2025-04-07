@@ -17,6 +17,7 @@
 #include <private/qqmljsast_p.h>
 #include <private/qqmljsscope_p.h>
 #include <private/qqmljscompilepass_p.h>
+#include <private/qqmljscontextproperties_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -30,7 +31,8 @@ struct Q_QMLCOMPILER_EXPORT QQmlJSTypePropagator : public QQmlJSCompilePass
                          const QQmlJSTypeResolver *typeResolver, QQmlJSLogger *logger,
                          const BasicBlocks &basicBlocks = {},
                          const InstructionAnnotations &annotations = {},
-                         QQmlSA::PassManager *passManager = nullptr);
+                         QQmlSA::PassManager *passManager = nullptr,
+                         const QQmlJS::ContextProperties &knownContextProperties = {});
 
     BlocksAndAnnotations run(const Function *m_function);
 
@@ -302,6 +304,7 @@ private:
 
     InstructionAnnotations m_prevStateAnnotations;
     PassState m_state;
+    QQmlJS::ContextProperties m_knownContextProperties;
 };
 
 QT_END_NAMESPACE

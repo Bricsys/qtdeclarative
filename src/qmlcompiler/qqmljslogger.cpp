@@ -44,6 +44,8 @@ using namespace Qt::StringLiterals;
       "Warn about confusing minuses.", QtWarningMsg, false, false)                                 \
     X(qmlConfusingPluses, "confusing-pluses", "ConfusingPluses",                                   \
       "Warn about confusing pluses.", QtWarningMsg, false, false)                                  \
+    X(qmlContextProperties, "context-properties", "ContextProperties",                             \
+      "Warn about using context properties.", QtWarningMsg, false, false)                          \
     X(qmlDeferredPropertyId, "deferred-property-id", "DeferredPropertyId",                         \
       "Warn about making deferred properties immediate by giving them an id.", QtInfoMsg, true,    \
       true)                                                                                        \

@@ -18,6 +18,7 @@
 
 #include <QtQmlCompiler/private/qqmljslogger_p.h>
 #include <QtQmlCompiler/private/qqmljsimporter_p.h>
+#include <QtQmlCompiler/private/qqmljscontextproperties_p.h>
 
 #include <QtQml/private/qqmljssourcelocation_p.h>
 
@@ -108,7 +109,8 @@ public:
     LintResult lintFile(const QString &filename, const QString *fileContents, const bool silent,
                         QJsonArray *json, const QStringList &qmlImportPaths,
                         const QStringList &qmldirFiles, const QStringList &resourceFiles,
-                        const QList<QQmlJS::LoggerCategory> &categories);
+                        const QList<QQmlJS::LoggerCategory> &categories,
+                        const QQmlJS::ContextProperties &contextProperties = {});
 
     LintResult lintModule(const QString &uri, const bool silent, QJsonArray *json,
                           const QStringList &qmlImportPaths, const QStringList &resourceFiles);

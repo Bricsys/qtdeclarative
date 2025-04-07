@@ -27,6 +27,7 @@
 #include <QtQmlCompiler/private/qqmljstyperesolver_p.h>
 #include <QtQmlCompiler/private/qqmljslogger_p.h>
 #include <QtQmlCompiler/private/qqmljscompilepass_p.h>
+#include <QtQmlCompiler/private/qqmljscontextproperties_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -38,7 +39,8 @@ class QQmlJSLinterCodegen : public QQmlJSAotCompiler
 {
 public:
     QQmlJSLinterCodegen(QQmlJSImporter *importer, const QString &fileName,
-                        const QStringList &qmldirFiles, QQmlJSLogger *logger);
+                        const QStringList &qmldirFiles, QQmlJSLogger *logger,
+                        const QQmlJS::ContextProperties &knownContextProperties);
 
     void setDocument(const QmlIR::JSCodeGen *codegen, const QmlIR::Document *document) override;
     std::variant<QQmlJSAotFunction, QList<QQmlJS::DiagnosticMessage>>
@@ -64,6 +66,7 @@ private:
 
     void analyzeFunction(const QV4::Compiler::Context *context,
                          QQmlJSCompilePass::Function *function);
+    QQmlJS::ContextProperties m_knownContextProperties;
 };
 
 QT_END_NAMESPACE

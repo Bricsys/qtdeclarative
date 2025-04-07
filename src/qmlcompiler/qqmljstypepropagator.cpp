@@ -26,12 +26,15 @@ using namespace Qt::StringLiterals;
  * refinement or code generation.
  */
 
-QQmlJSTypePropagator::QQmlJSTypePropagator(
-        const QV4::Compiler::JSUnitGenerator *unitGenerator, const QQmlJSTypeResolver *typeResolver,
-        QQmlJSLogger *logger, const BasicBlocks &basicBlocks,
-        const InstructionAnnotations &annotations, QQmlSA::PassManager *passManager)
+QQmlJSTypePropagator::QQmlJSTypePropagator(const QV4::Compiler::JSUnitGenerator *unitGenerator,
+                                           const QQmlJSTypeResolver *typeResolver,
+                                           QQmlJSLogger *logger, const BasicBlocks &basicBlocks,
+                                           const InstructionAnnotations &annotations,
+                                           QQmlSA::PassManager *passManager,
+                                           const QQmlJS::ContextProperties &knownContextProperties)
     : QQmlJSCompilePass(unitGenerator, typeResolver, logger, basicBlocks, annotations),
-      m_passManager(passManager)
+      m_passManager(passManager),
+      m_knownContextProperties(knownContextProperties)
 {
 }
 
@@ -551,6 +554,51 @@ void QQmlJSTypePropagator::generate_LoadQmlContextPropertyLookup_SAcheck(const Q
                     currentNonEmptySourceLocation()));
 }
 
+static bool shouldMentionRequiredProperties(const QQmlJSScope::ConstPtr &qmlScope)
+{
+    if (!qmlScope->isWrappedInImplicitComponent() && !qmlScope->isFileRootComponent()
+        && !qmlScope->isInlineComponent()) {
+        return false;
+    }
+
+    const auto properties = qmlScope->properties();
+    return std::none_of(properties.constBegin(), properties.constEnd(),
+                        [&qmlScope](const QQmlJSMetaProperty &property) {
+                            return qmlScope->isPropertyRequired(property.propertyName());
+                        });
+}
+
+static void warnAboutContextPropertyUsage(const QString name,
+                                          const QQmlJS::ContextProperties &contextProperties,
+                                          const QQmlJSScope::ConstPtr &qmlScope,
+                                          QQmlJSLogger *logger,
+                                          const QQmlJS::SourceLocation &location)
+{
+    Q_ASSERT(qmlScope);
+
+    // only warn if the property is using the same name as one of the context properties
+    auto it = contextProperties.find(name);
+    if (it == contextProperties.end())
+        return;
+
+    QString warningMessage =
+            "Potential context property access detected."
+            " Context properties are discouraged in QML: use normal, required, or singleton properties instead."_L1;
+
+    if (shouldMentionRequiredProperties(qmlScope)) {
+        warningMessage.append(
+                "\nNote: '%1' assumed to be a potential context property because it is not declared as required property."_L1
+                        .arg(name));
+    }
+
+    for (const auto &candidate : *it) {
+        warningMessage.append(
+                "\nNote: candidate context property declaration '%1' at %2:%3:%4"_L1.arg(
+                        name, candidate.filename, QString::number(candidate.location.startLine),
+                        QString::number(candidate.location.startColumn)));
+    }
+    logger->log(warningMessage, qmlContextProperties, location);
+}
 
 void QQmlJSTypePropagator::generate_LoadQmlContextPropertyLookup(int index)
 {
@@ -575,6 +623,10 @@ void QQmlJSTypePropagator::generate_LoadQmlContextPropertyLookup(int index)
 
     if (!accumulatorOut.isValid()) {
         addError(u"Cannot access value for name "_s + name);
+
+        warnAboutContextPropertyUsage(name, m_knownContextProperties,
+                                      m_function->qmlScope.containedType(), m_logger,
+                                      currentSourceLocation());
         handleUnqualifiedAccess(name, false);
         setVarAccumulatorAndError();
         return;

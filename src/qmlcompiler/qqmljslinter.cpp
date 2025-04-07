@@ -511,7 +511,8 @@ QQmlJSLinter::LintResult QQmlJSLinter::lintFile(const QString &filename,
                                                 QJsonArray *json, const QStringList &qmlImportPaths,
                                                 const QStringList &qmldirFiles,
                                                 const QStringList &resourceFiles,
-                                                const QList<QQmlJS::LoggerCategory> &categories)
+                                                const QList<QQmlJS::LoggerCategory> &categories,
+                                                const QQmlJS::ContextProperties &contextProperties)
 {
     // Make sure that we don't expose an old logger if we return before a new one is created.
     m_logger.reset();
@@ -648,7 +649,8 @@ QQmlJSLinter::LintResult QQmlJSLinter::lintFile(const QString &filename,
     const QString resolvedPath =
             (resourcePaths.size() == 1) ? u':' + resourcePaths.first() : filename;
 
-    QQmlJSLinterCodegen codegen{ &m_importer, resolvedPath, qmldirFiles, m_logger.get() };
+    QQmlJSLinterCodegen codegen{ &m_importer, resolvedPath, qmldirFiles, m_logger.get(),
+                                 contextProperties };
     codegen.setTypeResolver(std::move(typeResolver));
 
     using PassManagerPtr =
