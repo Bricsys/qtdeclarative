@@ -56,6 +56,7 @@ set(qml_files
     Cycle2.qml
     Cycle3.qml
     CppMethodListReturnType.qml
+    DeduplicateConversionOrigins.qml
     Dummy.qml
     Dummy2.qml
     EditConstraint.qml
