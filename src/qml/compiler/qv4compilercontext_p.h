@@ -212,13 +212,13 @@ struct Context {
     QString caughtVariable;
     QQmlJS::SourceLocation lastBlockInitializerLocation;
 
-    enum UsesArgumentsObject {
-        ArgumentsObjectUnknown,
-        ArgumentsObjectNotUsed,
-        ArgumentsObjectUsed
+    enum class UsesArgumentsObject: quint8 {
+        Unknown,
+        NotUsed,
+        Used
     };
 
-    UsesArgumentsObject usesArgumentsObject = ArgumentsObjectUnknown;
+    UsesArgumentsObject usesArgumentsObject = UsesArgumentsObject::Unknown;
 
     ContextType contextType;
 

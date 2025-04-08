@@ -282,8 +282,8 @@ bool ScanFunctions::visit(CallExpression *ast)
     if (!_context->hasDirectEval) {
         if (IdentifierExpression *id = cast<IdentifierExpression *>(ast->base)) {
             if (id->name == QLatin1String("eval")) {
-                if (_context->usesArgumentsObject == Context::ArgumentsObjectUnknown)
-                    _context->usesArgumentsObject = Context::ArgumentsObjectUsed;
+                if (_context->usesArgumentsObject == Context::UsesArgumentsObject::Unknown)
+                    _context->usesArgumentsObject = Context::UsesArgumentsObject::Used;
                 _context->hasDirectEval = true;
             }
         }
@@ -313,7 +313,7 @@ bool ScanFunctions::visit(PatternElement *ast)
             _cg->throwSyntaxError(ast->identifierToken, QStringLiteral("Variable name may not be eval or arguments in strict mode"));
         checkName(QStringView(name.id), ast->identifierToken);
         if (name.id == QLatin1String("arguments"))
-            _context->usesArgumentsObject = Context::ArgumentsObjectNotUsed;
+            _context->usesArgumentsObject = Context::UsesArgumentsObject::NotUsed;
         if (ast->scope == VariableScope::Const && !ast->initializer && !ast->isForDeclaration && !ast->destructuringPattern()) {
             _cg->throwSyntaxError(ast->identifierToken, QStringLiteral("Missing initializer in const declaration"));
             return false;
@@ -331,8 +331,8 @@ bool ScanFunctions::visit(IdentifierExpression *ast)
 {
     Q_ASSERT(_context);
     checkName(ast->name, ast->identifierToken);
-    if (_context->usesArgumentsObject == Context::ArgumentsObjectUnknown && ast->name == QLatin1String("arguments"))
-        _context->usesArgumentsObject = Context::ArgumentsObjectUsed;
+    if (_context->usesArgumentsObject == Context::UsesArgumentsObject::Unknown && ast->name == QLatin1String("arguments"))
+        _context->usesArgumentsObject = Context::UsesArgumentsObject::Used;
     _context->addUsedVariable(ast->name.toString());
     return true;
 }
@@ -662,13 +662,13 @@ bool ScanFunctions::enterFunction(
             outerContext->addLocalVar(name, Context::FunctionDefinition, VariableScope::Var, expr);
         }
         if (name == QLatin1String("arguments"))
-            outerContext->usesArgumentsObject = Context::ArgumentsObjectNotUsed;
+            outerContext->usesArgumentsObject = Context::UsesArgumentsObject::NotUsed;
     }
 
     Q_ASSERT(_context);
     _context->name = name;
     if (formals && formals->containsName(QStringLiteral("arguments")))
-        _context->usesArgumentsObject = Context::ArgumentsObjectNotUsed;
+        _context->usesArgumentsObject = Context::UsesArgumentsObject::NotUsed;
     if (expr) {
         if (expr->isArrowFunction)
             _context->isArrowFunction = true;
@@ -723,7 +723,7 @@ void ScanFunctions::calcEscapingVariables()
     Module *m = _cg->_module;
 
     for (Context *inner : std::as_const(m->contextMap)) {
-        if (inner->usesArgumentsObject != Context::ArgumentsObjectUsed)
+        if (inner->usesArgumentsObject != Context::UsesArgumentsObject::Used)
             continue;
         if (inner->contextType != ContextType::Block && !inner->isArrowFunction)
             continue;
@@ -731,13 +731,13 @@ void ScanFunctions::calcEscapingVariables()
         while (c && (c->contextType == ContextType::Block || c->isArrowFunction))
             c = c->parent;
         if (c)
-            c->usesArgumentsObject = Context::ArgumentsObjectUsed;
-        inner->usesArgumentsObject = Context::ArgumentsObjectNotUsed;
+            c->usesArgumentsObject = Context::UsesArgumentsObject::Used;
+        inner->usesArgumentsObject = Context::UsesArgumentsObject::NotUsed;
     }
     for (Context *inner : std::as_const(m->contextMap)) {
-        if (!inner->parent || inner->usesArgumentsObject == Context::ArgumentsObjectUnknown)
-            inner->usesArgumentsObject = Context::ArgumentsObjectNotUsed;
-        if (inner->usesArgumentsObject == Context::ArgumentsObjectUsed) {
+        if (!inner->parent || inner->usesArgumentsObject == Context::UsesArgumentsObject::Unknown)
+            inner->usesArgumentsObject = Context::UsesArgumentsObject::NotUsed;
+        if (inner->usesArgumentsObject == Context::UsesArgumentsObject::Used) {
             QString arguments = QStringLiteral("arguments");
             inner->addLocalVar(arguments, Context::VariableDeclaration, AST::VariableScope::Var);
             if (!inner->isStrict) {

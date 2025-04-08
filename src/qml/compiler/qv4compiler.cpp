@@ -441,7 +441,7 @@ void QV4::Compiler::JSUnitGenerator::writeFunction(char *f, QV4::Compiler::Conte
         function->flags |= CompiledData::Function::IsClosureWrapper;
 
     if (!irFunction->returnsClosure
-            || (irFunction->usesArgumentsObject == Context::ArgumentsObjectUsed)
+            || (irFunction->usesArgumentsObject == Context::UsesArgumentsObject::Used)
             || irFunction->innerFunctionAccessesThis
             || irFunction->innerFunctionAccessesNewTarget) {
         // If the inner function does things with this and new.target we need to do some work in

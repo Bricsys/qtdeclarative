@@ -261,7 +261,7 @@ void Context::emitBlockHeader(Codegen *codegen)
         }
     }
 
-    if (usesArgumentsObject == Context::ArgumentsObjectUsed) {
+    if (usesArgumentsObject == Context::UsesArgumentsObject::Used) {
         Q_ASSERT(contextType != ContextType::Block);
         if (isStrict || (formals && !formals->isSimpleParameterList())) {
             Instruction::CreateUnmappedArgumentsObject setup;

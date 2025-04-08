@@ -122,7 +122,7 @@ static bool checkArgumentsObjectUseInSignalHandlers(const QmlIR::Document &doc,
             auto compiledFunction = doc.jsModule.functions.value(object->runtimeFunctionIndices.at(binding->value.compiledScriptIndex));
             if (!compiledFunction)
                 continue;
-            if (compiledFunction->usesArgumentsObject == QV4::Compiler::Context::ArgumentsObjectUsed) {
+            if (compiledFunction->usesArgumentsObject == QV4::Compiler::Context::UsesArgumentsObject::Used) {
                 error->message = QLatin1Char(':') + QString::number(compiledFunction->line) + QLatin1Char(':');
                 if (compiledFunction->column > 0)
                     error->message += QString::number(compiledFunction->column) + QLatin1Char(':');
