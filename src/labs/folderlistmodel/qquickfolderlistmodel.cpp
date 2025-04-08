@@ -930,7 +930,7 @@ QVariant QQuickFolderListModel::get(int idx, const QString &property) const
 {
     int role = roleFromString(property);
     if (role >= 0 && idx >= 0)
-        return data(index(idx, 0), role);
+        return data(index(idx), role);
     else
         return QVariant();
 }
