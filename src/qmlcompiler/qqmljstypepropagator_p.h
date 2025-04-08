@@ -277,6 +277,7 @@ private:
                                        const QQmlJSScope::ConstPtr &callBase);
     void propagateCall_SAcheck(const QQmlJSMetaMethod &method,
                                const QQmlJSScope::ConstPtr &baseType);
+    void generate_GetOptionalLookup_SAcheck();
 
     void addError(const QString &message)
     {

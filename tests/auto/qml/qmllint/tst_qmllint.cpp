@@ -1286,6 +1286,10 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
             << QStringLiteral("settings/propertyAliasCycle/file.qml")
             << Result{ { { "\"cycle1\" is part of an alias cycle"_L1 },
                          { "\"cycle1\" is part of an alias cycle"_L1 } } };
+    QTest::newRow("redundantOptionalChainingEnums")
+            << QStringLiteral("RedundantOptionalChainingEnums.qml")
+            << Result{ { { "Redundant optional chaining for enum lookup"_L1, 5, 54 },
+                         { "Redundant optional chaining for enum lookup"_L1, 6, 26 } } };
 }
 
 void TestQmllint::dirtyQmlCode()
@@ -1458,6 +1462,10 @@ void TestQmllint::dirtyJsSnippet_data()
                                   << Result{ { { "Do not use 'eval'"_L1, 1, 13 } } };
     QTest::newRow("indirectEval2") << u"let x = (1, eval)(\"1 + 1\");"_s
                                    << Result{ { { "Do not use 'eval'"_L1, 1, 13 } } };
+    QTest::newRow("redundantOptionalChainingNonVoidableBase")
+            << u"/a/?.flags"_s
+            << Result{ { { "Redundant optional chaining for lookup on non-voidable and "_L1
+                           "non-nullable type QRegularExpression"_L1, 1, 6 } } };
 }
 
 void TestQmllint::dirtyJsSnippet()

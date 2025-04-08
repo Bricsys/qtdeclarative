@@ -1008,6 +1008,24 @@ void QQmlJSTypePropagator::generate_GetOptionalLookup(int index, int offset)
     Q_UNUSED(offset);
     saveRegisterStateForJump(offset);
     propagatePropertyLookup(m_jsUnitGenerator->lookupName(index), index);
+    if (m_passManager)
+        generate_GetOptionalLookup_SAcheck();
+}
+
+void QQmlJSTypePropagator::generate_GetOptionalLookup_SAcheck()
+{
+    auto suggMsg = "Consider using non-optional chaining instead: '?.' -> '.'"_L1;
+    auto suggestion = std::make_optional(QQmlJSFixSuggestion(suggMsg, currentSourceLocation()));
+    if (m_state.accumulatorOut().variant() == QQmlJSRegisterContent::Enum) {
+        m_logger->log("Redundant optional chaining for enum lookup"_L1, qmlRedundantOptionalChaining,
+                      currentSourceLocation(), true, true, suggestion);
+    } else if (!m_state.accumulatorIn().containedType()->isReferenceType()
+               && !m_typeResolver->canHoldUndefined(m_state.accumulatorIn())) {
+        auto baseType = m_state.accumulatorIn().containedTypeName();
+        m_logger->log("Redundant optional chaining for lookup on non-voidable and non-nullable "_L1
+                      "type %1"_L1.arg(baseType), qmlRedundantOptionalChaining,
+                      currentSourceLocation(), true, true, suggestion);
+    }
 }
 
 void QQmlJSTypePropagator::generate_StoreProperty_SAcheck(const QString &propertyName,

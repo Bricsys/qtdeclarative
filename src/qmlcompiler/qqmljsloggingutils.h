@@ -79,6 +79,7 @@ extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUncreatableType;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlMissingEnumEntry;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlAssignmentInCondition;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlEval;
+extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlRedundantOptionalChaining;
 
 QT_END_NAMESPACE
 

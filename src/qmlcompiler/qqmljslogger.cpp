@@ -106,7 +106,10 @@ using namespace Qt::StringLiterals;
       "Warn about using missing enum values.", QtWarningMsg, false, false)                         \
     X(qmlAssignmentInCondition, "assignment-in-condition", "AssignmentInCondition",                \
       "Warn about using assignment in conditions.", QtWarningMsg, false, false)                    \
-    X(qmlEval, "eval", "Eval", "Warn about uses of eval()", QtWarningMsg, false, false)
+    X(qmlEval, "eval", "Eval", "Warn about uses of eval()", QtWarningMsg, false, false)            \
+    X(qmlRedundantOptionalChaining, "redundant-optional-chaining", "RedundantOptionalChaining",    \
+      "Warn about optional chaining on non-voidable and non-nullable base", QtWarningMsg, false,   \
+      false)
 
 #define X(category, name, setting, description, level, ignored, isDefault) \
     const QQmlSA::LoggerWarningId category{ name };
