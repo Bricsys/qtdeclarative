@@ -4,8 +4,8 @@
 # Generated from src.pro.
 # special case skip regeneration
 
-if(NOT QT_FEATURE_commandlineparser)
-    message(FATAL_ERROR "QT_FEATURE_commandlineparser required to compile qmltyperegistrar")
+if(NOT QT_FEATURE_commandlineparser OR NOT QT_FEATURE_regularexpression)
+    message(FATAL_ERROR "QT_FEATURE_commandlineparser and QT_FEATURE_regularexpression required to compile qmltyperegistrar")
 endif()
 
 add_subdirectory(qmltoolingsettings)
