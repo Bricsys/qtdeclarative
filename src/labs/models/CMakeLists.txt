@@ -27,3 +27,9 @@ qt_internal_extend_target(LabsQmlModels CONDITION QT_FEATURE_qml_delegate_model
     SOURCES
         qqmldelegatechooser.cpp qqmldelegatechooser_p.h
 )
+
+qt_internal_extend_target(LabsQmlModels CONDITION QT_FEATURE_qml_tree_model
+    SOURCES
+        qqmltreemodel.cpp qqmltreemodel_p.h
+        qqmltreerow.cpp qqmltreerow_p.h
+)
