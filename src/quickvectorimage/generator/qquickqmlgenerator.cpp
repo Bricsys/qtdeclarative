@@ -135,6 +135,8 @@ QString QQuickQmlGenerator::generateNodeBase(const NodeInfo &info)
     if (info.opacity.isAnimated())
         generatePropertyAnimation(info.opacity, idString, QStringLiteral("opacity"));
 
+    generatePropertyAnimation(info.visibility, idString, QStringLiteral("visible"));
+
     return idString;
 }
 
@@ -319,29 +321,41 @@ void QQuickQmlGenerator::generatePropertyAnimation(const QQuickAnimatedProperty 
             const int time = it.key();
             const QVariant &value = it.value();
 
-            switch (animationType) {
-            case AnimationType::Auto:
+            // We special case bools, with PauseAnimation and then a setter at the end
+            if (animationType == AnimationType::Auto && value.typeId() == QMetaType::Bool) {
+                stream() << "PauseAnimation { duration: " << (time - previousTime) << " }";
+                stream() << "ScriptAction {";
+                m_indentLevel++;
+
+                stream() << "script:" << targetName << "." << propertyName << " = " << value.toString();
+
+                m_indentLevel--;
+                stream() << "}";
+            } else {
+                switch (animationType) {
+                case AnimationType::Auto:
+                    if (value.typeId() == QMetaType::QColor)
+                        stream() << "ColorAnimation {";
+                    else
+                        stream() << "PropertyAnimation {";
+                    break;
+                case AnimationType::ColorOpacity:
+                    stream() << "ColorOpacityAnimation {";
+                    break;
+                };
+                m_indentLevel++;
+
+                stream() << "target: " << targetName;
+                stream() << "property: \"" << propertyName << "\"";
                 if (value.typeId() == QMetaType::QColor)
-                    stream() << "ColorAnimation {";
+                    stream() << "to: \"" << value.toString() << '"';
                 else
-                    stream() << "PropertyAnimation {";
-                break;
-            case AnimationType::ColorOpacity:
-                stream() << "ColorOpacityAnimation {";
-                break;
-            };
-            m_indentLevel++;
+                    stream() << "to: " << value.toReal();
+                stream() << "duration: " << (time - previousTime);
 
-            stream() << "target: " << targetName;
-            stream() << "property: \"" << propertyName << "\"";
-            if (value.typeId() == QMetaType::QColor)
-                stream() << "to: \"" << value.toString() << '"';
-            else
-                stream() << "to: " << value.toReal();
-            stream() << "duration: " << (time - previousTime);
-
-            m_indentLevel--;
-            stream() << "}";
+                m_indentLevel--;
+                stream() << "}";
+            }
 
             previousTime = time;
         }

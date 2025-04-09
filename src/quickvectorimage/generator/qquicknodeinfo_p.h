@@ -36,6 +36,8 @@ struct NodeInfo
     bool isDefaultOpacity = true;
     bool isVisible = true;
     bool isDisplayed = true; // TODO: Map to display enum in QtSvg
+    QQuickAnimatedProperty visibility = QQuickAnimatedProperty(QVariant::fromValue(true));
+    int visibilityEndTime = -1;
 };
 
 struct ImageNodeInfo : NodeInfo
