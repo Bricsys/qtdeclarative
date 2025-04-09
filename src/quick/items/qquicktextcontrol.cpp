@@ -1333,12 +1333,17 @@ void QQuickTextControlPrivate::inputMethodEvent(QInputMethodEvent *e)
 
     // insert commit string
     if (textEditable && (!e->commitString().isEmpty() || e->replacementLength())) {
-        if (e->commitString().endsWith(QChar::LineFeed))
-            block = cursor.block(); // Remember the block where the preedit text is
-        QTextCursor c = cursor;
-        c.setPosition(c.position() + e->replacementStart());
-        c.setPosition(c.position() + e->replacementLength(), QTextCursor::KeepAnchor);
-        c.insertText(e->commitString());
+        auto *mimeData = QInputControl::mimeDataForInputEvent(e);
+        if (mimeData && q->canInsertFromMimeData(mimeData)) {
+            q->insertFromMimeData(mimeData);
+        } else {
+            if (e->commitString().endsWith(QChar::LineFeed))
+                block = cursor.block(); // Remember the block where the preedit text is
+            QTextCursor c = cursor;
+            c.setPosition(c.position() + e->replacementStart());
+            c.setPosition(c.position() + e->replacementLength(), QTextCursor::KeepAnchor);
+            c.insertText(e->commitString());
+        }
     }
 
     if (interactionFlags & (Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse)) {
@@ -1427,8 +1432,11 @@ QVariant QQuickTextControl::inputMethodQuery(Qt::InputMethodQuery property, cons
     }
     case Qt::ImSurroundingText:
         return QVariant(block.text());
-    case Qt::ImCurrentSelection:
-        return QVariant(d->cursor.selectedText());
+    case Qt::ImCurrentSelection: {
+        QMimeData *mimeData = createMimeDataFromSelection();
+        mimeData->deleteLater();
+        return QInputControl::selectionWrapper(mimeData);
+    }
     case Qt::ImMaximumTextLength:
         return QVariant(); // No limit.
     case Qt::ImAnchorPosition:
