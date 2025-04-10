@@ -10,7 +10,7 @@
 #include <QtQuickTestUtils/private/viewtestutils_p.h>
 #include <QtQuickTestUtils/private/visualtestutils_p.h>
 
-#include <QtTest/QtTest>
+#include <QtTest/QTest>
 
 using namespace QQuickViewTestUtils;
 using namespace QQuickVisualTestUtils;

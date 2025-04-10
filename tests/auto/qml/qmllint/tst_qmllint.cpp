@@ -2,7 +2,7 @@
 // Copyright (C) 2021 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include <QtTest/QtTest>
+#include <QtTest/QTest>
 #include <QProcess>
 #include <QString>
 #include <QtQuickTestUtils/private/qmlutils_p.h>
@@ -11,6 +11,8 @@
 #include <QtQmlToolingSettings/private/qqmltoolingsettings_p.h>
 #include <QtCore/qplugin.h>
 #include <QtCore/qcomparehelpers.h>
+#include <QtCore/qdiriterator.h>
+#include <QtCore/qlibraryinfo.h>
 
 Q_IMPORT_PLUGIN(LintPlugin)
 

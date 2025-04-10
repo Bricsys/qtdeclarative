@@ -3,7 +3,7 @@
 
 #include "delegatemodelkinds.h"
 
-#include <QtTest/QtTest>
+#include <QtTest/QTest>
 #include <QtQuick/qquickview.h>
 #include <QtQuick/private/qquickitemview_p_p.h>
 #include <QtQuick/private/qquicklistview_p.h>

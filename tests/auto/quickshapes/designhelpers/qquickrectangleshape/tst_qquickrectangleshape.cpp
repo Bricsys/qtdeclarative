@@ -1,7 +1,8 @@
 // Copyright (C) 2025 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include <QtTest/QtTest>
+#include <QtTest/QTest>
+#include <QtTest/QSignalSpy>
 #include <QtQuickShapesDesignHelpers/private/qquickrectangleshape_p.h>
 #include <QtQuickTest/quicktest.h>
 #include <QtQuickTestUtils/private/visualtestutils_p.h>
