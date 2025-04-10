@@ -38,7 +38,6 @@
 #include <QtCore/qlist.h>
 #include <QtCore/qmetaobject.h>
 #include <QtCore/qmutex.h>
-#include <QtCore/qpair.h>
 #include <QtCore/qpointer.h>
 #include <QtCore/qproperty.h>
 #include <QtCore/qstack.h>
@@ -46,6 +45,7 @@
 #include <QtCore/qthread.h>
 
 #include <atomic>
+#include <utility>
 
 QT_BEGIN_NAMESPACE
 

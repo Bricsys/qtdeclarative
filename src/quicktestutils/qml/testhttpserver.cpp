@@ -107,7 +107,7 @@ QString TestHTTPServer::errorString() const
 
 bool TestHTTPServer::serveDirectory(const QString &dir, Mode mode)
 {
-    m_directories.append(qMakePair(dir, mode));
+    m_directories.append(std::make_pair(dir, mode));
     return true;
 }
 
@@ -328,7 +328,7 @@ bool TestHTTPServer::reply(QTcpSocket *socket, const QByteArray &fileNameIn)
             response += data;
 
             if (mode == Delay) {
-                m_toSend.append(qMakePair(socket, response));
+                m_toSend.append(std::make_pair(socket, response));
                 QTimer::singleShot(500, this, &TestHTTPServer::sendOne);
                 return false;
             }
@@ -341,7 +341,7 @@ bool TestHTTPServer::reply(QTcpSocket *socket, const QByteArray &fileNameIn)
             socket->write(response.left(m_chunkSize));
             for (qsizetype offset = m_chunkSize, end = response.length(); offset < end;
                  offset += m_chunkSize) {
-                m_toSend.append(qMakePair(socket, response.mid(offset, m_chunkSize)));
+                m_toSend.append(std::make_pair(socket, response.mid(offset, m_chunkSize)));
             }
 
             QTimer::singleShot(1, this, &TestHTTPServer::sendChunk);

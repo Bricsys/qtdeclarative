@@ -257,7 +257,7 @@ private:
 
     QStringList m_importPaths;
 
-    QHash<QPair<QString, QTypeRevision>, QString> m_seenImports;
+    QHash<std::pair<QString, QTypeRevision>, QString> m_seenImports;
     QHash<QQmlJS::Import, QSharedPointer<AvailableTypes>> m_cachedImportTypes;
     QHash<QString, Import> m_seenQmldirFiles;
 

@@ -780,7 +780,7 @@ bool QQmlJSImporter::importHelper(const QString &module, AvailableTypes *types,
                     QQmlJS::ContextualTypes::INTERNAL, {}, {}, types->cppNames.arrayType())));
     m_cachedImportTypes[cacheKey] = cacheTypes;
 
-    const QPair<QString, QTypeRevision> importId { module, version };
+    const std::pair<QString, QTypeRevision> importId { module, version };
     const auto it = m_seenImports.constFind(importId);
 
     if (it != m_seenImports.constEnd()) {

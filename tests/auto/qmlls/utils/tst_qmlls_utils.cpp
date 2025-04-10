@@ -4530,7 +4530,7 @@ void tst_qmlls_utils::completions()
 void tst_qmlls_utils::cmakeBuildCommand()
 {
     const QString path = u"helloWorldPath"_s;
-    const QPair<QString, QStringList> expected{
+    const std::pair<QString, QStringList> expected{
         u"cmake"_s, { u"--build"_s, path, u"-t"_s, u"all_qmltyperegistrations"_s }
     };
     QCOMPARE(QQmlLSUtils::cmakeBuildCommand(path), expected);

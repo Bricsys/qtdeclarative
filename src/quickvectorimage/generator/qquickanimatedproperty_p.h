@@ -15,9 +15,9 @@
 // We mean it.
 //
 
-#include <QPair>
 #include <QMap>
 #include <QVariant>
+#include <utility>
 
 QT_BEGIN_NAMESPACE
 

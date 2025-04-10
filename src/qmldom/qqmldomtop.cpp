@@ -25,7 +25,6 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
-#include <QtCore/QPair>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #if QT_FEATURE_thread
@@ -33,6 +32,7 @@
 #endif
 
 #include <memory>
+#include <utility>
 
 QT_BEGIN_NAMESPACE
 

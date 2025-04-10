@@ -54,9 +54,9 @@ public:
         Flags flags = {};
     };
 
-    struct Environment : public QList<QPair<QString, QString>>
+    struct Environment : public QList<std::pair<QString, QString>>
     {
-        using QList<QPair<QString, QString>>::QList;
+        using QList<std::pair<QString, QString>>::QList;
     };
 
 private Q_SLOTS:
@@ -2641,7 +2641,7 @@ void TestQmllint::testPluginHelpCommandLine()
                     errorOutput = process.readAllStandardError();
                 },
                 args);
-        return QPair<QString, QString>{ output, errorOutput };
+        return std::pair<QString, QString>{ output, errorOutput };
     };
     {
         // make sure plugin warnings are documented by --help

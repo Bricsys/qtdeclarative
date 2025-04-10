@@ -63,20 +63,20 @@ using namespace Qt::StringLiterals;
 
 namespace QV4 {
 
-QPair<QObject *, int> QObjectMethod::extractQtMethod(const FunctionObject *function)
+std::pair<QObject *, int> QObjectMethod::extractQtMethod(const FunctionObject *function)
 {
     ExecutionEngine *v4 = function->engine();
     if (v4) {
         Scope scope(v4);
         Scoped<QObjectMethod> method(scope, function->as<QObjectMethod>());
         if (method)
-            return qMakePair(method->object(), method->methodIndex());
+            return std::make_pair(method->object(), method->methodIndex());
     }
 
-    return qMakePair((QObject *)nullptr, -1);
+    return std::make_pair((QObject *)nullptr, -1);
 }
 
-static QPair<QObject *, int> extractQtSignal(const Value &value)
+static std::pair<QObject *, int> extractQtSignal(const Value &value)
 {
     if (value.isObject()) {
         ExecutionEngine *v4 = value.as<Object>()->engine();
@@ -87,10 +87,10 @@ static QPair<QObject *, int> extractQtSignal(const Value &value)
 
         Scoped<QmlSignalHandler> handler(scope, value);
         if (handler)
-            return qMakePair(handler->object(), handler->signalIndex());
+            return std::make_pair(handler->object(), handler->signalIndex());
     }
 
-    return qMakePair((QObject *)nullptr, -1);
+    return std::make_pair((QObject *)nullptr, -1);
 }
 
 static Heap::ReferenceObject::Flags referenceFlags(
@@ -1307,7 +1307,7 @@ struct QObjectSlotDispatcher : public QtPrivate::QSlotObjectBase
                         (connection->thisObject.isUndefined() || RuntimeHelpers::strictEqual(*connection->thisObject.valueRef(), thisObject))) {
 
                     ScopedFunctionObject f(scope, connection->function.value());
-                    QPair<QObject *, int> connectedFunctionData = QObjectMethod::extractQtMethod(f);
+                    std::pair<QObject *, int> connectedFunctionData = QObjectMethod::extractQtMethod(f);
                     if (connectedFunctionData.first == receiverToDisconnect &&
                         connectedFunctionData.second == slotIndexToDisconnect) {
                         *ret = true;
@@ -1340,7 +1340,7 @@ ReturnedValue QObjectWrapper::method_connect(const FunctionObject *b, const Valu
     if (argc == 0)
         THROW_GENERIC_ERROR("Function.prototype.connect: no arguments given");
 
-    QPair<QObject *, int> signalInfo = extractQtSignal(*thisObject);
+    std::pair<QObject *, int> signalInfo = extractQtSignal(*thisObject);
     QObject *signalObject = signalInfo.first;
     int signalIndex = signalInfo.second; // in method range, not signal range!
 
@@ -1382,7 +1382,7 @@ ReturnedValue QObjectWrapper::method_connect(const FunctionObject *b, const Valu
         }
     }
 
-    QPair<QObject *, int> functionData = QObjectMethod::extractQtMethod(f); // align with disconnect
+    std::pair<QObject *, int> functionData = QObjectMethod::extractQtMethod(f); // align with disconnect
     QObject *receiver = nullptr;
 
     if (functionData.first)
@@ -1424,7 +1424,7 @@ ReturnedValue QObjectWrapper::method_disconnect(const FunctionObject *b, const V
     if (argc == 0)
         THROW_GENERIC_ERROR("Function.prototype.disconnect: no arguments given");
 
-    QPair<QObject *, int> signalInfo = extractQtSignal(*thisObject);
+    std::pair<QObject *, int> signalInfo = extractQtSignal(*thisObject);
     QObject *signalObject = signalInfo.first;
     int signalIndex = signalInfo.second;
 
@@ -1453,7 +1453,7 @@ ReturnedValue QObjectWrapper::method_disconnect(const FunctionObject *b, const V
     if (!functionThisValue->isUndefined() && !functionThisValue->isObject())
         THROW_GENERIC_ERROR("Function.prototype.disconnect: target this is not an object");
 
-    QPair<QObject *, int> functionData = QObjectMethod::extractQtMethod(functionValue);
+    std::pair<QObject *, int> functionData = QObjectMethod::extractQtMethod(functionValue);
 
     void *a[] = {
         scope.engine,

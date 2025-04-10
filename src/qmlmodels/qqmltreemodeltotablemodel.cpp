@@ -294,7 +294,7 @@ QItemSelection  QQmlTreeModelToTableModel::selectionForRowRange(const QModelInde
     if (from > to)
         qSwap(from, to);
 
-    typedef QPair<QModelIndex, QModelIndex> MIPair;
+    typedef std::pair<QModelIndex, QModelIndex> MIPair;
     typedef QHash<QModelIndex, MIPair> MI2MIPairHash;
     MI2MIPairHash ranges;
     QModelIndex firstIndex = m_items.at(from).index;

@@ -1030,7 +1030,7 @@ private:
     QByteArray m_data;
     int m_redirectCount;
 
-    typedef QPair<QByteArray, QByteArray> HeaderPair;
+    typedef std::pair<QByteArray, QByteArray> HeaderPair;
     typedef QList<HeaderPair> HeadersList;
     HeadersList m_headersList;
     void fillHeadersList();

@@ -20,8 +20,9 @@
 #include <QtQml/private/qqmljsastfwd_p.h>
 #include <QtQml/private/qqmljsdiagnosticmessage_p.h>
 
-#include <QtCore/qpair.h>
 #include <QtCore/qset.h>
+
+#include <utility>
 
 QT_BEGIN_NAMESPACE
 

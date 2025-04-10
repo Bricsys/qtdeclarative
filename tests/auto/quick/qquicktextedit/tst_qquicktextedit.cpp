@@ -46,7 +46,7 @@ DEFINE_BOOL_CONFIG_OPTION(qmlDisableDistanceField, QML_DISABLE_DISTANCEFIELD)
 typedef QList<int> IntList;
 Q_DECLARE_METATYPE(IntList)
 
-typedef QPair<int, QChar> Key;
+typedef std::pair<int, QChar> Key;
 typedef QList<Key> KeyList;
 Q_DECLARE_METATYPE(KeyList)
 

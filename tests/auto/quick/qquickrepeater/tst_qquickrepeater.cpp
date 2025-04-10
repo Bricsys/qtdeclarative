@@ -296,8 +296,8 @@ void tst_QQuickRepeater::dataModel_adding()
 
     //insert in middle multiple
     int childItemsSize = container->childItems().size();
-    QList<QPair<QString, QString> > multiData;
-    multiData << qMakePair(QStringLiteral("five"), QStringLiteral("5")) << qMakePair(QStringLiteral("six"), QStringLiteral("6")) << qMakePair(QStringLiteral("seven"), QStringLiteral("7"));
+    QList<std::pair<QString, QString> > multiData;
+    multiData << std::make_pair(QStringLiteral("five"), QStringLiteral("5")) << std::make_pair(QStringLiteral("six"), QStringLiteral("6")) << std::make_pair(QStringLiteral("seven"), QStringLiteral("7"));
     testModel.insertItems(1, multiData);
     QCOMPARE(countSpy.size(), 1);
     QCOMPARE(addedSpy.size(), 3);
@@ -572,10 +572,10 @@ void tst_QQuickRepeater::modelReset()
     QSignalSpy removedSpy(repeater, SIGNAL(itemRemoved(int,QQuickItem*)));
 
 
-    QList<QPair<QString, QString> > items = QList<QPair<QString, QString> >()
-            << qMakePair(QString::fromLatin1("one"), QString::fromLatin1("1"))
-            << qMakePair(QString::fromLatin1("two"), QString::fromLatin1("2"))
-            << qMakePair(QString::fromLatin1("three"), QString::fromLatin1("3"));
+    QList<std::pair<QString, QString> > items = QList<std::pair<QString, QString> >()
+            << std::make_pair(QString::fromLatin1("one"), QString::fromLatin1("1"))
+            << std::make_pair(QString::fromLatin1("two"), QString::fromLatin1("2"))
+            << std::make_pair(QString::fromLatin1("three"), QString::fromLatin1("3"));
 
     model.resetItems(items);
 
@@ -602,8 +602,8 @@ void tst_QQuickRepeater::modelReset()
     addedSpy.clear();
     removedSpy.clear();
 
-    items.append(qMakePair(QString::fromLatin1("four"), QString::fromLatin1("4")));
-    items.append(qMakePair(QString::fromLatin1("five"), QString::fromLatin1("5")));
+    items.append(std::make_pair(QString::fromLatin1("four"), QString::fromLatin1("4")));
+    items.append(std::make_pair(QString::fromLatin1("five"), QString::fromLatin1("5")));
 
     model.resetItems(items);
     QCOMPARE(countSpy.size(), 1);

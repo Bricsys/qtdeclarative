@@ -203,7 +203,7 @@ public:
     };
 
     template <typename Key, typename Value>
-    using QMultiHashRange = QPair<typename QMultiHash<Key, Value>::iterator,
+    using QMultiHashRange = std::pair<typename QMultiHash<Key, Value>::iterator,
                                   typename QMultiHash<Key, Value>::iterator>;
 
     static QQmlJSScope::Ptr create() { return QSharedPointer<QQmlJSScope>(new QQmlJSScope); }
@@ -315,7 +315,7 @@ public:
             const QQmlJSMetaPropertyBinding &binding,
             BindingTargetSpecifier specifier = BindingTargetSpecifier::SimplePropertyTarget);
     QMultiHash<QString, QQmlJSMetaPropertyBinding> ownPropertyBindings() const;
-    QPair<QMultiHash<QString, QQmlJSMetaPropertyBinding>::const_iterator,
+    std::pair<QMultiHash<QString, QQmlJSMetaPropertyBinding>::const_iterator,
           QMultiHash<QString, QQmlJSMetaPropertyBinding>::const_iterator>
     ownPropertyBindings(const QString &name) const;
     QList<QQmlJSMetaPropertyBinding> ownPropertyBindingsInQmlIROrder() const;
@@ -619,7 +619,7 @@ inline QMultiHash<QString, QQmlJSMetaPropertyBinding> QQmlJSScope::ownPropertyBi
             return m_propertyBindings;
 }
 
-inline QPair<QMultiHash<QString, QQmlJSMetaPropertyBinding>::const_iterator, QMultiHash<QString, QQmlJSMetaPropertyBinding>::const_iterator> QQmlJSScope::ownPropertyBindings(const QString &name) const
+inline std::pair<QMultiHash<QString, QQmlJSMetaPropertyBinding>::const_iterator, QMultiHash<QString, QQmlJSMetaPropertyBinding>::const_iterator> QQmlJSScope::ownPropertyBindings(const QString &name) const
 {
     return m_propertyBindings.equal_range(name);
 }

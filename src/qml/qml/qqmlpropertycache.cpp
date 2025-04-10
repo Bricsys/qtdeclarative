@@ -941,14 +941,14 @@ const char *QQmlPropertyCache::className() const
 
 void QQmlPropertyCache::toMetaObjectBuilder(QMetaObjectBuilder &builder) const
 {
-    struct Sort { static bool lt(const QPair<QString, const QQmlPropertyData *> &lhs,
-                                 const QPair<QString, const QQmlPropertyData *> &rhs) {
+    struct Sort { static bool lt(const std::pair<QString, const QQmlPropertyData *> &lhs,
+                                 const std::pair<QString, const QQmlPropertyData *> &rhs) {
         return lhs.second->coreIndex() < rhs.second->coreIndex();
     } };
 
     struct Insert { static void in(const QQmlPropertyCache *This,
-                                   QList<QPair<QString, const QQmlPropertyData *> > &properties,
-                                   QList<QPair<QString, const QQmlPropertyData *> > &methods,
+                                   QList<std::pair<QString, const QQmlPropertyData *> > &properties,
+                                   QList<std::pair<QString, const QQmlPropertyData *> > &methods,
                                    StringCache::ConstIterator iter, const QQmlPropertyData *data) {
         if (data->isSignalHandler())
             return;
@@ -957,7 +957,7 @@ void QQmlPropertyCache::toMetaObjectBuilder(QMetaObjectBuilder &builder) const
             if (data->coreIndex() < This->methodIndexCacheStart)
                 return;
 
-            QPair<QString, const QQmlPropertyData *> entry = qMakePair((QString)iter.key(), data);
+            std::pair<QString, const QQmlPropertyData *> entry = std::make_pair((QString)iter.key(), data);
             // Overrides can cause the entry to already exist
             if (!methods.contains(entry)) methods.append(entry);
 
@@ -967,7 +967,7 @@ void QQmlPropertyCache::toMetaObjectBuilder(QMetaObjectBuilder &builder) const
             if (data->coreIndex() < This->propertyIndexCacheStart)
                 return;
 
-            QPair<QString, const QQmlPropertyData *> entry = qMakePair((QString)iter.key(), data);
+            std::pair<QString, const QQmlPropertyData *> entry = std::make_pair((QString)iter.key(), data);
             // Overrides can cause the entry to already exist
             if (!properties.contains(entry)) properties.append(entry);
 
@@ -979,8 +979,8 @@ void QQmlPropertyCache::toMetaObjectBuilder(QMetaObjectBuilder &builder) const
 
     builder.setClassName(_dynamicClassName);
 
-    QList<QPair<QString, const QQmlPropertyData *> > properties;
-    QList<QPair<QString, const QQmlPropertyData *> > methods;
+    QList<std::pair<QString, const QQmlPropertyData *> > properties;
+    QList<std::pair<QString, const QQmlPropertyData *> > methods;
 
     for (StringCache::ConstIterator iter = stringCache.begin(), cend = stringCache.end(); iter != cend; ++iter)
         Insert::in(this, properties, methods, iter, iter.value().second);

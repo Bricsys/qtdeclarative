@@ -3252,12 +3252,12 @@ void tst_qquickwindow::findChild()
     QCOMPARE(window.contentItem()->findChild<QObject *>("contentItemChild"), contentItemChild);
 }
 
-class DeliveryRecord : public QPair<QString, QString>
+class DeliveryRecord : public std::pair<QString, QString>
 {
 public:
-    DeliveryRecord(const QString &filter, const QString &receiver) : QPair<QString, QString>(filter, receiver) { }
-    DeliveryRecord(const QString &receiver) : QPair<QString, QString>(QString(), receiver) { }
-    DeliveryRecord() : QPair<QString, QString>() { }
+    DeliveryRecord(const QString &filter, const QString &receiver) : std::pair<QString, QString>(filter, receiver) { }
+    DeliveryRecord(const QString &receiver) : std::pair<QString, QString>(QString(), receiver) { }
+    DeliveryRecord() : std::pair<QString, QString>() { }
     QString toString() const {
         if (second.isEmpty())
             return QLatin1String("Delivery(no receiver)");

@@ -17,7 +17,6 @@
 
 #include <QTcpServer>
 #include <QUrl>
-#include <QPair>
 #include <QThread>
 #include <QMutex>
 #include <QWaitCondition>
@@ -26,6 +25,7 @@
 #include <QSet>
 #include <QList>
 #include <QString>
+#include <utility>
 
 QT_BEGIN_NAMESPACE
 
@@ -76,9 +76,9 @@ private:
     void serveGET(QTcpSocket *, const QByteArray &);
     bool reply(QTcpSocket *, const QByteArray &);
 
-    QList<QPair<QString, Mode> > m_directories;
+    QList<std::pair<QString, Mode> > m_directories;
     QHash<QTcpSocket *, QByteArray> m_dataCache;
-    QList<QPair<QTcpSocket *, QByteArray> > m_toSend;
+    QList<std::pair<QTcpSocket *, QByteArray> > m_toSend;
     QSet<QString> m_contentSubstitutedFileNames;
 
     struct WaitData {

@@ -27,13 +27,13 @@
 #include <QtCore/QCborValue>
 #include <QtCore/QCborMap>
 #include <QtCore/QMutexLocker>
-#include <QtCore/QPair>
 
 #include <memory>
 #include <private/qqmljsscope_p.h>
 
 #include <functional>
 #include <limits>
+#include <utility>
 
 QT_BEGIN_NAMESPACE
 
@@ -959,7 +959,7 @@ public:
                                              m_annotations, annotation, aPtr);
     }
 
-    QList<QPair<SourceLocation, DomItem>> orderOfAttributes(const DomItem &self,
+    QList<std::pair<SourceLocation, DomItem>> orderOfAttributes(const DomItem &self,
                                                             const DomItem &component) const;
     void writeOutAttributes(const DomItem &self, OutWriter &ow, const DomItem &component,
                             const QString &code) const;

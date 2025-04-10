@@ -1812,7 +1812,7 @@ void QQuickWindowPrivate::updateCursor(const QPointF &scenePos, QQuickItem *root
     }
 }
 
-QPair<QQuickItem*, QQuickPointerHandler*> QQuickWindowPrivate::findCursorItemAndHandler(QQuickItem *item, const QPointF &scenePos) const
+std::pair<QQuickItem*, QQuickPointerHandler*> QQuickWindowPrivate::findCursorItemAndHandler(QQuickItem *item, const QPointF &scenePos) const
 {
     QQuickItemPrivate *itemPrivate = QQuickItemPrivate::get(item);
     if (itemPrivate->flags & QQuickItem::ItemClipsChildrenToShape) {

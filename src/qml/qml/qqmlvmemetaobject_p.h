@@ -34,7 +34,8 @@
 #include <QtCore/qdebug.h>
 #include <QtCore/qlist.h>
 #include <QtCore/qmetaobject.h>
-#include <QtCore/qpair.h>
+
+#include <utility>
 
 QT_BEGIN_NAMESPACE
 

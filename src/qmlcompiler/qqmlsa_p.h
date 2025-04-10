@@ -68,7 +68,7 @@ public:
     static QQmlSA::Binding::Bindings
     createBindings(const QMultiHash<QString, QQmlJSMetaPropertyBinding> &);
     static QQmlSA::Binding::Bindings
-            createBindings(QPair<QMultiHash<QString, QQmlJSMetaPropertyBinding>::const_iterator,
+            createBindings(std::pair<QMultiHash<QString, QQmlJSMetaPropertyBinding>::const_iterator,
                                  QMultiHash<QString, QQmlJSMetaPropertyBinding>::const_iterator>);
 
 private:

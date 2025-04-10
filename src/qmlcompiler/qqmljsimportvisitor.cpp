@@ -745,7 +745,7 @@ void QQmlJSImportVisitor::processMethodTypes()
 
 void QQmlJSImportVisitor::processPropertyBindingObjects()
 {
-    QSet<QPair<QQmlJSScope::Ptr, QString>> foundLiterals;
+    QSet<std::pair<QQmlJSScope::Ptr, QString>> foundLiterals;
     {
         // Note: populating literals here is special, because we do not store
         // them in m_pendingPropertyObjectBindings, so we have to lookup all
@@ -753,11 +753,11 @@ void QQmlJSImportVisitor::processPropertyBindingObjects()
         // literal bindings there. this is safe to do once at the beginning
         // because this function doesn't add new literal bindings and all
         // literal bindings must already be added at this point.
-        QSet<QPair<QQmlJSScope::Ptr, QString>> visited;
+        QSet<std::pair<QQmlJSScope::Ptr, QString>> visited;
         for (const PendingPropertyObjectBinding &objectBinding :
              std::as_const(m_pendingPropertyObjectBindings)) {
             // unique because it's per-scope and per-property
-            const auto uniqueBindingId = qMakePair(objectBinding.scope, objectBinding.name);
+            const auto uniqueBindingId = std::make_pair(objectBinding.scope, objectBinding.name);
             if (visited.contains(uniqueBindingId))
                 continue;
             visited.insert(uniqueBindingId);
@@ -772,9 +772,9 @@ void QQmlJSImportVisitor::processPropertyBindingObjects()
         }
     }
 
-    QSet<QPair<QQmlJSScope::Ptr, QString>> foundObjects;
-    QSet<QPair<QQmlJSScope::Ptr, QString>> foundInterceptors;
-    QSet<QPair<QQmlJSScope::Ptr, QString>> foundValueSources;
+    QSet<std::pair<QQmlJSScope::Ptr, QString>> foundObjects;
+    QSet<std::pair<QQmlJSScope::Ptr, QString>> foundInterceptors;
+    QSet<std::pair<QQmlJSScope::Ptr, QString>> foundValueSources;
 
     for (const PendingPropertyObjectBinding &objectBinding :
          std::as_const(m_pendingPropertyObjectBindings)) {
@@ -834,7 +834,7 @@ void QQmlJSImportVisitor::processPropertyBindingObjects()
                 causesImplicitComponentWrapping(property, childScope));
 
         // unique because it's per-scope and per-property
-        const auto uniqueBindingId = qMakePair(objectBinding.scope, objectBinding.name);
+        const auto uniqueBindingId = std::make_pair(objectBinding.scope, objectBinding.name);
         const QString typeName = getScopeName(childScope, QQmlSA::ScopeType::QMLScope);
 
         if (objectBinding.onToken) {

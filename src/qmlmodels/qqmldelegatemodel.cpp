@@ -980,20 +980,20 @@ void QQDMIncubationTask::initializeRequiredProperties(
         // column, model and more
         // the most derived subclasses of QQmlDelegateModelItem are QQmlDMAbstractItemModelData and
         // QQmlDMObjectData at depth 2, so 4 should be plenty
-        QVarLengthArray<QPair<const QMetaObject *, QObject *>, 4> mos;
+        QVarLengthArray<std::pair<const QMetaObject *, QObject *>, 4> mos;
         // we first check the dynamic meta object for properties originating from the model
         // contains abstractitemmodelproperties
-        mos.push_back(qMakePair(qmlMetaObject, modelItemToIncubate));
+        mos.push_back(std::make_pair(qmlMetaObject, modelItemToIncubate));
         auto delegateModelItemSubclassMO = qmlMetaObject->superClass();
-        mos.push_back(qMakePair(delegateModelItemSubclassMO, modelItemToIncubate));
+        mos.push_back(std::make_pair(delegateModelItemSubclassMO, modelItemToIncubate));
 
         while (strcmp(delegateModelItemSubclassMO->className(),
                       modelItemToIncubate->staticMetaObject.className())) {
             delegateModelItemSubclassMO = delegateModelItemSubclassMO->superClass();
-            mos.push_back(qMakePair(delegateModelItemSubclassMO, modelItemToIncubate));
+            mos.push_back(std::make_pair(delegateModelItemSubclassMO, modelItemToIncubate));
         }
         if (proxiedObject)
-            mos.push_back(qMakePair(proxiedObject->metaObject(), proxiedObject));
+            mos.push_back(std::make_pair(proxiedObject->metaObject(), proxiedObject));
 
         QQmlEngine *engine = QQmlEnginePrivate::get(incubatorPriv->enginePriv);
         QV4::ExecutionEngine *v4 = engine->handle();

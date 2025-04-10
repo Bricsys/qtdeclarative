@@ -1026,10 +1026,10 @@ void tst_qquickpositioners::populateTransitions(const QString &positionerObjectN
         QTRY_COMPARE(window->rootObject()->property("populateTransitionsDone").toInt(), model.count());
         QTRY_COMPARE(window->rootObject()->property("addTransitionsDone").toInt(), 0);
 
-        QList<QPair<QString, QString> > targetData;
+        QList<std::pair<QString, QString> > targetData;
         QList<int> targetIndexes;
         for (int i=0; i<model.count(); i++) {
-            targetData << qMakePair(model.name(i), model.number(i));
+            targetData << std::make_pair(model.name(i), model.number(i));
             targetIndexes << i;
         }
         QList<QQuickItem *> targetItems = findItems<QQuickItem>(positioner, "wrapper", targetIndexes);
@@ -1114,11 +1114,11 @@ void tst_qquickpositioners::addTransitions(const QString &positionerObjectName)
     for (int i = 0; i < initialItemCount; i++)
         model.addItem("Original item" + QString::number(i), "");
 
-    QList<QPair<QString,QString> > expectedDisplacedValues = expectedDisplacedIndexes.getModelDataValues(model);
-    QList<QPair<QString, QString> > targetData;
+    QList<std::pair<QString,QString> > expectedDisplacedValues = expectedDisplacedIndexes.getModelDataValues(model);
+    QList<std::pair<QString, QString> > targetData;
     QList<int> targetIndexes;
     for (int i=0; i<model.count(); i++) {
-        targetData << qMakePair(model.name(i), model.number(i));
+        targetData << std::make_pair(model.name(i), model.number(i));
         targetIndexes << i;
     }
     QList<QQuickItem *> targetItems = findItems<QQuickItem>(positioner, "wrapper", targetIndexes);
@@ -1142,7 +1142,7 @@ void tst_qquickpositioners::addTransitions(const QString &positionerObjectName)
     targetData.clear();
     targetIndexes.clear();
     for (int i=insertionIndex; i<insertionIndex+insertionCount; i++) {
-        targetData << qMakePair(QString("New item %1").arg(i), QString(""));
+        targetData << std::make_pair(QString("New item %1").arg(i), QString(""));
         targetIndexes << i;
     }
     model.insertItems(insertionIndex, targetData);
@@ -1230,7 +1230,7 @@ void tst_qquickpositioners::moveTransitions(const QString &positionerObjectName)
     QVERIFY(QTest::qWaitForWindowExposed(window.data()));
     qApp->processEvents();
 
-    QList<QPair<QString,QString> > expectedDisplacedValues = expectedDisplacedIndexes.getModelDataValues(model);
+    QList<std::pair<QString,QString> > expectedDisplacedValues = expectedDisplacedIndexes.getModelDataValues(model);
 
     QQuickItem *positioner = window->rootObject()->findChild<QQuickItem*>(positionerObjectName);
     QVERIFY(positioner);

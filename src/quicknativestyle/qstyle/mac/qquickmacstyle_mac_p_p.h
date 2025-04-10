@@ -13,7 +13,6 @@
 #include <QtCore/qhash.h>
 #include <QtCore/qmap.h>
 #include <QtCore/qmath.h>
-#include <QtCore/qpair.h>
 #include <QtCore/qpointer.h>
 #include <QtCore/qtextstream.h>
 #include <QtCore/qvector.h>
@@ -28,6 +27,8 @@
 
 #include <QtCore/private/qcore_mac_p.h>
 #include <QtGui/private/qpainter_p.h>
+
+#include <utility>
 
 //
 //  W A R N I N G

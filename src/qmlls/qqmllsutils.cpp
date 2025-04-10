@@ -2408,9 +2408,9 @@ https://doc.qt.io/qt-6/windows-building.html#step-2-install-build-requirements c
 to have CMake in your path to build Qt. So a developer machine running qmlls has a high chance of
 having CMake in their path, if CMake is installed and used.
 */
-QPair<QString, QStringList> cmakeBuildCommand(const QString &path)
+std::pair<QString, QStringList> cmakeBuildCommand(const QString &path)
 {
-    const QPair<QString, QStringList> result{
+    const std::pair<QString, QStringList> result{
         u"cmake"_s, { u"--build"_s, path, u"-t"_s, u"all_qmltyperegistrations"_s }
     };
     return result;

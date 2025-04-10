@@ -1096,7 +1096,7 @@ QList<QSvgVisitorImpl::AnimationPair> QSvgVisitorImpl::collectAnimations(const Q
         const QList<QSvgAbstractAnimatedProperty *> properties = animation->properties();
         for (const QSvgAbstractAnimatedProperty *property : properties) {
             if (property->propertyName() == propertyName)
-                ret.append(qMakePair(animation, property));
+                ret.append(std::make_pair(animation, property));
         }
     }
 

@@ -5,7 +5,7 @@
 #include <QQmlApplicationEngine>
 #include <QAbstractTableModel>
 
-typedef QPair<QString, bool> CellData;
+typedef std::pair<QString, bool> CellData;
 
 class TestModel : public QAbstractListModel
 {

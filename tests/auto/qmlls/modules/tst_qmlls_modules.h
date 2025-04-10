@@ -23,7 +23,7 @@
 
 class tst_qmlls_modules : public QQmlDataTest
 {
-    using ExpectedCompletion = QPair<QString, QLspSpecification::CompletionItemKind>;
+    using ExpectedCompletion = std::pair<QString, QLspSpecification::CompletionItemKind>;
     using ExpectedCompletions = QList<ExpectedCompletion>;
 
     using ExpectedDocumentation = std::tuple<QString, QString, QString>;

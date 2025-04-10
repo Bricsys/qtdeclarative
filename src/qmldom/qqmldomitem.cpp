@@ -34,13 +34,13 @@
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonValue>
 #include <QtCore/QMutexLocker>
-#include <QtCore/QPair>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QtGlobal>
 #include <QtCore/QTimeZone>
 #include <optional>
 #include <type_traits>
+#include <utility>
 
 QT_BEGIN_NAMESPACE
 
@@ -826,7 +826,7 @@ bool DomItem::resolve(const Path &path, DomItem::Visitor visitor, const ErrorHan
             if (idNow == quintptr() && toDo.item == *this)
                 idNow = quintptr(this);
             if (idNow != quintptr(0)) {
-                auto vPair = qMakePair(idNow, iPath);
+                auto vPair = std::make_pair(idNow, iPath);
                 if (visited[vPair.second].contains(vPair.first))
                     break;
                 visited[vPair.second].insert(vPair.first);
@@ -989,7 +989,7 @@ bool DomItem::resolve(const Path &path, DomItem::Visitor visitor, const ErrorHan
                     if (idNow == quintptr(0) && toDo.item == *this)
                         idNow = quintptr(this);
                     if (idNow != quintptr(0)) {
-                        auto vPair = qMakePair(idNow, iPath);
+                        auto vPair = std::make_pair(idNow, iPath);
                         if (visited[vPair.second].contains(vPair.first))
                             break;
                         visited[vPair.second].insert(vPair.first);
@@ -1885,7 +1885,7 @@ static bool visitQualifiedNameLookup(
     QList<QSet<quintptr>> lookupVisited(subpath.size() + 1);
     while (!lookupToDos.isEmpty()) {
         ResolveToDo tNow = lookupToDos.takeFirst();
-        auto vNow = qMakePair(tNow.item.id(), tNow.pathIndex);
+        auto vNow = std::make_pair(tNow.item.id(), tNow.pathIndex);
         DomItem subNow = tNow.item;
         int iSubPath = tNow.pathIndex;
         Q_ASSERT(iSubPath < subpath.size());

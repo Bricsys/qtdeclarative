@@ -1127,7 +1127,7 @@ BindingsPrivate::createBindings(const QMultiHash<QString, QQmlJSMetaPropertyBind
 }
 
 QQmlSA::Binding::Bindings BindingsPrivate::createBindings(
-        QPair<QMultiHash<QString, QQmlJSMetaPropertyBinding>::const_iterator,
+        std::pair<QMultiHash<QString, QQmlJSMetaPropertyBinding>::const_iterator,
               QMultiHash<QString, QQmlJSMetaPropertyBinding>::const_iterator> iterators)
 {
     QMultiHash<QString, QQmlSA::Binding> saBindings;

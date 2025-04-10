@@ -54,7 +54,7 @@ protected:
     void visitSwitchNodeEnd(const QSvgSwitch *node) override;
 
 private:
-    typedef QPair<const QSvgAbstractAnimation *, const QSvgAbstractAnimatedProperty *> AnimationPair;
+    typedef std::pair<const QSvgAbstractAnimation *, const QSvgAbstractAnimatedProperty *> AnimationPair;
     QList<AnimationPair> collectAnimations(const QSvgNode *node, const QString &propertyName);
     void applyAnimationsToProperty(const QList<AnimationPair> &animations,
                                    QQuickAnimatedProperty *property,

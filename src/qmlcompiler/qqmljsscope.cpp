@@ -845,7 +845,7 @@ void QQmlJSScope::addOwnPropertyBinding(const QQmlJSMetaPropertyBinding &binding
     // NB: insert() prepends \a binding to the list of bindings, but we need
     // append, so rotate
     using iter = typename QMultiHash<QString, QQmlJSMetaPropertyBinding>::iterator;
-    QPair<iter, iter> r = m_propertyBindings.equal_range(binding.propertyName());
+    std::pair<iter, iter> r = m_propertyBindings.equal_range(binding.propertyName());
     std::rotate(r.first, std::next(r.first), r.second);
 
     // additionally store bindings in the QmlIR compatible order

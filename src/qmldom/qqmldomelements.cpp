@@ -735,7 +735,7 @@ void QmlObject::writeOutId(const DomItem &self, OutWriter &ow) const
     }
 }
 
-QList<QPair<SourceLocation, DomItem>> QmlObject::orderOfAttributes(const DomItem &self,
+QList<std::pair<SourceLocation, DomItem>> QmlObject::orderOfAttributes(const DomItem &self,
                                                                    const DomItem &component) const
 {
     auto startLoc = [&](const FileLocations::Tree &l) {
@@ -744,7 +744,7 @@ QList<QPair<SourceLocation, DomItem>> QmlObject::orderOfAttributes(const DomItem
         return SourceLocation(posOfNewElements, 0, 0, 0);
     };
 
-    QList<QPair<SourceLocation, DomItem>> attribs;
+    QList<std::pair<SourceLocation, DomItem>> attribs;
     const auto objLocPtr = FileLocations::treeOf(self);
     FileLocations::Tree componentLoc;
     if (component && objLocPtr)
@@ -809,7 +809,7 @@ QList<QPair<SourceLocation, DomItem>> QmlObject::orderOfAttributes(const DomItem
 void QmlObject::writeOutAttributes(const DomItem &self, OutWriter &ow, const DomItem &component,
                                    const QString &code) const
 {
-    const QList<QPair<SourceLocation, DomItem>> attribs = orderOfAttributes(self, component);
+    const QList<std::pair<SourceLocation, DomItem>> attribs = orderOfAttributes(self, component);
     qsizetype iAttr = 0;
     while (iAttr != attribs.size()) {
         auto &el = attribs[iAttr++];

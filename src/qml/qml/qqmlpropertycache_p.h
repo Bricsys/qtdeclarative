@@ -252,7 +252,7 @@ private:
     QQmlPropertyCacheMethodArguments *createArgumentsObject(int count, const QList<QByteArray> &names);
 
     typedef QVector<QQmlPropertyData> IndexCache;
-    typedef QLinkedStringMultiHash<QPair<int, QQmlPropertyData *> > StringCache;
+    typedef QLinkedStringMultiHash<std::pair<int, QQmlPropertyData *> > StringCache;
     typedef QVector<QTypeRevision> AllowedRevisionCache;
 
     const QQmlPropertyData *findProperty(StringCache::ConstIterator it, QObject *,
@@ -270,7 +270,7 @@ private:
     template<typename K>
     void setNamedProperty(const K &key, int index, QQmlPropertyData *data)
     {
-        stringCache.insert(key, qMakePair(index, data));
+        stringCache.insert(key, std::make_pair(index, data));
     }
 
 private:
