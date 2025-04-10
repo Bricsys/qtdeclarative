@@ -7,6 +7,7 @@
 #include <private/qqmlanybinding_p.h>
 #include <private/qqmlbind_p.h>
 #include <private/qqmlcomponentattached_p.h>
+#include <private/qqmlinstantiator_p.h>
 #include <private/qqmlpropertytopropertybinding_p.h>
 #include <private/qquickrectangle_p.h>
 
@@ -51,6 +52,7 @@ private slots:
     void toggleEnableProperlyRemembersValues();
     void qQmlPropertyToPropertyBinding();
     void qQmlPropertyToPropertyBindingReverse();
+    void delayedBindingDestruction();
 
 private:
     QQmlEngine engine;
@@ -822,6 +824,36 @@ void tst_qqmlbinding::qQmlPropertyToPropertyBindingReverse()
     source->setTop(66);
     source->bindableBottom().setValue(88);
     QCOMPARE(target->b(), QRectF(55, 66, 77, 88));
+}
+
+void tst_qqmlbinding::delayedBindingDestruction()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, testFileUrl("delayedBindingDestruction.qml"));
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(object);
+    QVERIFY(object->objectName().isEmpty());
+    QVERIFY(object->property("result").toString().isEmpty());
+
+    const auto verifyDelegate = [&](const QString &expected) {
+        QQmlInstantiator *instantiator
+                = object->property("instantiator").value<QQmlInstantiator *>();
+        QVERIFY(instantiator);
+        QCOMPARE(instantiator->object()->objectName(), expected);
+    };
+
+    QMetaObject::invokeMethod(object.data(), "toggle");
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QCoreApplication::processEvents();
+    QCOMPARE(object->objectName(), QLatin1String("bar"));
+    verifyDelegate(QLatin1String("bar"));
+
+    QMetaObject::invokeMethod(object.data(), "toggle");
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QCoreApplication::processEvents();
+    QCOMPARE(object->objectName(), QLatin1String("foo"));
+    verifyDelegate(QLatin1String("foo"));
 }
 
 QTEST_MAIN(tst_qqmlbinding)
