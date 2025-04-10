@@ -1494,6 +1494,74 @@ static bool tryAssignBinding(
     return true;
 }
 
+static bool assignToListProperty(const QQmlPropertyData &property, QQmlPropertyData::WriteFlags flags, const QMetaType propertyMetaType, const QMetaType variantMetaType, const QVariant &value, QObject *object)
+{
+    if (propertyMetaType.flags() & QMetaType::IsQmlList) {
+        QMetaType listValueType = QQmlMetaType::listValueType(propertyMetaType);
+        QQmlMetaObject valueMetaObject = QQmlMetaType::rawMetaObjectForType(listValueType);
+        if (valueMetaObject.isNull())
+            return false;
+
+        QQmlListProperty<QObject> prop;
+        property.readProperty(object, &prop);
+
+        if (!prop.clear || !prop.append)
+            return false;
+
+        const bool useNonsignalingListOps = prop.clear == &QQmlVMEMetaObject::list_clear
+                && prop.append == &QQmlVMEMetaObject::list_append;
+
+        auto propClear =
+                useNonsignalingListOps ? &QQmlVMEMetaObject::list_clear_nosignal : prop.clear;
+        auto propAppend =
+                useNonsignalingListOps ? &QQmlVMEMetaObject::list_append_nosignal : prop.append;
+
+        propClear(&prop);
+
+        const auto doAppend = [&](QObject *o) {
+            if (Q_UNLIKELY(o && !QQmlMetaObject::canConvert(o, valueMetaObject))) {
+                qCWarning(lcIncompatibleElement)
+                << "Cannot append" << o << "to a QML list of" << listValueType.name();
+                o = nullptr;
+            }
+            propAppend(&prop, o);
+        };
+
+        if (variantMetaType == QMetaType::fromType<QQmlListReference>()) {
+            QQmlListReference qdlr = value.value<QQmlListReference>();
+            for (qsizetype ii = 0; ii < qdlr.count(); ++ii)
+                doAppend(qdlr.at(ii));
+        } else if (variantMetaType == QMetaType::fromType<QList<QObject *>>()) {
+            const QList<QObject *> &list = qvariant_cast<QList<QObject *> >(value);
+            for (qsizetype ii = 0; ii < list.size(); ++ii)
+                doAppend(list.at(ii));
+        } else if (variantMetaType == QMetaType::fromType<QList<QVariant>>()) {
+            const QList<QVariant> &list
+                    = *static_cast<const QList<QVariant> *>(value.constData());
+            for (const QVariant &entry : list)
+                doAppend(QQmlMetaType::toQObject(entry));
+        } else if (!iterateQObjectContainer(variantMetaType, value.data(), doAppend)) {
+            doAppend(QQmlMetaType::toQObject(value));
+        }
+        if (useNonsignalingListOps) {
+            Q_ASSERT(QQmlVMEMetaObject::get(object));
+            QQmlVMEResolvedList(&prop).activateSignal();
+        }
+
+        return true;
+    } else if (variantMetaType == propertyMetaType) {
+        QVariant v = value;
+        return property.writeProperty(object, v.data(), flags);
+    } else {
+        QVariant list(propertyMetaType);
+        const QQmlType type = QQmlMetaType::qmlType(propertyMetaType);
+        const QMetaSequence sequence = type.listMetaSequence();
+        if (sequence.canAddValue())
+            sequence.addValue(list.data(), value.data());
+        return property.writeProperty(object, list.data(), flags);
+    }
+}
+
 bool QQmlPropertyPrivate::write(
         QObject *object, const QQmlPropertyData &property, const QVariant &value,
         const QQmlRefPointer<QQmlContextData> &context, QQmlPropertyData::WriteFlags flags)
@@ -1584,68 +1652,7 @@ bool QQmlPropertyPrivate::write(
                 : urlSequence(value);
         return property.writeProperty(object, &urlSeq, flags);
     } else if (property.isQList()) {
-        if (propertyMetaType.flags() & QMetaType::IsQmlList) {
-            QMetaType listValueType = QQmlMetaType::listValueType(propertyMetaType);
-            QQmlMetaObject valueMetaObject = QQmlMetaType::rawMetaObjectForType(listValueType);
-            if (valueMetaObject.isNull())
-                return false;
-
-            QQmlListProperty<QObject> prop;
-            property.readProperty(object, &prop);
-
-            if (!prop.clear || !prop.append)
-                return false;
-
-            const bool useNonsignalingListOps = prop.clear == &QQmlVMEMetaObject::list_clear
-                    && prop.append == &QQmlVMEMetaObject::list_append;
-
-            auto propClear =
-                    useNonsignalingListOps ? &QQmlVMEMetaObject::list_clear_nosignal : prop.clear;
-            auto propAppend =
-                    useNonsignalingListOps ? &QQmlVMEMetaObject::list_append_nosignal : prop.append;
-
-            propClear(&prop);
-
-            const auto doAppend = [&](QObject *o) {
-                if (Q_UNLIKELY(o && !QQmlMetaObject::canConvert(o, valueMetaObject))) {
-                    qCWarning(lcIncompatibleElement)
-                            << "Cannot append" << o << "to a QML list of" << listValueType.name();
-                    o = nullptr;
-                }
-                propAppend(&prop, o);
-            };
-
-            if (variantMetaType == QMetaType::fromType<QQmlListReference>()) {
-                QQmlListReference qdlr = value.value<QQmlListReference>();
-                for (qsizetype ii = 0; ii < qdlr.count(); ++ii)
-                    doAppend(qdlr.at(ii));
-            } else if (variantMetaType == QMetaType::fromType<QList<QObject *>>()) {
-                const QList<QObject *> &list = qvariant_cast<QList<QObject *> >(value);
-                for (qsizetype ii = 0; ii < list.size(); ++ii)
-                    doAppend(list.at(ii));
-            } else if (variantMetaType == QMetaType::fromType<QList<QVariant>>()) {
-                const QList<QVariant> &list
-                    = *static_cast<const QList<QVariant> *>(value.constData());
-                for (const QVariant &entry : list)
-                    doAppend(QQmlMetaType::toQObject(entry));
-            } else if (!iterateQObjectContainer(variantMetaType, value.data(), doAppend)) {
-                doAppend(QQmlMetaType::toQObject(value));
-            }
-            if (useNonsignalingListOps) {
-                Q_ASSERT(QQmlVMEMetaObject::get(object));
-                QQmlVMEResolvedList(&prop).activateSignal();
-            }
-        } else if (variantMetaType == propertyMetaType) {
-            QVariant v = value;
-            property.writeProperty(object, v.data(), flags);
-        } else {
-            QVariant list(propertyMetaType);
-            const QQmlType type = QQmlMetaType::qmlType(propertyMetaType);
-            const QMetaSequence sequence = type.listMetaSequence();
-            if (sequence.canAddValue())
-                sequence.addValue(list.data(), value.data());
-            property.writeProperty(object, list.data(), flags);
-        }
+        return assignToListProperty(property, flags, propertyMetaType, variantMetaType, value, object);
     } else if (enginePriv && propertyMetaType == QMetaType::fromType<QJSValue>()) {
         // We can convert everything into a QJSValue if we have an engine.
         QJSValue jsValue = QJSValuePrivate::fromReturnedValue(

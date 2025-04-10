@@ -153,7 +153,6 @@ public:
             QObject *target, const QString &propertyName,
             const QQmlRefPointer<QQmlContextData> &context,
             QQmlPropertyPrivate::InitFlags flags);
-
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(QQmlPropertyPrivate::BindingFlags)
