@@ -270,7 +270,7 @@ QT_WARNING_POP
 
 
     QString signature
-            = u"    struct { QV4::ExecutableCompilationUnit *compilationUnit; } c { unit };\n"
+            = u"    struct { QV4::ExecutableCompilationUnit *compilationUnit; } c { contextUnit };\n"
                "    const auto *aotContext = &c;\n"
                "    Q_UNUSED(aotContext);\n"_s;
 
