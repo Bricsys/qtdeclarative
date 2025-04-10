@@ -253,29 +253,31 @@ void QmltcCodeGenerator::generate_createBindingOnProperty(
     }
 }
 
+static QByteArray toLiteral(const QByteArray &utf8)
+{
+    return QQmlJSUtils::toLiteral<QByteArray, char, QByteArrayView>(utf8);
+}
+
 static QString serializeTranslation(const QQmlTranslation::QsTrIdData &data)
 {
-    QString result = QStringLiteral(R"(QQmlTranslation(QQmlTranslation::QsTrIdData(
-    QStringLiteral("%1"),
+    return QStringLiteral(R"(QQmlTranslation(QQmlTranslation::QsTrIdData(
+    %1,
     %4)))")
-                             .arg(QString::fromUtf8(data.id()))
-                             .arg(data.number());
-
-    return result;
+            .arg(toLiteral(data.id()))
+            .arg(data.number());
 }
 
 static QString serializeTranslation(const QQmlTranslation::QsTrData &data)
 {
-    QString result = QStringLiteral(R"(QQmlTranslation(QQmlTranslation::QsTrData(
-    QStringLiteral("%1"),
-    QStringLiteral("%2"),
-    QStringLiteral("%3"),
+    return QStringLiteral(R"(QQmlTranslation(QQmlTranslation::QsTrData(
+    %1,
+    %2,
+    %3,
     %4)))")
-                             .arg(QString::fromUtf8(data.context()), QString::fromUtf8(data.text()),
-                                  QString::fromUtf8(data.comment()))
-                             .arg(data.number());
-
-    return result;
+            .arg(toLiteral(data.context()),
+                 toLiteral(data.text()),
+                 toLiteral(data.comment()))
+            .arg(data.number());
 }
 
 static QString serializeTranslation(const QQmlTranslation &translation)

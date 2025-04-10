@@ -97,6 +97,8 @@
 #include "attachedcomponentproperty.h"
 #include "attachednamespacedproperty.h"
 
+#include "newlinetranslation.h"
+
 // Qt:
 #include <QtCore/qstring.h>
 #include <QtCore/qbytearray.h>
@@ -3453,6 +3455,13 @@ void tst_qmltc::attachedNamespacedProperty()
     QQmlEngine e;
     PREPEND_NAMESPACE(attachedNamespacedProperty) createdByQmltc(&e);
     checkOverlayAttached(&createdByQmltc);
+}
+
+void tst_qmltc::newLineTranslation()
+{
+    QQmlEngine e;
+    PREPEND_NAMESPACE(newLineTranslation) createdByQmltc(&e);
+    QCOMPARE(createdByQmltc.objectName(), "Hello World \n"_L1);
 }
 
 QTEST_MAIN(tst_qmltc)

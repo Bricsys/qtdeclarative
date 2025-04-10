@@ -143,6 +143,8 @@ set(qml_sources
 
     attachedComponentProperty.qml
     attachedNamespacedProperty.qml
+
+    newLineTranslation.qml
 )
 
 set(js_sources
