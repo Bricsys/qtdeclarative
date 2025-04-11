@@ -175,13 +175,41 @@ private:
                        const QStringList &extraArgs = QStringList(), bool ignoreSettings = true,
                        bool addImportDirs = true, bool absolutePath = true,
                        const Environment &env = {});
-    void callQmllint(const QString &fileToLint, bool shouldSucceed, QJsonArray *warnings = nullptr,
-                     QStringList importDirs = {}, QStringList qmltypesFiles = {},
-                     QStringList resources = {},
-                     DefaultImportOption defaultImports = UseDefaultImports,
-                     QList<QQmlJS::LoggerCategory> *categories = nullptr, bool autoFixable = false,
-                     LintType type = LintFile, bool readSettings = false,
-                     const QString *content = nullptr);
+
+    enum CallQmllintCheck {
+        ShouldFail = 0,
+        ShouldSucceed = 1,
+        HasAutoFix = 2,
+        HasAutoFixAndSucceeds = HasAutoFix | ShouldSucceed,
+    };
+    Q_DECLARE_FLAGS(CallQmllintChecks, CallQmllintCheck);
+
+    static CallQmllintChecks fromResultFlags(Result::Flags flags)
+    {
+        CallQmllintChecks result;
+        result.setFlag(ShouldSucceed, flags.testFlags(Result::ExitsNormally));
+        result.setFlag(HasAutoFix, flags.testFlags(Result::AutoFixable));
+        return result;
+    }
+
+    struct CallQmllintOptions
+    {
+        QStringList importPaths = {};
+        QStringList qmldirFiles = {};
+        QStringList resources = {};
+        DefaultImportOption defaultImports = UseDefaultImports;
+        QList<QQmlJS::LoggerCategory> *categories = nullptr;
+        LintType type = LintFile;
+        bool readSettings = false;
+    };
+
+    QJsonArray callQmllintImpl(const QString &fileToLint, const QString &fileCpntent,
+                               const CallQmllintOptions &options,
+                               CallQmllintChecks check = CallQmllintCheck::ShouldSucceed);
+    QJsonArray callQmllint(const QString &fileToLint, const CallQmllintOptions &options,
+                           CallQmllintChecks check = CallQmllintCheck::ShouldSucceed);
+    QJsonArray callQmllintOnSnippet(const QString &snippet, const CallQmllintOptions &options,
+                                    CallQmllintChecks checks);
 
     void testFixes(bool shouldSucceed, QStringList importPaths, QStringList qmldirFiles,
                    QStringList resources, DefaultImportOption defaultImports,
@@ -398,9 +426,7 @@ void TestQmllint::qmltypes_data()
 void TestQmllint::qmltypes()
 {
     QFETCH(QString, file);
-    // pass the warnings in, so that callQmllint() would show errors if any
-    QJsonArray warnings;
-    callQmllint(file, true, &warnings);
+    callQmllint(file, {});
 }
 
 void TestQmllint::autoqmltypes()
@@ -441,35 +467,40 @@ void TestQmllint::resources()
         // contents for the same paths.
         const auto guard = qScopeGuard([this]() { m_linter.clearCache(); });
 
-        callQmllint(testFile("resource.qml"), true, nullptr, {}, {}, { testFile("resource.qrc") });
-        callQmllint(testFile("badResource.qml"), false, nullptr, {}, {}, { testFile("resource.qrc") });
+        CallQmllintOptions options;
+        options.resources.append(testFile("resource.qrc"));
+
+        callQmllint(testFile("resource.qml"), options);
+        callQmllint(testFile("badResource.qml"), options, CallQmllintCheck::ShouldFail);
     }
 
-
-    callQmllint(testFile("resource.qml"), false);
-    callQmllint(testFile("badResource.qml"), true);
+    callQmllint(testFile("resource.qml"), CallQmllintOptions{}, CallQmllintCheck::ShouldFail);
+    callQmllint(testFile("badResource.qml"), CallQmllintOptions{});
 
     {
         const auto guard = qScopeGuard([this]() { m_linter.clearCache(); });
-        callQmllint(testFile("T/b.qml"), true, nullptr, {}, {}, { testFile("T/a.qrc") });
+        CallQmllintOptions options;
+        options.resources.append(testFile("T/a.qrc"));
+
+        callQmllint(testFile("T/b.qml"), options);
     }
 
     {
         const auto guard = qScopeGuard([this]() { m_linter.clearCache(); });
-        callQmllint(testFile("relPathQrc/Foo/Thing.qml"), true, nullptr, {}, {},
-                { testFile("relPathQrc/resources.qrc") });
+        CallQmllintOptions options;
+        options.resources.append(testFile("relPathQrc/resources.qrc"));
+
+        callQmllint(testFile("relPathQrc/Foo/Thing.qml"), options);
     }
 }
 
 void TestQmllint::multiDirectory()
 {
-    callQmllint(
-            testFile("MultiDirectory/qml/Inner.qml"), true, nullptr,
-            {}, {}, { testFile("MultiDirectory/multi.qrc") });
+    CallQmllintOptions options;
+    options.resources.append(testFile("MultiDirectory/multi.qrc"));
 
-    callQmllint(
-            testFile("MultiDirectory/qml/pages/Page.qml"), true, nullptr,
-            {}, {}, { testFile("MultiDirectory/multi.qrc") });
+    callQmllint(testFile("MultiDirectory/qml/Inner.qml"), options);
+    callQmllint(testFile("MultiDirectory/qml/pages/Page.qml"), options);
 }
 
 void TestQmllint::dirtyQmlCode_data()
@@ -1299,8 +1330,6 @@ void TestQmllint::dirtyQmlCode()
     QFETCH(QString, filename);
     QFETCH(Result, result);
 
-    QJsonArray warnings;
-
     QEXPECT_FAIL("attachedPropertyAccess", "We cannot discern between types and instances", Abort);
     QEXPECT_FAIL("attachedPropertyNested", "We cannot discern between types and instances", Abort);
     QEXPECT_FAIL("BadLiteralBindingDate",
@@ -1313,9 +1342,9 @@ void TestQmllint::dirtyQmlCode()
     QEXPECT_FAIL("BadTranslationMixWithMacros",
                  "Translation macros are currently invisible to QQmlJSTypePropagator", Abort);
 
-    callQmllint(filename, result.flags.testFlag(Result::ExitsNormally), &warnings, {}, {}, {},
-                UseDefaultImports, nullptr, result.flags.testFlag(Result::Flag::AutoFixable),
-                LintFile, result.flags.testFlag(Result::Flag::UseSettings));
+    CallQmllintOptions options;
+    options.readSettings = result.flags.testFlag(Result::UseSettings);
+    const QJsonArray warnings = callQmllint(filename, options, fromResultFlags(result.flags));
 
     checkResult(
             warnings, result,
@@ -1397,10 +1426,8 @@ void TestQmllint::dirtyQmlSnippet()
 
     addLocationOffsetTo(&result, 2);
 
-    QJsonArray warnings;
-    callQmllint(QString(), result.flags.testFlag(Result::ExitsNormally), &warnings, {}, {}, {},
-                UseDefaultImports, nullptr, result.flags.testFlag(Result::Flag::AutoFixable),
-                LintFile, false, &qmlCode);
+    const QJsonArray warnings =
+            callQmllintOnSnippet(qmlCode, CallQmllintOptions{}, fromResultFlags(result.flags));
 
     checkResult(warnings, result, [] { }, [] { }, [] { });
 }
@@ -1429,10 +1456,8 @@ void TestQmllint::cleanQmlSnippet()
     const QString qmlCode = "import QtQuick\nItem {%1}"_L1.arg(code);
     const Result result = Result::clean();
 
-    QJsonArray warnings;
-    callQmllint(QString(), result.flags.testFlag(Result::ExitsNormally), &warnings, {}, {}, {},
-                UseDefaultImports, nullptr, result.flags.testFlag(Result::Flag::AutoFixable),
-                LintFile, false, &qmlCode);
+    const QJsonArray warnings =
+            callQmllintOnSnippet(qmlCode, CallQmllintOptions{}, fromResultFlags(result.flags));
     checkResult(warnings, result, [] { }, [] { }, [] { });
 }
 
@@ -1498,10 +1523,8 @@ void TestQmllint::dirtyJsSnippet()
     addLocationOffsetTo(&result, 2);
 
     const QString qmlCode = templateString.arg(code);
-    QJsonArray warnings;
-    callQmllint(QString(), result.flags.testFlag(Result::ExitsNormally), &warnings, {}, {}, {},
-                UseDefaultImports, nullptr, result.flags.testFlag(Result::Flag::AutoFixable),
-                LintFile, false, &qmlCode);
+    const QJsonArray warnings =
+            callQmllintOnSnippet(qmlCode, CallQmllintOptions{}, fromResultFlags(result.flags));
 
     checkResult(warnings, result, [] { }, [] { }, [] { });
 }
@@ -1533,10 +1556,8 @@ void TestQmllint::cleanJsSnippet()
     const QString qmlCode = "import QtQuick\nItem { function f() {\n%1}}"_L1.arg(code);
     const Result result = Result::clean();
 
-    QJsonArray warnings;
-    callQmllint(QString(), result.flags.testFlag(Result::ExitsNormally), &warnings, {}, {}, {},
-                UseDefaultImports, nullptr, result.flags.testFlag(Result::Flag::AutoFixable),
-                LintFile, false, &qmlCode);
+    const QJsonArray warnings =
+            callQmllintOnSnippet(qmlCode, CallQmllintOptions{}, fromResultFlags(result.flags));
     checkResult(warnings, result, [] { }, [] { }, [] { });
 }
 
@@ -1942,54 +1963,66 @@ QString TestQmllint::runQmllint(const QString &fileToLint, bool shouldSucceed,
             extraArgs, ignoreSettings, addImportDirs, absolutePath, env);
 }
 
-void TestQmllint::callQmllint(const QString &fileToLint, bool shouldSucceed, QJsonArray *warnings,
-                              QStringList importPaths, QStringList qmldirFiles,
-                              QStringList resources, DefaultImportOption defaultImports,
-                              QList<QQmlJS::LoggerCategory> *categories, bool autoFixable,
-                              LintType type, bool readSettings, const QString *content)
+QJsonArray TestQmllint::callQmllintImpl(const QString &fileToLint, const QString &content,
+                                        const CallQmllintOptions &options, CallQmllintChecks checks)
 {
     QJsonArray jsonOutput;
+    QJsonArray result;
 
     const QFileInfo info = QFileInfo(fileToLint);
     const QString lintedFile = info.isAbsolute() ? fileToLint : testFile(fileToLint);
 
     QQmlJSLinter::LintResult lintResult;
 
-    const QStringList resolvedImportPaths = defaultImports == UseDefaultImports
-            ? m_defaultImportPaths + importPaths
-            : importPaths;
-    if (type == LintFile) {
+    const QStringList resolvedImportPaths = options.defaultImports == UseDefaultImports
+            ? m_defaultImportPaths + options.importPaths
+            : options.importPaths;
+    if (options.type == LintFile) {
         QList<QQmlJS::LoggerCategory> resolvedCategories =
-                categories != nullptr ? *categories : m_categories;
+                options.categories != nullptr ? *options.categories : m_categories;
 
-        if (readSettings) {
+        if (options.readSettings) {
             QQmlToolingSettings settings(QLatin1String("qmllint"));
             if (settings.search(lintedFile))
                 QQmlJS::LoggingUtils::updateLogLevels(resolvedCategories, settings, nullptr);
         }
 
-        lintResult = m_linter.lintFile(
-                    lintedFile, content, true, &jsonOutput, resolvedImportPaths, qmldirFiles,
-                    resources, resolvedCategories);
+        lintResult = m_linter.lintFile(lintedFile, content.isEmpty() ? nullptr : &content, true,
+                                       &jsonOutput, resolvedImportPaths, options.qmldirFiles,
+                                       options.resources, resolvedCategories);
     } else {
-        lintResult =
-                m_linter.lintModule(fileToLint, true, &jsonOutput, resolvedImportPaths, resources);
+        lintResult = m_linter.lintModule(fileToLint, true, &jsonOutput, resolvedImportPaths,
+                                         options.resources);
     }
 
-    bool success = lintResult == QQmlJSLinter::LintSuccess;
-    QVERIFY2(success == shouldSucceed, QJsonDocument(jsonOutput).toJson());
-
-    if (warnings) {
-        QVERIFY2(jsonOutput.size() == 1, QJsonDocument(jsonOutput).toJson());
-        *warnings = jsonOutput.at(0)[u"warnings"_s].toArray();
-    }
-
-    QCOMPARE(success, shouldSucceed);
+    [&]() {
+        const bool success = lintResult == QQmlJSLinter::LintSuccess;
+        const QByteArray errorOutput = QJsonDocument(jsonOutput).toJson();
+        QVERIFY2(success == (checks.testFlag(ShouldSucceed)), errorOutput);
+        QVERIFY2(jsonOutput.size() == 1, errorOutput);
+        result = jsonOutput.at(0)[u"warnings"_s].toArray();
+    }();
 
     if (lintResult == QQmlJSLinter::LintSuccess || lintResult == QQmlJSLinter::HasWarnings) {
-        testFixes(shouldSucceed, importPaths, qmldirFiles, resources, defaultImports, categories,
-                  autoFixable, readSettings, info.baseName() + u".fixed.qml"_s);
+        testFixes(checks.testFlag(ShouldSucceed), options.importPaths, options.qmldirFiles,
+                  options.resources, options.defaultImports, options.categories,
+                  checks.testFlag(HasAutoFix), options.readSettings,
+                  info.baseName() + u".fixed.qml"_s);
     }
+    return result;
+}
+
+QJsonArray TestQmllint::callQmllint(const QString &fileToLint, const CallQmllintOptions &options,
+                                    CallQmllintChecks checks)
+{
+    return callQmllintImpl(fileToLint, QString(), options, checks);
+}
+
+QJsonArray TestQmllint::callQmllintOnSnippet(const QString &snippet,
+                                             const CallQmllintOptions &options,
+                                             CallQmllintChecks checks)
+{
+    return callQmllintImpl(QString(), snippet, options, checks);
 }
 
 void TestQmllint::testFixes(bool shouldSucceed, QStringList importPaths, QStringList qmldirFiles,
@@ -2011,8 +2044,15 @@ void TestQmllint::testFixes(bool shouldSucceed, QStringList importPaths, QString
         file.flush();
         file.close();
 
-        callQmllint(QFileInfo(file).absoluteFilePath(), true, nullptr, importPaths, qmldirFiles,
-                    resources, defaultImports, categories, false, LintFile, readSettings);
+        CallQmllintOptions options;
+        options.importPaths = importPaths;
+        options.qmldirFiles = qmldirFiles;
+        options.resources = resources;
+        options.defaultImports = defaultImports;
+        options.categories = categories;
+        options.readSettings = readSettings;
+
+        callQmllint(QFileInfo(file).absoluteFilePath(), options);
 
         if (QFileInfo(fixedPath).exists()) {
             QFile fixedFile(fixedPath);
@@ -2039,11 +2079,15 @@ void TestQmllint::runTest(const QString &testFile, const Result &result, QString
                           DefaultImportOption defaultImports,
                           QList<QQmlJS::LoggerCategory> *categories)
 {
-    QJsonArray warnings;
-    callQmllint(testFile, result.flags.testFlag(Result::Flag::ExitsNormally), &warnings, importDirs,
-                qmltypesFiles, resources, defaultImports, categories,
-                result.flags.testFlag(Result::Flag::AutoFixable), LintFile,
-                result.flags.testFlag(Result::Flag::UseSettings));
+    CallQmllintOptions options;
+    options.importPaths = importDirs;
+    options.qmldirFiles = qmltypesFiles;
+    options.resources = resources;
+    options.defaultImports = defaultImports;
+    options.categories = categories;
+    options.readSettings = result.flags.testFlag(Result::Flag::UseSettings);
+
+    const QJsonArray warnings = callQmllint(testFile, options, fromResultFlags(result.flags));
     checkResult(warnings, result);
 }
 
@@ -2265,10 +2309,10 @@ void TestQmllint::additionalImplicitImport()
 void TestQmllint::qrcUrlImport()
 {
     const auto guard = qScopeGuard([this]() { m_linter.clearCache(); });
+    CallQmllintOptions options;
+    options.resources.append(testFile("untitled/qrcUrlImport.qrc"));
 
-    QJsonArray warnings;
-    callQmllint(testFile("untitled/main.qml"), true, &warnings, {}, {},
-                { testFile("untitled/qrcUrlImport.qrc") });
+    const QJsonArray warnings = callQmllint(testFile("untitled/main.qml"), options);
     checkResult(warnings, Result::clean());
 }
 
@@ -2410,9 +2454,12 @@ void TestQmllint::lintModule()
     QFETCH(QStringList, resources);
     QFETCH(Result, result);
 
-    QJsonArray warnings;
-    callQmllint(module, result.flags & Result::ExitsNormally, &warnings, importPaths, {}, resources,
-                UseDefaultImports, nullptr, false, LintModule);
+    CallQmllintOptions options;
+    options.importPaths = importPaths;
+    options.resources = resources;
+    options.type = LintModule;
+
+    const QJsonArray warnings = callQmllint(module, options, fromResultFlags(result.flags));
     checkResult(warnings, result);
 }
 
@@ -2985,14 +3032,15 @@ void TestQmllint::importRelScript()
 
 void TestQmllint::replayImportWarnings()
 {
-    QJsonArray warnings;
-    callQmllint(testFile(u"duplicateTypeUserUser.qml"_s), true, &warnings);
+    QJsonArray warnings =
+            callQmllint(testFile(u"duplicateTypeUserUser.qml"_s), CallQmllintOptions{});
 
     // No warning because the offending import is indirect.
     QVERIFY2(warnings.isEmpty(), qPrintable(QJsonDocument(warnings).toJson()));
 
     // No cache clearing here. We want the warnings restored.
-    callQmllint(testFile(u"DuplicateTypeUser.qml"_s), false, &warnings);
+    warnings = callQmllint(testFile(u"DuplicateTypeUser.qml"_s), CallQmllintOptions{},
+                           CallQmllintCheck::ShouldFail);
 
     // Warning because the offending import is now direct.
     searchWarnings(warnings, "Ambiguous type detected. T 1.0 is defined multiple times.");
