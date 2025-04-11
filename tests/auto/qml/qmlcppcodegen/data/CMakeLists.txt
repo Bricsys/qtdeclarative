@@ -308,6 +308,7 @@ set(qml_files
     undefinedToDouble.qml
     unknownAttached.qml
     unknownParameter.qml
+    unknownUnderlyingType.qml
     unstoredUndefined.qml
     unusedAttached.qml
     urlString.qml

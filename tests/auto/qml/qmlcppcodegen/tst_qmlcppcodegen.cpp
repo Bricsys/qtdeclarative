@@ -269,6 +269,7 @@ private slots:
     void undefinedToDouble();
     void unknownAttached();
     void unknownParameter();
+    void unknownUnderlyingType();
     void unstoredUndefined();
     void unusedAttached();
     void urlString();
@@ -5464,6 +5465,16 @@ void tst_QmlCppCodegen::unknownParameter()
     QScopedPointer<QObject> object(component.create());
     QVERIFY(!object.isNull());
     QCOMPARE(object->property("cppProp").toInt(), 18);
+}
+
+void tst_QmlCppCodegen::unknownUnderlyingType()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, QUrl(u"qrc:/qt/qml/TestTypes/unknownUnderlyingType.qml"_s));
+    QVERIFY2(!component.isError(), component.errorString().toUtf8());
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(!object.isNull());
+    QCOMPARE(object->property("foo").toInt(), 11);
 }
 
 void tst_QmlCppCodegen::unstoredUndefined()
