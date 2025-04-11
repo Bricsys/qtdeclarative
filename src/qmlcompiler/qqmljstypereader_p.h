@@ -22,8 +22,6 @@
 
 #include <QtCore/qset.h>
 
-#include <utility>
-
 QT_BEGIN_NAMESPACE
 
 class QQmlJSTypeReader

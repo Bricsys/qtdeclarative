@@ -28,8 +28,6 @@
 #include <QtCore/private/qcore_mac_p.h>
 #include <QtGui/private/qpainter_p.h>
 
-#include <utility>
-
 //
 //  W A R N I N G
 //  -------------

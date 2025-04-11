@@ -20,7 +20,6 @@
 #include <QtCore/qhash.h>
 #include <QtCore/qset.h>
 #include <QtCore/qpointer.h>
-#include <utility>
 
 QT_BEGIN_NAMESPACE
 

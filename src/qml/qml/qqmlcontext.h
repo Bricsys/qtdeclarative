@@ -10,7 +10,6 @@
 #include <QtQml/qjsvalue.h>
 #include <QtCore/qmetatype.h>
 #include <QtCore/qvariant.h>
-#include <utility>
 
 QT_BEGIN_NAMESPACE
 

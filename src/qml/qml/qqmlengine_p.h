@@ -45,7 +45,6 @@
 #include <QtCore/qthread.h>
 
 #include <atomic>
-#include <utility>
 
 QT_BEGIN_NAMESPACE
 

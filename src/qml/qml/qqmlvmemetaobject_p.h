@@ -35,8 +35,6 @@
 #include <QtCore/qlist.h>
 #include <QtCore/qmetaobject.h>
 
-#include <utility>
-
 QT_BEGIN_NAMESPACE
 
 class QQmlVMEMetaObject;
