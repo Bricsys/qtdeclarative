@@ -613,7 +613,7 @@ void QQmlJSImportVisitor::processDefaultProperties()
         QQmlJSScope::ConstPtr parentScope = it.key();
 
         // We can't expect custom parser default properties to be sensible, discard them for now.
-        if (parentScope->isInCustomParserParent())
+        if (checkCustomParser(parentScope))
             continue;
 
         /* consider:
@@ -1081,7 +1081,7 @@ void QQmlJSImportVisitor::processPropertyBindings()
                 // These warnings do not apply for custom parsers and their children and need to be
                 // handled on a case by case basis
 
-                if (scope->isInCustomParserParent())
+                if (checkCustomParser(scope))
                     continue;
 
                 // TODO: Can this be in a better suited category?
@@ -1283,7 +1283,7 @@ void QQmlJSImportVisitor::addDefaultProperties()
 
     m_pendingDefaultProperties[m_currentScope->parentScope()] << m_currentScope;
 
-    if (parentScope->isInCustomParserParent())
+    if (checkCustomParser(parentScope))
         return;
 
     /* consider:
@@ -1379,7 +1379,7 @@ void QQmlJSImportVisitor::checkGroupedAndAttachedScopes(QQmlJSScope::ConstPtr sc
 {
     // These warnings do not apply for custom parsers and their children and need to be handled on a
     // case by case basis
-    if (scope->isInCustomParserParent())
+    if (checkCustomParser(scope))
         return;
 
     auto children = scope->childScopes();
@@ -1403,6 +1403,11 @@ void QQmlJSImportVisitor::checkGroupedAndAttachedScopes(QQmlJSScope::ConstPtr sc
             break;
         }
     }
+}
+
+bool QQmlJSImportVisitor::checkCustomParser(const QQmlJSScope::ConstPtr &scope)
+{
+    return scope->isInCustomParserParent();
 }
 
 void QQmlJSImportVisitor::flushPendingSignalParameters()
@@ -2372,7 +2377,7 @@ void QQmlJSImportVisitor::endVisit(UiArrayBinding *arrayBinding)
     const auto propertyName = getScopeName(m_currentScope, QQmlSA::ScopeType::QMLScope);
     leaveEnvironment();
 
-    if (m_currentScope->isInCustomParserParent()) {
+    if (checkCustomParser(m_currentScope)) {
         // These warnings do not apply for custom parsers and their children and need to be handled
         // on a case by case basis
         return;
@@ -2910,7 +2915,7 @@ void QQmlJSImportVisitor::endVisit(QQmlJS::AST::UiObjectBinding *uiob)
         }
     }
 
-    if (m_currentScope->isInCustomParserParent()) {
+    if (checkCustomParser(m_currentScope)) {
         // These warnings do not apply for custom parsers and their children and need to be handled
         // on a case by case basis
     } else {
