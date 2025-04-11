@@ -1,6 +1,8 @@
 // Copyright (C) 2024 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
+#include <QVarLengthArray>
+
 #include "qsvgvisitorimpl_p.h"
 #include "qquickgenerator_p.h"
 #include "qquicknodeinfo_p.h"
@@ -1105,7 +1107,7 @@ QList<QSvgVisitorImpl::AnimationPair> QSvgVisitorImpl::collectAnimations(const Q
 
 void QSvgVisitorImpl::applyAnimationsToProperty(const QList<AnimationPair> &animations,
                                                 QQuickAnimatedProperty *outProperty,
-                                                std::function<QVariant(const QSvgAbstractAnimatedProperty *, int index, int subtype)> calculateValue)
+                                                std::function<QVariant(const QSvgAbstractAnimatedProperty *, int index, int animationIndex)> calculateValue)
 {
     qCDebug(lcVectorImageAnimations) << "Applying animations to property with default value"
                                      << outProperty->defaultValue();
@@ -1130,44 +1132,76 @@ void QSvgVisitorImpl::applyAnimationsToProperty(const QList<AnimationPair> &anim
 
         QList<qreal> propertyKeyFrames = property->keyFrames();
 
-        QQuickAnimatedProperty::PropertyAnimation outAnimation;
-        outAnimation.repeatCount = repeatCount;
-        outAnimation.startOffset = start;
-        if (freeze)
-            outAnimation.flags |= QQuickAnimatedProperty::PropertyAnimation::FreezeAtEnd;
+        QList<QQuickAnimatedProperty::PropertyAnimation> outAnimations;
 
         // For transform animations, we register the type of the transform in the animation
         // (this assumes that each animation is only for a single part of the transform)
         if (property->type() == QSvgAbstractAnimatedProperty::Transform) {
             const auto *transformProperty = static_cast<const QSvgAnimatedPropertyTransform *>(property);
-            if (transformProperty->translations().size() == transformProperty->keyFrames().size())
-                outAnimation.subtype = QTransform::TxTranslate;
-            else if (transformProperty->rotations().size() == transformProperty->keyFrames().size())
-                outAnimation.subtype = QTransform::TxRotate;
-            else if (transformProperty->scales().size() == transformProperty->keyFrames().size())
-                outAnimation.subtype = QTransform::TxScale;
-            else if (transformProperty->skews().size() == transformProperty->keyFrames().size())
-                outAnimation.subtype = QTransform::TxShear;
-            else
-                qCWarning(lcVectorImageAnimations) << "QSvgAnimatedPropertyTransform has no animations";
+            const auto &components = transformProperty->components();
+            Q_ASSERT(components.size() >= transformProperty->transformCount());
+            for (uint i = 0; i < transformProperty->transformCount(); ++i) {
+                QQuickAnimatedProperty::PropertyAnimation outAnimation;
+                outAnimation.repeatCount = repeatCount;
+                outAnimation.startOffset = start;
+                if (freeze)
+                    outAnimation.flags |= QQuickAnimatedProperty::PropertyAnimation::FreezeAtEnd;
+                switch (components.at(i).type) {
+                case QSvgAnimatedPropertyTransform::TransformComponent::Translate:
+                    outAnimation.subtype = QTransform::TxTranslate;
+                    break;
+                case QSvgAnimatedPropertyTransform::TransformComponent::Scale:
+                    outAnimation.subtype = QTransform::TxScale;
+                    break;
+                case QSvgAnimatedPropertyTransform::TransformComponent::Rotate:
+                    outAnimation.subtype = QTransform::TxRotate;
+                    break;
+                case QSvgAnimatedPropertyTransform::TransformComponent::Skew:
+                    outAnimation.subtype = QTransform::TxShear;
+                    break;
+                default:
+                    qCWarning(lcQuickVectorImage()) << "Unhandled transform type:" << components.at(i).type;
+                    break;
+                }
+
+                qDebug(lcVectorImageAnimations) << "        -> Property type:"
+                                                << property->type()
+                                                << " name:"
+                                                << property->propertyName()
+                                                << " animation subtype:"
+                                                << outAnimation.subtype;
+
+                outAnimations.append(outAnimation);
+            }
+        } else {
+            QQuickAnimatedProperty::PropertyAnimation outAnimation;
+            outAnimation.repeatCount = repeatCount;
+            outAnimation.startOffset = start;
+            if (freeze)
+                outAnimation.flags |= QQuickAnimatedProperty::PropertyAnimation::FreezeAtEnd;
+
+            qDebug(lcVectorImageAnimations) << "        -> Property type:"
+                                            << property->type()
+                                            << " name:"
+                                            << property->propertyName();
+
+            outAnimations.append(outAnimation);
         }
 
-        qDebug(lcVectorImageAnimations) << "        -> Property type:"
-                                        << property->type()
-                                        << " name:"
-                                        << property->propertyName()
-                                        << " animation subtype:"
-                                        << outAnimation.subtype;
 
-        for (int j = 0; j < propertyKeyFrames.size(); ++j) {
-            const int time = qRound(propertyKeyFrames.at(j) * duration);
+        for (int i = 0; i < outAnimations.size(); ++i) {
+            QQuickAnimatedProperty::PropertyAnimation outAnimation = outAnimations.at(i);
 
-            const QVariant value = calculateValue(property, j, outAnimation.subtype);
-            outAnimation.frames[time] = value;
-            qCDebug(lcVectorImageAnimations) << "        -> Frame " << time << " is " << value;
+            for (int j = 0; j < propertyKeyFrames.size(); ++j) {
+                const int time = qRound(propertyKeyFrames.at(j) * duration);
+
+                const QVariant value = calculateValue(property, j, i);
+                outAnimation.frames[time] = value;
+                qCDebug(lcVectorImageAnimations) << "        -> Frame " << time << " is " << value;
+            }
+
+            outProperty->addAnimation(outAnimation);
         }
-
-        outProperty->addAnimation(outAnimation);
     }
 }
 
@@ -1192,28 +1226,38 @@ void QSvgVisitorImpl::fillTransformAnimationInfo(const QSvgNode *node, NodeInfo 
     qCDebug(lcVectorImageAnimations) << "Applying transform animations to property with default value"
                                      << info.transform.defaultValue();
 
-    auto calculateValue = [](const QSvgAbstractAnimatedProperty *property, int index, int subtype) {
+    auto calculateValue = [](const QSvgAbstractAnimatedProperty *property, int index, int animationIndex) {
         if (property->type() != QSvgAbstractAnimatedProperty::Transform)
             return QVariant{};
 
-        QVariantList parameters;
         const auto *transformProperty = static_cast<const QSvgAnimatedPropertyTransform *>(property);
-        switch (subtype) {
-        case QTransform::TxTranslate:
-            parameters.append(QVariant::fromValue(transformProperty->translations().at(index)));
+        const auto &components = transformProperty->components();
+
+        const int componentIndex = index * transformProperty->transformCount() + animationIndex;
+
+        QVariantList parameters;
+
+        const QSvgAnimatedPropertyTransform::TransformComponent &component = components.at(componentIndex);
+        switch (component.type) {
+        case QSvgAnimatedPropertyTransform::TransformComponent::Translate:
+            parameters.append(QVariant::fromValue(QPointF(component.values.value(0),
+                                                          component.values.value(1))));
             break;
-        case QTransform::TxRotate:
-            parameters.append(QVariant::fromValue(transformProperty->centersOfRotations().at(index)));
-            parameters.append(QVariant::fromValue(transformProperty->rotations().at(index)));
+        case QSvgAnimatedPropertyTransform::TransformComponent::Rotate:
+            parameters.append(QVariant::fromValue(QPointF(component.values.value(1),
+                                                          component.values.value(2))));
+            parameters.append(QVariant::fromValue(component.values.value(0)));
             break;
-        case QTransform::TxScale:
-            parameters.append(QVariant::fromValue(transformProperty->scales().at(index)));
+        case QSvgAnimatedPropertyTransform::TransformComponent::Scale:
+            parameters.append(QVariant::fromValue(QPointF(component.values.value(0),
+                                                          component.values.value(1))));
             break;
-        case QTransform::TxShear:
-            parameters.append(QVariant::fromValue(transformProperty->skews().at(index)));
+        case QSvgAnimatedPropertyTransform::TransformComponent::Skew:
+            parameters.append(QVariant::fromValue(QPointF(component.values.value(0),
+                                                          component.values.value(1))));
             break;
         default:
-            qCWarning(lcVectorImageAnimations) << "Unhandled transform type:" << subtype;
+            qCWarning(lcVectorImageAnimations) << "Unhandled transform type:" << component.type;
         };
 
         return QVariant::fromValue(parameters);
