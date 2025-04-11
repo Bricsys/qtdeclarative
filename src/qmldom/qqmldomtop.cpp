@@ -1380,7 +1380,7 @@ void DomEnvironment::loadModuleDependency(const DomItem &self, const QString &ur
 
 void DomEnvironment::loadBuiltins(const Callback &callback, const ErrorHandler &h)
 {
-    QString builtinsName = QLatin1String("builtins.qmltypes");
+    QString builtinsName = QLatin1String("QML/plugins.qmltypes");
     const auto lPaths = loadPaths();
     for (const QString &path : lPaths) {
         QDir dir(path);
@@ -1391,7 +1391,7 @@ void DomEnvironment::loadBuiltins(const Callback &callback, const ErrorHandler &
             return;
         }
     }
-    myErrors().error(tr("Could not find builtins.qmltypes file")).handle(h);
+    myErrors().error(tr("Could not find the QML/plugins.qmltypes file")).handle(h);
 }
 
 void DomEnvironment::removePath(const QString &path)
