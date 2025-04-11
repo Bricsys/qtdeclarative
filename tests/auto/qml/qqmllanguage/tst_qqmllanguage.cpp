@@ -6132,6 +6132,8 @@ class AttachedObject : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(InnerObject *attached READ attached CONSTANT)
+    Q_PROPERTY(int revisionedProperty READ revisionedProperty WRITE setRevisionedProperty
+               NOTIFY revisionedPropertyChanged REVISION 24)
 
 public:
     explicit AttachedObject(QObject *parent = nullptr) :
@@ -6141,11 +6143,22 @@ public:
 
     InnerObject *attached() const { return m_attached; }
 
+    int revisionedProperty() const { return m_revisionedProperty; }
+    void setRevisionedProperty(int revisionedProperty)
+    {
+        if (revisionedProperty != m_revisionedProperty) {
+            m_revisionedProperty = revisionedProperty;
+            emit revisionedPropertyChanged();
+        }
+    }
+
 signals:
     Q_REVISION(25) void revisionedSignal();
+    Q_REVISION(24) void revisionedPropertyChanged();
 
 private:
-    InnerObject *m_attached;
+    InnerObject *m_attached = nullptr;
+    int m_revisionedProperty = 12;
 };
 
 class OuterObject : public QObject
@@ -6168,6 +6181,7 @@ void tst_qqmllanguage::revisionedPropertyOfAttachedObjectProperty()
     qmlRegisterAnonymousType<AttachedObject>("foo", 2);
     qmlRegisterType<InnerObject>("foo", 2, 0, "InnerObject");
     qmlRegisterType<InnerObject, 2>("foo", 2, 2, "InnerObject");
+    qmlRegisterType<InnerObject, 24>("foo", 2, 24, "InnerObject");
     qmlRegisterType<OuterObject>("foo", 2, 2, "OuterObject");
 
     QQmlEngine engine;
@@ -6176,6 +6190,7 @@ void tst_qqmllanguage::revisionedPropertyOfAttachedObjectProperty()
                       "OuterObject {\n"
                       "    InnerObject.attached.revisionedProperty: true\n"
                       "    InnerObject.onRevisionedSignal: objectName = 'yes'\n"
+                      "    InnerObject.revisionedProperty: 14\n"
                       "}", QUrl());
 
     QVERIFY2(component.isReady(), qPrintable(component.errorString()));
@@ -6191,6 +6206,7 @@ void tst_qqmllanguage::revisionedPropertyOfAttachedObjectProperty()
     QVERIFY(attached);
 
     QCOMPARE(attached->attached()->revisionedProperty(), true);
+    QCOMPARE(attached->revisionedProperty(), 14);
 
     emit attached->revisionedSignal();
     QCOMPARE(obj->objectName(), "yes");
