@@ -40,7 +40,6 @@ Q_LOGGING_CATEGORY(lcTests, "qt.quick.tests")
 
 struct TouchEventData {
     QEvent::Type type;
-    QWidget *widget;
     QWindow *window;
     QEventPoint::States states;
     QList<QEventPoint> touchPoints;
@@ -62,7 +61,7 @@ static QEventPoint makeTouchPoint(QQuickItem *item, const QPointF &p, const QPoi
 static TouchEventData makeTouchData(QEvent::Type type, QWindow *w, QEventPoint::States states = {},
                                     const QList<QEventPoint>& touchPoints = QList<QEventPoint>())
 {
-    TouchEventData d = { type, nullptr, w, states, touchPoints };
+    TouchEventData d = { type, w, states, touchPoints };
     for (auto &pt : d.touchPoints)
         QMutableEventPoint::detach(pt);
     return d;
@@ -73,7 +72,7 @@ static TouchEventData makeTouchData(QEvent::Type type, QWindow *w, QEventPoint::
     QList <QEventPoint> pts;
     for (auto pt : touchPoints)
         pts << *pt;
-    TouchEventData d = { type, nullptr, w, states, pts };
+    TouchEventData d = { type, w, states, pts };
     return d;
 }
 static TouchEventData makeTouchData(QEvent::Type type, QWindow *w, QEventPoint::States states, const QEventPoint &touchPoint)
@@ -96,7 +95,6 @@ static TouchEventData makeTouchData(QEvent::Type type, QWindow *w, QEventPoint::
 #define COMPARE_TOUCH_DATA(d1, d2) \
 { \
     QCOMPARE((int)d1.type, (int)d2.type); \
-    QCOMPARE(d1.widget, d2.widget); \
     QCOMPARE((int)d1.states, (int)d2.states); \
     QCOMPARE(d1.touchPoints.count(), d2.touchPoints.count()); \
     for (int i=0; i<d1.touchPoints.count(); i++) { \
