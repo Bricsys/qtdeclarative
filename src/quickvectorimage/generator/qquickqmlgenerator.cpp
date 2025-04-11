@@ -79,57 +79,78 @@ QString QQuickQmlGenerator::commentString() const
 
 QString QQuickQmlGenerator::generateNodeBase(const NodeInfo &info)
 {
+    auto layerIdString = [](int layerId) {
+        return QStringLiteral("_qt_layer%1").arg(layerId);
+    };
+
     if (!info.nodeId.isEmpty())
         stream() << "objectName: \"" << info.nodeId << "\"";
 
     static int counter = 0;
-    const QString idString = QStringLiteral("_qt_node%1").arg(counter++);
+    QString idString;
+    if (info.layerNum >= 0)
+        idString = layerIdString(info.layerNum);
+    else
+        idString = QStringLiteral("_qt_node%1").arg(counter++);
     stream() << "id: " << idString;
 
     if (!info.isDefaultOpacity)
         stream() << "opacity: " << info.opacity.defaultValue().toReal();
 
-    if (info.transform.isAnimated()) {
+    const bool hasTransformReference = (info.transformReferenceLayerNum >= 0);
+    const bool hasTransform = info.transform.isAnimated() || !info.isDefaultTransform || hasTransformReference;
+    if (hasTransform) {
+        bool hasPrevious = false;
         stream() << "transform: [";
         m_indentLevel++;
-        for (int i = info.transform.animationCount() - 1; i >= 0; --i) {
-            const auto &animation = info.transform.animation(i);
+        if (info.transform.isAnimated()) {
+            for (int i = info.transform.animationCount() - 1; i >= 0; --i) {
+                const auto &animation = info.transform.animation(i);
 
-            switch (animation.subtype) {
-            case QTransform::TxTranslate:
-                stream() << "Translate { id: " << idString << "_transform_" << i << " }";
-                break;
-            case QTransform::TxScale:
-                stream() << "Scale { id: " << idString << "_transform_" << i << "}";
-                break;
-            case QTransform::TxRotate:
-                stream() << "Rotation { id: " << idString << "_transform_" << i << "; origin.x: " << idString << ".width / 2.0; origin.y: " << idString << ".height / 2.0 }";
-                break;
-            case QTransform::TxShear:
-                stream() << "Shear { id: " << idString << "_transform_" << i << " }";
-                break;
-            default:
-                Q_UNREACHABLE();
+                switch (animation.subtype) {
+                case QTransform::TxTranslate:
+                    stream() << "Translate { id: " << idString << "_transform_" << i << " }";
+                    break;
+                case QTransform::TxScale:
+                    stream() << "Scale { id: " << idString << "_transform_" << i << "}";
+                    break;
+                case QTransform::TxRotate:
+                    stream() << "Rotation { id: " << idString << "_transform_" << i << "; origin.x: " << idString << ".width / 2.0; origin.y: " << idString << ".height / 2.0 }";
+                    break;
+                case QTransform::TxShear:
+                    stream() << "Shear { id: " << idString << "_transform_" << i << " }";
+                    break;
+                default:
+                    Q_UNREACHABLE();
+                }
+
+                hasPrevious = true;
+                if (i > 0)
+                    stream(SameLine) << ",";
             }
-
-            if (i > 0)
-                stream(SameLine) << ",";
         }
 
         if (!info.isDefaultTransform) {
-            stream() << ", Matrix4x4 { id: " << idString << "_transform_base; matrix: ";
+            if (hasPrevious)
+                stream(SameLine) << ",";
+            stream() << "Matrix4x4 { id: " << idString << "_transform_base; matrix: ";
             generateTransform(info.transform.defaultValue().value<QTransform>());
             stream(SameLine) << "}";
+            hasPrevious = true;
+        }
+
+        if (hasTransformReference) {
+            if (hasPrevious)
+                stream(SameLine) << ",";
+            stream() << "Matrix4x4 { matrix: " << layerIdString(info.transformReferenceLayerNum)
+                     << ".transformMatrix }";
+            hasPrevious = true;
         }
 
         m_indentLevel--;
         stream() << "]";
 
         generateAnimateTransform(idString, info);
-    } else if (!info.isDefaultTransform) {
-        stream() << "transform: Matrix4x4 { matrix: ";
-        generateTransform(info.transform.defaultValue().value<QTransform>());
-        stream(SameLine) << "}";
     }
 
     if (info.opacity.isAnimated())
@@ -891,6 +912,8 @@ bool QQuickQmlGenerator::generateStructureNode(const StructureNodeInfo &info)
     if (info.stage == StructureNodeStage::Start) {
         if (isPathContainer) {
             generatePathContainer(info);
+        } else  if (info.layerNum >= 0) {
+            stream() << "LayerItem {";
         } else {
             stream() << "Item {";
         }
