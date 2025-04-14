@@ -1352,6 +1352,9 @@ void TestQmllint::dirtyJsSnippet_data()
                                         { { "Identifier 'x' has already been declared"_L1, 1, 20 },
                                           { "Note: previous declaration of 'x' here"_L1, 1, 7 } }
                                     };
+    QTest::newRow("assignmentWarningLocation")
+            << u"console.log(a = 1)"_s
+            << Result{ { { "Unqualified access"_L1, 1, 13 } } };
 }
 
 static void addLocationOffsetTo(TestQmllint::Result *result, qsizetype lineOffset,
