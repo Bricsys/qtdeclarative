@@ -133,6 +133,15 @@ QQmlJSAotFunction QQmlJSCodeGenerator::run(const Function *function, bool basicB
 {
     m_function = function;
 
+    if (m_context->contextType == QV4::Compiler::ContextType::Binding
+        && m_function->returnType.contains(m_typeResolver->qQmlScriptStringType())) {
+        const QString reason = u"binding for property of type QQmlScriptString; nothing to do."_s;
+        skip(reason);
+        QQmlJSAotFunction result;
+        result.skipReason = reason;
+        return result;
+    }
+
     QHash<int, int> numRegisterVariablesPerIndex;
 
     const auto addVariable

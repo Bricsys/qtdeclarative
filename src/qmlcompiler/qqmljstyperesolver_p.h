@@ -91,6 +91,7 @@ public:
     QQmlJSScope::ConstPtr arrayPrototype() const { return m_arrayPrototype; }
     QQmlJSScope::ConstPtr forInIteratorPtr() const { return m_forInIteratorPtr; }
     QQmlJSScope::ConstPtr forOfIteratorPtr() const { return m_forOfIteratorPtr; }
+    QQmlJSScope::ConstPtr qQmlScriptStringType() const { return m_qQmlScriptStringType; }
 
     QQmlJSRegisterContent jsGlobalObjectContent() const { return m_jsGlobalObjectContent; }
     QQmlJSScope::ConstPtr mathObject() const;

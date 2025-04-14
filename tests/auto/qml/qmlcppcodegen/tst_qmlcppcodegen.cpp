@@ -61,6 +61,7 @@ private slots:
     void basicDTZ();
     void bindToValueType();
     void bindingExpression();
+    void bindingToScriptStringProperty();
     void blockComments();
     void boolCoercions();
     void boolPointerMerge();
@@ -950,6 +951,20 @@ void tst_QmlCppCodegen::bindingExpression()
         object->setProperty("width", width);
         object->setProperty("y", y);
     }
+}
+
+void tst_QmlCppCodegen::bindingToScriptStringProperty()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, QUrl(u"qrc:/qt/qml/TestTypes/BindingToScriptStringProperty.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(o);
+
+    const auto *bottomRect = o->findChild<QObject *>("bottom");
+    QCOMPARE(bottomRect->property("y").toInt(), 150);
+    o->setProperty("c", true);
+    QCOMPARE(bottomRect->property("y").toInt(), 300);
 }
 
 void tst_QmlCppCodegen::blockComments()

@@ -996,9 +996,12 @@ void tst_qmlcachegen::aotstatsGeneration_data()
     const QString fError = "function without return type annotation returns int. This may prevent "
                            "proper compilation to Cpp.";
     const QString sError = "method g cannot be resolved.";
+    const QString numSkip = "Skipped code generation for binding for property of type "
+                            "QQmlScriptString; nothing to do.";
     functionEntries = QList<FunctionEntry>{ { "i", "", QQmlJS::CodegenResult::Success },
                                             { "f", fError, QQmlJS::CodegenResult::Failure },
-                                            { "s", sError, QQmlJS::CodegenResult::Failure } };
+                                            { "s", sError, QQmlJS::CodegenResult::Failure },
+                                            { "num", numSkip, QQmlJS::CodegenResult::Skip } };
     QTest::addRow("mixed") << "AotstatsMixed.qml"
                            << "tst_qmlcachegen_aotstats_AotstatsMixed_qml.cpp.aotstats"
                            << functionEntries;
