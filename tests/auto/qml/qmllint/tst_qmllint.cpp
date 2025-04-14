@@ -1387,48 +1387,56 @@ void TestQmllint::dirtyQmlSnippet_data()
 {
     QTest::addColumn<QString>("code");
     QTest::addColumn<Result>("result");
+    QTest::addColumn<CallQmllintOptions>("options");
 
-    QTest::newRow("testSnippet") << u"property int qwer: \"Hello\""_s
-                                 << Result{ { { "Cannot assign literal of type string to int"_L1 } } };
+    const CallQmllintOptions defaultOptions;
+
+    QTest::newRow("testSnippet")
+            << u"property int qwer: \"Hello\""_s
+            << Result{ { { "Cannot assign literal of type string to int"_L1 } } } << defaultOptions;
 
     QTest::newRow("enum") << u"enum Hello { World, Kitty, World, dlrow }"_s
                           << Result{ { { "Enum key 'World' has already been declared"_L1, 1, 28 },
                                        { "Note: previous declaration of 'World' here"_L1, 1, 14 },
-                                       { "Enum keys should start with an uppercase"_L1, 1, 35 } } };
+                                       { "Enum keys should start with an uppercase"_L1, 1, 35 } } }
+                          << defaultOptions;
 
     QTest::newRow("color-name") << u"property color myColor: \"lbue\""_s
                                 << Result{ { { "Invalid color \"lbue\""_L1, 1, 25 } },
                                            {},
-                                           { { "Did you mean \"blue\"?", 1, 25 } } };
+                                           { { "Did you mean \"blue\"?", 1, 25 } } }
+                                << defaultOptions;
     QTest::newRow("color-hex") << u"property color myColor: \"#12345\""_s
-                               << Result{ { { "Invalid color"_L1, 1, 25 } } };
+                               << Result{ { { "Invalid color"_L1, 1, 25 } } } << defaultOptions;
     QTest::newRow("color-hex2") << u"property color myColor: \"#123456789\""_s
-                                << Result{ { { "Invalid color"_L1, 1, 25 } } };
+                                << Result{ { { "Invalid color"_L1, 1, 25 } } } << defaultOptions;
     QTest::newRow("color-hex3") << u"property color myColor: \"##123456\""_s
-                                << Result{ { { "Invalid color"_L1, 1, 25 } } };
+                                << Result{ { { "Invalid color"_L1, 1, 25 } } } << defaultOptions;
     QTest::newRow("color-hex4") << u"property color myColor: \"#123456#\""_s
-                                << Result{ { { "Invalid color"_L1, 1, 25 } } };
+                                << Result{ { { "Invalid color"_L1, 1, 25 } } } << defaultOptions;
     QTest::newRow("color-hex5") << u"property color myColor: \"#HELLOL\""_s
-                                << Result{ { { "Invalid color"_L1, 1, 25 } } };
+                                << Result{ { { "Invalid color"_L1, 1, 25 } } } << defaultOptions;
     QTest::newRow("color-hex6") << u"property color myColor: \"#1234567\""_s
-                                << Result{ { { "Invalid color"_L1, 1, 25 } } };
+                                << Result{ { { "Invalid color"_L1, 1, 25 } } } << defaultOptions;
 
     QTest::newRow("upperCaseId")
             << u"id: Root"_s
-            << Result{ { { "Id must start with a lower case letter or an '_'"_L1, 1, 5 } } };
+            << Result{ { { "Id must start with a lower case letter or an '_'"_L1, 1, 5 } } }
+            << defaultOptions;
 }
 
 void TestQmllint::dirtyQmlSnippet()
 {
     QFETCH(QString, code);
     QFETCH(Result, result);
+    QFETCH(CallQmllintOptions, options);
 
     QString qmlCode = "import QtQuick\nItem {\n%1}"_L1.arg(code);
 
     addLocationOffsetTo(&result, 2);
 
     const QJsonArray warnings =
-            callQmllintOnSnippet(qmlCode, CallQmllintOptions{}, fromResultFlags(result.flags));
+            callQmllintOnSnippet(qmlCode, options, fromResultFlags(result.flags));
 
     checkResult(warnings, result, [] { }, [] { }, [] { });
 }
@@ -1436,29 +1444,34 @@ void TestQmllint::dirtyQmlSnippet()
 void TestQmllint::cleanQmlSnippet_data()
 {
     QTest::addColumn<QString>("code");
+    QTest::addColumn<CallQmllintOptions>("options");
 
-    QTest::newRow("testSnippet") << u"property int qwer: 123"_s;
-    QTest::newRow("enum") << u"enum Hello { World, Kitty, DlroW }"_s;
+    const CallQmllintOptions defaultOptions;
 
-    QTest::newRow("color-name") << u"property color myColor: \"blue\""_s;
-    QTest::newRow("color-name2") << u"property color myColor\nmyColor: \"green\""_s;
-    QTest::newRow("color-hex") << u"property color myColor: \"#123456\""_s;
-    QTest::newRow("color-hex2") << u"property color myColor: \"#FFFFFFFF\""_s;
-    QTest::newRow("color-hex3") << u"property color myColor: \"#A0AAff1f\""_s;
+    QTest::newRow("testSnippet") << u"property int qwer: 123"_s << defaultOptions;
+    QTest::newRow("enum") << u"enum Hello { World, Kitty, DlroW }"_s << defaultOptions;
 
-    QTest::newRow("lowerCaseId") << u"id: root"_s;
-    QTest::newRow("underScoreId") << u"id: _Root"_s;
+    QTest::newRow("color-name") << u"property color myColor: \"blue\""_s << defaultOptions;
+    QTest::newRow("color-name2") << u"property color myColor\nmyColor: \"green\""_s
+                                 << defaultOptions;
+    QTest::newRow("color-hex") << u"property color myColor: \"#123456\""_s << defaultOptions;
+    QTest::newRow("color-hex2") << u"property color myColor: \"#FFFFFFFF\""_s << defaultOptions;
+    QTest::newRow("color-hex3") << u"property color myColor: \"#A0AAff1f\""_s << defaultOptions;
+
+    QTest::newRow("lowerCaseId") << u"id: root"_s << defaultOptions;
+    QTest::newRow("underScoreId") << u"id: _Root"_s << defaultOptions;
 }
 
 void TestQmllint::cleanQmlSnippet()
 {
     QFETCH(QString, code);
+    QFETCH(CallQmllintOptions, options);
 
     const QString qmlCode = "import QtQuick\nItem {%1}"_L1.arg(code);
     const Result result = Result::clean();
 
     const QJsonArray warnings =
-            callQmllintOnSnippet(qmlCode, CallQmllintOptions{}, fromResultFlags(result.flags));
+            callQmllintOnSnippet(qmlCode, options, fromResultFlags(result.flags));
     checkResult(warnings, result, [] { }, [] { }, [] { });
 }
 
@@ -1466,56 +1479,70 @@ void TestQmllint::dirtyJsSnippet_data()
 {
     QTest::addColumn<QString>("code");
     QTest::addColumn<Result>("result");
+    QTest::addColumn<CallQmllintOptions>("options");
 
-    QTest::newRow("doubleLet") << u"let x = 4; let x = 4;"_s
-                               << Result{
-                                      { { "Identifier 'x' has already been declared"_L1, 1, 16 },
-                                        { "Note: previous declaration of 'x' here"_L1, 1, 5 } }
-                                  };
-    QTest::newRow("doubleConst") << u"const x = 4; const x = 4;"_s
-                                 << Result{
-                                        { { "Identifier 'x' has already been declared"_L1, 1, 20 },
-                                          { "Note: previous declaration of 'x' here"_L1, 1, 7 } }
-                                    };
+    const CallQmllintOptions defaultOptions;
+
+    QTest::newRow("doubleLet")
+            << u"let x = 4; let x = 4;"_s
+            << Result{ { { "Identifier 'x' has already been declared"_L1, 1, 16 },
+                         { "Note: previous declaration of 'x' here"_L1, 1, 5 } } }
+            << defaultOptions;
+    QTest::newRow("doubleConst")
+            << u"const x = 4; const x = 4;"_s
+            << Result{ { { "Identifier 'x' has already been declared"_L1, 1, 20 },
+                         { "Note: previous declaration of 'x' here"_L1, 1, 7 } } }
+            << defaultOptions;
 
     QTest::newRow("assignmentInCondition")
             << u"let xxx = 3; if (xxx=3) return;"_s
             << Result{ { { "Assignment in condition: did you meant to use \"===\" or \"==\" "
                            "instead of \"=\"?"_L1,
-                           1, 21 } } };
-    QTest::newRow("eval") << u"let x = eval();"_s << Result{ { { "Do not use 'eval'"_L1, 1, 9 } } };
+                           1, 21 } } }
+            << defaultOptions;
+    QTest::newRow("eval") << u"let x = eval();"_s << Result{ { { "Do not use 'eval'"_L1, 1, 9 } } }
+                          << defaultOptions;
     QTest::newRow("eval2") << u"let x = eval(\"1 + 1\");"_s
-                           << Result{ { { "Do not use 'eval'"_L1, 1, 9 } } };
+                           << Result{ { { "Do not use 'eval'"_L1, 1, 9 } } } << defaultOptions;
     QTest::newRow("indirectEval") << u"let x = (1, eval)();"_s
-                                  << Result{ { { "Do not use 'eval'"_L1, 1, 13 } } };
-    QTest::newRow("indirectEval2") << u"let x = (1, eval)(\"1 + 1\");"_s
-                                   << Result{ { { "Do not use 'eval'"_L1, 1, 13 } } };
+                                  << Result{ { { "Do not use 'eval'"_L1, 1, 13 } } }
+                                  << defaultOptions;
+    QTest::newRow("indirectEval2")
+            << u"let x = (1, eval)(\"1 + 1\");"_s << Result{ { { "Do not use 'eval'"_L1, 1, 13 } } }
+            << defaultOptions;
     QTest::newRow("redundantOptionalChainingNonVoidableBase")
             << u"/a/?.flags"_s
             << Result{ { { "Redundant optional chaining for lookup on non-voidable and "_L1
-                           "non-nullable type QRegularExpression"_L1, 1, 6 } } };
+                           "non-nullable type QRegularExpression"_L1,
+                           1, 6 } } }
+            << defaultOptions;
 
     QTest::newRow("shadowArgument")
             << u"function f(a) { const a = 33; }"_s
             << Result{ { { "Identifier 'a' has already been declared"_L1, 1, 23 },
-                         { "Note: previous declaration of 'a' here"_L1, 1, 12 } } };
+                         { "Note: previous declaration of 'a' here"_L1, 1, 12 } } }
+            << defaultOptions;
     QTest::newRow("shadowFunction")
             << u"function f() {} const f = 33"_s
             << Result{ { { "Identifier 'f' has already been declared"_L1, 1, 23 },
-                         { "Note: previous declaration of 'f' here"_L1, 1, 10 } } };
+                         { "Note: previous declaration of 'f' here"_L1, 1, 10 } } }
+            << defaultOptions;
     QTest::newRow("shadowFunction2")
             << u"const f = 33; function f() {}"_s
             << Result{ { { "Identifier 'f' has already been declared"_L1, 1, 24 },
-                         { "Note: previous declaration of 'f' here"_L1, 1, 7 } } };
+                         { "Note: previous declaration of 'f' here"_L1, 1, 7 } } }
+            << defaultOptions;
     QTest::newRow("assignmentWarningLocation")
             << u"console.log(a = 1)"_s
-            << Result{ { { "Unqualified access"_L1, 1, 13 } } };
+            << Result{ { { "Unqualified access"_L1, 1, 13 } } }
+            << defaultOptions;
 }
 
 void TestQmllint::dirtyJsSnippet()
 {
     QFETCH(QString, code);
     QFETCH(Result, result);
+    QFETCH(CallQmllintOptions, options);
 
     static constexpr QLatin1StringView templateString =
             "import QtQuick\nItem { function f() {\n%1}}"_L1;
@@ -1525,7 +1552,7 @@ void TestQmllint::dirtyJsSnippet()
 
     const QString qmlCode = templateString.arg(code);
     const QJsonArray warnings =
-            callQmllintOnSnippet(qmlCode, CallQmllintOptions{}, fromResultFlags(result.flags));
+            callQmllintOnSnippet(qmlCode, options, fromResultFlags(result.flags));
 
     checkResult(warnings, result, [] { }, [] { }, [] { });
 }
@@ -1533,32 +1560,40 @@ void TestQmllint::dirtyJsSnippet()
 void TestQmllint::cleanJsSnippet_data()
 {
     QTest::addColumn<QString>("code");
+    QTest::addColumn<CallQmllintOptions>("options");
 
-    QTest::newRow("testSnippet") << u"let x = 5"_s;
-    QTest::newRow("doubleVar") << u"var x = 5; var y = 5"_s;
-    QTest::newRow("doubleInDifferentScopes") << u"const a = 42; for (let a = 1; a < 10; ++a) {}"_s;
+    const CallQmllintOptions defaultOptions;
 
-    QTest::newRow("notAssignmentInCondition") << u"let x = 3; if (x==3) return;"_s;
+    QTest::newRow("testSnippet") << u"let x = 5"_s << defaultOptions;
+    QTest::newRow("doubleVar") << u"var x = 5; var y = 5"_s << defaultOptions;
+    QTest::newRow("doubleInDifferentScopes")
+            << u"const a = 42; for (let a = 1; a < 10; ++a) {}"_s << defaultOptions;
 
-    QTest::newRow("shadowArgument") << u"function f(a) { if (1){ const a = 33; } }"_s;
-    QTest::newRow("shadowFunction") << u"function f() { function f() {} }"_s;
+    QTest::newRow("notAssignmentInCondition")
+            << u"let x = 3; if (x==3) return;"_s << defaultOptions;
+
+    QTest::newRow("shadowArgument")
+            << u"function f(a) { if (1){ const a = 33; } }"_s << defaultOptions;
+    QTest::newRow("shadowFunction") << u"function f() { function f() {} }"_s << defaultOptions;
 
     QTest::newRow("varUsedBeforeDeclarationWithIgnore")
             << u"// qmllint disable var-used-before-declaration\n"
-               "f(x);\n"
+               "f(x) ;\n"
                "// qmllint enable var-used-before-declaration\n"
-               "let x = 3;"_s;
+               "let x = 3;"_s
+            << defaultOptions;
 }
 
 void TestQmllint::cleanJsSnippet()
 {
     QFETCH(QString, code);
+    QFETCH(CallQmllintOptions, options);
 
     const QString qmlCode = "import QtQuick\nItem { function f() {\n%1}}"_L1.arg(code);
     const Result result = Result::clean();
 
     const QJsonArray warnings =
-            callQmllintOnSnippet(qmlCode, CallQmllintOptions{}, fromResultFlags(result.flags));
+            callQmllintOnSnippet(qmlCode, options, fromResultFlags(result.flags));
     checkResult(warnings, result, [] { }, [] { }, [] { });
 }
 
