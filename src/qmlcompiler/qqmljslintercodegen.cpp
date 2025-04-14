@@ -48,6 +48,7 @@ QQmlJSLinterCodegen::compileBinding(const QV4::Compiler::Context *context,
     });
 
     m_logger->setCompileErrorPrefix(u"Could not compile binding for %1: "_s.arg(name));
+    m_logger->setCompileSkipPrefix(u"Compilation of binding for %1 was skipped: "_s.arg(name));
 
     analyzeFunction(context, &function);
     if (const auto errors = finalizeBindingOrFunction())
@@ -71,6 +72,7 @@ QQmlJSLinterCodegen::compileFunction(const QV4::Compiler::Context *context,
     });
 
     m_logger->setCompileErrorPrefix(u"Could not compile function %1: "_s.arg(name));
+    m_logger->setCompileSkipPrefix(u"Compilation of function %1 was skipped: "_s.arg(name));
     analyzeFunction(context, &function);
 
     if (const auto errors = finalizeBindingOrFunction())

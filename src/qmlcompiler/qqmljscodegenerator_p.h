@@ -260,6 +260,7 @@ protected:
 
     void generateReturnError();
     void reject(const QString &thing);
+    void skip(const QString &thing);
 
     template<typename T>
     T reject(const QString &thing)

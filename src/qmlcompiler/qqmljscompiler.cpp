@@ -339,9 +339,13 @@ bool qCompileQmlFile(QmlIR::Document &irDocument, const QString &inputFileName,
                                                << diagnosticErrorMessage(inputFileName, error);
                     }
                 } else if (auto *func = std::get_if<QQmlJSAotFunction>(&result)) {
-                    qCDebug(lcAotCompiler) << "Generated code:" << func->code;
-                    aotFunctionsByIndex[object->runtimeFunctionIndices[bindingOrFunction.index()]] =
-                            *func;
+                    if (func->skipReason.has_value()) {
+                        qCDebug(lcAotCompiler) << "Compilation skipped:" << func->skipReason.value();
+                    } else {
+                        qCDebug(lcAotCompiler) << "Generated code:" << func->code;
+                        auto index = object->runtimeFunctionIndices[bindingOrFunction.index()];
+                        aotFunctionsByIndex[index] = *func;
+                    }
                 }
             });
         }
@@ -738,7 +742,7 @@ std::optional<QList<QQmlJS::DiagnosticMessage>> QQmlJSAotCompiler::finalizeBindi
 
     QList<QQmlJS::DiagnosticMessage> errors;
     m_logger->iterateCurrentFunctionMessages([&](const Message &msg) {
-        if (msg.isCompileError)
+        if (msg.compilationStatus == Message::CompilationStatus::Error)
             errors.append(diagnose(msg.message, msg.type, msg.loc));
     });
     return errors;
@@ -747,7 +751,7 @@ std::optional<QList<QQmlJS::DiagnosticMessage>> QQmlJSAotCompiler::finalizeBindi
 QQmlJSAotFunction QQmlJSAotCompiler::doCompile(
         const QV4::Compiler::Context *context, QQmlJSCompilePass::Function *function)
 {
-    if (m_logger->currentFunctionHasCompileError())
+    if (m_logger->currentFunctionHasErrorOrSkip())
         return QQmlJSAotFunction();
 
     bool basicBlocksValidationFailed = false;
@@ -758,20 +762,20 @@ QQmlJSAotFunction QQmlJSAotCompiler::doCompile(
     QQmlJSTypePropagator propagator(
             m_unitGenerator, &m_typeResolver, m_logger, blocks, annotations);
     passResult = propagator.run(function);
-    if (m_logger->currentFunctionHasCompileError())
+    if (m_logger->currentFunctionHasErrorOrSkip())
         return QQmlJSAotFunction();
 
     QQmlJSShadowCheck shadowCheck(
             m_unitGenerator, &m_typeResolver, m_logger, blocks, annotations);
     passResult = shadowCheck.run(function);
-    if (m_logger->currentFunctionHasCompileError())
+    if (m_logger->currentFunctionHasErrorOrSkip())
         return QQmlJSAotFunction();
 
     QQmlJSOptimizations optimizer(
             m_unitGenerator, &m_typeResolver, m_logger, blocks, annotations,
             basicBlocks.objectAndArrayDefinitions());
     passResult = optimizer.run(function);
-    if (m_logger->currentFunctionHasCompileError())
+    if (m_logger->currentFunctionHasErrorOrSkip())
         return QQmlJSAotFunction();
 
     QQmlJSStorageInitializer initializer(
@@ -782,13 +786,13 @@ QQmlJSAotFunction QQmlJSAotCompiler::doCompile(
     QQmlJSStorageGeneralizer generalizer(
             m_unitGenerator, &m_typeResolver, m_logger, blocks, annotations);
     passResult = generalizer.run(function);
-    if (m_logger->currentFunctionHasCompileError())
+    if (m_logger->currentFunctionHasErrorOrSkip())
         return QQmlJSAotFunction();
 
     QQmlJSCodeGenerator codegen(
             context, m_unitGenerator, &m_typeResolver, m_logger, blocks, annotations);
     QQmlJSAotFunction result = codegen.run(function, basicBlocksValidationFailed);
-    if (m_logger->currentFunctionHasCompileError())
+    if (m_logger->currentFunctionHasErrorOrSkip())
         return QQmlJSAotFunction();
 
     return result;
@@ -805,6 +809,7 @@ QQmlJSAotFunction QQmlJSAotCompiler::doCompileAndRecordAotStats(
     auto t2 = std::chrono::high_resolution_clock::now();
 
     if (QQmlJS::QQmlJSAotCompilerStats::recordAotStats()) {
+        // TODO: Update AotStats for skipping
         QQmlJS::AotStatsEntry entry;
         entry.codegenDuration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
         entry.functionName = name;
@@ -815,6 +820,9 @@ QQmlJSAotFunction QQmlJSAotCompiler::doCompileAndRecordAotStats(
         QQmlJS::QQmlJSAotCompilerStats::addEntry(
                 function->qmlScope.containedType()->filePath(), entry);
     }
+
+    if (m_logger->currentFunctionWasSkipped())
+        result.skipReason = m_logger->currentFunctionCompileSkipMessage();
 
     return result;
 }

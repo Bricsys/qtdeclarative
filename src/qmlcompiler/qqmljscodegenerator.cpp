@@ -4326,6 +4326,12 @@ void QQmlJSCodeGenerator::reject(const QString &thing)
     addError(u"Cannot generate efficient code for %1"_s.arg(thing));
 }
 
+
+void QQmlJSCodeGenerator::skip(const QString &thing)
+{
+    addSkip(u"Skipped code generation for %1"_s.arg(thing));
+}
+
 QQmlJSCodeGenerator::AccumulatorConverter::AccumulatorConverter(QQmlJSCodeGenerator *generator)
     : accumulatorOut(generator->m_state.accumulatorOut())
     , accumulatorVariableIn(generator->m_state.accumulatorVariableIn)

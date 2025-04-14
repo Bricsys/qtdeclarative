@@ -439,9 +439,19 @@ protected:
         m_logger->logCompileError(message, sourceLocation(instructionOffset));
     }
 
+    void addSkip(const QString &message, int instructionOffset)
+    {
+        m_logger->logCompileSkip(message, sourceLocation(instructionOffset));
+    }
+
     void addError(const QString &message)
     {
         addError(message, currentInstructionOffset());
+    }
+
+    void addSkip(const QString &message)
+    {
+        addSkip(message, currentInstructionOffset());
     }
 
     static bool instructionManipulatesContext(QV4::Moth::Instr::Type type)

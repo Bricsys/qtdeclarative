@@ -105,11 +105,13 @@ private:
 
 struct Message : public QQmlJS::DiagnosticMessage
 {
+    enum class CompilationStatus { Normal, Skip, Error };
+
     // This doesn't need to be an owning-reference since the string is expected to outlive any
     // Message object by virtue of coming from a LoggerWarningId.
     QAnyStringView id;
     std::optional<QQmlJSFixSuggestion> fixSuggestion;
-    bool isCompileError = false;
+    CompilationStatus compilationStatus = CompilationStatus::Normal;
     std::optional<quint32> customLineForDisabling = std::nullopt;
 
     quint32 lineForDisabling() const { return customLineForDisabling.value_or(loc.startLine); }
@@ -191,6 +193,9 @@ public:
     QString compileErrorPrefix() const { return m_compileErrorPrefix; }
     void setCompileErrorPrefix(const QString &prefix) { m_compileErrorPrefix = prefix; }
 
+    QString compileSkipPrefix() const { return m_compileSkipPrefix; }
+    void setCompileSkipPrefix(const QString &prefix) { m_compileSkipPrefix = prefix; }
+
     /*! \internal
 
         Logs \a message with severity deduced from \a category. Prefer using
@@ -212,7 +217,7 @@ public:
                 },
                 id.name(),
                 suggestion,
-                false, // isCompileError
+                Message::CompilationStatus::Normal,
                 customLineForDisabling
             }, showContext, showFileName, overrideFileName);
     }
@@ -232,9 +237,24 @@ public:
                 },
                 qmlCompiler.name(),
                 {},  // fixSuggestion
-                true // isCompileError
+                Message::CompilationStatus::Error
             });
 
+    }
+
+    void logCompileSkip(const QString &message, const QQmlJS::SourceLocation &srcLocation)
+    {
+        m_hasCompileSkip = true;
+        log(Message {
+                QQmlJS::DiagnosticMessage {
+                        m_compileSkipPrefix + message,
+                        m_compileSkipLevel,
+                        srcLocation
+                },
+                qmlCompiler.name(),
+                {},  // fixSuggestion
+                Message::CompilationStatus::Skip
+        });
     }
 
     void processMessages(const QList<QQmlJS::DiagnosticMessage> &messages,
@@ -272,10 +292,30 @@ public:
         return m_hasCompileError || m_hasPendingCompileError;
     }
 
+    bool currentFunctionWasSkipped() const
+    {
+        return m_hasCompileSkip;
+    }
+
+    bool currentFunctionHasErrorOrSkip() const
+    {
+        return currentFunctionHasCompileError() || currentFunctionWasSkipped();
+    }
+
     QString currentFunctionCompileErrorMessage() const
     {
         for (const Message &message : m_currentFunctionMessages) {
-            if (message.isCompileError)
+            if (message.compilationStatus == Message::CompilationStatus::Error)
+                return message.message;
+        }
+
+        return QString();
+    }
+
+    QString currentFunctionCompileSkipMessage() const
+    {
+        for (const Message &message : m_currentFunctionMessages) {
+            if (message.compilationStatus == Message::CompilationStatus::Skip)
                 return message.message;
         }
 
@@ -319,15 +359,18 @@ private:
     QHash<uint32_t, QSet<QString>> m_ignoredWarnings;
 
     QString m_compileErrorPrefix;
+    QString m_compileSkipPrefix;
 
     qsizetype m_numWarnings = 0;
     qsizetype m_numErrors = 0;
     bool m_inTransaction = false;
     bool m_hasCompileError = false;
     bool m_hasPendingCompileError = false;
+    bool m_hasCompileSkip = false;
     bool m_isDisabled = false;
 
     QtMsgType m_compileErrorLevel = QtWarningMsg;
+    QtMsgType m_compileSkipLevel = QtInfoMsg;
 };
 
 QT_END_NAMESPACE

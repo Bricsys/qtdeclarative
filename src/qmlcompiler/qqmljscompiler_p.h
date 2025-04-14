@@ -51,6 +51,7 @@ struct Q_QMLCOMPILER_EXPORT QQmlJSAotFunction
     QStringList includes;
     QString code;
     QString signature;
+    std::optional<QString> skipReason;
     int numArguments = 0;
 };
 
