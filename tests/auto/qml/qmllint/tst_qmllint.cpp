@@ -1479,6 +1479,9 @@ void TestQmllint::dirtyJsSnippet_data()
             << u"const f = 33; function f() {}"_s
             << Result{ { { "Identifier 'f' has already been declared"_L1, 1, 24 },
                          { "Note: previous declaration of 'f' here"_L1, 1, 7 } } };
+    QTest::newRow("assignmentWarningLocation")
+            << u"console.log(a = 1)"_s
+            << Result{ { { "Unqualified access"_L1, 1, 13 } } };
 }
 
 void TestQmllint::dirtyJsSnippet()
