@@ -31,6 +31,9 @@
 #include <QtGui/private/qcoregraphics_p.h>
 #include <QtGui/private/qguiapplication_p.h>
 
+using namespace QQC2;
+#include <QtGui/private/qmacstyle_p.h>
+
 #include <cmath>
 
 QT_USE_NAMESPACE
@@ -264,42 +267,6 @@ static const int toolButtonArrowSize = 7;
 static const int toolButtonArrowMargin = 2;
 
 static const qreal focusRingWidth = 3.5;
-
-// An application can force 'Aqua' theme while the system theme is one of
-// the 'Dark' variants. Since in Qt we sometimes use NSControls and even
-// NSCells directly without attaching them to any view hierarchy, we have
-// to set NSAppearance.currentAppearance to 'Aqua' manually, to make sure
-// the correct rendering path is triggered. Apple recommends us to un-set
-// the current appearance back after we finished with drawing. This is what
-// AppearanceSync is for.
-
-class AppearanceSync {
-public:
-    AppearanceSync()
-    {
-#if QT_MACOS_PLATFORM_SDK_EQUAL_OR_ABOVE(__MAC_10_14)
-        if (QOperatingSystemVersion::current() >= QOperatingSystemVersion::MacOSMojave
-            && !isDarkMode()) {
-            auto requiredAppearanceName = NSApplication.sharedApplication.effectiveAppearance.name;
-            if (![NSAppearance.currentAppearance.name isEqualToString:requiredAppearanceName]) {
-                previous = NSAppearance.currentAppearance;
-                NSAppearance.currentAppearance = [NSAppearance appearanceNamed:requiredAppearanceName];
-            }
-        }
-#endif // QT_MACOS_PLATFORM_SDK_EQUAL_OR_ABOVE(__MAC_10_14)
-    }
-
-    ~AppearanceSync()
-    {
-        if (previous)
-            NSAppearance.currentAppearance = previous;
-    }
-
-private:
-    NSAppearance *previous = nil;
-
-    Q_DISABLE_COPY(AppearanceSync)
-};
 
 static bool setupScroller(NSScroller *scroller, const QStyleOptionSlider *sb)
 {
@@ -1615,6 +1582,11 @@ void QMacStylePrivate::resolveCurrentNSView(QWindow *window) const
     backingStoreNSView = window ? (NSView *)window->winId() : nil;
 }
 
+QMacStyle *QMacStyle::create()
+{
+    return new QMacApperanceStyle<QMacStyle>;
+}
+
 QMacStyle::QMacStyle()
     : QCommonStyle(*new QMacStylePrivate)
 {
@@ -2408,7 +2380,6 @@ void QMacStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *opt, QPai
 {
     Q_D(const QMacStyle);
 
-    const AppearanceSync appSync;
     QMacCGContext cg(p);
     d->resolveCurrentNSView(opt->window);
 
@@ -2903,7 +2874,6 @@ void QMacStyle::drawControl(ControlElement ce, const QStyleOption *opt, QPainter
 {
     Q_D(const QMacStyle);
 
-    const AppearanceSync sync;
     const QMacAutoReleasePool pool;
 
     QMacCGContext cg(p);
@@ -4431,7 +4401,6 @@ void QMacStylePrivate::restoreNSGraphicsContext(CGContextRef cg) const
 void QMacStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex *opt, QPainter *p) const
 {
     Q_D(const QMacStyle);
-    const AppearanceSync sync;
 
     QMacCGContext cg(p);
     d->resolveCurrentNSView(opt->window);
