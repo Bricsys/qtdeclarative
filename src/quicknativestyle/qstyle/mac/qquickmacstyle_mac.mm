@@ -22,6 +22,7 @@
 #include <QtCore/qvarlengtharray.h>
 
 #include <QtGui/qpainterpath.h>
+#include <QtGui/qstylehints.h>
 #include <QtGui/qpa/qplatformnativeinterface.h>
 #include <QtGui/qpa/qplatformfontdatabase.h>
 #include <QtGui/qpa/qplatformtheme.h>
@@ -187,7 +188,7 @@ static const qreal titleBarButtonSpacing = 8;
 // active: window is active
 // selected: tab is selected
 // hovered: tab is hovered
-bool isDarkMode() { return qt_mac_applicationIsInDarkMode(); }
+static bool isDarkMode() { return qGuiApp->styleHints()->colorScheme() == Qt::ColorScheme::Dark; }
 
 static const QColor lightTabBarTabBackgroundActive(190, 190, 190);
 static const QColor darkTabBarTabBackgroundActive(38, 38, 38);
@@ -278,7 +279,7 @@ public:
     {
 #if QT_MACOS_PLATFORM_SDK_EQUAL_OR_ABOVE(__MAC_10_14)
         if (QOperatingSystemVersion::current() >= QOperatingSystemVersion::MacOSMojave
-            && !qt_mac_applicationIsInDarkMode()) {
+            && !isDarkMode()) {
             auto requiredAppearanceName = NSApplication.sharedApplication.effectiveAppearance.name;
             if (![NSAppearance.currentAppearance.name isEqualToString:requiredAppearanceName]) {
                 previous = NSAppearance.currentAppearance;
@@ -1380,7 +1381,7 @@ NSView *QMacStylePrivate::cocoaControl(CocoaControl cocoaControl) const
 
     if (cocoaControl.type == Box) {
         if (__builtin_available(macOS 10.14, *)) {
-            if (qt_mac_applicationIsInDarkMode()) {
+            if (isDarkMode()) {
                 // See render code in drawPrimitive(PE_FrameTabWidget)
                 cocoaControl.type = Box_Dark;
             }
@@ -2522,7 +2523,7 @@ void QMacStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *opt, QPai
         auto adjustedRect = opt->rect;
         bool needTranslation = false;
         if (QOperatingSystemVersion::current() >= QOperatingSystemVersion::MacOSMojave
-            && !qt_mac_applicationIsInDarkMode()) {
+            && !isDarkMode()) {
             // In Aqua theme we have to use the 'default' NSBox (as opposite
             // to the 'custom' QDarkNSBox we use in dark theme). Since -drawRect:
             // does nothing in default NSBox, we call -displayRectIgnoringOpaticty:.
@@ -2571,7 +2572,7 @@ void QMacStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *opt, QPai
             theStroker.setCapStyle(Qt::FlatCap);
             theStroker.setDashPattern(QVector<qreal>() << 1 << 2);
             path = theStroker.createStroke(path);
-            const auto dark = qt_mac_applicationIsInDarkMode() ? opt->palette.dark().color().darker()
+            const auto dark = isDarkMode() ? opt->palette.dark().color().darker()
                                                                : QColor(0, 0, 0, 119);
             p->fillPath(path, dark);
         }
@@ -2769,7 +2770,7 @@ void QMacStyle::drawPrimitive(PrimitiveElement pe, const QStyleOption *opt, QPai
                 tf.frame = opt->rect.toCGRect();
                 d->drawNSViewInRect(tf, opt->rect, p, ^(CGContextRef, const CGRect &rect) {
                     QMacAutoReleasePool pool;
-                    if (!qt_mac_applicationIsInDarkMode()) {
+                    if (!isDarkMode()) {
                         // In 'Dark' mode controls are transparent, so we do not
                         // over-paint the (potentially custom) color in the background.
                         // In 'Light' mode we have to care about the correct
@@ -3854,7 +3855,7 @@ void QMacStyle::drawControl(ControlElement ce, const QStyleOption *opt, QPainter
         }
         break;
     case CE_ToolBar: {
-        const bool isDarkMode = qt_mac_applicationIsInDarkMode();
+        const bool isDarkMode = QT_PREPEND_NAMESPACE(QQC2_NAMESPACE::isDarkMode());
 
         // Unified title and toolbar drawing. In this mode the cocoa platform plugin will
         // fill the top toolbar area part with a background gradient that "unifies" with
