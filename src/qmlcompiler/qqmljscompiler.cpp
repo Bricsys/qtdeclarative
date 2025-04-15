@@ -809,14 +809,20 @@ QQmlJSAotFunction QQmlJSAotCompiler::doCompileAndRecordAotStats(
     auto t2 = std::chrono::high_resolution_clock::now();
 
     if (QQmlJS::QQmlJSAotCompilerStats::recordAotStats()) {
-        // TODO: Update AotStats for skipping
         QQmlJS::AotStatsEntry entry;
         entry.codegenDuration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
         entry.functionName = name;
-        entry.errorMessage = m_logger->currentFunctionCompileErrorMessage();
+        entry.message = m_logger->currentFunctionWasSkipped()
+                ? m_logger->currentFunctionCompileSkipMessage()
+                : m_logger->currentFunctionCompileErrorMessage();
         entry.line = location.startLine;
         entry.column = location.startColumn;
-        entry.codegenSuccessful = !m_logger->currentFunctionHasCompileError();
+        if (m_logger->currentFunctionWasSkipped())
+            entry.codegenResult = QQmlJS::CodegenResult::Skip;
+        else if (m_logger->currentFunctionHasCompileError())
+            entry.codegenResult = QQmlJS::CodegenResult::Failure;
+        else
+            entry.codegenResult = QQmlJS::CodegenResult::Success;
         QQmlJS::QQmlJSAotCompilerStats::addEntry(
                 function->qmlScope.containedType()->filePath(), entry);
     }
