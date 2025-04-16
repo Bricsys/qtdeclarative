@@ -1419,6 +1419,11 @@ void TestQmllint::dirtyQmlSnippet_data()
     QTest::newRow("color-hex6") << u"property color myColor: \"#1234567\""_s
                                 << Result{ { { "Invalid color"_L1, 1, 25 } } } << defaultOptions;
 
+    QTest::newRow("requiredInInlineComponent")
+            << u"Item { component Foo: Item { required property var bla; } } Foo {}"_s
+            << Result{ { { "Component is missing required property bla from Foo"_L1, 1, 61 } } }
+            << defaultOptions;
+
     QTest::newRow("upperCaseId")
             << u"id: Root"_s
             << Result{ { { "Id must start with a lower case letter or an '_'"_L1, 1, 5 } } }
@@ -1459,6 +1464,10 @@ void TestQmllint::cleanQmlSnippet_data()
     QTest::newRow("color-hex3") << u"property color myColor: \"#A0AAff1f\""_s << defaultOptions;
 
     QTest::newRow("lowerCaseId") << u"id: root"_s << defaultOptions;
+    QTest::newRow("requiredInComponent")
+            << u"Item { Component { id: comp; required property var bla; } }"_s << defaultOptions;
+    QTest::newRow("requiredInInlineComponent")
+            << u"Item { component Foo: Item { required property var bla; } }"_s << defaultOptions;
     QTest::newRow("underScoreId") << u"id: _Root"_s << defaultOptions;
 }
 
