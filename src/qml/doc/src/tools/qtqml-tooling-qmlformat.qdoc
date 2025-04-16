@@ -101,7 +101,10 @@ The following options are available:
     \li --functions-spacing
     \li
     \li Ensure spaces between functions (only works with normalize option).
-
+\row
+    \li --semicolon-rule
+    \li always
+    \li Customize the addition of semicolons at the end of  JS statements.
 \endtable
 
 \section2 Arguments
@@ -154,5 +157,13 @@ then \c qmlformat will error out for that particular entry. It will still format
 the valid file entries in place.
 
 \warning If you provide -F option, qmlformat will ignore the positional arguments.
+
+\section3 Semicolon Rule
+The \c{--semicolon-rule} option allows you to customize the addition of semicolons at the end of JS statements.
+The following values are accepted:
+\list
+    \li \c{always} - Always add semicolons (default).
+    \li \c{essential} - Remove semicolons unless omitting them would cause issues.
+\endlist
 
 */
