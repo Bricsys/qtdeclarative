@@ -24,6 +24,7 @@ QT_BEGIN_NAMESPACE
 
 class QQuickMatrix4x4;
 class QQuickAnimatedProperty;
+class QQmlContext;
 
 class Q_QUICKVECTORIMAGEGENERATOR_EXPORT QQuickItemGenerator : public QQuickQmlGenerator
 {

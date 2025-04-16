@@ -17,6 +17,7 @@
 
 #include <QtCore/qloggingcategory.h>
 #include <QtCore/qstandardpaths.h>
+#include <QtQml/qqmlcomponent.h>
 
 QT_BEGIN_NAMESPACE
 
