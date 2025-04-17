@@ -632,8 +632,9 @@ QV4::CompiledData::Unit QV4::Compiler::JSUnitGenerator::generateHeader(QV4::Comp
     unit.flags = QV4::CompiledData::Unit::IsJavascript;
     unit.flags |= module->unitFlags;
     unit.version = QV4_DATA_STRUCTURE_VERSION;
+    unit.reserved = 0;
     memset(unit.md5Checksum, 0, sizeof(unit.md5Checksum));
-    memset(unit.dependencyMD5Checksum, 0, sizeof(unit.dependencyMD5Checksum));
+    memset(unit.reserved2, 0, sizeof(unit.reserved2));
 
     quint32 nextOffset = sizeof(CompiledData::Unit);
 

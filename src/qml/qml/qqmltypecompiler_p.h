@@ -46,8 +46,7 @@ public:
     QQmlTypeCompiler(QQmlTypeLoader *typeLoader,
                      QQmlTypeData *typeData,
                      QmlIR::Document *document,
-                     QV4::CompiledData::ResolvedTypeReferenceMap *resolvedTypeCache,
-                     const QV4::CompiledData::DependentTypesHasher &dependencyHasher);
+                     QV4::CompiledData::ResolvedTypeReferenceMap *resolvedTypeCache);
 
     // --- interface used by QQmlPropertyCacheCreator
     typedef QmlIR::Object CompiledObject;
@@ -121,7 +120,6 @@ public:
 private:
     QList<QQmlError> errors;
     QQmlTypeLoader *loader;
-    const QV4::CompiledData::DependentTypesHasher &dependencyHasher;
     QmlIR::Document *document;
     // index is string index of type name (use obj->inheritedTypeNameIndex)
     QHash<int, QQmlCustomParser*> customParsers;

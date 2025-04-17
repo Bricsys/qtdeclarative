@@ -26,11 +26,9 @@ Q_LOGGING_CATEGORY(lcQmlTypeCompiler, "qt.qml.typecompiler");
 
 QQmlTypeCompiler::QQmlTypeCompiler(
         QQmlTypeLoader *typeLoader, QQmlTypeData *typeData, QmlIR::Document *parsedQML,
-        QV4::CompiledData::ResolvedTypeReferenceMap *resolvedTypeCache,
-        const QV4::CompiledData::DependentTypesHasher &dependencyHasher)
+        QV4::CompiledData::ResolvedTypeReferenceMap *resolvedTypeCache)
     : resolvedTypes(resolvedTypeCache)
     , loader(typeLoader)
-    , dependencyHasher(dependencyHasher)
     , document(parsedQML)
     , typeData(typeData)
 {
@@ -138,7 +136,7 @@ QQmlRefPointer<QV4::CompiledData::CompilationUnit> QQmlTypeCompiler::compile()
     // Generate QML compiled type data structures
 
     QmlIR::QmlUnitGenerator qmlGenerator;
-    qmlGenerator.generate(*document, dependencyHasher);
+    qmlGenerator.generate(*document);
 
     if (!errors.isEmpty())
         return nullptr;

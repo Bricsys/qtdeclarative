@@ -50,29 +50,6 @@ bool Unit::verifyHeader(QDateTime expectedSourceTimeStamp, QString *errorString)
     return true;
 }
 
-/*!
-    \internal
-    This function creates a temporary key vector and sorts it to guarantuee a stable
-    hash. This is used to calculate a check-sum on dependent meta-objects.
- */
-bool ResolvedTypeReferenceMap::addToHash(
-        QCryptographicHash *hash, QHash<quintptr, QByteArray> *checksums) const
-{
-    std::vector<int> keys (size());
-    int i = 0;
-    for (auto it = constBegin(), end = constEnd(); it != end; ++it) {
-        keys[i] = it.key();
-        ++i;
-    }
-    std::sort(keys.begin(), keys.end());
-    for (int key: keys) {
-        if (!this->operator[](key)->addToHash(hash, checksums))
-            return false;
-    }
-
-    return true;
-}
-
 CompilationUnit::CompilationUnit(
         const Unit *unitData, const QString &fileName, const QString &finalUrlString)
 {
@@ -352,21 +329,6 @@ int CompilationUnit::totalParserStatusCount(const QString &inlineComponentRootNa
     if (inlineComponentRootName.isEmpty())
         return m_totalParserStatusCount;
     return inlineComponentData[inlineComponentRootName].totalParserStatusCount;
-}
-
-bool CompilationUnit::verifyChecksum(const DependentTypesHasher &dependencyHasher) const
-{
-    if (!dependencyHasher) {
-        for (size_t i = 0; i < sizeof(data->dependencyMD5Checksum); ++i) {
-            if (data->dependencyMD5Checksum[i] != 0)
-                return false;
-        }
-        return true;
-    }
-    const QByteArray checksum = dependencyHasher();
-    return checksum.size() == sizeof(data->dependencyMD5Checksum)
-            && memcmp(data->dependencyMD5Checksum, checksum.constData(),
-                      sizeof(data->dependencyMD5Checksum)) == 0;
 }
 
 QQmlType CompilationUnit::qmlTypeForComponent(const QString &inlineComponentName) const

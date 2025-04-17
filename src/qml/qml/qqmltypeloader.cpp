@@ -1732,7 +1732,6 @@ void QQmlTypeLoader::clearCache()
 
     QQmlTypeLoaderThreadDataPtr threadData(&m_data);
     qDeleteAll(threadData->importQmlDirCache);
-    threadData->checksumCache.clear();
     threadData->importQmlDirCache.clear();
 
     QQmlTypeLoaderSharedDataPtr data(&m_data);

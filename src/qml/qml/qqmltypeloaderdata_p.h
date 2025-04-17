@@ -58,7 +58,6 @@ class QQmlTypeLoaderThreadData
 {
     Q_DISABLE_COPY_MOVE(QQmlTypeLoaderThreadData)
 public:
-    using ChecksumCache = QHash<quintptr, QByteArray>;
     using ImportQmlDirCache = QStringHash<QQmlTypeLoaderQmldirContent *>;
 
     struct QmldirInfo {
@@ -71,7 +70,6 @@ public:
     QQmlTypeLoaderThreadData() = default;
 
     ImportQmlDirCache importQmlDirCache;
-    ChecksumCache checksumCache;
 
     // Maps from an import to a linked list of qmldir info.
     // Used in locateLocalQmldir()

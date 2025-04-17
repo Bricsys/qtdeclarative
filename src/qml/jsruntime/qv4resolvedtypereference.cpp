@@ -64,35 +64,6 @@ QQmlPropertyCache::ConstPtr ResolvedTypeReference::createPropertyCache()
     }
 }
 
-bool ResolvedTypeReference::addToHash(
-        QCryptographicHash *hash, QHash<quintptr, QByteArray> *checksums)
-{
-    if (m_type.isInlineComponentType()) {
-
-        // A reference to an inline component in the same file will have
-        // - no compilation unit since we cannot resolve the compilation unit before it's built.
-        // - a property cache since we've assigned one in buildMetaObjectsIncrementally().
-        // - a QQmlType that says it's an inline component.
-        // We don't have to add such a thing to the hash since if it changes, the QML document
-        // itself changes, leading to a new timestamp, which is checked before the checksum.
-        if (!m_compilationUnit)
-            return !m_typePropertyCache.isNull();
-
-    } else if (m_type.isValid()) {
-        bool ok = false;
-        if (QQmlPropertyCache::ConstPtr propertyCache = createPropertyCache())
-            hash->addData(propertyCache->checksum(checksums, &ok));
-        else
-            Q_ASSERT(m_type.module() == QLatin1String("QML")); // a builtin without metaobject
-        return ok;
-    }
-    if (!m_compilationUnit)
-        return false;
-    hash->addData({m_compilationUnit->unitData()->md5Checksum,
-                  sizeof(m_compilationUnit->unitData()->md5Checksum)});
-    return true;
-}
-
 } // namespace QV4
 
 QT_END_NAMESPACE

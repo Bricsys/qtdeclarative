@@ -227,11 +227,6 @@ public:
 
     inline bool callJSFactoryMethod(QObject *object, void **args) const;
 
-    static bool determineMetaObjectSizes(const QMetaObject &mo, int *fieldCount, int *stringCount);
-    static bool addToHash(QCryptographicHash &hash, const QMetaObject &mo);
-
-    QByteArray checksum(QHash<quintptr, QByteArray> *checksums, bool *ok) const;
-
     QTypeRevision allowedRevision(int index) const { return allowedRevisionCache[index]; }
     void setAllowedRevision(int index, QTypeRevision allowed) { allowedRevisionCache[index] = allowed; }
 
