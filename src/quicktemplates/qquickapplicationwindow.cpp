@@ -817,9 +817,21 @@ void QQuickApplicationWindow::classBegin()
     QQuickWindowQmlImpl::classBegin();
     d->resolveFont();
 
-    // Create the control up front, rather than lazily, as we have
-    // to set the default padding before any user-bindings override
-    // them.
+    /*
+        Create the control up front, rather than lazily, as we have
+        to set the default padding before any user-bindings override
+        them.
+
+        The hierarchy is:
+
+            contentItem (QQuickRootItem)
+            ├── menuBar
+            ├── header
+            ├── control (QQuickControl)
+            │   └── control->contentItem() (QQuickContentItem)
+            ├── footer
+            └── background
+     */
     d->control = new QQuickControl(QQuickWindow::contentItem());
     d->control->setObjectName("ApplicationWindowContentControl");
 #if QT_CONFIG(quicktemplates2_hover)
