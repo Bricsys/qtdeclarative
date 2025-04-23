@@ -2220,6 +2220,11 @@ void emitWarningWithOptionalFix(GenericPass &pass, QAnyStringView diagnostic,
     pass.emitWarning(diagnostic, id, srcLocation, saFix);
 }
 
+bool isRegularBindingType(BindingType type)
+{
+    return type >= BindingType::BoolLiteral && type <= BindingType::Object;
+}
+
 } // namespace QQmlSA
 
 QT_END_NAMESPACE

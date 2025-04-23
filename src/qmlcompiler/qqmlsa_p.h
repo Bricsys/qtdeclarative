@@ -107,6 +107,8 @@ private:
     bool m_isAttached = false;
 };
 
+bool isRegularBindingType(BindingType type);
+
 class MethodPrivate
 {
     friend class QT_PREPEND_NAMESPACE(QQmlJSMetaMethod);
