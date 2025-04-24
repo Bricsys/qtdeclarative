@@ -45,7 +45,7 @@ public:
         QString translate() const
         {
 #if QT_CONFIG(translation)
-            return QCoreApplication::translate(m_context, m_text, m_comment, m_number);
+            return QCoreApplication::translate(m_context.constData(), m_text.constData(), m_comment.constData(), m_number);
 #else
             return QString();
 #endif
@@ -71,7 +71,7 @@ public:
         QString translate() const
         {
 #if QT_CONFIG(translation)
-            return qtTrId(m_id, m_number);
+            return qtTrId(m_id.constData(), m_number);
 #else
             return QString();
 #endif
