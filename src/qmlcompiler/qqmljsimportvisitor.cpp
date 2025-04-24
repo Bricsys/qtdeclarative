@@ -600,6 +600,9 @@ QVector<QQmlJSAnnotation> QQmlJSImportVisitor::parseAnnotations(QQmlJS::AST::UiA
 
 void QQmlJSImportVisitor::setAllBindings()
 {
+    using Key = std::pair<QQmlJSScope::ConstPtr, QString>;
+    QHash<Key, QQmlJS::SourceLocation> m_foundBindings;
+
     for (auto it = m_bindings.cbegin(); it != m_bindings.cend(); ++it) {
         // ensure the scope is resolved. If not, produce a warning.
         const QQmlJSScope::Ptr type = it->owner;
@@ -607,8 +610,32 @@ void QQmlJSImportVisitor::setAllBindings()
             continue;
 
         auto binding = it->create();
-        if (binding.isValid())
-            type->addOwnPropertyBinding(binding, it->specifier);
+        if (!binding.isValid())
+            continue;
+        type->addOwnPropertyBinding(binding, it->specifier);
+
+        // we already warn about duplicate interceptors in processPropertyBindingObjects()
+        if (binding.hasInterceptor())
+            continue;
+        const QString propertyName = binding.propertyName();
+
+        // list can be bound multiple times
+        if (type->property(propertyName).isList())
+            continue;
+
+        const Key key = std::make_pair(type, propertyName);
+        auto sourceLocationIt = m_foundBindings.constFind(key);
+        if (sourceLocationIt == m_foundBindings.constEnd()) {
+            m_foundBindings.insert(key, binding.sourceLocation());
+            continue;
+        }
+
+        const QQmlJS::SourceLocation location = binding.sourceLocation();
+        m_logger->log("Duplicate binding on property '%1'"_L1.arg(propertyName),
+                      qmlDuplicatePropertyBinding, location);
+        m_logger->log("Note: previous binding on '%1' here"_L1.arg(propertyName),
+                      qmlDuplicatePropertyBinding, *sourceLocationIt, true, true, {}, {},
+                      location.startLine);
     }
 }
 
@@ -883,7 +910,6 @@ void QQmlJSImportVisitor::processPropertyBindingObjects()
                               qmlIncompatibleType, objectBinding.location);
             }
         } else {
-            // TODO: Warn here if binding.hasValue() is true
             if (foundValueSources.contains(uniqueBindingId)) {
                 m_logger->log(
                         QStringLiteral("Cannot combine value source and binding on property \"%1\"")

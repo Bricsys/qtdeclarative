@@ -1401,6 +1401,48 @@ void TestQmllint::dirtyQmlSnippet_data()
                                        { "Enum keys should start with an uppercase"_L1, 1, 35 } } }
                           << defaultOptions;
 
+    QTest::newRow("duplicateObjectBinding")
+            << u"property Item i; i: Item {} i: Item {}"_s
+            << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 29 },
+                         { "Note: previous binding on 'i' here"_L1, 1, 18 } } }
+            << defaultOptions;
+
+    QTest::newRow("duplicateObjectBinding2")
+            << u"property Item i: Item {} i: Item {}"_s
+            << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 26 },
+                         { "Note: previous binding on 'i' here"_L1, 1, 15 } } }
+            << defaultOptions;
+
+    QTest::newRow("duplicateBinding")
+            << u"property int i; i: 42; i: 43;"_s
+            << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 27 },
+                         { "Note: previous binding on 'i' here"_L1, 1, 20 } } }
+            << defaultOptions;
+
+    QTest::newRow("duplicateBinding2")
+            << u"property int i: 42; i: 43;"_s
+            << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 24 },
+                         { "Note: previous binding on 'i' here"_L1, 1, 17 } } }
+            << defaultOptions;
+
+    QTest::newRow("duplicateGrouped")
+            << u"Text { font.pixelSize: 5; font.pixelSize: 10; }"_s
+            << Result{ { { "Duplicate binding on property 'pixelSize'"_L1, 1, 43 },
+                         { "Note: previous binding on 'pixelSize' here"_L1, 1, 24 } } }
+            << defaultOptions;
+
+    QTest::newRow("duplicateGrouped2")
+            << u"Text { font.pixelSize: 5; font { pixelSize: 10 } }"_s
+            << Result{ { { "Duplicate binding on property 'pixelSize'"_L1, 1, 45 },
+                         { "Note: previous binding on 'pixelSize' here"_L1, 1, 24 } } }
+            << defaultOptions;
+
+    QTest::newRow("duplicateGrouped3")
+            << u"Text { font { pixelSize: 5; pixelSize: 10 } }"_s
+            << Result{ { { "Duplicate binding on property 'pixelSize'"_L1, 1, 40 },
+                         { "Note: previous binding on 'pixelSize' here"_L1, 1, 26 } } }
+            << defaultOptions;
+
     QTest::newRow("color-name") << u"property color myColor: \"lbue\""_s
                                 << Result{ { { "Invalid color \"lbue\""_L1, 1, 25 } },
                                            {},
@@ -1463,6 +1505,10 @@ void TestQmllint::cleanQmlSnippet_data()
 
     QTest::newRow("testSnippet") << u"property int qwer: 123"_s << defaultOptions;
     QTest::newRow("enum") << u"enum Hello { World, Kitty, DlroW }"_s << defaultOptions;
+
+    QTest::newRow("duplicateList") << u"Item {} Item {}"_s << defaultOptions;
+    QTest::newRow("duplicateList2")
+            << u"property list<Item> myList; myList: Item {} myList: Item {}"_s << defaultOptions;
 
     QTest::newRow("color-name") << u"property color myColor: \"blue\""_s << defaultOptions;
     QTest::newRow("color-name2") << u"property color myColor\nmyColor: \"green\""_s
