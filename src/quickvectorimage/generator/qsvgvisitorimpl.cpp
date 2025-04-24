@@ -1,8 +1,6 @@
 // Copyright (C) 2024 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
-#include <QVarLengthArray>
-
 #include "qsvgvisitorimpl_p.h"
 #include "qquickgenerator_p.h"
 #include "qquicknodeinfo_p.h"
@@ -1133,17 +1131,19 @@ void QSvgVisitorImpl::applyAnimationsToProperty(const QList<AnimationPair> &anim
         const int duration = animation->duration();
 
         bool freeze = false;
+        bool replace = true;
         if (animation->animationType() == QSvgAbstractAnimation::SMIL) {
             const QSvgAnimateNode *animateNode = static_cast<const QSvgAnimateNode *>(animation);
             freeze = animateNode->fill() == QSvgAnimateNode::Freeze;
+            replace = animateNode->additiveType() == QSvgAnimateNode::Replace;
         }
 
         qCDebug(lcVectorImageAnimations) << "        -> Start:" << start
                                          << ", repeatCount:" << repeatCount
-                                         << ", freeze:" << freeze;
+                                         << ", freeze:" << freeze
+                                         << ", replace:" << replace;
 
         QList<qreal> propertyKeyFrames = property->keyFrames();
-
         QList<QQuickAnimatedProperty::PropertyAnimation> outAnimations;
 
         // For transform animations, we register the type of the transform in the animation
@@ -1158,6 +1158,8 @@ void QSvgVisitorImpl::applyAnimationsToProperty(const QList<AnimationPair> &anim
                 outAnimation.startOffset = start;
                 if (freeze)
                     outAnimation.flags |= QQuickAnimatedProperty::PropertyAnimation::FreezeAtEnd;
+                if (replace)
+                    outAnimation.flags |= QQuickAnimatedProperty::PropertyAnimation::ReplacePreviousAnimations;
                 switch (components.at(i).type) {
                 case QSvgAnimatedPropertyTransform::TransformComponent::Translate:
                     outAnimation.subtype = QTransform::TxTranslate;
@@ -1200,7 +1202,7 @@ void QSvgVisitorImpl::applyAnimationsToProperty(const QList<AnimationPair> &anim
             outAnimations.append(outAnimation);
         }
 
-
+        outProperty->beginAnimationGroup();
         for (int i = 0; i < outAnimations.size(); ++i) {
             QQuickAnimatedProperty::PropertyAnimation outAnimation = outAnimations.at(i);
 

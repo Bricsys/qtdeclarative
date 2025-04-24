@@ -47,6 +47,7 @@ qt_internal_add_qml_module(QuickVectorImageHelpers
     SOURCES
         helpers/qquickcoloropacityanimation_p.h helpers/qquickcoloropacityanimation.cpp
         helpers/qquicklayeritem_p.h helpers/qquicklayeritem.cpp
+        helpers/qquicktransformgroup_p.h helpers/qquicktransformgroup.cpp
     LIBRARIES
         Qt::QuickPrivate
         Qt::QuickVectorImageGeneratorPrivate

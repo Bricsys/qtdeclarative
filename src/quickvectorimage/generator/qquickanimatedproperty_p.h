@@ -26,7 +26,8 @@ public:
     struct PropertyAnimation {
         enum Flag {
             NoFlags = 0,
-            FreezeAtEnd = 1
+            FreezeAtEnd = 1,
+            ReplacePreviousAnimations = 2,
         };
 
         int subtype = 0;
@@ -57,7 +58,7 @@ public:
         m_defaultValue = value;
     }
 
-    int animationCount() const
+    qsizetype animationCount() const
     {
         return m_animations.size();
     }
@@ -69,12 +70,31 @@ public:
 
     void addAnimation(const PropertyAnimation &animation)
     {
+        if (m_animationGroups.isEmpty())
+            beginAnimationGroup();
+
         m_animations.append(animation);
+    }
+
+    qsizetype animationGroupCount() const
+    {
+        return m_animationGroups.size();
+    }
+
+    int animationGroup(int index) const
+    {
+        return m_animationGroups.at(index);
+    }
+
+    void beginAnimationGroup()
+    {
+        m_animationGroups.append(m_animations.size());
     }
 
 private:
     QVariant m_defaultValue;
     QList<PropertyAnimation> m_animations;
+    QList<int> m_animationGroups;
 };
 
 QT_END_NAMESPACE
