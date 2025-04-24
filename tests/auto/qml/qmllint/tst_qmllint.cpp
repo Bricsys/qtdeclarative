@@ -1424,6 +1424,14 @@ void TestQmllint::dirtyQmlSnippet_data()
             << Result{ { { "Component is missing required property bla from Foo"_L1, 1, 61 } } }
             << defaultOptions;
 
+    QTest::newRow("requiredPropertyOwnerMixup")
+            << u"component Foo: Item { required property var bla }\n"_s
+               u"Foo { Item { property int bla: 43 } }\n"_s
+               u"Foo {}\n"_s
+            << Result{ { { "Component is missing required property bla from Foo"_L1, 2, 1 },
+                         { "Component is missing required property bla from Foo"_L1, 3, 1 } } }
+            << defaultOptions;
+
     QTest::newRow("upperCaseId")
             << u"id: Root"_s
             << Result{ { { "Id must start with a lower case letter or an '_'"_L1, 1, 5 } } }
