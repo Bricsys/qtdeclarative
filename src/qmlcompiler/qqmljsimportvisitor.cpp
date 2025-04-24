@@ -1009,11 +1009,10 @@ void QQmlJSImportVisitor::checkRequiredProperties()
         return false;
     };
 
-    const auto warn = [this](QQmlJSScope::ConstPtr prevRequiredScope,
-                             const QString &propName,
-                             QQmlJSScope::ConstPtr defScope,
-                             QQmlJSScope::ConstPtr requiredScope,
-                             QQmlJSScope::ConstPtr descendant) {
+    const auto warn = [this](const QQmlJSScope::ConstPtr &prevRequiredScope,
+                             const QString &propName, const QQmlJSScope::ConstPtr &defScope,
+                             const QQmlJSScope::ConstPtr &requiredScope,
+                             const QQmlJSScope::ConstPtr &descendant) {
         const auto &propertyScope = QQmlJSScope::ownerOfProperty(requiredScope, propName).scope;
         const QString propertyScopeName = !propertyScope.isNull()
                 ? getScopeName(propertyScope, QQmlSA::ScopeType::QMLScope)
@@ -1061,7 +1060,7 @@ void QQmlJSImportVisitor::checkRequiredProperties()
         for (QQmlJSScope::ConstPtr scope = defScope; scope; scope = scope->baseType()) {
             const auto descendants = QList<QQmlJSScope::ConstPtr>()
                     << scope << qmlScopeDescendants(scope);
-            for (QQmlJSScope::ConstPtr descendant : std::as_const(descendants)) {
+            for (const QQmlJSScope::ConstPtr &descendant : std::as_const(descendants)) {
                 // Ignore inline components of children. Base types need to be always checked for
                 // required properties, even if they are defined in an inline component.
                 if (descendant != scope && descendant->isInlineComponent())
@@ -1075,7 +1074,7 @@ void QQmlJSImportVisitor::checkRequiredProperties()
                         continue;
 
                     QQmlJSScope::ConstPtr prevRequiredScope;
-                    for (QQmlJSScope::ConstPtr requiredScope : std::as_const(scopesToSearch)) {
+                    for (const QQmlJSScope::ConstPtr &requiredScope : std::as_const(scopesToSearch)) {
                         if (isInComponent(requiredScope))
                             continue;
 
