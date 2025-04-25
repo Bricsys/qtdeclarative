@@ -46,6 +46,7 @@ extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlAssignmentInConditi
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlAttachedPropertyReuse;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlComma;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlCompiler;
+extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlConfusingExpressionStatement;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlConfusingMinuses;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlConfusingPluses;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlContextProperties;

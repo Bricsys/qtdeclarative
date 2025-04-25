@@ -332,6 +332,71 @@ bool LinterVisitor::visit(QQmlJS::AST::CaseBlock *block)
     return true;
 }
 
+/*!
+\internal
+
+This assumes that there is no custom coercion enabled via \c Symbol.toPrimitive or similar.
+*/
+static bool isUselessExpressionStatement(ExpressionNode *ast)
+{
+    switch (ast->kind) {
+    case Node::Kind_CallExpression:
+    case Node::Kind_DeleteExpression:
+    case Node::Kind_NewExpression:
+    case Node::Kind_PreDecrementExpression:
+    case Node::Kind_PreIncrementExpression:
+    case Node::Kind_PostDecrementExpression:
+    case Node::Kind_PostIncrementExpression:
+    case Node::Kind_YieldExpression:
+    case Node::Kind_FunctionExpression:
+        return false;
+    default:
+        break;
+    };
+    BinaryExpression *binary = cast<BinaryExpression *>(ast);
+    if (!binary)
+        return false;
+
+    switch (binary->op) {
+    case QSOperator::InplaceAnd:
+    case QSOperator::Assign:
+    case QSOperator::InplaceSub:
+    case QSOperator::InplaceDiv:
+    case QSOperator::InplaceExp:
+    case QSOperator::InplaceAdd:
+    case QSOperator::InplaceLeftShift:
+    case QSOperator::InplaceMod:
+    case QSOperator::InplaceMul:
+    case QSOperator::InplaceOr:
+    case QSOperator::InplaceRightShift:
+    case QSOperator::InplaceURightShift:
+    case QSOperator::InplaceXor:
+        return false;
+    default:
+        return true;
+    }
+    Q_UNREACHABLE_RETURN(true);
+}
+
+static bool canHaveUselessExpressionStatement(Node *parent)
+{
+    return parent->kind != Node::Kind_UiScriptBinding && parent->kind != Node::Kind_UiPublicMember;
+}
+
+bool LinterVisitor::visit(ExpressionStatement *ast)
+{
+    QQmlJSImportVisitor::visit(ast);
+
+    if (canHaveUselessExpressionStatement(astParentOfVisitedNode())
+        && isUselessExpressionStatement(ast->expression)) {
+        m_logger->log("Expression statement has no obvious effect."_L1,
+                      qmlConfusingExpressionStatement,
+                      combine(ast->firstSourceLocation(), ast->lastSourceLocation()));
+    }
+
+    return true;
+}
+
 } // namespace QQmlJS
 
 QT_END_NAMESPACE

@@ -40,6 +40,9 @@ using namespace Qt::StringLiterals;
       false)                                                                                       \
     X(qmlCompiler, "compiler", "CompilerWarnings", "Warn about compiler issues", QtWarningMsg,     \
       true, false)                                                                                 \
+    X(qmlConfusingExpressionStatement, "confusing-expression-statement",                           \
+      "ConfusingExpressionStatement",                                                              \
+      "Warn about expression statement that has no obvious effect.", QtWarningMsg, false, false)   \
     X(qmlConfusingMinuses, "confusing-minuses", "ConfusingMinuses",                                \
       "Warn about confusing minuses.", QtWarningMsg, false, false)                                 \
     X(qmlConfusingPluses, "confusing-pluses", "ConfusingPluses",                                   \

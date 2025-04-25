@@ -51,6 +51,7 @@ protected:
     bool visit(QQmlJS::AST::UiImport *import) override;
     bool visit(QQmlJS::AST::UiEnumDeclaration *uied) override;
     bool visit(QQmlJS::AST::CaseBlock *) override;
+    bool visit(QQmlJS::AST::ExpressionStatement *ast) override;
 
 private:
     struct SeenImport

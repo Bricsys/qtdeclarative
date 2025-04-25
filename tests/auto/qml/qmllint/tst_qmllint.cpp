@@ -1445,6 +1445,11 @@ void TestQmllint::dirtyQmlSnippet_data()
             << Result{ { { "Cannot assign literal of type string to int"_L1 } } }
             << defaultOptions;
 
+    QTest::newRow("uselessExpressionStatement")
+            << u"property int i: { let x = 0; 0 + 1; return i + 3; }"_s
+            << Result{ { { "Expression statement has no obvious effect."_L1, 1, 30 } } }
+            << defaultOptions;
+
     QTest::newRow("upperCaseId")
             << u"id: Root"_s
             << Result{ { { "Id must start with a lower case letter or an '_'"_L1, 1, 5 } } }
@@ -1499,6 +1504,8 @@ void TestQmllint::cleanQmlSnippet_data()
             << u"Item { component Foo: Item { required property var bla; } }"_s << defaultOptions;
     QTest::newRow("testSnippet") << u"property int qwer: 123"_s << defaultOptions;
     QTest::newRow("underScoreId") << u"id: _Root"_s << defaultOptions;
+    QTest::newRow("usefulExpressionStatement") << u"x: y + 3;"_s << defaultOptions;
+    QTest::newRow("usefulExpressionStatement") << u"x: 3;"_s << defaultOptions;
     QTest::newRow("void") << u"function f(): void {}"_s << defaultOptions;
 }
 
@@ -1683,6 +1690,14 @@ void TestQmllint::dirtyJsSnippet_data()
                 << Result{ { { "Do not use void expressions"_L1, 1, 1 } } }
                 << options;
     }
+    QTest::newRow("uselessExpressionStatement")
+            << u"x + 3;"_s
+            << Result{ { { "Expression statement has no obvious effect."_L1, 1, 1 } } }
+            << defaultOptions;
+    QTest::newRow("uselessExpressionStatement2")
+            << u"for (;;) { x + 3; return x; }"_s
+            << Result{ { { "Expression statement has no obvious effect."_L1, 1, 12 } } }
+            << defaultOptions;
 }
 
 void TestQmllint::dirtyJsSnippet()
@@ -1731,6 +1746,9 @@ void TestQmllint::cleanJsSnippet_data()
             << u"function f(a) { if (1){ const a = 33; } }"_s << defaultOptions;
     QTest::newRow("shadowFunction") << u"function f() { function f() {} }"_s << defaultOptions;
     QTest::newRow("testSnippet") << u"let x = 5"_s << defaultOptions;
+    QTest::newRow("usefulExpressionStatement") << u"x += 3;"_s << defaultOptions;
+    QTest::newRow("usefulExpressionStatement2")
+            << u"for (;;) { x /= 3; return x; }"_s << defaultOptions;
     QTest::newRow("varUsedBeforeDeclarationWithIgnore")
             << u"// qmllint disable var-used-before-declaration\n"
                "f(x) ;\n"
