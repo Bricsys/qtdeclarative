@@ -114,6 +114,13 @@ bool LinterVisitor::visit(NewMemberExpression *expression)
     return true;
 }
 
+bool LinterVisitor::visit(VoidExpression *ast)
+{
+    QQmlJSImportVisitor::visit(ast);
+    m_logger->log("Do not use void expressions."_L1, qmlVoid, ast->voidToken);
+    return true;
+}
+
 } // namespace QQmlJS
 
 QT_END_NAMESPACE

@@ -1338,6 +1338,7 @@ void TestQmllint::cleanQmlSnippet_data()
             << u"Item { component Foo: Item { required property var bla; } }"_s << defaultOptions;
     QTest::newRow("testSnippet") << u"property int qwer: 123"_s << defaultOptions;
     QTest::newRow("underScoreId") << u"id: _Root"_s << defaultOptions;
+    QTest::newRow("void") << u"function f(): void {}"_s << defaultOptions;
 }
 
 void TestQmllint::cleanQmlSnippet()
@@ -1468,6 +1469,18 @@ void TestQmllint::dirtyJsSnippet_data()
             << Result{ { { "Identifier 'f' has already been declared"_L1, 1, 24 },
                          { "Note: previous declaration of 'f' here"_L1, 1, 7 } } }
             << defaultOptions;
+    {
+        CallQmllintOptions options;
+        options.enableCategories.append(qmlVoid.name().toString());
+        QTest::newRow("void")
+                << u"void 1;"_s
+                << Result{ { { "Do not use void expressions"_L1, 1, 1 } } }
+                << options;
+        QTest::newRow("void2")
+                << u"void(0)"_s
+                << Result{ { { "Do not use void expressions"_L1, 1, 1 } } }
+                << options;
+    }
 }
 
 void TestQmllint::dirtyJsSnippet()

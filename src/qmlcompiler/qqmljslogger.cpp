@@ -121,6 +121,7 @@ using namespace Qt::StringLiterals;
       "Warn if var is used for storing functions", QtWarningMsg, false, false)                     \
     X(qmlVarUsedBeforeDeclaration, "var-used-before-declaration", "VarUsedBeforeDeclaration",      \
       "Warn if a variable is used before declaration", QtWarningMsg, false, false)                 \
+    X(qmlVoid, "void", "Void", "Warn about void expressions.", QtWarningMsg, true, false)          \
     X(qmlWith, "with", "WithStatement",                                                            \
       "Warn about with statements as they can cause false "                                        \
       "positives when checking for unqualified access",                                            \

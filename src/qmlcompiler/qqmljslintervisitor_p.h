@@ -42,6 +42,7 @@ protected:
     bool visit(QQmlJS::AST::StringLiteral *) override;
     bool visit(AST::CommaExpression *) override;
     bool visit(QQmlJS::AST::NewMemberExpression *) override;
+    bool visit(QQmlJS::AST::VoidExpression *ast) override;
 
 private:
     std::vector<QQmlJS::AST::Node *> m_ancestryIncludingCurrentNode;

@@ -85,6 +85,7 @@ extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUnresolvedType;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUnusedImports;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUseProperFunction;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlVarUsedBeforeDeclaration;
+extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlVoid;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlWith;
 
 QT_END_NAMESPACE
