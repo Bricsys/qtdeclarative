@@ -40,6 +40,7 @@ protected:
     QQmlJS::AST::Node *astParentOfVisitedNode() const;
 
     bool visit(QQmlJS::AST::StringLiteral *) override;
+    bool visit(AST::CommaExpression *) override;
 
 private:
     std::vector<QQmlJS::AST::Node *> m_ancestryIncludingCurrentNode;

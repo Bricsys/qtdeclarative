@@ -78,6 +78,20 @@ Node *LinterVisitor::astParentOfVisitedNode() const
     return m_ancestryIncludingCurrentNode[m_ancestryIncludingCurrentNode.size() - 2];
 }
 
+bool LinterVisitor::visit(CommaExpression *expression)
+{
+    QQmlJSImportVisitor::visit(expression);
+    if (!expression->left || !expression->right)
+        return true;
+
+    // don't warn about commas in "for" statements
+    if (cast<ForStatement *>(astParentOfVisitedNode()))
+        return true;
+
+    m_logger->log("Do not use comma expressions."_L1, qmlComma, expression->commaToken);
+    return true;
+}
+
 } // namespace QQmlJS
 
 QT_END_NAMESPACE

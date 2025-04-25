@@ -36,6 +36,8 @@ using namespace Qt::StringLiterals;
       "Warn if attached types from parent components aren't reused. This is handled by the "       \
       "QtQuick lint plugin. Use Quick.AttachedPropertyReuse instead.",                             \
       QtCriticalMsg, true, false)                                                                  \
+    X(qmlComma, "comma", "Comma", "Warn about using comma expressions.", QtWarningMsg, false,      \
+      false)                                                                                       \
     X(qmlCompiler, "compiler", "CompilerWarnings", "Warn about compiler issues", QtWarningMsg,     \
       true, false)                                                                                 \
     X(qmlDeferredPropertyId, "deferred-property-id", "DeferredPropertyId",                         \

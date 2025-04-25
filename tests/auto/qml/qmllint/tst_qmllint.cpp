@@ -1387,6 +1387,14 @@ void TestQmllint::dirtyJsSnippet_data()
             << u"for (;;) { throw 1; return 1;}"_s
             << Result{ { { "Unreachable code"_L1, 1, 21 } } }
             << defaultOptions;
+    QTest::newRow("comma")
+            << u"return 2, 3"_s
+            << Result{ { { "Do not use comma expressions."_L1, 1, 9 } } }
+            << defaultOptions;
+    QTest::newRow("comma2")
+            << u"for (;;) { return 2, 3; }"_s
+            << Result{ { { "Do not use comma expressions."_L1, 1, 20 } } }
+            << defaultOptions;
     QTest::newRow("doubleConst")
             << u"const x = 4; const x = 4;"_s
             << Result{ { { "Identifier 'x' has already been declared"_L1, 1, 20 },
@@ -1487,6 +1495,8 @@ void TestQmllint::cleanJsSnippet_data()
     QTest::newRow("codeAfterReturn2")
             << u"switch (1) { case 1: break; default: return 4;} return 3;"_s << defaultOptions;
     QTest::newRow("codeAfterThrow") << u"for (;;) { if (x) throw 1; return 1;}"_s << defaultOptions;
+    QTest::newRow("comma") << u"let i, end; for (i = 0, end = 42; i < end; ++i) {}"_s
+                           << defaultOptions;
     QTest::newRow("doubleInDifferentScopes")
             << u"const a = 42; for (let a = 1; a < 10; ++a) {}"_s << defaultOptions;
     QTest::newRow("doubleVar") << u"var x = 5; var y = 5"_s << defaultOptions;
