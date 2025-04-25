@@ -82,6 +82,7 @@ extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlAssignmentInConditi
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlEval;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlRedundantOptionalChaining;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUnreachableCode;
+extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlStalePropertyRead;
 
 QT_END_NAMESPACE
 

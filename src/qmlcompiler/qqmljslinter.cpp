@@ -669,6 +669,24 @@ QQmlJSLinter::LintResult QQmlJSLinter::lintFile(const QString &filename,
             })
             .registerOnBuiltin("GlobalObject", "eval");
 
+    QQmlSA::PropertyPassBuilder(passMan.get())
+            .withOnRead([](QQmlSA::PropertyPass *self, const QQmlSA::Element &element,
+                           const QString &propName, const QQmlSA::Element &readScope,
+                           QQmlSA::SourceLocation location) {
+                Q_UNUSED(readScope);
+                const auto &elementScope = QQmlJSScope::scope(element);
+                const auto &owner = QQmlJSScope::ownerOfProperty(elementScope, propName).scope;
+                if (!owner || owner->isComposite() || owner->isValueType())
+                    return;
+                const auto &prop = QQmlSA::PropertyPrivate::property(element.property(propName));
+                if (prop.index() != -1 && !prop.isPropertyConstant() && prop.notify().isEmpty()) {
+                    const QString msg =
+                            "Reading non-constant and non-notifiable property %1. "_L1
+                            "Binding might not update when the property changes."_L1.arg(propName);
+                    self->emitWarning(msg, qmlStalePropertyRead, location);
+                }
+            }).registerOn({}, {}, {});
+
     if (m_enablePlugins) {
         for (const Plugin &plugin : m_plugins) {
             if (!plugin.isValid() || !plugin.isEnabled())

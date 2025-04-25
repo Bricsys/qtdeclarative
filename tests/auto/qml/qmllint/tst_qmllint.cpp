@@ -1324,6 +1324,18 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
             << QStringLiteral("RedundantOptionalChainingEnums.qml")
             << Result{ { { "Redundant optional chaining for enum lookup"_L1, 5, 54 },
                          { "Redundant optional chaining for enum lookup"_L1, 6, 26 } } };
+    {
+        const auto msgGen = [](const QString &name, quint32 line, quint32 col) {
+            return Message{ "Reading non-constant and non-notifiable property %1. Binding might "_L1
+                            "not update when the property changes."_L1.arg(name), line, col };
+        };
+        QTest::newRow("stalePropertyRead")
+                << QStringLiteral("StalePropertyRead.qml")
+                << Result{ { msgGen("cppStale"_L1, 10, 24), msgGen("cppReadonly"_L1, 11, 24) },
+                           { msgGen("cppConstant"_L1, 14, 24), msgGen("cppNotifiable"_L1, 15, 24),
+                             msgGen("cppConstantNotifiable"_L1, 16, 24), msgGen("i"_L1, 17, 24),
+                             msgGen("ro"_L1, 18, 24) } };
+    }
 }
 
 void TestQmllint::dirtyQmlCode()

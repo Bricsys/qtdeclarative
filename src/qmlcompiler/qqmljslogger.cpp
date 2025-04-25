@@ -114,7 +114,10 @@ using namespace Qt::StringLiterals;
       false)                                                                                       \
     X(qmlEval, "eval", "Eval", "Warn about uses of eval()", QtWarningMsg, false, false)            \
     X(qmlUnreachableCode, "unreachable-code", "UnreachableCode", "Warn about unreachable code.",   \
-      QtWarningMsg, false, false)
+      QtWarningMsg, false, false)                                                                  \
+    X(qmlStalePropertyRead, "stale-property-read", "StalePropertyRead",                            \
+      "Warn about bindings reading non-constant and non-notifyable properties", QtWarningMsg,      \
+      false, false) \
 
 #define X(category, name, setting, description, level, ignored, isDefault) \
     const QQmlSA::LoggerWarningId category{ name };
