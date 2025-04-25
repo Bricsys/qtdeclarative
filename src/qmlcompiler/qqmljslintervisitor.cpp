@@ -121,6 +121,69 @@ bool LinterVisitor::visit(VoidExpression *ast)
     return true;
 }
 
+static SourceLocation confusingPluses(BinaryExpression *exp)
+{
+    Q_ASSERT(exp->op == QSOperator::Add);
+
+    SourceLocation location = exp->operatorToken;
+
+    // a++ + b
+    if (auto increment = cast<PostIncrementExpression *>(exp->left))
+        location = combine(increment->incrementToken, location);
+    // a + +b
+    if (auto unary = cast<UnaryPlusExpression *>(exp->right))
+        location = combine(location, unary->plusToken);
+    // a + ++b
+    if (auto increment = cast<PreIncrementExpression *>(exp->right))
+        location = combine(location, increment->incrementToken);
+
+    if (location == exp->operatorToken)
+        return SourceLocation{};
+
+    return location;
+}
+
+static SourceLocation confusingMinuses(BinaryExpression *exp)
+{
+    Q_ASSERT(exp->op == QSOperator::Sub);
+
+    SourceLocation location = exp->operatorToken;
+
+    // a-- - b
+    if (auto decrement = cast<PostDecrementExpression *>(exp->left))
+        location = combine(decrement->decrementToken, location);
+    // a - -b
+    if (auto unary = cast<UnaryMinusExpression *>(exp->right))
+        location = combine(location, unary->minusToken);
+    // a - --b
+    if (auto decrement = cast<PreDecrementExpression *>(exp->right))
+        location = combine(location, decrement->decrementToken);
+
+    if (location == exp->operatorToken)
+        return SourceLocation{};
+
+    return location;
+}
+
+bool LinterVisitor::visit(BinaryExpression *exp)
+{
+    QQmlJSImportVisitor::visit(exp);
+    switch (exp->op) {
+    case QSOperator::Add:
+        if (SourceLocation loc = confusingPluses(exp); loc.isValid())
+            m_logger->log("Confusing pluses."_L1, qmlConfusingPluses, loc);
+        break;
+    case QSOperator::Sub:
+        if (SourceLocation loc = confusingMinuses(exp); loc.isValid())
+            m_logger->log("Confusing minuses."_L1, qmlConfusingMinuses, loc);
+        break;
+    default:
+        break;
+    }
+
+    return true;
+}
+
 } // namespace QQmlJS
 
 QT_END_NAMESPACE

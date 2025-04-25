@@ -1396,6 +1396,24 @@ void TestQmllint::dirtyJsSnippet_data()
             << u"for (;;) { return 2, 3; }"_s
             << Result{ { { "Do not use comma expressions."_L1, 1, 20 } } }
             << defaultOptions;
+    QTest::newRow("confusing-minuses")
+            << u"let a = 0, b = 0; return a-- - b;"_s
+            << Result{ { { "Confusing minuses"_L1, 1, 27 } } } << defaultOptions;
+    QTest::newRow("confusing-minuses2")
+            << u"let a = 0, b = 0; return a-- - -b;"_s
+            << Result{ { { "Confusing minuses"_L1, 1, 27 } } } << defaultOptions;
+    QTest::newRow("confusing-minuses3")
+            << u"let a = 0, b = 0; return a-- - --b;"_s
+            << Result{ { { "Confusing minuses"_L1, 1, 27 } } } << defaultOptions;
+    QTest::newRow("confusing-pluses")
+            << u"let a = 0, b = 0; return a++ + b;"_s
+            << Result{ { { "Confusing pluses"_L1, 1, 27 } } } << defaultOptions;
+    QTest::newRow("confusing-pluses2")
+            << u"let a = 0, b = 0; return a++ + +b;"_s
+            << Result{ { { "Confusing pluses"_L1, 1, 27 } } } << defaultOptions;
+    QTest::newRow("confusing-pluses3")
+            << u"let a = 0, b = 0; return a++ + ++b;"_s
+            << Result{ { { "Confusing pluses"_L1, 1, 27 } } } << defaultOptions;
     QTest::newRow("constructor")
             << u"return new Boolean();"_s
             << Result{ { { "Do not use 'Boolean' as a constructor."_L1, 1, 12 } } }

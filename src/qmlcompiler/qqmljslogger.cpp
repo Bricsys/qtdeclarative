@@ -40,6 +40,10 @@ using namespace Qt::StringLiterals;
       false)                                                                                       \
     X(qmlCompiler, "compiler", "CompilerWarnings", "Warn about compiler issues", QtWarningMsg,     \
       true, false)                                                                                 \
+    X(qmlConfusingMinuses, "confusing-minuses", "ConfusingMinuses",                                \
+      "Warn about confusing minuses.", QtWarningMsg, false, false)                                 \
+    X(qmlConfusingPluses, "confusing-pluses", "ConfusingPluses",                                   \
+      "Warn about confusing pluses.", QtWarningMsg, false, false)                                  \
     X(qmlDeferredPropertyId, "deferred-property-id", "DeferredPropertyId",                         \
       "Warn about making deferred properties immediate by giving them an id.", QtInfoMsg, true,    \
       true)                                                                                        \
