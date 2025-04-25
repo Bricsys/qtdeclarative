@@ -964,7 +964,7 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
                    {},
                    {}
                };
-    QTest::newRow("AssignToReadOnlyProperty")
+    QTest::newRow("AssignToReadOnlyProperty2")
             << QStringLiteral("assignToReadOnlyProperty2.qml")
             << Result { { Message {
                        QStringLiteral("Cannot assign to read-only property activeFocus") } } };
