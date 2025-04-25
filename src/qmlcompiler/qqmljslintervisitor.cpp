@@ -92,6 +92,28 @@ bool LinterVisitor::visit(CommaExpression *expression)
     return true;
 }
 
+static void warnAboutLiteralConstructors(NewMemberExpression *expression, QQmlJSLogger *logger)
+{
+    static constexpr std::array literals{ "Boolean"_L1, "Function"_L1, "JSON"_L1,
+                                          "Math"_L1,    "Number"_L1,   "String"_L1 };
+
+    const IdentifierExpression *identifier = cast<IdentifierExpression *>(expression->base);
+    if (!identifier)
+        return;
+
+    if (std::find(literals.cbegin(), literals.cend(), identifier->name) != literals.cend()) {
+        logger->log("Do not use '%1' as a constructor."_L1.arg(identifier->name),
+                    qmlLiteralConstructor, identifier->identifierToken);
+    }
+}
+
+bool LinterVisitor::visit(NewMemberExpression *expression)
+{
+    QQmlJSImportVisitor::visit(expression);
+    warnAboutLiteralConstructors(expression, m_logger);
+    return true;
+}
+
 } // namespace QQmlJS
 
 QT_END_NAMESPACE

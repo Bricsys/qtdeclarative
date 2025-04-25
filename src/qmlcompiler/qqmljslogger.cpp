@@ -63,6 +63,9 @@ using namespace Qt::StringLiterals;
       "Warn about inheritance cycles", QtWarningMsg, false, false)                                 \
     X(qmlInvalidLintDirective, "invalid-lint-directive", "InvalidLintDirective",                   \
       "Warn if an invalid qmllint comment is found", QtWarningMsg, false, false)                   \
+    X(qmlLiteralConstructor, "literal-constructor", "LiteralConstructor",                          \
+      "Warn about using literal constructors, like Boolean or String for example.", QtWarningMsg,  \
+      false, false)                                                                                \
     X(qmlMissingEnumEntry, "missing-enum-entry", "MissingEnumEntry",                               \
       "Warn about using missing enum values.", QtWarningMsg, false, false)                         \
     X(qmlMissingProperty, "missing-property", "MissingProperty", "Warn about missing properties",  \
