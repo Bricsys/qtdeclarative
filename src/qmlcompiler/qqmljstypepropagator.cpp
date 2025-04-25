@@ -2581,6 +2581,64 @@ void QQmlJSTypePropagator::recordCompareType(int lhs)
     }
 }
 
+static bool mightContainStringOrNumberOrBoolean(const QQmlJSScope::ConstPtr &scope,
+                                                const QQmlJSTypeResolver *resolver)
+{
+    return scope == resolver->varType() || scope == resolver->jsValueType()
+            || scope == resolver->jsPrimitiveType();
+}
+
+static bool isStringOrNumberOrBoolean(const QQmlJSScope::ConstPtr &scope,
+                                      const QQmlJSTypeResolver *resolver)
+{
+    return scope == resolver->boolType() || scope == resolver->stringType()
+            || resolver->isNumeric(scope);
+}
+
+static bool isVoidOrUndefined(const QQmlJSScope::ConstPtr &scope,
+                              const QQmlJSTypeResolver *resolver)
+{
+    return scope == resolver->nullType() || scope == resolver->voidType();
+}
+
+static bool requiresStrictEquality(const QQmlJSScope::ConstPtr &lhs,
+                                   const QQmlJSScope::ConstPtr &rhs,
+                                   const QQmlJSTypeResolver *resolver)
+{
+    if (lhs == rhs)
+        return false;
+
+    if (resolver->isNumeric(lhs) && resolver->isNumeric(rhs))
+        return false;
+
+    if (isVoidOrUndefined(lhs, resolver) || isVoidOrUndefined(rhs, resolver))
+        return false;
+
+    if (isStringOrNumberOrBoolean(lhs, resolver)
+        && !mightContainStringOrNumberOrBoolean(rhs, resolver)) {
+        return true;
+    }
+
+    if (isStringOrNumberOrBoolean(rhs, resolver)
+        && !mightContainStringOrNumberOrBoolean(lhs, resolver)) {
+        return true;
+    }
+
+    return false;
+}
+
+void QQmlJSTypePropagator::warnAboutTypeCoercion(int lhs)
+{
+    const QQmlJSScope::ConstPtr lhsType = checkedInputRegister(lhs).containedType();
+    const QQmlJSScope::ConstPtr rhsType = m_state.accumulatorIn().containedType();
+
+    if (!requiresStrictEquality(lhsType, rhsType, m_typeResolver))
+        return;
+
+    m_logger->log("== and != may perform type coercion, use === or !== to avoid it."_L1,
+                  qmlEqualityTypeCoercion, currentNonEmptySourceLocation());
+}
+
 void QQmlJSTypePropagator::generate_CmpEqNull()
 {
     recordEqualsNullType();
@@ -2613,12 +2671,14 @@ void QQmlJSTypePropagator::generate_CmpNeInt(int lhsConst)
 
 void QQmlJSTypePropagator::generate_CmpEq(int lhs)
 {
+    warnAboutTypeCoercion(lhs);
     recordEqualsType(lhs);
     propagateBinaryOperation(QSOperator::Op::Equal, lhs);
 }
 
 void QQmlJSTypePropagator::generate_CmpNe(int lhs)
 {
+    warnAboutTypeCoercion(lhs);
     recordEqualsType(lhs);
     propagateBinaryOperation(QSOperator::Op::NotEqual, lhs);
 }

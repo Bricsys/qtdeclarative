@@ -1044,6 +1044,7 @@ ticks: \` \` \\\` \\\`
 singleTicks: ' \\' \\\\'
 expression: \${expr} \${expr} \\\${expr} \\\${expr}`)"_L1, 16, 27 } },
                        { Result::ExitsNormally, Result::AutoFixable } };
+
     // The warning should show up only once even though
     // we have to run the type propagator multiple times.
     QTest::newRow("multiplePasses")
@@ -1404,6 +1405,21 @@ void TestQmllint::dirtyQmlSnippet_data()
             << Result{ { { "Duplicate inline component 'A'"_L1, 2, 8 },
                          { "Note: previous component named 'A' here"_L1, 1, 1 } } }
             << defaultOptions;
+    QTest::newRow("equality-with-coercion")
+            << u"function f(a: int, b: string): bool { return a == b; }"_s
+            << Result{ { { "== and != may perform type coercion, use === or !== to avoid it."_L1, 1,
+                           46 } } }
+            << defaultOptions;
+    QTest::newRow("equality-with-coercion2")
+            << u"function f(a: int): bool { return a == {}; }"_s
+            << Result{ { { "== and != may perform type coercion, use === or !== to avoid it."_L1, 1,
+                           35 } } }
+            << defaultOptions;
+    QTest::newRow("equality-with-coercion3")
+            << u"function f(a: int): bool { return a == true; }"_s
+            << Result{ { { "== and != may perform type coercion, use === or !== to avoid it."_L1, 1,
+                           35 } } }
+            << defaultOptions;
     QTest::newRow("duplicateObjectBinding")
             << u"property Item i; i: Item {} i: Item {}"_s
             << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 29 },
@@ -1517,6 +1533,10 @@ void TestQmllint::cleanQmlSnippet_data()
     QTest::newRow("duplicateList2")
             << u"property list<Item> myList; myList: Item {} myList: Item {}"_s << defaultOptions;
     QTest::newRow("enum") << u"enum Hello { World, Kitty, DlroW }"_s << defaultOptions;
+    QTest::newRow("equality-with-coercion")
+            << u"function f(a:int, b: int): bool { return a == b; }"_s << defaultOptions;
+    QTest::newRow("equality-with-coercion2")
+            << u"function f(a, b) { return a == null && b == undefined; }"_s << defaultOptions;
     QTest::newRow("lowerCaseId") << u"id: root"_s << defaultOptions;
     QTest::newRow("preferNonVarProperties_nonReadOnly")
             << u"property var i: 1     \n"_s
@@ -1646,6 +1666,11 @@ void TestQmllint::dirtyJsSnippet_data()
     QTest::newRow("eval2")
             << u"let x = eval(\"1 + 1\");"_s
             << Result{ { { "Do not use 'eval'"_L1, 1, 9 } } }
+            << defaultOptions;
+    QTest::newRow("equality-with-coercion")
+            << u"let a = 0, b = \"0\"; return a == b;"_s
+            << Result{ { { "== and != may perform type coercion, use === or !== to avoid it."_L1, 1,
+                           28 } } }
             << defaultOptions;
     QTest::newRow("functionAfterThrow")
             << u"throw 1; function f() {}; let x = 1; function g() {}; let y = 1;"_s
@@ -1786,6 +1811,10 @@ void TestQmllint::cleanJsSnippet_data()
     QTest::newRow("functionAfterThrow") << u"throw 1; function f() {}"_s << defaultOptions;
     QTest::newRow("notAssignmentInCondition")
             << u"let x = 3; if (x==3) return;"_s << defaultOptions;
+
+    QTest::newRow("equality-with-coercion") << u"let a = 0; return a == null;"_s << defaultOptions;
+    QTest::newRow("equality-with-coercion2")
+            << u"let a = 0; return a == undefined;"_s << defaultOptions;
     QTest::newRow("shadowArgument")
             << u"function f(a) { if (1){ const a = 33; } }"_s << defaultOptions;
     QTest::newRow("shadowFunction") << u"function f() { function f() {} }"_s << defaultOptions;

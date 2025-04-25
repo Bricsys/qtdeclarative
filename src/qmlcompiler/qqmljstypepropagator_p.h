@@ -295,6 +295,7 @@ private:
         setAccumulator(m_typeResolver->syntheticType(m_typeResolver->varType()));
         m_state.instructionHasError = true;
     }
+    void warnAboutTypeCoercion(int lhs);
 
     QQmlJSRegisterContent m_returnType;
     QQmlSA::PassManager *m_passManager = nullptr;
