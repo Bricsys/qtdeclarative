@@ -59,6 +59,25 @@ bool LinterVisitor::visit(StringLiteral *sl)
     return true;
 }
 
+bool LinterVisitor::preVisit(Node *n)
+{
+    m_ancestryIncludingCurrentNode.push_back(n);
+    return true;
+}
+
+void LinterVisitor::postVisit(Node *n)
+{
+    Q_ASSERT(m_ancestryIncludingCurrentNode.back() == n);
+    m_ancestryIncludingCurrentNode.pop_back();
+}
+
+Node *LinterVisitor::astParentOfVisitedNode() const
+{
+    if (m_ancestryIncludingCurrentNode.size() < 2)
+        return nullptr;
+    return m_ancestryIncludingCurrentNode[m_ancestryIncludingCurrentNode.size() - 2];
+}
+
 } // namespace QQmlJS
 
 QT_END_NAMESPACE

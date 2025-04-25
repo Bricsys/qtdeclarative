@@ -33,11 +33,16 @@ public:
 
 protected:
     using QQmlJSImportVisitor::endVisit;
-    using QQmlJSImportVisitor::postVisit;
-    using QQmlJSImportVisitor::preVisit;
     using QQmlJSImportVisitor::visit;
 
+    bool preVisit(QQmlJS::AST::Node *) override;
+    void postVisit(QQmlJS::AST::Node *) override;
+    QQmlJS::AST::Node *astParentOfVisitedNode() const;
+
     bool visit(QQmlJS::AST::StringLiteral *) override;
+
+private:
+    std::vector<QQmlJS::AST::Node *> m_ancestryIncludingCurrentNode;
 };
 
 } // namespace QQmlJS
