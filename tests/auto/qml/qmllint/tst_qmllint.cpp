@@ -3052,6 +3052,8 @@ void TestQmllint::qdsPlugin()
     runTest(fileName, expectedResult);
 }
 
+#endif // QT_CONFIG(library)
+
 void TestQmllint::environment_data()
 {
     QTest::addColumn<QString>("file");
@@ -3111,8 +3113,6 @@ void TestQmllint::maxWarnings()
     // only 2 warning => should exit normally
     runQmllint(testFile("badScript.qml"), true, {"--max-warnings", "2"});
 }
-
-#endif
 
 void TestQmllint::ignoreSettingsNotCommandLineOptions()
 {
