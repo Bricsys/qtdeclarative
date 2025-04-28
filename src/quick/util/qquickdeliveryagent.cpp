@@ -2943,7 +2943,10 @@ QVector<QQuickItem *> QQuickDeliveryAgentPrivate::contextMenuTargets(QQuickItem 
         return std::nullopt;
     };
 
-    return eventTargets(item, event, event->pos(), predicate);
+    const auto pos = event->pos().isNull() ? activeFocusItem->mapToScene({}).toPoint() : event->pos();
+    if (event->pos().isNull())
+        qCDebug(lcContextMenu) << "for QContextMenuEvent, active focus item is" << activeFocusItem << "@" << pos;
+    return eventTargets(item, event, pos, predicate);
 }
 
 /*!
