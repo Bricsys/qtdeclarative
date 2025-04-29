@@ -311,6 +311,9 @@ void QQmlMetaType::clearTypeRegistrations()
     data->undeletableTypes.clear();
     data->propertyCaches.clear();
 
+    qDeleteAll(data->metaTypeToValueType);
+    data->metaTypeToValueType.clear();
+
     // Avoid deletion recursion (via QQmlTypePrivate dtor) by moving them out of the way first.
     QQmlMetaTypeData::CompositeTypes emptyComposites;
     emptyComposites.swap(data->compositeTypes);
