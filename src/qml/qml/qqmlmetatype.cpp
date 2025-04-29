@@ -1862,6 +1862,9 @@ static bool isInternalType(int idx)
 
 bool QQmlMetaType::isValueType(QMetaType type)
 {
+    if (type.flags().testFlag(QMetaType::PointerToQObject))
+        return false;
+
     if (!type.isValid() || isInternalType(type.id()))
         return false;
 
