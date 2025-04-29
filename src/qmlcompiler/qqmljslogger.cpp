@@ -43,6 +43,8 @@ using namespace Qt::StringLiterals;
       true)                                                                                        \
     X(qmlDeprecated, "deprecated", "Deprecated", "Warn about deprecated properties and types",     \
       QtWarningMsg, false, false)                                                                  \
+    X(qmlDuplicateInlineComponent, "duplicate-inline-component", "DuplicateInlineComponent",       \
+      "Warn about duplicate inline components", QtWarningMsg, false, false)                        \
     X(qmlDuplicatePropertyBinding, "duplicate-property-binding", "DuplicatePropertyBinding",       \
       "Warn about duplicate property bindings", QtWarningMsg, false, false)                        \
     X(qmlDuplicatedName, "duplicated-name", "DuplicatedName",                                      \
@@ -118,6 +120,7 @@ using namespace Qt::StringLiterals;
       "Warn about with statements as they can cause false "                                        \
       "positives when checking for unqualified access",                                            \
       QtWarningMsg, false, false)
+
 
 #define X(category, name, setting, description, level, ignored, isDefault) \
     const QQmlSA::LoggerWarningId category{ name };

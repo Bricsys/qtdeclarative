@@ -384,6 +384,7 @@ protected:
     QSet<QQmlJSScope::ConstPtr> m_literalScopesToCheck;
     QQmlJS::SourceLocation m_pendingSignalHandler;
     QStringList m_seenModuleQualifiers;
+    QHash<QStringView, QQmlJS::SourceLocation> m_seenInlineComponents;
 
 private:
     void registerTargetIntoImporter(const QQmlJSScope::Ptr &target);

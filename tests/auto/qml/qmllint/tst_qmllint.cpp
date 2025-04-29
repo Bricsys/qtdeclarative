@@ -1255,6 +1255,12 @@ void TestQmllint::dirtyQmlSnippet_data()
             << Result{ { { "Duplicate binding on property 'pixelSize'"_L1, 1, 40 },
                          { "Note: previous binding on 'pixelSize' here"_L1, 1, 26 } } }
             << defaultOptions;
+    QTest::newRow("duplicateInlineComponent")
+            << u"component A: QtObject {}\n"_s
+               u"Item { component A: Item {} }\n"_s
+            << Result{ { { "Duplicate inline component 'A'"_L1, 2, 8 },
+                         { "Note: previous component named 'A' here"_L1, 1, 1 } } }
+            << defaultOptions;
     QTest::newRow("duplicateObjectBinding")
             << u"property Item i; i: Item {} i: Item {}"_s
             << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 29 },

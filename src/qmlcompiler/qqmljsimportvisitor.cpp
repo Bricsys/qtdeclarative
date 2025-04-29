@@ -1750,6 +1750,17 @@ bool QQmlJSImportVisitor::visit(UiInlineComponent *component)
         return true;
     }
 
+    const auto it = m_seenInlineComponents.constFind(component->name);
+    if (it != m_seenInlineComponents.cend()) {
+        m_logger->log("Duplicate inline component '%1'"_L1.arg(it.key()),
+                      qmlDuplicateInlineComponent, component->firstSourceLocation());
+        m_logger->log("Note: previous component named '%1' here"_L1.arg(it.key()),
+                      qmlDuplicateInlineComponent, it.value(), true, true, {}, {},
+                      component->firstSourceLocation().startLine);
+    } else {
+        m_seenInlineComponents[component->name] = component->firstSourceLocation();
+    }
+
     m_nextIsInlineComponent = true;
     m_currentRootName = component->name.toString();
     return true;
