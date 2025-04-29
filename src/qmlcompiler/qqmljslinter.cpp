@@ -21,6 +21,7 @@
 
 #include <QtQmlCompiler/private/qqmlsa_p.h>
 #include <QtQmlCompiler/private/qqmljsloggingutils_p.h>
+#include <QtQmlCompiler/private/qqmljslintervisitor_p.h>
 
 #if QT_CONFIG(library)
 #    include <QtCore/qdiriterator.h>
@@ -604,10 +605,10 @@ QQmlJSLinter::LintResult QQmlJSLinter::lintFile(const QString &filename,
     m_logger->setSilent(silent || json);
 
     QQmlJSScope::Ptr target = QQmlJSScope::create();
-    QQmlJSImportVisitor v{ target, &m_importer, m_logger.get(),
-                           QQmlJSImportVisitor::implicitImportDirectory(
-                                   m_logger->filePath(), m_importer.resourceFileMapper()),
-                           qmldirFiles };
+    QQmlJS::LinterVisitor v{ target, &m_importer, m_logger.get(),
+                             QQmlJSImportVisitor::implicitImportDirectory(
+                                     m_logger->filePath(), m_importer.resourceFileMapper()),
+                             qmldirFiles };
 
     if (m_enablePlugins) {
         for (const Plugin &plugin : m_plugins) {
