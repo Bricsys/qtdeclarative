@@ -89,9 +89,6 @@ public:
     QStringList seenModuleQualifiers() const { return m_seenModuleQualifiers; }
 
 protected:
-    // Linter warnings, we might want to move this at some point
-    bool visit(QQmlJS::AST::StringLiteral *) override;
-
     bool visit(QQmlJS::AST::ExpressionStatement *ast) override;
     void endVisit(QQmlJS::AST::ExpressionStatement *ast) override;
 

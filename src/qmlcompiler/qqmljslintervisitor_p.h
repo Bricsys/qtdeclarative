@@ -36,6 +36,8 @@ protected:
     using QQmlJSImportVisitor::postVisit;
     using QQmlJSImportVisitor::preVisit;
     using QQmlJSImportVisitor::visit;
+
+    bool visit(QQmlJS::AST::StringLiteral *) override;
 };
 
 } // namespace QQmlJS
