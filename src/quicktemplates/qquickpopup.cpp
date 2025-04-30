@@ -839,11 +839,13 @@ void QQuickPopupPrivate::finalizeExitTransition()
     }
     destroyDimmer();
 
-    if (hadActiveFocusBeforeExitTransition && window) {
+    if (auto *overlay = QQuickOverlay::overlay(window)) {
+        auto *overlayPrivate = QQuickOverlayPrivate::get(overlay);
+
         // restore focus to the next popup in chain, or to the window content if there are no other popups open
-        QQuickPopup *nextFocusPopup = nullptr;
-        if (QQuickOverlay *overlay = QQuickOverlay::overlay(window)) {
-            const auto stackingOrderPopups = QQuickOverlayPrivate::get(overlay)->stackingOrderPopups();
+        if (hadActiveFocusBeforeExitTransition) {
+            QQuickPopup *nextFocusPopup = nullptr;
+            const auto stackingOrderPopups = overlayPrivate->stackingOrderPopups();
             for (auto popup : stackingOrderPopups) {
                 // only pick a popup that is focused but has not already been activated
                 if (QQuickPopupPrivate::get(popup)->transitionState != ExitTransition
@@ -852,30 +854,24 @@ void QQuickPopupPrivate::finalizeExitTransition()
                     break;
                 }
             }
-        }
-        if (nextFocusPopup) {
-            nextFocusPopup->forceActiveFocus(Qt::PopupFocusReason);
-        } else if (auto *overlay = QQuickOverlay::overlay(window)) {
-            auto *appWindow = qobject_cast<QQuickApplicationWindow*>(window);
-            auto *contentItem = appWindow ? appWindow->contentItem() : window->contentItem();
-            auto *overlayPrivate = QQuickOverlayPrivate::get(overlay);
-            if (!contentItem->scopedFocusItem()
-                && !overlayPrivate->lastActiveFocusItem.isNull()) {
-                // The last active focus item may have lost focus not just for
-                // itself but for its entire focus chain, so force active focus.
-                overlayPrivate->lastActiveFocusItem->forceActiveFocus(Qt::OtherFocusReason);
+            if (nextFocusPopup) {
+                nextFocusPopup->forceActiveFocus(Qt::PopupFocusReason);
             } else {
-                contentItem->setFocus(true, Qt::PopupFocusReason);
+                auto *appWindow = qobject_cast<QQuickApplicationWindow*>(window);
+                auto *contentItem = appWindow ? appWindow->contentItem() : window->contentItem();
+                if (!contentItem->scopedFocusItem()
+                    && !overlayPrivate->lastActiveFocusItem.isNull()) {
+                    // The last active focus item may have lost focus not just for
+                    // itself but for its entire focus chain, so force active focus.
+                    overlayPrivate->lastActiveFocusItem->forceActiveFocus(Qt::OtherFocusReason);
+                } else {
+                    contentItem->setFocus(true, Qt::PopupFocusReason);
+                }
             }
         }
-    }
-
-    if (window) {
-        auto *overlay = QQuickOverlay::overlay(window);
-        auto *overlayPrivate = overlay ? QQuickOverlayPrivate::get(overlay) : nullptr;
 
         // Clear the overlay's saved focus if this popup was the one that set it
-        if (savedLastActiveFocusItem && overlayPrivate)
+        if (savedLastActiveFocusItem)
             overlayPrivate->lastActiveFocusItem = nullptr;
     }
 
