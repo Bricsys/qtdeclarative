@@ -517,6 +517,8 @@ private slots:
     void argumentsUsageInBindings_data();
     void argumentsUsageInBindings();
 
+    void aliasToLargeRevision();
+
 private:
     QQmlEngine engine;
     QStringList defaultImportPathList;
@@ -9765,6 +9767,21 @@ void tst_qqmllanguage::argumentsUsageInBindings() {
     QVERIFY(object);
 
     QCOMPARE(object->property("result").toString(), object->property("expected").toString());
+}
+
+void tst_qqmllanguage::aliasToLargeRevision()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl("aliasToLargeRevision.qml"));
+
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+
+    QCOMPARE(o->property("aa"), 13);
+    QCOMPARE(o->property("bb"), 14);
+    QCOMPARE(o->property("cc"), 15);
+    QCOMPARE(o->property("dd"), 16);
 }
 
 QTEST_MAIN(tst_qqmllanguage)
