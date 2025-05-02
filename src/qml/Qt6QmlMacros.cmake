@@ -3637,24 +3637,26 @@ function(qt6_target_qml_sources target)
     endif()
 
     set(qml_resource_name ${target}_raw_qml_${counter})
-    set(qml_resource_targets)
-    set(qml_resource_options)
-    if(discard_qml_contents)
-        list(APPEND qml_resource_options DISCARD_FILE_CONTENTS)
+    if(actual_QML_FILES)
+        set(qml_resource_targets "")
+        set(qml_resource_options "")
+        if(discard_qml_contents)
+            list(APPEND qml_resource_options DISCARD_FILE_CONTENTS)
+        endif()
+        qt6_add_resources(${target} ${qml_resource_name}
+            PREFIX ${arg_PREFIX}
+            FILES ${actual_QML_FILES}
+            OUTPUT_TARGETS qml_resource_targets
+            ${qml_resource_options}
+        )
+        list(APPEND output_targets ${qml_resource_targets})
+        # Save the resource name in a property so we can reference it later in a qml plugin
+        # constructor, to avoid discarding the resource if it's in a static library.
+        __qt_internal_sanitize_resource_name(
+            sanitized_qml_resource_name "${qml_resource_name}")
+        set_property(TARGET ${target} APPEND PROPERTY
+            _qt_qml_module_sanitized_resource_names "${sanitized_qml_resource_name}")
     endif()
-    qt6_add_resources(${target} ${qml_resource_name}
-        PREFIX ${arg_PREFIX}
-        FILES ${actual_QML_FILES}
-        OUTPUT_TARGETS qml_resource_targets
-        ${qml_resource_options}
-    )
-    list(APPEND output_targets ${qml_resource_targets})
-    # Save the resource name in a property so we can reference it later in a qml plugin
-    # constructor, to avoid discarding the resource if it's in a static library.
-    __qt_internal_sanitize_resource_name(
-        sanitized_qml_resource_name "${qml_resource_name}")
-    set_property(TARGET ${target} APPEND PROPERTY
-        _qt_qml_module_sanitized_resource_names "${sanitized_qml_resource_name}")
 
     if(actual_RESOURCES)
         set(resources_resource_name ${target}_raw_res_${counter})

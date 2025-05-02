@@ -147,6 +147,8 @@ if(TARGET Qt::Qml)
         BUILD_OPTIONS -Drun=case_resources
         ${test_duplicate_files_extra_args}
     )
+
+    _qt_internal_test_expect_pass(test_separate_qml_and_resources)
 endif()
 
 if(TARGET Qt::Quick)
