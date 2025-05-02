@@ -10,6 +10,7 @@ Item {
     height: 200
 
     property alias testModel: testModel
+    property alias treeView: treeView
 
     TreeView {
         id: treeView

@@ -10,6 +10,7 @@
 #include <QtQuick/qquickitem.h>
 #include <QtQuick/qquickview.h>
 #include <QtQuick/private/qquicktableview_p.h>
+#include <QtQuick/private/qquicktreeview_p.h>
 
 #include <QtQuickTestUtils/private/qmlutils_p.h>
 #include <QtQuickTestUtils/private/viewtestutils_p.h>
@@ -25,8 +26,42 @@ public:
     tst_QQmlTreeModel() : QQmlDataTest(QT_QMLTEST_DATADIR, FailOnWarningsPolicy::FailOnWarnings) {}
 
 private slots:
+    void clear();
     void getRow();
 };
+
+void tst_QQmlTreeModel::clear()
+{
+    QQuickView view;
+    QVERIFY(QQuickTest::showView(view, testFileUrl("common.qml")));
+
+    auto *model = view.rootObject()->property("testModel").value<QQmlTreeModel*>();
+    QVERIFY(model);
+
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 8);
+
+    QSignalSpy columnCountSpy(model, SIGNAL(columnCountChanged()));
+    QVERIFY(columnCountSpy.isValid());
+
+    QSignalSpy rowsChangedSpy(model, SIGNAL(rowsChanged()));
+    QVERIFY(rowsChangedSpy.isValid());
+
+    QQuickTreeView *treeView = view.rootObject()->property("treeView").value<QQuickTreeView*>();
+    QVERIFY(treeView);
+    QCOMPARE(treeView->columns(), 5);
+    QCOMPARE(treeView->rows(), 2);  // treeView cannot call our treeSize
+
+    model->clear();
+    // the rows should be cleared but the columns should not change
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 0);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), 1);
+    // Wait until updatePolish() gets called, which is where the size is recalculated.
+    QTRY_COMPARE(treeView->rows(), 0);
+    QCOMPARE(treeView->columns(), 5);
+}
 
 void tst_QQmlTreeModel::getRow()
 {
