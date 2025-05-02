@@ -782,7 +782,7 @@ QSGNode *QQuickRectangle::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData 
         rectangle->setPenColor(d->pen->color());
         qreal penWidth = d->pen->width();
         if (d->pen->pixelAligned()) {
-            qreal dpr = window() ? window()->effectiveDevicePixelRatio() : 1.0;
+            qreal dpr = d->effectiveDevicePixelRatio();
             penWidth = qRound(penWidth * dpr) / dpr; // Ensures integer width after dpr scaling
         }
         rectangle->setPenWidth(penWidth);

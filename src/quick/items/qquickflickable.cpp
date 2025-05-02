@@ -1101,11 +1101,6 @@ qint64 QQuickFlickablePrivate::computeCurrentTime(QInputEvent *event) const
     return timer.elapsed();
 }
 
-qreal QQuickFlickablePrivate::devicePixelRatio() const
-{
-    return (window ? window->effectiveDevicePixelRatio() : qApp->devicePixelRatio());
-}
-
 void QQuickFlickablePrivate::handlePressEvent(QPointerEvent *event)
 {
     Q_Q(QQuickFlickable);
@@ -1249,7 +1244,7 @@ void QQuickFlickablePrivate::drag(qint64 currentTimestamp, QEvent::Type eventTyp
                     }
                     if (velocitySensitiveOverBounds) {
                         qreal overshoot = (newY - minY) * vData.velocity / maxVelocity / QML_FLICK_OVERSHOOTFRICTION;
-                        overshoot = QML_FLICK_OVERSHOOT * devicePixelRatio() * EaseOvershoot(overshoot / QML_FLICK_OVERSHOOT / devicePixelRatio());
+                        overshoot = QML_FLICK_OVERSHOOT * effectiveDevicePixelRatio() * EaseOvershoot(overshoot / QML_FLICK_OVERSHOOT / effectiveDevicePixelRatio());
                         newY = minY + overshoot;
                     } else {
                         newY = minY + (newY - minY) / 2;
@@ -1265,7 +1260,7 @@ void QQuickFlickablePrivate::drag(qint64 currentTimestamp, QEvent::Type eventTyp
                     }
                     if (velocitySensitiveOverBounds) {
                         qreal overshoot = (newY - maxY) * vData.velocity / maxVelocity / QML_FLICK_OVERSHOOTFRICTION;
-                        overshoot = QML_FLICK_OVERSHOOT * devicePixelRatio() * EaseOvershoot(overshoot / QML_FLICK_OVERSHOOT / devicePixelRatio());
+                        overshoot = QML_FLICK_OVERSHOOT * effectiveDevicePixelRatio() * EaseOvershoot(overshoot / QML_FLICK_OVERSHOOT / effectiveDevicePixelRatio());
                         newY = maxY - overshoot;
                     } else {
                         newY = maxY + (newY - maxY) / 2;
@@ -1322,7 +1317,7 @@ void QQuickFlickablePrivate::drag(qint64 currentTimestamp, QEvent::Type eventTyp
                     }
                     if (velocitySensitiveOverBounds) {
                         qreal overshoot = (newX - minX) * hData.velocity / maxVelocity / QML_FLICK_OVERSHOOTFRICTION;
-                        overshoot = QML_FLICK_OVERSHOOT * devicePixelRatio() * EaseOvershoot(overshoot / QML_FLICK_OVERSHOOT / devicePixelRatio());
+                        overshoot = QML_FLICK_OVERSHOOT * effectiveDevicePixelRatio() * EaseOvershoot(overshoot / QML_FLICK_OVERSHOOT / effectiveDevicePixelRatio());
                         newX = minX + overshoot;
                     } else {
                         newX = minX + (newX - minX) / 2;
@@ -1338,7 +1333,7 @@ void QQuickFlickablePrivate::drag(qint64 currentTimestamp, QEvent::Type eventTyp
                     }
                     if (velocitySensitiveOverBounds) {
                         qreal overshoot = (newX - maxX) * hData.velocity / maxVelocity / QML_FLICK_OVERSHOOTFRICTION;
-                        overshoot = QML_FLICK_OVERSHOOT * devicePixelRatio() * EaseOvershoot(overshoot / QML_FLICK_OVERSHOOT / devicePixelRatio());
+                        overshoot = QML_FLICK_OVERSHOOT * effectiveDevicePixelRatio() * EaseOvershoot(overshoot / QML_FLICK_OVERSHOOT / effectiveDevicePixelRatio());
                         newX = maxX - overshoot;
                     } else {
                         newX = maxX + (newX - maxX) / 2;

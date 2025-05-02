@@ -618,6 +618,8 @@ public:
     void refWindow(QQuickWindow *);
     void derefWindow();
 
+    qreal effectiveDevicePixelRatio() const;
+
     QPointer<QQuickItem> subFocusItem;
     void updateSubFocusItem(QQuickItem *scope, bool focus);
 
