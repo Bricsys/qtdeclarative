@@ -1563,11 +1563,53 @@ struct SingleRequiredProperty : QObject
     int i = 42;
 };
 
+
+struct SingleRequiredPropertyDynamic : QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(int i MEMBER i REQUIRED)
+
+    int i = 42;
+
+    class QObjectDynamicMetaObject : public QDynamicMetaObjectData
+    {
+    public:
+    #if QT_VERSION >= QT_VERSION_CHECK(7, 0, 0)
+        const QMetaObject *toDynamicMetaObject(QObject *) const final
+        {
+            return &SingleRequiredPropertyDynamic::staticMetaObject;
+        }
+    #else
+        QMetaObject *toDynamicMetaObject(QObject *) final
+        {
+            return const_cast<QMetaObject *>(&SingleRequiredPropertyDynamic::staticMetaObject);
+        }
+    #endif
+        int metaCall(QObject *o, QMetaObject::Call c, int id, void **argv) final
+        {
+            return o->qt_metacall(c, id, argv);
+        }
+    };
+
+public:
+    SingleRequiredPropertyDynamic() {
+        auto priv = QObjectPrivate::get(this);
+        priv->metaObject = new QObjectDynamicMetaObject;
+    }
+
+    ~SingleRequiredPropertyDynamic()  {
+        auto priv = QObjectPrivate::get(this);
+        delete priv->metaObject;
+        priv->metaObject = nullptr ;
+    }
+};
+
 void tst_qqmlcomponent::loadFromModuleRequired()
 {
 
     QQmlEngine engine;
     qmlRegisterType<SingleRequiredProperty>("qqmlcomponenttest", 1, 0, "SingleRequiredProperty");
+    qmlRegisterType<SingleRequiredPropertyDynamic>("qqmlcomponenttest", 1, 0, "SingleRequiredPropertyDynamic");
     const QString error = QStringLiteral("Required property i was not initialized");
     {
         QQmlComponent component(&engine, "qqmlcomponenttest", "SingleRequiredProperty");
@@ -1590,6 +1632,13 @@ void tst_qqmlcomponent::loadFromModuleRequired()
         // ... produces an error.
         QVERIFY(component.isError());
         QCOMPARE(component.errorString(), qPrintable(":-1 " + error  + "\n"));
+    }
+    {
+        QQmlComponent component(&engine, "qqmlcomponenttest", "SingleRequiredPropertyDynamic");
+        QVERIFY2(!component.isError(), qPrintable(component.errorString()));
+        QScopedPointer<QObject> root(component.create());
+        QEXPECT_FAIL("", "Can't check required properties when there's a dynamic metaobject", Continue);
+        QVERIFY(!root);
     }
 }
 
