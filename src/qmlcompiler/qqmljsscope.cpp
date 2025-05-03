@@ -1285,9 +1285,9 @@ QQmlJSScope::InlineComponentOrDocumentRootName QQmlJSScope::enclosingInlineCompo
     return RootDocumentNameType();
 }
 
-QVector<QQmlJSScope::ConstPtr> QQmlJSScope::childScopes() const
+QList<QQmlJSScope::ConstPtr> QQmlJSScope::childScopes() const
 {
-    QVector<QQmlJSScope::ConstPtr> result;
+    QList<QQmlJSScope::ConstPtr> result;
     result.reserve(m_childScopes.size());
     for (const auto &child : m_childScopes)
         result.append(child);

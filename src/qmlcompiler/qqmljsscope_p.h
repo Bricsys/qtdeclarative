@@ -444,9 +444,9 @@ public:
     std::optional<QString> inlineComponentName() const;
     InlineComponentOrDocumentRootName enclosingInlineComponentName() const;
 
-    QVector<QQmlJSScope::Ptr> childScopes();
+    QList<QQmlJSScope::Ptr> childScopes();
 
-    QVector<QQmlJSScope::ConstPtr> childScopes() const;
+    QList<QQmlJSScope::ConstPtr> childScopes() const;
 
     static QTypeRevision resolveTypes(
             const Ptr &self, const QQmlJS::ContextualTypes &contextualTypes,
@@ -541,8 +541,8 @@ private:
 
     QHash<QString, QQmlJSMetaEnum> m_enumerations;
 
-    QVector<QQmlJSAnnotation> m_annotations;
-    QVector<QQmlJSScope::Ptr> m_childScopes;
+    QList<QQmlJSAnnotation> m_annotations;
+    QList<QQmlJSScope::Ptr> m_childScopes;
     QQmlJSScope::WeakPtr m_parentScope;
 
     QString m_filePath;
@@ -642,7 +642,7 @@ inline void QQmlJSScope::setInlineComponentName(const QString &inlineComponentNa
     m_inlineComponentName = inlineComponentName;
 }
 
-inline QVector<QQmlJSScope::Ptr> QQmlJSScope::childScopes()
+inline QList<QQmlJSScope::Ptr> QQmlJSScope::childScopes()
 {
     return m_childScopes;
 }
