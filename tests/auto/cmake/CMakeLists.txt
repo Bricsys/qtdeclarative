@@ -165,7 +165,10 @@ if(TARGET Qt::Quick)
             )
         endif()
         if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.19")
-            _qt_internal_test_expect_pass(test_generate_qmlls_ini BINARY tst_generate_qmlls_ini)
+            # we can't use qtpaths with --query without the settings feature flag
+            if(QT_FEATURE_settings)
+                _qt_internal_test_expect_pass(test_generate_qmlls_ini BINARY tst_generate_qmlls_ini)
+            endif()
             _qt_internal_test_expect_pass(test_aotstats_integration BINARY tst_aotstats_integration)
         endif()
         _qt_internal_test_expect_pass(

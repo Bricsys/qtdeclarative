@@ -17,6 +17,7 @@ add_subdirectory(Dotted)
 add_subdirectory(Dependency)
 add_subdirectory(ModuleWithDependency)
 add_subdirectory(quotesInPath)
+add_subdirectory(QmllsBuildIni)
 
 add_subdirectory(WithoutCMakeBuilds)
 

@@ -15,6 +15,8 @@ class tst_generate_qmlls_ini : public QObject
 private slots:
     void qmllsIniAreCorrect_data();
     void qmllsIniAreCorrect();
+
+    void qmllsBuildIni();
 };
 
 using namespace Qt::StringLiterals;
@@ -135,6 +137,37 @@ importPaths="%4"
              qmllsIniTemplate.arg(expectedBuildDirs.join(QDir::listSeparator()),
                                   expectedNoCMakeCalls, expectedDocDir,
                                   expectedImportPaths.join(QDir::listSeparator())));
+}
+
+void tst_generate_qmlls_ini::qmllsBuildIni()
+{
+    static constexpr QLatin1String qmllsBuildIniPath = ".qt/.qmlls.build.ini"_L1;
+
+    QDir build(BUILD_DIRECTORY);
+    QVERIFY(build.exists());
+
+    QDir source(SOURCE_DIRECTORY);
+    if (!source.exists()) {
+        QSKIP(u"Cannot find source directory '%1', skipping test..."_s.arg(SOURCE_DIRECTORY)
+                      .toLatin1());
+    }
+
+    const QString content = contentOf(build.filePath(qmllsBuildIniPath));
+
+    QVERIFY(source.cd("QmllsBuildIni"_L1));
+    QVERIFY(build.cd("QmllsBuildIni"_L1));
+
+    const QString escapedSource = source.absolutePath().replace("/"_L1, "<SLASH>"_L1);
+    const QString importPaths =
+            QStringList{ build.absoluteFilePath("qml2"_L1), build.absoluteFilePath("qml"_L1),
+                         build.absoluteFilePath("qml3/MyModule3"_L1),
+                         build.absoluteFilePath(QLibraryInfo::path(QLibraryInfo::QmlImportsPath)) }
+                    .join(QDir::listSeparator());
+
+    static constexpr QLatin1String expectedContent = R"([%1]
+importPaths="%2"
+)"_L1;
+    QVERIFY(content.contains(expectedContent.arg(escapedSource, importPaths)));
 }
 
 QTEST_MAIN(tst_generate_qmlls_ini)

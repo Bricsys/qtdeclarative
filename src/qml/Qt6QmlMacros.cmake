@@ -1016,21 +1016,22 @@ Check https://doc.qt.io/qt-6/qt-cmake-policy-qtp0001.html for policy details."
         endif()
     endforeach()
 
-    if(QT_QML_GENERATE_QMLLS_INI)
-        if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.19.0")
-            # collect all build dirs obtained from all the qt_add_qml_module calls and
-            # write the .qmlls.ini file in a deferred call
+    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.19.0")
+        # collect all build dirs obtained from all the qt_add_qml_module calls and
+        # write the .qmlls.ini file in a deferred call
 
-            if(NOT "${arg_OUTPUT_DIRECTORY}" STREQUAL "")
-                set(output_folder "${arg_OUTPUT_DIRECTORY}")
-            else()
-                set(output_folder "${CMAKE_CURRENT_BINARY_DIR}")
-            endif()
-            string(REPLACE "." ";" uri_bits "${arg_URI}")
-            set(build_folder "${output_folder}")
-            foreach(bit IN LISTS uri_bits)
-                get_filename_component(build_folder "${build_folder}" DIRECTORY)
-            endforeach()
+        if(NOT "${arg_OUTPUT_DIRECTORY}" STREQUAL "")
+            set(output_folder "${arg_OUTPUT_DIRECTORY}")
+        else()
+            set(output_folder "${CMAKE_CURRENT_BINARY_DIR}")
+        endif()
+        string(REPLACE "." ";" uri_bits "${arg_URI}")
+        set(build_folder "${output_folder}")
+        foreach(bit IN LISTS uri_bits)
+            get_filename_component(build_folder "${build_folder}" DIRECTORY)
+        endforeach()
+
+        if(QT_QML_GENERATE_QMLLS_INI)
             set_property(DIRECTORY APPEND PROPERTY _qmlls_ini_build_folders "${build_folder}")
             set_property(DIRECTORY APPEND PROPERTY _qmlls_ini_import_path_targets "${target}")
 
@@ -1041,7 +1042,21 @@ Check https://doc.qt.io/qt-6/qt-cmake-policy-qtp0001.html for policy details."
                     "cmake_language(DEFER ID qmlls_ini_generation_id CALL _qt_internal_write_deferred_qmlls_ini_file ${target})"
                 )
             endif()
-        else()
+        endif()
+
+        set_property(GLOBAL APPEND PROPERTY _qmlls_build_ini_targets "${target}")
+
+        cmake_language(DEFER DIRECTORY "${CMAKE_BINARY_DIR}" GET_CALL qmlls_build_ini_generation_id call)
+        if("${call}" STREQUAL "")
+            cmake_language(EVAL CODE
+                "cmake_language(DEFER DIRECTORY ${CMAKE_BINARY_DIR} "
+                    "ID qmlls_build_ini_generation_id "
+                    "CALL _qt_internal_write_deferred_qmlls_build_ini_file"
+                ")"
+            )
+        endif()
+    else()
+        if(QT_QML_GENERATE_QMLLS_INI)
             get_property(__qt_internal_generate_qmlls_ini_warning
                 GLOBAL
                 PROPERTY __qt_internal_generate_qmlls_ini_warning
@@ -1237,10 +1252,84 @@ function(_qt_internal_deferred_aotstats_setup)
     endif()
 endfunction()
 
+function(_qt_internal_list_to_ini list_var)
+    list(REMOVE_DUPLICATES ${list_var})
+
+    if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+        # replace cmake list separator ';' with unix path separator ':'
+        list(JOIN ${list_var} ":" result)
+    else()
+        # cmake list separator and windows path separator are both ';', so no replacement needed
+        set(result "${${list_var}}")
+    endif()
+    set(${list_var} "${result}" PARENT_SCOPE)
+endfunction()
+
+function(_qt_internal_write_deferred_qmlls_build_ini_file)
+    get_property(_qmlls_build_ini_targets GLOBAL PROPERTY _qmlls_build_ini_targets)
+    list(REMOVE_DUPLICATES _qmlls_build_ini_targets)
+
+    set(qmlls_build_ini_file "${CMAKE_BINARY_DIR}/.qt/.qmlls.build.ini")
+    add_custom_command(
+        OUTPUT
+            ${qmlls_build_ini_file}
+        COMMAND ${CMAKE_COMMAND} -E echo "[General]" > ${qmlls_build_ini_file}
+        COMMENT "Populating .qmlls.ini file at ${qmlls_build_ini_file}"
+        VERBATIM
+    )
+    # qtpaths only supports --query when the settings config is enabled
+    if(QT_FEATURE_settings)
+        add_custom_command(
+        OUTPUT
+            ${qmlls_build_ini_file}
+        COMMAND ${CMAKE_COMMAND} -E echo_append "docDir=" >> ${qmlls_build_ini_file}
+        COMMAND
+            ${tool_wrapper}
+            $<TARGET_FILE:${QT_CMAKE_EXPORT_NAMESPACE}::qtpaths>
+            --query QT_INSTALL_DOCS >> ${qmlls_build_ini_file}
+            APPEND
+        )
+    endif()
+
+    _qt_internal_get_main_qt_qml_import_paths(installation_paths)
+    foreach(current_target IN LISTS _qmlls_build_ini_targets)
+        # prepare import paths
+        get_target_property(_import_paths "${current_target}" QT_QML_IMPORT_PATH)
+        list(APPEND _import_paths ${installation_paths})
+        # Note that standalone builds will have the installation path twice in _import_paths: _qt_internal_list_to_ini
+        # takes care of removing these duplicates.
+        _qt_internal_list_to_ini(_import_paths)
+
+        # prepare source paths: replace / with <SLASH> as .ini files do not support / in group names
+        get_target_property(source_path "${current_target}" SOURCE_DIR)
+        string(REPLACE "/" "<SLASH>" source_path "${source_path}")
+
+        add_custom_command(
+            OUTPUT
+                ${qmlls_build_ini_file}
+            COMMAND ${CMAKE_COMMAND} -E
+                echo "[${source_path}]" >> ${qmlls_build_ini_file}
+            COMMAND ${CMAKE_COMMAND} -E
+                echo "importPaths=\"${_import_paths}\"" >> ${qmlls_build_ini_file}
+            APPEND
+        )
+    endforeach()
+
+    add_custom_target(generate_qmlls_build_ini_file
+        DEPENDS ${qmlls_build_ini_file}
+        VERBATIM
+    )
+    foreach(current_target IN LISTS _qmlls_build_ini_targets)
+        add_dependencies(${current_target} generate_qmlls_build_ini_file)
+    endforeach()
+endfunction()
+
 function(_qt_internal_write_deferred_qmlls_ini_file target)
     set(qmlls_ini_file "${CMAKE_CURRENT_SOURCE_DIR}/.qmlls.ini")
+
     get_directory_property(_qmlls_ini_build_folders _qmlls_ini_build_folders)
-    list(REMOVE_DUPLICATES _qmlls_ini_build_folders)
+    _qt_internal_list_to_ini(_qmlls_ini_build_folders)
+
     get_directory_property(_qmlls_ini_import_path_targets _qmlls_ini_import_path_targets)
     set(_import_paths "")
     foreach(import_path_target IN LISTS _qmlls_ini_import_path_targets)
@@ -1250,24 +1339,13 @@ function(_qt_internal_write_deferred_qmlls_ini_file target)
 
     _qt_internal_get_main_qt_qml_import_paths(installation_paths)
     list(APPEND _import_paths ${installation_paths})
-    # standalone builds will have the installation path twice in _import_paths
-    list(REMOVE_DUPLICATES _import_paths)
-
-    if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-        # replace cmake list separator ';' with unix path separator ':'
-        list(JOIN _qmlls_ini_build_folders ":" concatenated_build_dirs)
-        list(JOIN _import_paths ":" concatenated_import_paths)
-    else()
-        # cmake list separator and windows path separator are both ';', so no replacement needed
-        set(concatenated_build_dirs "${_qmlls_ini_build_folders}")
-        set(concatenated_import_paths "${_import_paths}")
-    endif()
+    _qt_internal_list_to_ini(_import_paths)
 
     _populate_qmlls_ini_file(
         ${target}
         "${qmlls_ini_file}"
-        "${concatenated_build_dirs}"
-        "${concatenated_import_paths}")
+        "${_qmlls_ini_build_folders}"
+        "${_import_paths}")
 endfunction()
 
 if(NOT QT_NO_CREATE_VERSIONLESS_FUNCTIONS)
