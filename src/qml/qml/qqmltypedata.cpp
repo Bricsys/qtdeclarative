@@ -396,7 +396,7 @@ void setupICs(
             InlineComponentData icDatum(
                     QQmlMetaType::findInlineComponentType(
                             baseUrl, container->stringAt(it->nameIndex), compilationUnit),
-                int(it->objectIndex), int(it->nameIndex), 0, 0, 0);
+                int(it->objectIndex), int(it->nameIndex));
 
             icData->insert(container->stringAt(it->nameIndex), icDatum);
         }

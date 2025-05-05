@@ -51,7 +51,7 @@ QT_BEGIN_NAMESPACE
 // Also change the comment behind the number to describe the latest change. This has the added
 // benefit that if another patch changes the version too, it will result in a merge conflict, and
 // not get removed silently.
-#define QV4_DATA_STRUCTURE_VERSION 0x46 // Removed property indices from aliases
+#define QV4_DATA_STRUCTURE_VERSION 0x47 // Removed various counts
 
 class QIODevice;
 class QQmlTypeNameCache;
@@ -1447,23 +1447,15 @@ using DependentTypesHasher = std::function<QByteArray()>;
 struct InlineComponentData {
 
     InlineComponentData() = default;
-    InlineComponentData(
-            const QQmlType &qmlType, int objectIndex, int nameIndex, int totalObjectCount,
-            int totalBindingCount, int totalParserStatusCount)
+    InlineComponentData(const QQmlType &qmlType, int objectIndex, int nameIndex)
         : qmlType(qmlType)
         , objectIndex(objectIndex)
         , nameIndex(nameIndex)
-        , totalObjectCount(totalObjectCount)
-        , totalBindingCount(totalBindingCount)
-        , totalParserStatusCount(totalParserStatusCount)
     {}
 
     QQmlType qmlType;
     int objectIndex = -1;
     int nameIndex = -1;
-    int totalObjectCount = 0;
-    int totalBindingCount = 0;
-    int totalParserStatusCount = 0;
 };
 
 struct CompilationUnit final : public QQmlRefCounted<CompilationUnit>
@@ -1479,10 +1471,6 @@ struct CompilationUnit final : public QQmlRefCounted<CompilationUnit>
     const StaticValue *constants = nullptr;
 
     std::unique_ptr<CompilationUnitMapper> backingFile;
-
-    int m_totalBindingsCount = 0; // Number of bindings used in this type
-    int m_totalParserStatusCount = 0; // Number of instantiated types that are QQmlParserStatus subclasses
-    int m_totalObjectCount = 0; // Number of objects explicitly instantiated
 
     QHash<QString, InlineComponentData> inlineComponentData;
 
@@ -1654,10 +1642,6 @@ public:
 
     int objectCount() const { return qmlData->nObjects; }
     const CompiledObject *objectAt(int index) const { return qmlData->objectAt(index); }
-
-    int totalBindingsCount(const QString &inlineComponentRootName) const;
-    int totalParserStatusCount(const QString &inlineComponentRootName) const;
-    int totalObjectCount(const QString &inlineComponentRootName) const;
 
     int inlineComponentId(const QString &inlineComponentName) const
     {
