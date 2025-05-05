@@ -1902,9 +1902,6 @@ void TestQmllint::cleanQmlCode_data()
 void TestQmllint::cleanQmlCode()
 {
     QFETCH(QString, filename);
-
-    QJsonArray warnings;
-
     runTest(filename, Result::clean());
 }
 
@@ -2015,8 +2012,6 @@ void TestQmllint::compilerWarnings()
     QFETCH(QString, filename);
     QFETCH(Result, result);
     QFETCH(bool, enableCompilerWarnings);
-
-    QJsonArray warnings;
 
     auto categories = QQmlJSLogger::defaultCategories();
 
