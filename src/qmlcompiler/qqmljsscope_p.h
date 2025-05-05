@@ -39,7 +39,7 @@ class QQmlJSImporter;
 
 namespace QQmlJS {
 
-using ConstPtrWrapperIterator = QList<QDeferredSharedPointer<QQmlJSScope>>::const_iterator;
+using ChildScopesIterator = QList<QDeferredSharedPointer<QQmlJSScope>>::const_iterator;
 
 class Export {
 public:
@@ -386,8 +386,8 @@ public:
     std::optional<JavaScriptIdentifier> jsIdentifier(const QString &id) const;
     std::optional<JavaScriptIdentifier> ownJSIdentifier(const QString &id) const;
 
-    QQmlJS::ConstPtrWrapperIterator childScopesBegin() const { return m_childScopes.constBegin(); }
-    QQmlJS::ConstPtrWrapperIterator childScopesEnd() const { return m_childScopes.constEnd(); }
+    QQmlJS::ChildScopesIterator childScopesBegin() const { return m_childScopes.constBegin(); }
+    QQmlJS::ChildScopesIterator childScopesEnd() const { return m_childScopes.constEnd(); }
 
     void setInlineComponentName(const QString &inlineComponentName);
     std::optional<QString> inlineComponentName() const;

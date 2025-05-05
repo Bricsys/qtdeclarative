@@ -1573,12 +1573,12 @@ void PassManager::analyze(const Element &root)
     d->analyze(root);
 }
 
-static QQmlJS::ConstPtrWrapperIterator childScopesBegin(const Element &element)
+static QQmlJS::ChildScopesIterator childScopesBegin(const Element &element)
 {
     return QQmlJSScope::scope(element)->childScopesBegin();
 }
 
-static QQmlJS::ConstPtrWrapperIterator childScopesEnd(const Element &element)
+static QQmlJS::ChildScopesIterator childScopesEnd(const Element &element)
 {
     return QQmlJSScope::scope(element)->childScopesEnd();
 }
