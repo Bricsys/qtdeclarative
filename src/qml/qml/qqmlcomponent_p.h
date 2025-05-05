@@ -106,7 +106,7 @@ public:
 
             if (m_creatorOrRequiredProperties.isT1()) {
                 const auto &objects = m_creatorOrRequiredProperties.asT1()->allCreatedObjects();
-                return objects.isEmpty() ? nullptr : objects.at(0);
+                return objects.empty() ? nullptr : objects.at(0);
             }
 
             Q_ASSERT(m_creatorOrRequiredProperties.isT2());

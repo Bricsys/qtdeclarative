@@ -5,7 +5,6 @@
 
 #include <private/qmetaobjectbuilder_p.h>
 #include "qqmlengine.h"
-#include <private/qfinitestack_p.h>
 #include <QtQml/private/qqmlcomponent_p.h>
 
 #include <QStack>
@@ -52,8 +51,8 @@ void QQmlVMEGuard::guard(QQmlObjectCreator *creator)
 {
     clear();
 
-    QFiniteStack<QQmlGuard<QObject> > &objects = creator->allCreatedObjects();
-    m_objectCount = objects.count();
+    std::vector<QQmlGuard<QObject>> &objects = creator->allCreatedObjects();
+    m_objectCount = objects.size();
     m_objects = new QQmlGuard<QObject>[m_objectCount];
     for (int ii = 0; ii < m_objectCount; ++ii)
         m_objects[ii] = objects[ii];

@@ -25,7 +25,6 @@
 #include <QtCore/qtypeinfo.h>
 
 #include <private/qqmlengine_p.h>
-#include <private/qfinitestack_p.h>
 
 #include <atomic>
 

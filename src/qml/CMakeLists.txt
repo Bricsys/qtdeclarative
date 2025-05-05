@@ -239,7 +239,6 @@ qt_internal_add_qml_module(Qml
         qml/ftw/qbipointer_p.h
         qml/ftw/qdoubleendedlist_p.h
         qml/ftw/qfieldlist_p.h
-        qml/ftw/qfinitestack_p.h
         qml/ftw/qhashedstring.cpp qml/ftw/qhashedstring_p.h
         qml/ftw/qintrusivelist.cpp qml/ftw/qintrusivelist_p.h
         qml/ftw/qlazilyallocated_p.h
