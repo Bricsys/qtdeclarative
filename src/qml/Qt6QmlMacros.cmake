@@ -3347,7 +3347,7 @@ function(qt6_target_qml_sources target)
     set(set_should_create_tooling_target FALSE)
 
     foreach(file_set IN ITEMS QML_FILES RESOURCES)
-        foreach(file_src IN LISTS arg_${file_set})
+        foreach(file_src IN LISTS actual_${file_set})
             get_filename_component(file_absolute ${file_src} ABSOLUTE)
 
             # Store the original files so the project can query them later.
