@@ -39,58 +39,7 @@ class QQmlJSImporter;
 
 namespace QQmlJS {
 
-class ConstPtrWrapperIterator
-{
-public:
-    using Ptr = QDeferredSharedPointer<QQmlJSScope>;
-    using ConstPtr = QDeferredSharedPointer<const QQmlJSScope>;
-    using iterator_category = std::forward_iterator_tag;
-    using difference_type = std::ptrdiff_t;
-    using value_type = ConstPtr;
-    using pointer = value_type *;
-    using reference = value_type &;
-
-    ConstPtrWrapperIterator(QList<Ptr>::const_iterator iterator) : m_iterator(iterator) { }
-
-    friend bool operator==(const ConstPtrWrapperIterator &a, const ConstPtrWrapperIterator &b)
-    {
-        return a.m_iterator == b.m_iterator;
-    }
-    friend bool operator!=(const ConstPtrWrapperIterator &a, const ConstPtrWrapperIterator &b)
-    {
-        return a.m_iterator != b.m_iterator;
-    }
-
-    reference operator*()
-    {
-        if (!m_pointer)
-            m_pointer = *m_iterator;
-        return m_pointer;
-    }
-    pointer operator->()
-    {
-        if (!m_pointer)
-            m_pointer = *m_iterator;
-        return &m_pointer;
-    }
-
-    ConstPtrWrapperIterator &operator++()
-    {
-        m_iterator++;
-        m_pointer = {};
-        return *this;
-    }
-    ConstPtrWrapperIterator operator++(int)
-    {
-        auto before = *this;
-        ++(*this);
-        return before;
-    }
-
-private:
-    QList<Ptr>::const_iterator m_iterator;
-    ConstPtr m_pointer;
-};
+using ConstPtrWrapperIterator = QList<QDeferredSharedPointer<QQmlJSScope>>::const_iterator;
 
 class Export {
 public:
