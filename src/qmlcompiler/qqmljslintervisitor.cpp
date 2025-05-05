@@ -184,6 +184,40 @@ bool LinterVisitor::visit(BinaryExpression *exp)
     return true;
 }
 
+bool LinterVisitor::visit(QQmlJS::AST::UiImport *import)
+{
+    QQmlJSImportVisitor::visit(import);
+
+    const auto locAndName = [](const UiImport *i) {
+        if (!i->importUri)
+            return std::make_pair(i->fileNameToken, i->fileName.toString());
+
+        QQmlJS::SourceLocation l = i->importUri->firstSourceLocation();
+        if (i->importIdToken.isValid())
+            l = combine(l, i->importIdToken);
+        else if (i->version)
+            l = combine(l, i->version->minorToken);
+        else
+            l = combine(l, i->importUri->lastSourceLocation());
+
+        return std::make_pair(l, i->importUri->toString());
+    };
+
+    SeenImport i(import);
+    if (const auto it = m_seenImports.constFind(i); it != m_seenImports.constEnd()) {
+        const auto locAndNameImport = locAndName(import);
+        const auto locAndNameSeen = locAndName(it->uiImport);
+        m_logger->log("Duplicate import '%1'"_L1.arg(locAndNameImport.second),
+                      qmlDuplicateImport, locAndNameImport.first);
+        m_logger->log("Note: previous import '%1' here"_L1.arg(locAndNameSeen.second),
+                      qmlDuplicateImport, locAndNameSeen.first, true, true, {}, {},
+                      locAndName(import).first.startLine);
+    }
+
+    m_seenImports.insert(i);
+    return true;
+}
+
 } // namespace QQmlJS
 
 QT_END_NAMESPACE

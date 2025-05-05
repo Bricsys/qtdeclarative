@@ -50,6 +50,7 @@ extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlConfusingMinuses;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlConfusingPluses;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlDeferredPropertyId;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlDeprecated;
+extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlDuplicateImport;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlDuplicateInlineComponent;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlDuplicatePropertyBinding;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlDuplicatedName;

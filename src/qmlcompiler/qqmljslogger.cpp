@@ -49,6 +49,8 @@ using namespace Qt::StringLiterals;
       true)                                                                                        \
     X(qmlDeprecated, "deprecated", "Deprecated", "Warn about deprecated properties and types",     \
       QtWarningMsg, false, false)                                                                  \
+    X(qmlDuplicateImport, "duplicate-import", "DuplicateImport", "Warn about duplicate imports",   \
+      QtWarningMsg, false, false)                                                                  \
     X(qmlDuplicateInlineComponent, "duplicate-inline-component", "DuplicateInlineComponent",       \
       "Warn about duplicate inline components", QtWarningMsg, false, false)                        \
     X(qmlDuplicatePropertyBinding, "duplicate-property-binding", "DuplicatePropertyBinding",       \

@@ -897,6 +897,17 @@ void TestQmllint::dirtyQmlCode_data()
             << Result{ { { "Unqualified access"_L1 } },
                        {},
                        { { "func"_L1 } } };
+    QTest::newRow("duplicateImportsDirty")
+            << QStringLiteral("duplicateImportsDirty.qml")
+            << Result{ { { "Duplicate import 'QtQml'"_L1, 2, 8 },
+                         { "Note: previous import 'QtQml' here"_L1, 1, 8 },
+                         { "Duplicate import 'Truc'"_L1, 6, 8 },
+                         { "Note: previous import 'Truc' here", 5, 8 },
+                         { "Duplicate import 'QtQuick.Controls'"_L1, 9, 8 },
+                         { "Note: previous import 'QtQuick.Controls' here"_L1, 8, 8 },
+                         { "Duplicate import '..'"_L1, 12, 8 },
+                         { "Note: previous import '..' here"_L1, 11, 8 } },
+                       { { "Duplicate import 'QtQml'"_L1, 3, 8 } } };
     QTest::newRow("duplicated id")
             << QStringLiteral("duplicateId.qml")
             << Result{ { { "Found a duplicated id. id root was first declared "_L1, 0, 0,
@@ -1585,6 +1596,7 @@ void TestQmllint::cleanQmlCode_data()
             << QStringLiteral("goodBindingsOnGroupAndAttached.qml");
     QTest::newRow("CustomParserUnqualifiedAccess")
             << QStringLiteral("customParserUnqualifiedAccess.qml");
+    QTest::newRow("duplicateImportsClean") << QStringLiteral("duplicateImportsClean.qml");
     QTest::newRow("EnumAccess1") << QStringLiteral("EnumAccess1.qml");
     QTest::newRow("EnumAccess2") << QStringLiteral("EnumAccess2.qml");
     QTest::newRow("EnumAccessCpp") << QStringLiteral("EnumAccessCpp.qml");

@@ -44,8 +44,37 @@ protected:
     bool visit(QQmlJS::AST::NewMemberExpression *) override;
     bool visit(QQmlJS::AST::VoidExpression *ast) override;
     bool visit(QQmlJS::AST::BinaryExpression *) override;
+    bool visit(QQmlJS::AST::UiImport *import) override;
 
 private:
+    struct SeenImport
+    {
+        QStringView filename;
+        QString uri;
+        QTypeRevision version;
+        QStringView id;
+        QQmlJS::AST::UiImport *uiImport;
+
+        SeenImport(QQmlJS::AST::UiImport *i) : filename(i->fileName), id(i->importId), uiImport(i)
+        {
+            if (i->importUri)
+                uri = i->importUri->toString();
+            if (i->version)
+                version = i->version->version;
+        }
+        friend bool comparesEqual(const SeenImport &lhs, const SeenImport &rhs) noexcept
+        {
+            return lhs.filename == rhs.filename && lhs.uri == rhs.uri
+                    && lhs.version == rhs.version && lhs.id == rhs.id;
+        }
+        Q_DECLARE_EQUALITY_COMPARABLE(SeenImport)
+
+        friend size_t qHash(const SeenImport &i, size_t seed = 0)
+        {
+            return qHashMulti(seed, i.filename, i.uri, i.version, i.id);
+        }
+    };
+    QSet<SeenImport> m_seenImports;
     std::vector<QQmlJS::AST::Node *> m_ancestryIncludingCurrentNode;
 };
 
