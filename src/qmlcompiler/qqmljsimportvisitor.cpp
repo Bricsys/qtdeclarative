@@ -2457,38 +2457,12 @@ void QQmlJSImportVisitor::endVisit(UiArrayBinding *arrayBinding)
     }
 }
 
-void QQmlJSImportVisitor::handleDuplicateEnums(UiEnumMemberList *members, const QString &key,
-                                               const QQmlJS::SourceLocation &location)
-{
-    m_logger->log(u"Enum key '%1' has already been declared"_s.arg(key), qmlSyntax, location);
-    for (const auto *member = members; member; member = member->next) {
-        if (member->member.toString() == key) {
-            m_logger->log(u"Note: previous declaration of '%1' here"_s.arg(key), qmlSyntax,
-                          member->memberToken);
-            return;
-        }
-    }
-}
-
 bool QQmlJSImportVisitor::visit(QQmlJS::AST::UiEnumDeclaration *uied)
 {
-    if (m_currentScope->inlineComponentName()) {
-        m_logger->log(u"Enums declared inside of inline component are ignored."_s, qmlSyntax,
-                      uied->firstSourceLocation());
-    }
     QQmlJSMetaEnum qmlEnum(uied->name.toString());
     qmlEnum.setIsQml(true);
     for (const auto *member = uied->members; member; member = member->next) {
-        const QString key = member->member.toString();
-
-        if (!key.front().isUpper()) {
-            m_logger->log(u"Enum keys should start with an uppercase."_s, qmlSyntax,
-                          member->memberToken);
-        }
-        if (qmlEnum.hasKey(key))
-            handleDuplicateEnums(uied->members, key, member->memberToken);
-
-        qmlEnum.addKey(key);
+        qmlEnum.addKey(member->member.toString());
         qmlEnum.addValue(int(member->value));
     }
     m_currentScope->addOwnEnumeration(qmlEnum);

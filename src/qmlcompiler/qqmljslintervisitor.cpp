@@ -218,6 +218,46 @@ bool LinterVisitor::visit(QQmlJS::AST::UiImport *import)
     return true;
 }
 
+void LinterVisitor::handleDuplicateEnums(UiEnumMemberList *members, QStringView key,
+                                         const QQmlJS::SourceLocation &location)
+{
+    m_logger->log(u"Enum key '%1' has already been declared"_s.arg(key), qmlDuplicateEnumEntries,
+                  location);
+    for (const auto *member = members; member; member = member->next) {
+        if (member->member.toString() == key) {
+            m_logger->log(u"Note: previous declaration of '%1' here"_s.arg(key),
+                          qmlDuplicateEnumEntries, member->memberToken);
+            return;
+        }
+    }
+}
+
+bool LinterVisitor::visit(QQmlJS::AST::UiEnumDeclaration *uied)
+{
+    QQmlJSImportVisitor::visit(uied);
+
+    if (m_currentScope->inlineComponentName()) {
+        m_logger->log(u"Enums declared inside of inline component are ignored."_s, qmlSyntax,
+                      uied->firstSourceLocation());
+    }
+
+    QHash<QStringView, const QQmlJS::AST::UiEnumMemberList *> seen;
+    for (const auto *member = uied->members; member; member = member->next) {
+        QStringView key = member->member;
+        if (!key.front().isUpper()) {
+            m_logger->log(u"Enum keys should start with an uppercase."_s, qmlSyntax,
+                          member->memberToken);
+        }
+
+        if (seen.contains(key))
+            handleDuplicateEnums(uied->members, key, member->memberToken);
+        else
+            seen[member->member] = member;
+    }
+
+    return true;
+}
+
 } // namespace QQmlJS
 
 QT_END_NAMESPACE

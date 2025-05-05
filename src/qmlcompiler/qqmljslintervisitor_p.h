@@ -45,6 +45,7 @@ protected:
     bool visit(QQmlJS::AST::VoidExpression *ast) override;
     bool visit(QQmlJS::AST::BinaryExpression *) override;
     bool visit(QQmlJS::AST::UiImport *import) override;
+    bool visit(QQmlJS::AST::UiEnumDeclaration *uied) override;
 
 private:
     struct SeenImport
@@ -76,6 +77,9 @@ private:
     };
     QSet<SeenImport> m_seenImports;
     std::vector<QQmlJS::AST::Node *> m_ancestryIncludingCurrentNode;
+
+    void handleDuplicateEnums(QQmlJS::AST::UiEnumMemberList *members, QStringView key,
+                              const QQmlJS::SourceLocation &location);
 };
 
 } // namespace QQmlJS
