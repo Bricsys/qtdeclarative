@@ -90,6 +90,121 @@ Item {
                             })
     }
 
+    function appendToNegativeIndex() {
+        var index = testModel.index([0,1,-1], 0)
+
+        testModel.appendRow(index, {
+                            checked: true,
+                            amount: 1,
+                            fruitType: "Pear",
+                            fruitName: "Williams",
+                            fruitPrice: 1.50,
+                            color: "green"
+                            })
+    }
+
+    function appendToInvalidIndex() {
+        var index = testModel.index([0,12,1], 0)
+
+        testModel.appendRow(index, {
+                            checked: true,
+                            amount: 1,
+                            fruitType: "Pear",
+                            fruitName: "Williams",
+                            fruitPrice: 1.50,
+                            color: "green"
+                            })
+    }
+
+    function appendInvalidNode1() {
+        var index = testModel.index([0,1,1], 0)
+        testModel.appendRow(index, 150)
+    }
+
+    function appendInvalidNode2() {
+        var index = testModel.index([0,1,1], 0)
+
+        testModel.appendRow(index, {
+                            checked: false,
+                            amount: 4,
+                            fruitType: "Peach",
+                            fruitName: "Princess Peach",
+                            fruitPrice: 1.45,
+                            color: "yellow",
+                            rows: [
+                                {
+                                    checked: true,
+                                    amount: 5,
+                                    fruitType: "Strawberry",
+                                    fruitName: "Perry the Berry",
+                                    fruitPrice: 3.80,
+                                    color: "red",
+                                },
+                                {
+                                    checked: false,
+                                    amount: 6,
+                                    fruitType:[],
+                                    fruitName: "Bear Pear",
+                                    fruitPrice: 1.50,
+                                    color: "green",
+                                }
+                            ]
+                        })
+    }
+
+    function appendInvalidNode3() {
+        var index = testModel.index([0,1,1], 0)
+
+        testModel.appendRow(index, [{
+                            checked: true,
+                            amount: 1,
+                            fruitType: "Pear",
+                            fruitName: "Bear Pear",
+                            fruitPrice: 1.50,
+                            color: "green"
+                            }])
+    }
+
+    function appendToLeaf() {
+        var index = testModel.index([1,0], 0)
+
+        testModel.appendRow(index, {
+                            checked: true,
+                            amount: 1,
+                            fruitType: "Pear",
+                            fruitName: "Bear Pear",
+                            fruitPrice: 1.50,
+                            color: "green"
+                            })
+    }
+
+    function appendToMiddle() {
+        var index = testModel.index([0,0], 0)
+
+        testModel.appendRow(index, {
+                            checked: true,
+                            amount: 5,
+                            fruitType: "Strawberry",
+                            fruitName: "Perry the Berry",
+                            fruitPrice: 3.80,
+                            color: "red"
+                            })
+    }
+
+
+    function appendToNodeWithExtraData() {
+        var index = testModel.index([1], 0)
+
+        testModel.appendRow(index, {
+                            checked: true,
+                            amount: 1,
+                            fruitType: "Pear",
+                            fruitName: "Williams",
+                            fruitPrice: 1.50,
+                            color: "green",
+                            extradata: "extradata"
+                            })
+    }
 
     TreeView {
         id: treeView

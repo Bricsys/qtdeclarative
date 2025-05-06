@@ -27,6 +27,7 @@ public:
 
 private slots:
     void appendToRoot();
+    void appendRow();
     void clear();
     void getRow();
 };
@@ -186,6 +187,181 @@ void tst_QQmlTreeModel::appendToRoot()
     QCOMPARE(model->data(model->index(4, 3, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
     QCOMPARE(model->data(model->index(4, 4, QModelIndex()), roleNames.key("display")).toDouble(), 1.5);
     QCOMPARE(model->data(model->index(4, 4, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+}
+
+void tst_QQmlTreeModel::appendRow()
+{
+    QQuickView view;
+    QVERIFY(QQuickTest::showView(view, testFileUrl("common.qml")));
+
+    auto *model = view.rootObject()->property("testModel").value<QQmlTreeModel*>();
+    QVERIFY(model);
+
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 8);
+
+    QSignalSpy columnCountSpy(model, SIGNAL(columnCountChanged()));
+    QVERIFY(columnCountSpy.isValid());
+
+    QSignalSpy rowsChangedSpy(model, SIGNAL(rowsChanged()));
+    QVERIFY(rowsChangedSpy.isValid());
+    int rowsChangedSignalEmissions = 0;
+
+    const QHash<int, QByteArray> roleNames = model->roleNames();
+    QCOMPARE(roleNames.size(), 2);
+    QVERIFY(roleNames.values().contains("display"));
+    QVERIFY(roleNames.values().contains("decoration"));
+
+    QQuickTreeView *treeView = view.rootObject()->property("treeView").value<QQuickTreeView*>();
+    QVERIFY(treeView);
+    QCOMPARE(treeView->columns(), 5);
+    QCOMPARE(treeView->rows(), 2);  // treeView cannot call our treeSize
+
+    // Try to append something invalid - an int
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* got int instead"));
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendInvalidNode1"));
+    // Nothing is inserted
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 8);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), rowsChangedSignalEmissions);
+    QCOMPARE(treeView->columns(), 5);
+    QCOMPARE(treeView->rows(), 2);
+
+    // Try to append something invalid - a subtree, but one child has an invalid data type
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* expected the property named"));
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendInvalidNode2"));
+    // Nothing is inserted
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 8);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), rowsChangedSignalEmissions);
+    QCOMPARE(treeView->columns(), 5);
+    QCOMPARE(treeView->rows(), 2);
+
+    // Call append with something invalid - the input is an array instead of a simple object.
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* row manipulation functions do not support complex rows"));
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendInvalidNode3"));
+    // Nothing is inserted
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 8);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), rowsChangedSignalEmissions);
+    QCOMPARE(treeView->columns(), 5);
+    QCOMPARE(treeView->rows(), 2);
+
+    // Append a node to a leaf
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendToLeaf"));
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 9);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), ++rowsChangedSignalEmissions);
+    QCOMPARE(treeView->columns(), 5);
+    QCOMPARE(treeView->rows(), 2);
+
+    // Appending to {1,1} - the index of the new node is {1,1,0}
+    // {1,1,0} is the tree index, 0 is the col index
+    QCOMPARE(model->data(model->index({1,0,0}, 0), roleNames.key("display")).toBool(), true);
+    QCOMPARE(model->data(model->index({1,0,0}, 0), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index({1,0,0}, 1), roleNames.key("display")).toInt(), 1);
+    QCOMPARE(model->data(model->index({1,0,0}, 1), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index({1,0,0}, 2), roleNames.key("display")).toString(), u"Pear"_s);
+    QCOMPARE(model->data(model->index({1,0,0}, 2), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index({1,0,0}, 3), roleNames.key("display")).toString(), u"Bear Pear"_s);
+    QCOMPARE(model->data(model->index({1,0,0}, 3), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index({1,0,0}, 4), roleNames.key("display")).toDouble(), 1.5);
+    QCOMPARE(model->data(model->index({1,0,0}, 4), roleNames.key("decoration")).toString(), u"green"_s);
+
+    // Append to an "intermediate" node
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendToMiddle"));
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 10);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), ++rowsChangedSignalEmissions);
+    QCOMPARE(treeView->columns(), 5);
+    QCOMPARE(treeView->rows(), 2);
+
+    // Appending to {0,0} - the index of the new node is {0,0,0}
+    // {0,0,0} is the tree index, 0 is the col index
+    QCOMPARE(model->data(model->index({0,0,0}, 0), roleNames.key("display")).toBool(), true);
+    QCOMPARE(model->data(model->index({0,0,0}, 0), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index({0,0,0}, 1), roleNames.key("display")).toInt(), 5);
+    QCOMPARE(model->data(model->index({0,0,0}, 1), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index({0,0,0}, 2), roleNames.key("display")).toString(), u"Strawberry"_s);
+    QCOMPARE(model->data(model->index({0,0,0}, 2), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index({0,0,0}, 3), roleNames.key("display")).toString(), u"Perry the Berry"_s);
+    QCOMPARE(model->data(model->index({0,0,0}, 3), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index({0,0,0}, 4), roleNames.key("display")).toDouble(), 3.8);
+    QCOMPARE(model->data(model->index({0,0,0}, 4), roleNames.key("decoration")).toString(), u"red"_s);
+
+    // Call append with a node that has an unexpected role;
+    // the node should be added and the extra data ignored.
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendToNodeWithExtraData"));
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 11);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), ++rowsChangedSignalEmissions);
+    QCOMPARE(treeView->columns(), 5);
+    QCOMPARE(treeView->rows(), 2);
+
+    // Appending to {1} - the index of the new node is {1,2}
+    // {1,2} is the tree index, 0 is the col index
+    QCOMPARE(model->data(model->index({1,2}, 0), roleNames.key("display")).toBool(), true);
+    QCOMPARE(model->data(model->index({1,2}, 0), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index({1,2}, 1), roleNames.key("display")).toInt(), 1);
+    QCOMPARE(model->data(model->index({1,2}, 1), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index({1,2}, 2), roleNames.key("display")).toString(), u"Pear"_s);
+    QCOMPARE(model->data(model->index({1,2}, 2), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index({1,2}, 3), roleNames.key("display")).toString(), u"Williams"_s);
+    QCOMPARE(model->data(model->index({1,2}, 3), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index({1,2}, 4), roleNames.key("display")).toDouble(), 1.5);
+    QCOMPARE(model->data(model->index({1,2}, 4), roleNames.key("decoration")).toString(), u"green"_s);
+
+    // Try to append to an invalid index - the index contains a negtive number
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* could not find any node at the specified index"));
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* could not find any node at the specified index"));
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendToNegativeIndex"));
+    // Node is appended to the root
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 12);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), ++rowsChangedSignalEmissions);
+    QCOMPARE(treeView->columns(), 5);
+    QTRY_COMPARE(treeView->rows(), 3);
+
+    QCOMPARE(model->data(model->index(2, 0), roleNames.key("display")).toBool(), true);
+    QCOMPARE(model->data(model->index(2, 0), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(2, 1), roleNames.key("display")).toInt(), 1);
+    QCOMPARE(model->data(model->index(2, 1), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(2, 2), roleNames.key("display")).toString(), u"Pear"_s);
+    QCOMPARE(model->data(model->index(2, 2), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(2, 3), roleNames.key("display")).toString(), u"Williams"_s);
+    QCOMPARE(model->data(model->index(2, 3), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(2, 4), roleNames.key("display")).toDouble(), 1.5);
+    QCOMPARE(model->data(model->index(2, 4), roleNames.key("decoration")).toString(), u"green"_s);
+
+    // Try to append to an invalid index - the node does not exist
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* could not find any node at the specified index"));
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* could not find any node at the specified index"));
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendToInvalidIndex"));   // TODO - ignore waning message ?
+    // Node is appended to the root
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 13);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), ++rowsChangedSignalEmissions);
+    QCOMPARE(treeView->columns(), 5);
+    QTRY_COMPARE(treeView->rows(), 4);
+
+    QCOMPARE(model->data(model->index(3, 0), roleNames.key("display")).toBool(), true);
+    QCOMPARE(model->data(model->index(3, 0), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(3, 1), roleNames.key("display")).toInt(), 1);
+    QCOMPARE(model->data(model->index(3, 1), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(3, 2), roleNames.key("display")).toString(), u"Pear"_s);
+    QCOMPARE(model->data(model->index(3, 2), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(3, 3), roleNames.key("display")).toString(), u"Williams"_s);
+    QCOMPARE(model->data(model->index(3, 3), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(3, 4), roleNames.key("display")).toDouble(), 1.5);
+    QCOMPARE(model->data(model->index(3, 4), roleNames.key("decoration")).toString(), u"green"_s);
 }
 
 void tst_QQmlTreeModel::clear()
