@@ -26,98 +26,98 @@ using namespace Qt::StringLiterals;
 
 // don't forget to forward-declare your logging category ID in qqmljsloggingutils.h!
 #define QMLLINT_DEFAULT_CATEGORIES                                                                 \
-    X(qmlRequired, "required", "RequiredProperty", "Warn about required properties", QtWarningMsg, \
-      false, false)                                                                                \
+    X(qmlAccessSingleton, "access-singleton-via-object", "AccessSingletonViaObject",               \
+      "Warn if a singleton is accessed via an object", QtWarningMsg, false, false)                 \
     X(qmlAliasCycle, "alias-cycle", "AliasCycle", "Warn about alias cycles", QtWarningMsg, false,  \
       false)                                                                                       \
-    X(qmlUnresolvedAlias, "unresolved-alias", "UnresolvedAlias", "Warn about unresolved aliases",  \
-      QtWarningMsg, false, false)                                                                  \
-    X(qmlImport, "import", "ImportFailure", "Warn about failing imports and deprecated qmltypes",  \
-      QtWarningMsg, false, false)                                                                  \
-    X(qmlRecursionDepthErrors, "recursion-depth-errors", "", "", QtWarningMsg, false, true)        \
-    X(qmlWith, "with", "WithStatement",                                                            \
-      "Warn about with statements as they can cause false "                                        \
-      "positives when checking for unqualified access",                                            \
-      QtWarningMsg, false, false)                                                                  \
-    X(qmlInheritanceCycle, "inheritance-cycle", "InheritanceCycle",                                \
-      "Warn about inheritance cycles", QtWarningMsg, false, false)                                 \
-    X(qmlDeprecated, "deprecated", "Deprecated", "Warn about deprecated properties and types",     \
-      QtWarningMsg, false, false)                                                                  \
-    X(qmlSignalParameters, "signal-handler-parameters", "BadSignalHandlerParameters",              \
-      "Warn about bad signal handler parameters", QtWarningMsg, false, false)                      \
-    X(qmlMissingType, "missing-type", "MissingType", "Warn about missing types", QtWarningMsg,     \
-      false, false)                                                                                \
-    X(qmlUnresolvedType, "unresolved-type", "UnresolvedType", "Warn about unresolved types",       \
-      QtWarningMsg, false, false)                                                                  \
-    X(qmlRestrictedType, "restricted-type", "RestrictedType", "Warn about restricted types",       \
-      QtWarningMsg, false, false)                                                                  \
-    X(qmlPrefixedImportType, "prefixed-import-type", "PrefixedImportType",                         \
-      "Warn about prefixed import types", QtWarningMsg, false, false)                              \
-    X(qmlIncompatibleType, "incompatible-type", "IncompatibleType",                                \
-      "Warn about incompatible types", QtWarningMsg, false, false)                                 \
-    X(qmlTranslationFunctionMismatch, "translation-function-mismatch",                             \
-      "TranslationFunctionMismatch",                                                               \
-      "Warn about usages of ID and non-ID translation functions in the same file.", QtWarningMsg,  \
-      false, false)                                                                                \
-    X(qmlMissingProperty, "missing-property", "MissingProperty", "Warn about missing properties",  \
-      QtWarningMsg, false, false)                                                                  \
-    X(qmlNonListProperty, "non-list-property", "NonListProperty",                                  \
-      "Warn about non-list properties", QtWarningMsg, false, false)                                \
-    X(qmlReadOnlyProperty, "read-only-property", "ReadOnlyProperty",                               \
-      "Warn about writing to read-only properties", QtWarningMsg, false, false)                    \
-    X(qmlDuplicatePropertyBinding, "duplicate-property-binding", "DuplicatePropertyBinding",       \
-      "Warn about duplicate property bindings", QtWarningMsg, false, false)                        \
-    X(qmlDuplicatedName, "duplicated-name", "DuplicatedName",                                      \
-      "Warn about duplicated property/signal names", QtWarningMsg, false, false)                   \
-    X(qmlDeferredPropertyId, "deferred-property-id", "DeferredPropertyId",                         \
-      "Warn about making deferred properties immediate by giving them an id.", QtInfoMsg, true,    \
-      true)                                                                                        \
-    X(qmlUnqualified, "unqualified", "UnqualifiedAccess",                                          \
-      "Warn about unqualified identifiers and how to fix them", QtWarningMsg, false, false)        \
-    X(qmlUnusedImports, "unused-imports", "UnusedImports", "Warn about unused imports", QtInfoMsg, \
-      false, false)                                                                                \
-    X(qmlMultilineStrings, "multiline-strings", "MultilineStrings",                                \
-      "Warn about multiline strings", QtInfoMsg, false, false)                                     \
-    X(qmlSyntax, "syntax", "", "Syntax errors", QtWarningMsg, false, true)                         \
-    X(qmlSyntaxIdQuotation, "syntax.id-quotation", "", "ID quotation", QtWarningMsg, false, true)  \
-    X(qmlSyntaxDuplicateIds, "syntax.duplicate-ids", "", "ID duplication", QtCriticalMsg, false,   \
-      true)                                                                                        \
-    X(qmlCompiler, "compiler", "CompilerWarnings", "Warn about compiler issues", QtWarningMsg,     \
-      true, false)                                                                                 \
+    X(qmlAssignmentInCondition, "assignment-in-condition", "AssignmentInCondition",                \
+      "Warn about using assignment in conditions.", QtWarningMsg, false, false)                    \
     X(qmlAttachedPropertyReuse, "attached-property-reuse", "AttachedPropertyReuse",                \
       "Warn if attached types from parent components aren't reused. This is handled by the "       \
       "QtQuick lint plugin. Use Quick.AttachedPropertyReuse instead.",                             \
       QtCriticalMsg, true, false)                                                                  \
-    X(qmlPlugin, "plugin", "LintPluginWarnings", "Warn if a qmllint plugin finds an issue",        \
-      QtWarningMsg, true, false)                                                                   \
-    X(qmlVarUsedBeforeDeclaration, "var-used-before-declaration", "VarUsedBeforeDeclaration",      \
-      "Warn if a variable is used before declaration", QtWarningMsg, false, false)                 \
+    X(qmlCompiler, "compiler", "CompilerWarnings", "Warn about compiler issues", QtWarningMsg,     \
+      true, false)                                                                                 \
+    X(qmlDeferredPropertyId, "deferred-property-id", "DeferredPropertyId",                         \
+      "Warn about making deferred properties immediate by giving them an id.", QtInfoMsg, true,    \
+      true)                                                                                        \
+    X(qmlDeprecated, "deprecated", "Deprecated", "Warn about deprecated properties and types",     \
+      QtWarningMsg, false, false)                                                                  \
+    X(qmlDuplicatePropertyBinding, "duplicate-property-binding", "DuplicatePropertyBinding",       \
+      "Warn about duplicate property bindings", QtWarningMsg, false, false)                        \
+    X(qmlDuplicatedName, "duplicated-name", "DuplicatedName",                                      \
+      "Warn about duplicated property/signal names", QtWarningMsg, false, false)                   \
+    X(qmlEval, "eval", "Eval", "Warn about uses of eval()", QtWarningMsg, false, false)            \
     X(qmlFunctionUsedBeforeDeclaration, "function-used-before-declaration",                        \
       "FunctionUsedBeforeDeclaration", "Warn if a function is used before declaration",            \
       QtWarningMsg, true, false)                                                                   \
+    X(qmlImport, "import", "ImportFailure", "Warn about failing imports and deprecated qmltypes",  \
+      QtWarningMsg, false, false)                                                                  \
+    X(qmlIncompatibleType, "incompatible-type", "IncompatibleType",                                \
+      "Warn about incompatible types", QtWarningMsg, false, false)                                 \
+    X(qmlInheritanceCycle, "inheritance-cycle", "InheritanceCycle",                                \
+      "Warn about inheritance cycles", QtWarningMsg, false, false)                                 \
     X(qmlInvalidLintDirective, "invalid-lint-directive", "InvalidLintDirective",                   \
       "Warn if an invalid qmllint comment is found", QtWarningMsg, false, false)                   \
-    X(qmlUseProperFunction, "use-proper-function", "UseProperFunction",                            \
-      "Warn if var is used for storing functions", QtWarningMsg, false, false)                     \
-    X(qmlAccessSingleton, "access-singleton-via-object", "AccessSingletonViaObject",               \
-      "Warn if a singleton is accessed via an object", QtWarningMsg, false, false)                 \
-    X(qmlTopLevelComponent, "top-level-component", "TopLevelComponent",                            \
-      "Warn if a top level Component is encountered", QtWarningMsg, false, false)                  \
-    X(qmlUncreatableType, "uncreatable-type", "UncreatableType",                                   \
-      "Warn if uncreatable types are created", QtWarningMsg, false, false)                         \
     X(qmlMissingEnumEntry, "missing-enum-entry", "MissingEnumEntry",                               \
       "Warn about using missing enum values.", QtWarningMsg, false, false)                         \
-    X(qmlAssignmentInCondition, "assignment-in-condition", "AssignmentInCondition",                \
-      "Warn about using assignment in conditions.", QtWarningMsg, false, false)                    \
+    X(qmlMissingProperty, "missing-property", "MissingProperty", "Warn about missing properties",  \
+      QtWarningMsg, false, false)                                                                  \
+    X(qmlMissingType, "missing-type", "MissingType", "Warn about missing types", QtWarningMsg,     \
+      false, false)                                                                                \
+    X(qmlMultilineStrings, "multiline-strings", "MultilineStrings",                                \
+      "Warn about multiline strings", QtInfoMsg, false, false)                                     \
+    X(qmlNonListProperty, "non-list-property", "NonListProperty",                                  \
+      "Warn about non-list properties", QtWarningMsg, false, false)                                \
+    X(qmlPlugin, "plugin", "LintPluginWarnings", "Warn if a qmllint plugin finds an issue",        \
+      QtWarningMsg, true, false)                                                                   \
+    X(qmlPrefixedImportType, "prefixed-import-type", "PrefixedImportType",                         \
+      "Warn about prefixed import types", QtWarningMsg, false, false)                              \
+    X(qmlReadOnlyProperty, "read-only-property", "ReadOnlyProperty",                               \
+      "Warn about writing to read-only properties", QtWarningMsg, false, false)                    \
+    X(qmlRecursionDepthErrors, "recursion-depth-errors", "", "", QtWarningMsg, false, true)        \
     X(qmlRedundantOptionalChaining, "redundant-optional-chaining", "RedundantOptionalChaining",    \
       "Warn about optional chaining on non-voidable and non-nullable base", QtWarningMsg, false,   \
       false)                                                                                       \
-    X(qmlEval, "eval", "Eval", "Warn about uses of eval()", QtWarningMsg, false, false)            \
-    X(qmlUnreachableCode, "unreachable-code", "UnreachableCode", "Warn about unreachable code.",   \
+    X(qmlRequired, "required", "RequiredProperty", "Warn about required properties", QtWarningMsg, \
+      false, false)                                                                                \
+    X(qmlRestrictedType, "restricted-type", "RestrictedType", "Warn about restricted types",       \
       QtWarningMsg, false, false)                                                                  \
+    X(qmlSignalParameters, "signal-handler-parameters", "BadSignalHandlerParameters",              \
+      "Warn about bad signal handler parameters", QtWarningMsg, false, false)                      \
     X(qmlStalePropertyRead, "stale-property-read", "StalePropertyRead",                            \
       "Warn about bindings reading non-constant and non-notifiable properties", QtWarningMsg,      \
-      false, false) \
+      false, false)                                                                                \
+    X(qmlSyntax, "syntax", "", "Syntax errors", QtWarningMsg, false, true)                         \
+    X(qmlSyntaxDuplicateIds, "syntax.duplicate-ids", "", "ID duplication", QtCriticalMsg, false,   \
+      true)                                                                                        \
+    X(qmlSyntaxIdQuotation, "syntax.id-quotation", "", "ID quotation", QtWarningMsg, false, true)  \
+    X(qmlTopLevelComponent, "top-level-component", "TopLevelComponent",                            \
+      "Warn if a top level Component is encountered", QtWarningMsg, false, false)                  \
+    X(qmlTranslationFunctionMismatch, "translation-function-mismatch",                             \
+      "TranslationFunctionMismatch",                                                               \
+      "Warn about usages of ID and non-ID translation functions in the same file.", QtWarningMsg,  \
+      false, false)                                                                                \
+    X(qmlUncreatableType, "uncreatable-type", "UncreatableType",                                   \
+      "Warn if uncreatable types are created", QtWarningMsg, false, false)                         \
+    X(qmlUnqualified, "unqualified", "UnqualifiedAccess",                                          \
+      "Warn about unqualified identifiers and how to fix them", QtWarningMsg, false, false)        \
+    X(qmlUnreachableCode, "unreachable-code", "UnreachableCode", "Warn about unreachable code.",   \
+      QtWarningMsg, false, false)                                                                  \
+    X(qmlUnresolvedAlias, "unresolved-alias", "UnresolvedAlias", "Warn about unresolved aliases",  \
+      QtWarningMsg, false, false)                                                                  \
+    X(qmlUnresolvedType, "unresolved-type", "UnresolvedType", "Warn about unresolved types",       \
+      QtWarningMsg, false, false)                                                                  \
+    X(qmlUnusedImports, "unused-imports", "UnusedImports", "Warn about unused imports", QtInfoMsg, \
+      false, false)                                                                                \
+    X(qmlUseProperFunction, "use-proper-function", "UseProperFunction",                            \
+      "Warn if var is used for storing functions", QtWarningMsg, false, false)                     \
+    X(qmlVarUsedBeforeDeclaration, "var-used-before-declaration", "VarUsedBeforeDeclaration",      \
+      "Warn if a variable is used before declaration", QtWarningMsg, false, false)                 \
+    X(qmlWith, "with", "WithStatement",                                                            \
+      "Warn about with statements as they can cause false "                                        \
+      "positives when checking for unqualified access",                                            \
+      QtWarningMsg, false, false)
 
 #define X(category, name, setting, description, level, ignored, isDefault) \
     const QQmlSA::LoggerWarningId category{ name };
@@ -148,8 +148,7 @@ static_assert(isUnique(std::array{ QMLLINT_DEFAULT_CATEGORIES }), "Duplicate nam
 static_assert(isUnique(std::array{ QMLLINT_DEFAULT_CATEGORIES }), "Duplicate settings found!");
 #undef X
 
-#define X(category, name, setting, description, level, ignored, isDefault) std::string_view(description),\
-
+#define X(category, name, setting, description, level, ignored, isDefault) std::string_view(description),
 static_assert(isUnique(std::array{ QMLLINT_DEFAULT_CATEGORIES }), "Duplicate description found!");
 #undef X
 
