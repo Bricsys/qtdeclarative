@@ -206,6 +206,108 @@ Item {
                             })
     }
 
+    function setWithNegativeIndex() {
+        var index = testModel.index([0,1,-1], 0)
+
+        testModel.setRow(index, {
+                        checked: true,
+                        amount: 1,
+                        fruitType: "Pear",
+                        fruitName: "Williams",
+                        fruitPrice: 1.50,
+                        color: "green"
+                        })
+    }
+
+    function setWithInvalidIndex() {
+        var index = testModel.index([3,0,1], 0)
+
+        testModel.setRow(index, {
+                        checked: true,
+                        amount: 1,
+                        fruitType: "Pear",
+                        fruitName: "Williams",
+                        fruitPrice: 1.50,
+                        color: "green"
+                        })
+    }
+
+    function setInvalidData1() {
+        var index = testModel.index([0,1,1], 0)
+        testModel.setRow(index, 150)
+    }
+
+    function setInvalidData2() {
+        var index = testModel.index([0,1,1], 0)
+
+        testModel.setRow(index, {
+                        checked: false,
+                        amount: 4,
+                        fruitType: "Peach",
+                        fruitName: "Princess Peach",
+                        fruitPrice: 1.45,
+                        color: "yellow",
+                        rows: [
+                            {
+                                checked: true,
+                                amount: 5,
+                                fruitType: "Strawberry",
+                                fruitName: "Perry the Berry",
+                                fruitPrice: 3.80,
+                                color: "red",
+                            },
+                            {
+                                checked: false,
+                                amount: 6,
+                                fruitType: "Pear",
+                                fruitName: "Bear Pear",
+                                fruitPrice: 1.50,
+                                color: "green",
+                            }
+                        ]
+                    })
+    }
+
+    function setInvalidData3() {
+        var index = testModel.index([0,1,1], 0)
+
+        testModel.setRow(index, [{
+                        checked: true,
+                        amount: 1,
+                        fruitType: "Pear",
+                        fruitName: "Bear Pear",
+                        fruitPrice: 1.50,
+                        color: "green"
+                        }])
+    }
+
+    function setLeaf() {
+        var index = testModel.index([0,1,1], 0)
+
+        testModel.setRow(index, {
+                        checked: true,
+                        amount: 1,
+                        fruitType: "Pear",
+                        fruitName: "Bear Pear",
+                        fruitPrice: 1.50,
+                        color: "green"
+                        })
+    }
+
+    function setNodeWithExtraData() {
+        var index = testModel.index([1,0], 0)
+
+        testModel.setRow(index, {
+                        checked: true,
+                        amount: 4,
+                        fruitType: "Orange",
+                        fruitName: "Navel",
+                        fruitPrice: 2.50,
+                        color: "orange",
+                        extradata: "extradata"
+                        })
+    }
+
     TreeView {
         id: treeView
         anchors.fill: parent
