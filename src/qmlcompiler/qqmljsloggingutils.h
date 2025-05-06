@@ -55,6 +55,7 @@ extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlDuplicateImport;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlDuplicateInlineComponent;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlDuplicatePropertyBinding;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlDuplicatedName;
+extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlEnumEntryMatchesEnum;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlEval;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlFunctionUsedBeforeDeclaration;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlImport;

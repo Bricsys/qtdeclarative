@@ -253,6 +253,11 @@ bool LinterVisitor::visit(QQmlJS::AST::UiEnumDeclaration *uied)
             handleDuplicateEnums(uied->members, key, member->memberToken);
         else
             seen[member->member] = member;
+
+        if (uied->name == key) {
+            m_logger->log("Enum entry should be named differently than the enum itself to avoid "
+                          "confusion."_L1, qmlEnumEntryMatchesEnum, member->firstSourceLocation());
+        }
     }
 
     return true;

@@ -1288,6 +1288,11 @@ void TestQmllint::dirtyQmlSnippet_data()
                          { "Note: previous declaration of 'World' here"_L1, 1, 14 },
                          { "Enum keys should start with an uppercase"_L1, 1, 35 } } }
             << defaultOptions;
+    QTest::newRow("enumEntryMatchesEnum")
+            << u"enum A { A, B, C }"_s
+            << Result{ { { "Enum entry should be named differently than the enum itself to avoid "
+                           "confusion."_L1, 1, 10 } } }
+            << defaultOptions;
     QTest::newRow("requiredInInlineComponent")
             << u"Item { component Foo: Item { required property var bla; } } Foo {}"_s
             << Result{ { { "Component is missing required property bla from Foo"_L1, 1, 61 } } }

@@ -59,6 +59,8 @@ using namespace Qt::StringLiterals;
       "Warn about duplicate property bindings", QtWarningMsg, false, false)                        \
     X(qmlDuplicatedName, "duplicated-name", "DuplicatedName",                                      \
       "Warn about duplicated property/signal names", QtWarningMsg, false, false)                   \
+    X(qmlEnumEntryMatchesEnum, "enum-entry-matches-enum", "EnumEntryMatchesEnum",                  \
+      "Warn about enum entries named the same as the enum itself", QtWarningMsg, false, false)     \
     X(qmlEval, "eval", "Eval", "Warn about uses of eval()", QtWarningMsg, false, false)            \
     X(qmlFunctionUsedBeforeDeclaration, "function-used-before-declaration",                        \
       "FunctionUsedBeforeDeclaration", "Warn if a function is used before declaration",            \
