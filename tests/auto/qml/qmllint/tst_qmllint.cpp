@@ -1293,6 +1293,18 @@ void TestQmllint::dirtyQmlSnippet_data()
             << Result{ { { "Enum entry should be named differently than the enum itself to avoid "
                            "confusion."_L1, 1, 10 } } }
             << defaultOptions;
+    QTest::newRow("nonRootEnum1")
+            << u"Item { enum E { A, B, C } }"_s
+            << Result{ { { "Enum declared outside the root element. It won't be accessible."_L1,
+                           1, 8 } } }
+            << defaultOptions;
+    QTest::newRow("nonRootEnum2")
+            << u"Component { enum E1 { A, B, C } Item { enum E2 { A, B, C } } }"_s
+            << Result{ { { "Enum declared outside the root element. It won't be accessible."_L1,
+                           1, 13 } },
+                       { { "Enum declared outside the root element. It won't be accessible."_L1,
+                           1, 40 } } }
+            << defaultOptions;
     QTest::newRow("requiredInInlineComponent")
             << u"Item { component Foo: Item { required property var bla; } } Foo {}"_s
             << Result{ { { "Component is missing required property bla from Foo"_L1, 1, 61 } } }

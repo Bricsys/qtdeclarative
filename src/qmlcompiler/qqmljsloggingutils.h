@@ -68,6 +68,7 @@ extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlMissingProperty;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlMissingType;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlMultilineStrings;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlNonListProperty;
+extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlNonRootEnums;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlPlugin;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlPrefixedImportType;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlReadOnlyProperty;

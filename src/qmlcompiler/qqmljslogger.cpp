@@ -86,6 +86,8 @@ using namespace Qt::StringLiterals;
       "Warn about multiline strings", QtInfoMsg, false, false)                                     \
     X(qmlNonListProperty, "non-list-property", "NonListProperty",                                  \
       "Warn about non-list properties", QtWarningMsg, false, false)                                \
+    X(qmlNonRootEnums, "non-root-enum", "NonRootEnum",                                             \
+      "Warn about enums defined outside the root component", QtWarningMsg, false, false)           \
     X(qmlPlugin, "plugin", "LintPluginWarnings", "Warn if a qmllint plugin finds an issue",        \
       QtWarningMsg, true, false)                                                                   \
     X(qmlPrefixedImportType, "prefixed-import-type", "PrefixedImportType",                         \
