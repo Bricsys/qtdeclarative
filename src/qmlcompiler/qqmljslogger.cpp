@@ -116,7 +116,7 @@ using namespace Qt::StringLiterals;
     X(qmlUnreachableCode, "unreachable-code", "UnreachableCode", "Warn about unreachable code.",   \
       QtWarningMsg, false, false)                                                                  \
     X(qmlStalePropertyRead, "stale-property-read", "StalePropertyRead",                            \
-      "Warn about bindings reading non-constant and non-notifyable properties", QtWarningMsg,      \
+      "Warn about bindings reading non-constant and non-notifiable properties", QtWarningMsg,      \
       false, false) \
 
 #define X(category, name, setting, description, level, ignored, isDefault) \
