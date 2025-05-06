@@ -509,125 +509,684 @@ void TestQmllint::dirtyQmlCode_data()
     QTest::addColumn<QString>("filename");
     QTest::addColumn<Result>("result");
 
-    QTest::newRow("Invalid_syntax_QML")
-            << QStringLiteral("failure1.qml")
-            << Result { { Message { QStringLiteral("Expected token `:'"), 4, 8, QtCriticalMsg } } };
-    QTest::newRow("Invalid_syntax_JS") << QStringLiteral("failure1.js")
-                                       << Result { { Message { QStringLiteral("Expected token `;'"),
-                                                               4, 12, QtCriticalMsg } } };
+    QTest::newRow("2Interceptors")
+            << QStringLiteral("2interceptors.qml")
+            << Result { { Message { QStringLiteral("Duplicate interceptor on property \"x\"") } } };
+    QTest::newRow("2ValueSources") << QStringLiteral("2valueSources.qml")
+                                   << Result { { Message { QStringLiteral(
+                                              "Duplicate value source on property \"x\"") } } };
+    QTest::newRow("AssignToReadOnlyProperty")
+            << QStringLiteral("assignToReadOnlyProperty.qml")
+            << Result{
+                   { Message{ QStringLiteral("Cannot assign to read-only property activeFocus") } },
+                   {},
+                   {}
+               };
+    QTest::newRow("AssignToReadOnlyProperty2")
+            << QStringLiteral("assignToReadOnlyProperty2.qml")
+            << Result { { Message {
+                                  QStringLiteral("Cannot assign to read-only property activeFocus") } } };
     QTest::newRow("AutomatchedSignalHandler")
             << QStringLiteral("AutomatchedSignalHandler.qml")
             << Result { { Message { QStringLiteral("Unqualified access"), 12, 36 } } };
     QTest::newRow("AutomatchedSignalHandler2")
             << QStringLiteral("AutomatchedSignalHandler.qml")
             << Result{ { Message{
-                       QStringLiteral(
-                               "Implicitly defining \"onClicked\" as signal handler in Connections "
-                               "is deprecated. "
-                               "Create a function instead: \"function onClicked() { ... }\"")} } };
+                                  QStringLiteral(
+                                          "Implicitly defining \"onClicked\" as signal handler in Connections "
+                                          "is deprecated. "
+                                          "Create a function instead: \"function onClicked() { ... }\"")} } };
+    QTest::newRow("BadAttached") << QStringLiteral("badAttached.qml")
+                                 << Result { { Message { QStringLiteral(
+                                            "unknown attached property scope WrongAttached.") } } };
+    QTest::newRow("BadBinding") << QStringLiteral("badBinding.qml")
+                                << Result{ { Message{ QStringLiteral(
+                                           "Could not find property \"doesNotExist\".") } } };
+    QTest::newRow("BadLiteralBinding")
+            << QStringLiteral("badLiteralBinding.qml")
+            << Result { { Message {
+                                  QStringLiteral("Cannot assign literal of type string to int") } } };
+    QTest::newRow("BadLiteralBindingDate")
+            << QStringLiteral("badLiteralBindingDate.qml")
+            << Result { { Message {
+                                  QStringLiteral("Cannot assign binding of type QString to QDateTime") } } };
+    QTest::newRow("BadModulePrefix")
+            << QStringLiteral("badModulePrefix.qml")
+            << Result { { Message {
+                                  QStringLiteral("Cannot access singleton as a property of an object") } } };
+    QTest::newRow("BadModulePrefix2")
+            << QStringLiteral("badModulePrefix2.qml")
+            << Result { { Message { QStringLiteral(
+                               "Cannot use non-QObject type QRectF to access prefixed import") } },
+                       { Message { QStringLiteral(
+                                 "Type not found in namespace") },
+                         Message { QStringLiteral(
+                                 "Member \"BirthdayParty\" not found on type \"QRectF\"") } },
+                       };
+    QTest::newRow("BadPropertyType")
+            << QStringLiteral("badPropertyType.qml")
+            << Result { { Message { QStringLiteral(
+                       "No type found for property \"bad\". This may be due to a missing "
+                       "import statement or incomplete qmltypes files.") } } };
+    QTest::newRow("BadScriptBindingOnAttachedSignalHandler")
+            << QStringLiteral("badScriptBinding.attachedSignalHandler.qml")
+            << Result { { Message {
+                                  QStringLiteral("no matching signal found for handler \"onBogusSignal\""), 3,
+                                  10 } } };
+    QTest::newRow("BadScriptBindingOnAttachedType")
+            << QStringLiteral("badScriptBinding.attached.qml")
+            << Result{ { Message{ QStringLiteral("Could not find property \"bogusProperty\"."), 5,
+                                  12 } } };
+    QTest::newRow("BadScriptBindingOnGroup")
+            << QStringLiteral("badScriptBinding.group.qml")
+            << Result{ { Message{ QStringLiteral("Could not find property \"bogusProperty\"."), 3,
+                                  10 } } };
+    {
+        const QString warning = u"Do not mix translation functions"_s;
+        QTest::addRow("BadTranslationMix") << testFile(u"translations/BadMix.qml"_s)
+                                           << Result{ {
+                                                        Message{ warning, 5, 49 },
+                                                        Message{ warning, 6, 56 },
+                                                        } };
+        QTest::addRow("BadTranslationMixWithMacros")
+                << testFile(u"translations/BadMixWithMacros.qml"_s)
+                << Result{ {
+                             Message{ warning, 5, 29 },
+                             } };
+    }
+    QTest::newRow("CoerceToVoid")
+            << QStringLiteral("coercetovoid.qml")
+            << Result{ { { "Function without return type annotation returns double"_L1 } } };
+    QTest::newRow("DefaultPropertyLookupInUnknownType")
+            << QStringLiteral("unknownParentDefaultPropertyCheck.qml")
+            << Result { { Message {  QStringLiteral(
+                       "Alien was not found. Did you add all imports and dependencies?") } } };
+    QTest::newRow("DefaultPropertyWithWrongType(string)")
+            << QStringLiteral("defaultPropertyWithWrongType.qml")
+            << Result { { Message { QStringLiteral(
+                               "Cannot assign to default property of incompatible type") } },
+                       { Message { QStringLiteral(
+                               "Cannot assign to non-existent default property") } } };
+    QTest::newRow("Deprecation (Property binding, no reason)")
+            << QStringLiteral("deprecatedPropertyBinding.qml")
+            << Result { { Message {
+                                  QStringLiteral("Binding on deprecated property \"deprecated\"") } } };
+    QTest::newRow("Deprecation (Property binding, with reason)")
+            << QStringLiteral("deprecatedPropertyBindingReason.qml")
+            << Result { { Message { QStringLiteral(
+                       "Binding on deprecated property \"deprecatedReason\" (Reason: Test)") } } };
+    QTest::newRow("Deprecation (Property, no reason)")
+            << QStringLiteral("deprecatedProperty.qml")
+            << Result { { Message { QStringLiteral("Property \"deprecated\" is deprecated") } } };
+    QTest::newRow("Deprecation (Property, with reason)")
+            << QStringLiteral("deprecatedPropertyReason.qml")
+            << Result { { Message {
+                                  QStringLiteral("Property \"deprecated\" is deprecated (Reason: Test)") } } };
+    QTest::newRow("Deprecation (Type, no reason)")
+            << QStringLiteral("deprecatedType.qml")
+            << Result { { Message { QStringLiteral("Type \"TypeDeprecated\" is deprecated") } } };
+    QTest::newRow("Deprecation (Type, with reason)")
+            << QStringLiteral("deprecatedTypeReason.qml")
+            << Result { { Message { QStringLiteral(
+                       "Type \"TypeDeprecatedReason\" is deprecated (Reason: Test)") } } };
+    QTest::newRow("DoubleAssignToDefaultProperty")
+            << QStringLiteral("defaultPropertyWithDoubleAssignment.qml")
+            << Result { { Message { QStringLiteral(
+                       "Cannot assign multiple objects to a default non-list property") } } };
+    QTest::newRow("InvalidImport")
+            << QStringLiteral("invalidImport.qml")
+            << Result { { Message { QStringLiteral(
+                                          "Failed to import FooBar. Are your import paths set up properly?"), 2, 1 } } };
+    QTest::newRow("Invalid_id_blockstatement")
+            << QStringLiteral("invalidId2.qml")
+            << Result { { Message { QStringLiteral("id must be followed by an identifier") } } };
+    QTest::newRow("Invalid_id_expression")
+            << QStringLiteral("invalidId1.qml")
+            << Result { { Message { QStringLiteral("Failed to parse id") } } };
+    QTest::newRow("Invalid_syntax_JS") << QStringLiteral("failure1.js")
+                                       << Result { { Message { QStringLiteral("Expected token `;'"),
+                                                             4, 12, QtCriticalMsg } } };
+    QTest::newRow("Invalid_syntax_QML")
+            << QStringLiteral("failure1.qml")
+            << Result { { Message { QStringLiteral("Expected token `:'"), 4, 8, QtCriticalMsg } } };
+    QTest::newRow("IsNotAnEntryOfEnum")
+            << QStringLiteral("IsNotAnEntryOfEnum.qml")
+            << Result{ {
+                           Message {
+                                    QStringLiteral("Member \"Mode\" not found on type \"Item\""), 12,
+                                    29},
+                           Message{
+                                    QStringLiteral("\"Hour\" is not an entry of enum \"Mode\"."), 13,
+                                    62}
+                   },
+                   {},
+                   { Message{ QStringLiteral("Hours") } }
+               };
     QTest::newRow("MemberNotFound")
             << QStringLiteral("memberNotFound.qml")
             << Result { { Message {
-                       QStringLiteral("Member \"foo\" not found on type \"QtObject\""), 6,
-                       31 } } };
+                                  QStringLiteral("Member \"foo\" not found on type \"QtObject\""), 6,
+                                  31 } } };
+    QTest::newRow("MissingDefaultProperty")
+            << QStringLiteral("defaultPropertyWithoutKeyword.qml")
+            << Result { { Message {
+                                  QStringLiteral("Cannot assign to non-existent default property") } } };
+    QTest::newRow("MissingDefaultPropertyDefinedInTheSameType")
+            << QStringLiteral("defaultPropertyWithinTheSameType.qml")
+            << Result { { Message {
+                                  QStringLiteral("Cannot assign to non-existent default property") } } };
+    QTest::newRow("MultiDefaultPropertyWithWrongType")
+            << QStringLiteral("multiDefaultPropertyWithWrongType.qml")
+            << Result { { Message { QStringLiteral(
+                               "Cannot assign to default property of incompatible type") } },
+                       { Message { QStringLiteral(
+                               "Cannot assign to non-existent default property") } } };
+    QTest::newRow("NonExistentListProperty")
+            << QStringLiteral("nonExistentListProperty.qml")
+            << Result { { Message { QStringLiteral("Could not find property \"objs\".") } } };
+    QTest::newRow("NotScopedEnumCpp")
+            << QStringLiteral("NotScopedEnumCpp.qml")
+            << Result{ { Message{
+                                  QStringLiteral("You cannot access unscoped enum \"TheEnum\" from here."), 5,
+                                  49 } } };
+    QTest::newRow("OnAssignment") << QStringLiteral("onAssignment.qml")
+                                  << Result { { Message { QStringLiteral(
+                                             "Member \"loops\" not found on type \"bool\"") } } };
+    QTest::newRow("PropertyAliasCycles") << QStringLiteral("settings/propertyAliasCycle/file.qml")
+                                         << Result::cleanWithSettings();
+    // make sure that warnings are triggered without settings:
+    QTest::newRow("PropertyAliasCycles2")
+            << QStringLiteral("settings/propertyAliasCycle/file.qml")
+            << Result{ { { "\"cycle1\" is part of an alias cycle"_L1 },
+                         { "\"cycle1\" is part of an alias cycle"_L1 } } };
+    QTest::newRow("QtQuick.Window 2.0")
+            << QStringLiteral("qtquickWindow20.qml")
+            << Result { { Message { QStringLiteral(
+                       "Member \"window\" not found on type \"QQuickWindow\"") } } };
+    QTest::newRow("SignalParameterMismatch")
+            << QStringLiteral("namedSignalParameters.qml")
+            << Result { { Message { QStringLiteral(
+                               "Parameter 1 to signal handler for \"onSig\" is called \"argarg\". "
+                               "The signal has a parameter of the same name in position 2.") } },
+                       { Message { QStringLiteral("onSig2") } } };
+    QTest::newRow("StoreNameMethod")
+            << QStringLiteral("storeNameMethod.qml")
+            << Result { { Message { QStringLiteral("Cannot assign to method foo") } } };
+    QTest::newRow("TooManySignalParameters")
+            << QStringLiteral("tooManySignalParameters.qml")
+            << Result { { Message {
+                                  QStringLiteral("Signal handler for \"onSig\" has more formal parameters "
+                                                 "than the signal it handles.") } } };
+    QTest::newRow("TypePropertAccess") << QStringLiteral("typePropertyAccess.qml") << Result {};
     QTest::newRow("UnknownJavascriptMethd")
             << QStringLiteral("unknownJavascriptMethod.qml")
             << Result { { Message {
-                       QStringLiteral("Member \"foo2\" not found on type \"Methods\""), 5,
-                       25 } } };
+                                  QStringLiteral("Member \"foo2\" not found on type \"Methods\""), 5,
+                                  25 } } };
+    QTest::newRow("Unused Import (prefix)")
+            << QStringLiteral("unused_prefix.qml")
+            << Result { { Message { QStringLiteral("Unused import"), 1, 1, QtInfoMsg } },
+                       {},
+                       {},
+                       Result::ExitsNormally };
+    QTest::newRow("Unused Import (simple)")
+            << QStringLiteral("unused_simple.qml")
+            << Result { { Message { QStringLiteral("Unused import"), 1, 1, QtInfoMsg } },
+                       {},
+                       {},
+                       Result::ExitsNormally };
+    QTest::newRow("ValueSource+2Interceptors")
+            << QStringLiteral("valueSourceBetween2interceptors.qml")
+            << Result { { Message { QStringLiteral("Duplicate interceptor on property \"x\"") } } };
+    QTest::newRow("ValueSource+ListValue")
+            << QStringLiteral("valueSource_listValue.qml")
+            << Result { { Message { QStringLiteral(
+                       "Cannot combine value source and binding on property \"objs\"") } } };
+    QTest::newRow("ValueSource+Value")
+            << QStringLiteral("valueSource_Value.qml")
+            << Result { { Message { QStringLiteral(
+                       "Cannot combine value source and binding on property \"obj\"") } } };
+    QTest::newRow("VariableUsedBeforeDeclaration")
+            << QStringLiteral("useBeforeDeclaration.qml")
+            << Result{ {
+                         Message{ "Identifier 'argq' is used here before its declaration"_L1, 5, 9 },
+                         Message{ "Note: declaration of 'argq' here"_L1, 6, 13 },
+                         } };
+    QTest::newRow("WithStatement") << QStringLiteral("WithStatement.qml")
+                                   << Result { { Message { QStringLiteral(
+                                              "with statements are strongly discouraged") } } };
+    QTest::newRow("aliasCycle1") << QStringLiteral("aliasCycle.qml")
+                                 << Result { { Message {
+                                                       QStringLiteral("Alias \"b\" is part of an alias cycle"),
+                                                       6, 5 } } };
+    QTest::newRow("aliasCycle2") << QStringLiteral("aliasCycle.qml")
+                                 << Result { { Message {
+                                                       QStringLiteral("Alias \"a\" is part of an alias cycle"),
+                                                       5, 5 } } };
+    QTest::newRow("anchors3")
+            << QStringLiteral("anchors3.qml")
+            << Result { { Message { QStringLiteral(
+                       "Cannot assign binding of type QQuickItem to QQuickAnchorLine") } } };
+    QTest::newRow("annotatedDefaultParameter")
+            << QStringLiteral("annotatedDefaultParameter.qml")
+            << Result{ { { "Type annotations on default parameters are not supported"_L1 } } };
+    QTest::newRow("assignNonExistingTypeToVarProp")
+            << QStringLiteral("assignNonExistingTypeToVarProp.qml")
+            << Result { { Message { QStringLiteral(
+                               "NonExistingType was not found. Did you add all imports and dependencies?")
+               } } };
+    // should succeed, but it does not:
+    QTest::newRow("attachedPropertyAccess")
+            << QStringLiteral("goodAttachedPropertyAccess.qml") << Result::clean();
+    // should succeed, but it does not:
+    QTest::newRow("attachedPropertyNested")
+            << QStringLiteral("goodAttachedPropertyNested.qml") << Result::clean();
+    QTest::newRow("autoFixConnectionsBinding")
+            << QStringLiteral("autofix/ConnectionsHandler.qml")
+            << Result{
+                       { Message{
+                                  u"Implicitly defining \"onWidthChanged\" as signal handler in "
+                                  u"Connections is deprecated. "
+                                  u"Create a function instead: \"function onWidthChanged() { ... }\"."_s },
+                         Message{
+                                  u"Implicitly defining \"onColorChanged\" as signal handler in "
+                                  u"Connections is deprecated. "
+                                  u"Create a function instead: \"function onColorChanged(collie) { ... }\"."_s } },
+                       {},
+                       {
+                               Message{ u"function onWidthChanged() { console.log(\"new width:\", width) }"_s },
+                               Message{ u"function onColorChanged(col) { console.log(\"new color:\", col) }"_s },
+                               },
+                       };
+    QTest::newRow("bad constant number to string")
+            << QStringLiteral("numberToStringProperty.qml")
+            << Result { { Message { QStringLiteral(
+                       "Cannot assign literal of type double to QString") } } };
+    QTest::newRow("bad string binding (QT_TR_NOOP)")
+            << QStringLiteral("bad_QT_TR_NOOP.qml")
+            << Result { { Message {
+                                  QStringLiteral("Cannot assign literal of type string to int") } } };
+    QTest::newRow("bad template literal (simple)")
+            << QStringLiteral("badTemplateStringSimple.qml")
+            << Result { { Message {
+                                  QStringLiteral("Cannot assign literal of type string to int") } } };
+    QTest::newRow("bad tranlsation binding (qsTr)") << QStringLiteral("bad_qsTr.qml") << Result {};
+    QTest::newRow("bad unary minus to string")
+            << QStringLiteral("unaryMinusToStringProperty.qml")
+            << Result { { Message { QStringLiteral(
+                       "Cannot assign literal of type double to QString") } } };
     QTest::newRow("badAlias")
             << QStringLiteral("badAlias.qml")
             << Result { { Message { QStringLiteral("Cannot resolve alias \"wrong\""), 4, 5 } } };
-    QTest::newRow("badAliasProperty1")
-            << QStringLiteral("badAliasProperty.qml")
-            << Result { { Message { QStringLiteral("Cannot resolve alias \"wrong\""), 5, 5 } } };
     QTest::newRow("badAliasExpression")
             << QStringLiteral("badAliasExpression.qml")
             << Result { { Message {
-                       QStringLiteral("Invalid alias expression. Only IDs and field member "
-                                      "expressions can be aliased"),
-                       5, 26 } } };
+                                  QStringLiteral("Invalid alias expression. Only IDs and field member "
+                                                 "expressions can be aliased"),
+                                  5, 26 } } };
     QTest::newRow("badAliasNotAnExpression")
             << QStringLiteral("badAliasNotAnExpression.qml")
             << Result { { Message {
                                   QStringLiteral("Invalid alias expression. Only IDs and field member "
                                                  "expressions can be aliased"),
                                   4, 30 } } };
-    QTest::newRow("aliasCycle1") << QStringLiteral("aliasCycle.qml")
-                                 << Result { { Message {
-                                            QStringLiteral("Alias \"b\" is part of an alias cycle"),
-                                            6, 5 } } };
-    QTest::newRow("aliasCycle2") << QStringLiteral("aliasCycle.qml")
-                                 << Result { { Message {
-                                            QStringLiteral("Alias \"a\" is part of an alias cycle"),
-                                            5, 5 } } };
-    QTest::newRow("invalidAliasTarget1") << QStringLiteral("invalidAliasTarget.qml")
-                                         << Result { { Message {
-                                            QStringLiteral("Invalid alias expression - an initalizer is needed."),
-                                            6, 18 } } };
-    QTest::newRow("invalidAliasTarget2") << QStringLiteral("invalidAliasTarget.qml")
-                                         << Result { { Message {
-                                            QStringLiteral("Invalid alias expression. Only IDs and field member expressions can be aliased"),
-                                            7, 30 } } };
-    QTest::newRow("invalidAliasTarget3") << QStringLiteral("invalidAliasTarget.qml")
-                                         << Result { { Message {
-                                            QStringLiteral("Invalid alias expression. Only IDs and field member expressions can be aliased"),
-                                            9, 34 } } };
-    QTest::newRow("badParent")
-            << QStringLiteral("badParent.qml")
-            << Result { { Message { QStringLiteral("Member \"rrr\" not found on type \"Item\""),
-                                    5, 34 } } };
-    QTest::newRow("parentIsComponent")
-            << QStringLiteral("parentIsComponent.qml")
-            << Result { { Message {
-                       QStringLiteral("Member \"progress\" not found on type \"QQuickItem\""), 7,
-                       39 } } };
-    QTest::newRow("badTypeAssertion")
-            << QStringLiteral("badTypeAssertion.qml")
-            << Result { { Message {
-                       QStringLiteral("Member \"rrr\" not found on type \"QQuickItem\""), 5,
-                       39 } } };
-    QTest::newRow("incompleteQmltypes")
-            << QStringLiteral("incompleteQmltypes.qml")
-            << Result { { Message {
-                       QStringLiteral("Type \"QPalette\" of property \"palette\" not found"), 5,
-                       26 } } };
-    QTest::newRow("incompleteQmltypes2")
-            << QStringLiteral("incompleteQmltypes2.qml")
-            << Result { { Message { QStringLiteral("Member \"weDontKnowIt\" "
-                                                   "not found on type \"CustomPalette\""),
-                                    5, 35 } } };
-    QTest::newRow("incompleteQmltypes3")
-            << QStringLiteral("incompleteQmltypes3.qml")
-            << Result { { Message {
-                       QStringLiteral("Type \"QPalette\" of property \"palette\" not found"), 5,
-                       21 } } };
-    QTest::newRow("inheritanceCycle")
-            << QStringLiteral("Cycle1.qml")
-            << Result { { Message {
-                       QStringLiteral("Cycle1 is part of an inheritance cycle: Cycle2 -> Cycle3 "
-                                      "-> Cycle1 -> Cycle2"),
-                       2, 1 } } };
-    QTest::newRow("badQmldirImportAndDepend")
-            << QStringLiteral("qmldirImportAndDepend/bad.qml")
-            << Result { { Message {
-                       QStringLiteral("Item was not found. "
-                                      "Did you add all imports and dependencies?"),
-                       3, 1 } } };
-    QTest::newRow("javascriptMethodsInModule")
-            << QStringLiteral("javascriptMethodsInModuleBad.qml")
-            << Result { { Message {
-                       QStringLiteral("Member \"unknownFunc\" not found on type \"Foo\""), 5,
-                       21 } } };
+    QTest::newRow("badAliasObject")
+            << QStringLiteral("badAliasObject.qml")
+            << Result { { Message { QStringLiteral("Member \"wrongwrongwrong\" not "
+                                                 "found on type \"QtObject\""),
+                                  8, 40 } } };
+    QTest::newRow("badAliasProperty1")
+            << QStringLiteral("badAliasProperty.qml")
+            << Result { { Message { QStringLiteral("Cannot resolve alias \"wrong\""), 5, 5 } } };
+    QTest::newRow("badAttachedProperty")
+            << QStringLiteral("badAttachedProperty.qml")
+            << Result{ { { "Member \"progress\" not found on type \"TestTypeAttached\""_L1 } } };
+    QTest::newRow("badAttachedPropertyNested")
+            << QStringLiteral("badAttachedPropertyNested.qml")
+            << Result { { Message { QStringLiteral(
+                                          "Member \"progress\" not found on type \"QObject\""),
+                                  12, 41 } },
+                       { Message { QString("Member \"progress\" not found on type \"QObject\""),
+                                  6, 37 } } };
+    QTest::newRow("badAttachedPropertyTypeQtObject")
+            << QStringLiteral("badAttachedPropertyTypeQtObject.qml")
+            << Result{ { Message{
+                                  QStringLiteral("Cannot assign object of type QtObject to int") } } };
+    QTest::newRow("badAttachedPropertyTypeString")
+            << QStringLiteral("badAttachedPropertyTypeString.qml")
+            << Result{ { Message{ QStringLiteral("Cannot assign literal of type string to int") } },
+                       {},
+                       {} };
     QTest::newRow("badEnumFromQtQml")
             << QStringLiteral("badEnumFromQtQml.qml")
             << Result { { Message { QStringLiteral("Member \"Linear123\" not "
-                                                   "found on type \"QQmlEasingEnums\""),
-                                    4, 30 } } };
-    QTest::newRow("anchors3")
-            << QStringLiteral("anchors3.qml")
+                                                 "found on type \"QQmlEasingEnums\""),
+                                  4, 30 } } };
+    QTest::newRow("badGeneralizedGroup1")
+            << QStringLiteral("badGeneralizedGroup1.qml")
+            << Result{ { Message{ QStringLiteral("Could not find property \"aaaa\".") } } };
+    QTest::newRow("badGeneralizedGroup2")
+            << QStringLiteral("badGeneralizedGroup2.qml")
+            << Result { { Message { QStringLiteral("unknown grouped property scope aself") } } };
+    QTest::newRow("badParent")
+            << QStringLiteral("badParent.qml")
+            << Result { { Message { QStringLiteral("Member \"rrr\" not found on type \"Item\""),
+                                  5, 34 } } };
+    QTest::newRow("badQmldirImportAndDepend")
+            << QStringLiteral("qmldirImportAndDepend/bad.qml")
+            << Result { { Message {
+                                  QStringLiteral("Item was not found. "
+                                                 "Did you add all imports and dependencies?"),
+                                  3, 1 } } };
+    QTest::newRow("badScript") << QStringLiteral("badScript.qml")
+                               << Result { { Message {
+                                                     QStringLiteral(
+                                                             "Member \"stuff\" not found on type \"Empty\""),
+                                                     5, 21 } } };
+    QTest::newRow("badScriptOnAttachedProperty")
+            << QStringLiteral("badScript.attached.qml")
+            << Result { { Message { QStringLiteral("Unqualified access"), 3, 26 } } };
+    QTest::newRow("badTypeAssertion")
+            << QStringLiteral("badTypeAssertion.qml")
+            << Result { { Message {
+                                  QStringLiteral("Member \"rrr\" not found on type \"QQuickItem\""), 5,
+                                  39 } } };
+    QTest::newRow("badlyBoundComponents")
+            << QStringLiteral("badlyBoundComponents.qml")
+            << Result{ { Message{ QStringLiteral("Unqualified access"), 18, 36 } } };
+    QTest::newRow("brokenNamespace")
+            << QStringLiteral("brokenNamespace.qml")
+            << Result { { Message { QStringLiteral("Type not found in namespace"), 4, 19 } } };
+    QTest::newRow("cachedDependency")
+            << QStringLiteral("cachedDependency.qml")
+            << Result { { Message { QStringLiteral("Unused import"), 1, 1, QtInfoMsg } },
+                       { Message { QStringLiteral(
+                               "Cannot assign binding of type QQuickItem to QObject") } },
+                       {},
+                       Result::ExitsNormally };
+    QTest::newRow("callJSValue")
+            << QStringLiteral("callJSValueProp.qml")
             << Result { { Message { QStringLiteral(
-                       "Cannot assign binding of type QQuickItem to QQuickAnchorLine") } } };
+                       "Property \"jsValue\" is a QJSValue property. It may or may not be "
+                       "a method. Use a regular Q_INVOKABLE instead.") } } };
+    QTest::newRow("callVarProp")
+            << QStringLiteral("callVarProp.qml")
+            << Result { { Message { QStringLiteral(
+                       "Property \"foo\" is a var property. It may or may not be a "
+                       "method. Use a regular function instead.") } } };
+    QTest::newRow("connectionsBinding")
+            << QStringLiteral("autofix/ConnectionsHandler.qml")
+            << Result{
+                       { Message{
+                                  u"Implicitly defining \"onWidthChanged\" as signal handler in "
+                                  u"Connections is deprecated. "
+                                  u"Create a function instead: \"function onWidthChanged() { ... }\"."_s },
+                         Message{
+                                  u"Implicitly defining \"onColorChanged\" as signal handler in "
+                                  u"Connections is deprecated. "
+                                  u"Create a function instead: \"function onColorChanged(collie) { ... }\"."_s } },
+                       };
+    QTest::newRow("cppPropertyChangeHandlers-no-property")
+            << QStringLiteral("badCppPropertyChangeHandlers3.qml")
+            << Result { { Message {
+                                  QStringLiteral("no matching signal found for handler \"onXChanged\"") } } };
+    QTest::newRow("cppPropertyChangeHandlers-not-a-signal")
+            << QStringLiteral("badCppPropertyChangeHandlers4.qml")
+            << Result { { Message { QStringLiteral(
+                       "no matching signal found for handler \"onWannabeSignal\"") } } };
+    QTest::newRow("cppPropertyChangeHandlers-wrong-parameters-size-bindable")
+            << QStringLiteral("badCppPropertyChangeHandlers1.qml")
+            << Result { { Message { QStringLiteral(
+                       "Signal handler for \"onAChanged\" has more formal parameters than "
+                       "the signal it handles") } } };
+    QTest::newRow("cppPropertyChangeHandlers-wrong-parameters-size-notify")
+            << QStringLiteral("badCppPropertyChangeHandlers2.qml")
+            << Result { { Message { QStringLiteral(
+                       "Signal handler for \"onBChanged\" has more formal parameters than "
+                       "the signal it handles") } } };
+    QTest::newRow("cycle in import")
+            << QStringLiteral("cycleHead.qml")
+            << Result { { Message { QStringLiteral(
+                       "MenuItem is part of an inheritance cycle: MenuItem -> MenuItem") } } };
+    QTest::newRow("deprecatedFunction")
+            << QStringLiteral("deprecatedFunction.qml")
+            << Result { { Message { QStringLiteral(
+                       "Method \"deprecated(foobar)\" is deprecated (Reason: No particular "
+                       "reason.)") } } };
+    QTest::newRow("deprecatedFunctionInherited")
+            << QStringLiteral("deprecatedFunctionInherited.qml")
+            << Result { { Message { QStringLiteral(
+                       "Method \"deprecatedInherited(c, d)\" is deprecated (Reason: This "
+                       "deprecation should be visible!)") } } };
+    QTest::newRow("didYouMean(binding)")
+            << QStringLiteral("didYouMeanBinding.qml")
+            << Result{ { Message{ QStringLiteral("Could not find property \"witdh\".") } },
+                       {},
+                       { Message{ QStringLiteral("width") } } };
+    QTest::newRow("didYouMean(component)")
+            << QStringLiteral("didYouMeanComponent.qml")
+            << Result { { Message { QStringLiteral(
+                                         "Itym was not found. Did you add all imports and dependencies?")
+                         }, {},
+                         { Message { QStringLiteral("Item") } } } };
+    QTest::newRow("didYouMean(enum)")
+            << QStringLiteral("didYouMeanEnum.qml")
+            << Result { { Message { QStringLiteral(
+                                 "Member \"Readx\" not found on type \"QQuickImage\"") },
+                         {},
+                         { Message { QStringLiteral("Ready") } } } };
+    QTest::newRow("didYouMean(property)")
+            << QStringLiteral("didYouMeanProperty.qml")
+            << Result { { Message { QStringLiteral(
+                                 "Member \"hoight\" not found on type \"Rectangle\"") },
+                         {},
+                         { Message { QStringLiteral("height") } } } };
+    QTest::newRow("didYouMean(propertyCall)")
+            << QStringLiteral("didYouMeanPropertyCall.qml")
+            << Result {
+                   { Message { QStringLiteral("Member \"lgg\" not found on type \"Console\"") },
+                     {},
+                     { Message { QStringLiteral("log") } } }
+               };
+    QTest::newRow("didYouMean(unqualified)")
+            << QStringLiteral("didYouMeanUnqualified.qml")
+            << Result { { Message { QStringLiteral("Unqualified access") } },
+                       {},
+                       { Message { QStringLiteral("height") } } };
+    QTest::newRow("didYouMean(unqualifiedCall)")
+            << QStringLiteral("didYouMeanUnqualifiedCall.qml")
+            << Result { { Message { QStringLiteral("Unqualified access") } },
+                       {},
+                       { Message { QStringLiteral("func") } } };
+    QTest::newRow("duplicated id")
+            << QStringLiteral("duplicateId.qml")
+            << Result { { Message {
+                                  QStringLiteral("Found a duplicated id. id root was first declared "), 0, 0,
+                                  QtCriticalMsg } } };
+    QTest::newRow("duplicatedPropertyName")
+            << QStringLiteral("duplicatedPropertyName.qml")
+            << Result{ { Message{ QStringLiteral("Duplicated property name \"cat\"."), 5, 5 } } };
+    QTest::newRow("duplicatedSignalName")
+            << QStringLiteral("duplicatedPropertyName.qml")
+            << Result{ { Message{ QStringLiteral("Duplicated signal name \"clicked\"."), 8, 5 } } };
+    QTest::newRow("enumInvalid")
+            << QStringLiteral("enumInvalid.qml")
+            << Result { {
+                               Message { QStringLiteral("Member \"red\" not found on type \"QtObject\""), 5, 25 },
+                               Message { QStringLiteral("Member \"red\" not found on type \"QtObject\""), 6, 25 },
+                               Message {
+                                       QStringLiteral("You cannot access unscoped enum \"Unscoped\" from here."),
+                                       8, 32
+                               },
+                               Message {
+                                       QStringLiteral("You cannot access unscoped enum \"Unscoped\" from here."),
+                                       9, 38
+                               },
+                               Message {
+                                       QStringLiteral("Member \"S2\" not found on type \"EnumTesterScoped\""),
+                                       10, 38
+                               },
+                       }, {
+                               Message { QStringLiteral("Did you mean \"S2\"?"), 0, 0, QtInfoMsg }
+                       }, {
+                               Message { QStringLiteral("Did you mean \"U2\"?"), 10, 38, QtInfoMsg }
+                       } };
+    QTest::newRow("id_in_value_type")
+            << QStringLiteral("idInValueType.qml")
+            << Result{ { Message{ "id declarations are only allowed in objects" } } };
+    QTest::newRow("inaccessibleId")
+            << QStringLiteral("inaccessibleId.qml")
+            << Result { { Message {
+                                  QStringLiteral("Member \"objectName\" not found on type \"int\"") } } };
+    QTest::newRow("inaccessibleId2")
+            << QStringLiteral("inaccessibleId2.qml")
+            << Result { { Message {
+                                  QStringLiteral("Member \"objectName\" not found on type \"int\"") } } };
+    QTest::newRow("incompleteQmltypes")
+            << QStringLiteral("incompleteQmltypes.qml")
+            << Result { { Message {
+                                  QStringLiteral("Type \"QPalette\" of property \"palette\" not found"), 5,
+                                  26 } } };
+    QTest::newRow("incompleteQmltypes2")
+            << QStringLiteral("incompleteQmltypes2.qml")
+            << Result { { Message { QStringLiteral("Member \"weDontKnowIt\" "
+                                                 "not found on type \"CustomPalette\""),
+                                  5, 35 } } };
+    QTest::newRow("incompleteQmltypes3")
+            << QStringLiteral("incompleteQmltypes3.qml")
+            << Result { { Message {
+                                  QStringLiteral("Type \"QPalette\" of property \"palette\" not found"), 5,
+                                  21 } } };
+    QTest::newRow("inheritanceCycle")
+            << QStringLiteral("Cycle1.qml")
+            << Result { { Message {
+                                  QStringLiteral("Cycle1 is part of an inheritance cycle: Cycle2 -> Cycle3 "
+                                                 "-> Cycle1 -> Cycle2"),
+                                  2, 1 } } };
+    QTest::newRow("inlineComponentNoComponent")
+            << QStringLiteral("inlineComponentNoComponent.qml")
+            << Result { { Message {
+                                  QStringLiteral("Inline component declaration must be followed by a typename"),
+                                  3, 2 } } };
+    QTest::newRow("invalidAliasTarget1") << QStringLiteral("invalidAliasTarget.qml")
+                                         << Result { { Message {
+                                                               QStringLiteral("Invalid alias expression - an initalizer is needed."),
+                                                               6, 18 } } };
+    QTest::newRow("invalidAliasTarget2") << QStringLiteral("invalidAliasTarget.qml")
+                                         << Result { { Message {
+                                                               QStringLiteral("Invalid alias expression. Only IDs and field member expressions can be aliased"),
+                                                               7, 30 } } };
+    QTest::newRow("invalidAliasTarget3") << QStringLiteral("invalidAliasTarget.qml")
+                                         << Result { { Message {
+                                                               QStringLiteral("Invalid alias expression. Only IDs and field member expressions can be aliased"),
+                                                               9, 34 } } };
+    QTest::newRow("invalidInterceptor")
+            << QStringLiteral("invalidInterceptor.qml")
+            << Result { { Message { QStringLiteral(
+                       "On-binding for property \"angle\" has wrong type \"Item\"") } } };
+    QTest::newRow("javascriptMethodsInModule")
+            << QStringLiteral("javascriptMethodsInModuleBad.qml")
+            << Result { { Message {
+                                  QStringLiteral("Member \"unknownFunc\" not found on type \"Foo\""), 5,
+                                  21 } } };
+    QTest::newRow("jsVarDeclarationsWriteConst")
+            << QStringLiteral("jsVarDeclarationsWriteConst.qml")
+            << Result { { Message {
+                                  QStringLiteral("Cannot assign to read-only property constProp") } } };
+    QTest::newRow("lowerCaseQualifiedImport")
+            << QStringLiteral("lowerCaseQualifiedImport.qml")
+            << Result{
+                   {
+                           Message{
+                                    u"Import qualifier 'test' must start with a capital letter."_s },
+                           Message{
+                                    u"Namespace 'test' of 'test.Rectangle' must start with an upper case letter."_s },
+                   },
+                   {},
+                   {}
+               };
+    QTest::newRow("lowerCaseQualifiedImport2")
+            << QStringLiteral("lowerCaseQualifiedImport2.qml")
+            << Result{
+                   {
+                           Message{
+                                    u"Import qualifier 'test' must start with a capital letter."_s },
+                           Message{
+                                    u"Namespace 'test' of 'test.Item' must start with an upper case letter."_s },
+                           Message{
+                                    u"Namespace 'test' of 'test.Rectangle' must start with an upper case letter."_s },
+                           Message{
+                                    u"Namespace 'test' of 'test.color' must start with an upper case letter."_s },
+                           Message{
+                                    u"Namespace 'test' of 'test.Grid' must start with an upper case letter."_s },
+                   },
+                   {},
+                   {}
+               };
+    QTest::newRow("missingComponentBehaviorBound")
+            << QStringLiteral("missingComponentBehaviorBound.qml")
+            << Result {
+                   {  Message{ QStringLiteral("Unqualified access"), 8, 31  } },
+                   {},
+                   {  Message{ QStringLiteral("Set \"pragma ComponentBehavior: Bound\" in "
+                                             "order to use IDs from outer components "
+                                             "in nested components."), 0, 0, QtInfoMsg } },
+                   Result::AutoFixable
+               };
+    QTest::newRow("missingQmltypes")
+            << QStringLiteral("missingQmltypes.qml")
+            << Result { { Message { QStringLiteral("QML types file does not exist") } } };
+    QTest::newRow("missingRequiredAlias")
+            << QStringLiteral("missingRequiredAlias.qml")
+            << Result{ { Message{ u"Component is missing required property foo from Item"_s } } };
+    QTest::newRow("missingRequiredOnObjectDefinitionBinding")
+            << QStringLiteral("missingRequiredPropertyOnObjectDefinitionBinding.qml")
+            << Result{ { { uR"(Component is missing required property i from QtObject)"_s, 4, 26 } } };
+    QTest::newRow("missingSingletonPragma")
+            << QStringLiteral("missingSingletonPragma.qml")
+            << Result { { Message { QStringLiteral(
+                       "Type MissingPragma declared as singleton in qmldir but missing "
+                       "pragma Singleton") } } };
+    QTest::newRow("missingSingletonQmldir")
+            << QStringLiteral("missingSingletonQmldir.qml")
+            << Result { { Message { QStringLiteral(
+                       "Type MissingQmldirSingleton not declared as singleton in qmldir but using "
+                       "pragma Singleton") } } };
+    QTest::addRow("multifix")
+            << QStringLiteral("multifix.qml")
+            << Result { {
+                         Message { QStringLiteral("Unqualified access"), 7,  19, QtWarningMsg},
+                         Message { QStringLiteral("Unqualified access"), 11, 19, QtWarningMsg},
+                         }, {}, {
+                               Message { QStringLiteral("pragma ComponentBehavior: Bound\n"), 1, 1 }
+                       }, { Result::AutoFixable }};
+    QTest::newRow("multilineString")
+            << QStringLiteral("multilineString.qml")
+            << Result { { Message { QStringLiteral("String contains unescaped line terminator "
+                                                 "which is deprecated."),
+                                  0, 0, QtInfoMsg } },
+                       {},
+                       { Message { "`Foo\nmultiline\\`\nstring`", 4, 32 },
+                         Message { "`another\\`\npart\nof it`", 6, 11 },
+                         Message { R"(`
+quote: " \\" \\\\"
+ticks: \` \` \\\` \\\`
+singleTicks: ' \' \\' \\\'
+expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
+                                  10, 28 },
+                         Message {
+                                  R"(`
+quote: " \" \\" \\\"
+ticks: \` \` \\\` \\\`
+singleTicks: ' \\' \\\\'
+expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
+                                  16, 27 } },
+                       { Result::ExitsNormally, Result::AutoFixable } };
+    // The warning should show up only once even though
+    // we have to run the type propagator multiple times.
+    QTest::newRow("multiplePasses")
+            << testFile("multiplePasses.qml")
+            << Result {{ Message { QStringLiteral("Unqualified access") }}};
     QTest::newRow("nanchors1") << QStringLiteral("nanchors1.qml")
                                << Result{ { Message{ QStringLiteral(
                                                   "unknown grouped property scope nanchors.") } },
@@ -643,687 +1202,51 @@ void TestQmllint::dirtyQmlCode_data()
                                                   "unknown grouped property scope nanchors.") } },
                                           {},
                                           {} };
-    QTest::newRow("badAliasObject")
-            << QStringLiteral("badAliasObject.qml")
-            << Result { { Message { QStringLiteral("Member \"wrongwrongwrong\" not "
-                                                   "found on type \"QtObject\""),
-                                    8, 40 } } };
-    QTest::newRow("badScript") << QStringLiteral("badScript.qml")
-                               << Result { { Message {
-                                          QStringLiteral(
-                                                  "Member \"stuff\" not found on type \"Empty\""),
-                                          5, 21 } } };
-    QTest::newRow("badScriptOnAttachedProperty")
-            << QStringLiteral("badScript.attached.qml")
-            << Result { { Message { QStringLiteral("Unqualified access"), 3, 26 } } };
-    QTest::newRow("brokenNamespace")
-            << QStringLiteral("brokenNamespace.qml")
-            << Result { { Message { QStringLiteral("Type not found in namespace"), 4, 19 } } };
-    QTest::newRow("segFault (bad)")
-            << QStringLiteral("SegFault.bad.qml")
-            << Result { { Message { QStringLiteral(
-                       "Member \"foobar\" not found on type \"QQuickScreenAttached\"") } } };
-    QTest::newRow("VariableUsedBeforeDeclaration")
-            << QStringLiteral("useBeforeDeclaration.qml")
-            << Result{ {
-                       Message{ "Identifier 'argq' is used here before its declaration"_L1, 5, 9 },
-                       Message{ "Note: declaration of 'argq' here"_L1, 6, 13 },
-               } };
-    QTest::newRow("SignalParameterMismatch")
-            << QStringLiteral("namedSignalParameters.qml")
-            << Result { { Message { QStringLiteral(
-                                "Parameter 1 to signal handler for \"onSig\" is called \"argarg\". "
-                                "The signal has a parameter of the same name in position 2.") } },
-                        { Message { QStringLiteral("onSig2") } } };
-    QTest::newRow("TooManySignalParameters")
-            << QStringLiteral("tooManySignalParameters.qml")
-            << Result { { Message {
-                       QStringLiteral("Signal handler for \"onSig\" has more formal parameters "
-                                      "than the signal it handles.") } } };
-    QTest::newRow("OnAssignment") << QStringLiteral("onAssignment.qml")
-                                  << Result { { Message { QStringLiteral(
-                                             "Member \"loops\" not found on type \"bool\"") } } };
-    QTest::newRow("BadAttached") << QStringLiteral("badAttached.qml")
-                                 << Result { { Message { QStringLiteral(
-                                            "unknown attached property scope WrongAttached.") } } };
-    QTest::newRow("BadBinding") << QStringLiteral("badBinding.qml")
-                                << Result{ { Message{ QStringLiteral(
-                                           "Could not find property \"doesNotExist\".") } } };
-    QTest::newRow("bad template literal (simple)")
-            << QStringLiteral("badTemplateStringSimple.qml")
-            << Result { { Message {
-                       QStringLiteral("Cannot assign literal of type string to int") } } };
-    QTest::newRow("bad constant number to string")
-            << QStringLiteral("numberToStringProperty.qml")
-            << Result { { Message { QStringLiteral(
-                       "Cannot assign literal of type double to QString") } } };
-    QTest::newRow("bad unary minus to string")
-            << QStringLiteral("unaryMinusToStringProperty.qml")
-            << Result { { Message { QStringLiteral(
-                       "Cannot assign literal of type double to QString") } } };
-    QTest::newRow("bad tranlsation binding (qsTr)") << QStringLiteral("bad_qsTr.qml") << Result {};
-    QTest::newRow("bad string binding (QT_TR_NOOP)")
-            << QStringLiteral("bad_QT_TR_NOOP.qml")
-            << Result { { Message {
-                       QStringLiteral("Cannot assign literal of type string to int") } } };
-    QTest::newRow("BadScriptBindingOnGroup")
-            << QStringLiteral("badScriptBinding.group.qml")
-            << Result{ { Message{ QStringLiteral("Could not find property \"bogusProperty\"."), 3,
-                                  10 } } };
-    QTest::newRow("BadScriptBindingOnAttachedType")
-            << QStringLiteral("badScriptBinding.attached.qml")
-            << Result{ { Message{ QStringLiteral("Could not find property \"bogusProperty\"."), 5,
-                                  12 } } };
-    QTest::newRow("BadScriptBindingOnAttachedSignalHandler")
-            << QStringLiteral("badScriptBinding.attachedSignalHandler.qml")
-            << Result { { Message {
-                       QStringLiteral("no matching signal found for handler \"onBogusSignal\""), 3,
-                       10 } } };
-    QTest::newRow("BadPropertyType")
-            << QStringLiteral("badPropertyType.qml")
-            << Result { { Message { QStringLiteral(
-                       "No type found for property \"bad\". This may be due to a missing "
-                       "import statement or incomplete qmltypes files.") } } };
-    QTest::newRow("Deprecation (Property, with reason)")
-            << QStringLiteral("deprecatedPropertyReason.qml")
-            << Result { { Message {
-                       QStringLiteral("Property \"deprecated\" is deprecated (Reason: Test)") } } };
-    QTest::newRow("Deprecation (Property, no reason)")
-            << QStringLiteral("deprecatedProperty.qml")
-            << Result { { Message { QStringLiteral("Property \"deprecated\" is deprecated") } } };
-    QTest::newRow("Deprecation (Property binding, with reason)")
-            << QStringLiteral("deprecatedPropertyBindingReason.qml")
-            << Result { { Message { QStringLiteral(
-                       "Binding on deprecated property \"deprecatedReason\" (Reason: Test)") } } };
-    QTest::newRow("Deprecation (Property binding, no reason)")
-            << QStringLiteral("deprecatedPropertyBinding.qml")
-            << Result { { Message {
-                       QStringLiteral("Binding on deprecated property \"deprecated\"") } } };
-    QTest::newRow("Deprecation (Type, with reason)")
-            << QStringLiteral("deprecatedTypeReason.qml")
-            << Result { { Message { QStringLiteral(
-                       "Type \"TypeDeprecatedReason\" is deprecated (Reason: Test)") } } };
-    QTest::newRow("Deprecation (Type, no reason)")
-            << QStringLiteral("deprecatedType.qml")
-            << Result { { Message { QStringLiteral("Type \"TypeDeprecated\" is deprecated") } } };
-    QTest::newRow("MissingDefaultProperty")
-            << QStringLiteral("defaultPropertyWithoutKeyword.qml")
-            << Result { { Message {
-                       QStringLiteral("Cannot assign to non-existent default property") } } };
-    QTest::newRow("MissingDefaultPropertyDefinedInTheSameType")
-            << QStringLiteral("defaultPropertyWithinTheSameType.qml")
-            << Result { { Message {
-                       QStringLiteral("Cannot assign to non-existent default property") } } };
-    QTest::newRow("DoubleAssignToDefaultProperty")
-            << QStringLiteral("defaultPropertyWithDoubleAssignment.qml")
-            << Result { { Message { QStringLiteral(
-                       "Cannot assign multiple objects to a default non-list property") } } };
-    QTest::newRow("DefaultPropertyWithWrongType(string)")
-            << QStringLiteral("defaultPropertyWithWrongType.qml")
-            << Result { { Message { QStringLiteral(
-                                "Cannot assign to default property of incompatible type") } },
-                        { Message { QStringLiteral(
-                                "Cannot assign to non-existent default property") } } };
-    QTest::newRow("MultiDefaultPropertyWithWrongType")
-            << QStringLiteral("multiDefaultPropertyWithWrongType.qml")
-            << Result { { Message { QStringLiteral(
-                                "Cannot assign to default property of incompatible type") } },
-                        { Message { QStringLiteral(
-                                "Cannot assign to non-existent default property") } } };
-    QTest::newRow("DefaultPropertyLookupInUnknownType")
-        << QStringLiteral("unknownParentDefaultPropertyCheck.qml")
-        << Result { { Message {  QStringLiteral(
-                "Alien was not found. Did you add all imports and dependencies?") } } };
-    QTest::newRow("InvalidImport")
-            << QStringLiteral("invalidImport.qml")
-            << Result { { Message { QStringLiteral(
-                       "Failed to import FooBar. Are your import paths set up properly?"), 2, 1 } } };
-    QTest::newRow("Unused Import (simple)")
-            << QStringLiteral("unused_simple.qml")
-            << Result { { Message { QStringLiteral("Unused import"), 1, 1, QtInfoMsg } },
-                        {},
-                        {},
-                        Result::ExitsNormally };
-    QTest::newRow("Unused Import (prefix)")
-            << QStringLiteral("unused_prefix.qml")
-            << Result { { Message { QStringLiteral("Unused import"), 1, 1, QtInfoMsg } },
-                        {},
-                        {},
-                        Result::ExitsNormally };
-    QTest::newRow("TypePropertAccess") << QStringLiteral("typePropertyAccess.qml") << Result {};
-    QTest::newRow("badAttachedProperty")
-            << QStringLiteral("badAttachedProperty.qml")
-            << Result { { Message {
-                       QStringLiteral("Member \"progress\" not found on type \"TestTypeAttached\"")
-               } } };
-    QTest::newRow("badAttachedPropertyNested")
-            << QStringLiteral("badAttachedPropertyNested.qml")
-            << Result { { Message { QStringLiteral(
-                                            "Member \"progress\" not found on type \"QObject\""),
-                                    12, 41 } },
-                        { Message { QString("Member \"progress\" not found on type \"QObject\""),
-                                    6, 37 } } };
-    QTest::newRow("badAttachedPropertyTypeString")
-            << QStringLiteral("badAttachedPropertyTypeString.qml")
-            << Result{ { Message{ QStringLiteral("Cannot assign literal of type string to int") } },
-                       {},
-                       {} };
-    QTest::newRow("badAttachedPropertyTypeQtObject")
-            << QStringLiteral("badAttachedPropertyTypeQtObject.qml")
-            << Result{ { Message{
-                                  QStringLiteral("Cannot assign object of type QtObject to int") } } };
-    // should succeed, but it does not:
-    QTest::newRow("attachedPropertyAccess")
-            << QStringLiteral("goodAttachedPropertyAccess.qml") << Result::clean();
-    // should succeed, but it does not:
-    QTest::newRow("attachedPropertyNested")
-            << QStringLiteral("goodAttachedPropertyNested.qml") << Result::clean();
-    QTest::newRow("deprecatedFunction")
-            << QStringLiteral("deprecatedFunction.qml")
-            << Result { { Message { QStringLiteral(
-                       "Method \"deprecated(foobar)\" is deprecated (Reason: No particular "
-                       "reason.)") } } };
-    QTest::newRow("deprecatedFunctionInherited")
-            << QStringLiteral("deprecatedFunctionInherited.qml")
-            << Result { { Message { QStringLiteral(
-                       "Method \"deprecatedInherited(c, d)\" is deprecated (Reason: This "
-                       "deprecation should be visible!)") } } };
-
-    QTest::newRow("duplicated id")
-            << QStringLiteral("duplicateId.qml")
-            << Result { { Message {
-                       QStringLiteral("Found a duplicated id. id root was first declared "), 0, 0,
-                       QtCriticalMsg } } };
-
-    QTest::newRow("string as id") << QStringLiteral("stringAsId.qml")
-                                  << Result { { Message { QStringLiteral(
-                                             "ids do not need quotation marks") } } };
-    QTest::newRow("stringIdUsedInWarning")
-            << QStringLiteral("stringIdUsedInWarning.qml")
-            << Result { { Message {
-                                QStringLiteral("i is a member of a parent element"),
-                        } },
-                        {},
-                        { Message { QStringLiteral("stringy.") } } };
-    QTest::newRow("id_in_value_type")
-            << QStringLiteral("idInValueType.qml")
-            << Result{ { Message{ "id declarations are only allowed in objects" } } };
-    QTest::newRow("Invalid_id_expression")
-            << QStringLiteral("invalidId1.qml")
-            << Result { { Message { QStringLiteral("Failed to parse id") } } };
-    QTest::newRow("Invalid_id_blockstatement")
-            << QStringLiteral("invalidId2.qml")
-            << Result { { Message { QStringLiteral("id must be followed by an identifier") } } };
-    QTest::newRow("multilineString")
-            << QStringLiteral("multilineString.qml")
-            << Result { { Message { QStringLiteral("String contains unescaped line terminator "
-                                                   "which is deprecated."),
-                                    0, 0, QtInfoMsg } },
-                        {},
-                        { Message { "`Foo\nmultiline\\`\nstring`", 4, 32 },
-                          Message { "`another\\`\npart\nof it`", 6, 11 },
-                          Message { R"(`
-quote: " \\" \\\\"
-ticks: \` \` \\\` \\\`
-singleTicks: ' \' \\' \\\'
-expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
-                                    10, 28 },
-                          Message {
-                                  R"(`
-quote: " \" \\" \\\"
-ticks: \` \` \\\` \\\`
-singleTicks: ' \\' \\\\'
-expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
-                                  16, 27 } },
-                        { Result::ExitsNormally, Result::AutoFixable } };
-    QTest::addRow("multifix")
-            << QStringLiteral("multifix.qml")
-            << Result { {
-                    Message { QStringLiteral("Unqualified access"), 7,  19, QtWarningMsg},
-                    Message { QStringLiteral("Unqualified access"), 11, 19, QtWarningMsg},
-                }, {}, {
-                    Message { QStringLiteral("pragma ComponentBehavior: Bound\n"), 1, 1 }
-                }, { Result::AutoFixable }};
-    QTest::newRow("unresolvedType")
-            << QStringLiteral("unresolvedType.qml")
-            << Result { { Message { QStringLiteral(
-                               "UnresolvedType was not found. "
-                               "Did you add all imports and dependencies?")
-                       } },
-                        { Message { QStringLiteral("incompatible type") } } };
-    QTest::newRow("invalidInterceptor")
-            << QStringLiteral("invalidInterceptor.qml")
-            << Result { { Message { QStringLiteral(
-                       "On-binding for property \"angle\" has wrong type \"Item\"") } } };
-    QTest::newRow("2Interceptors")
-            << QStringLiteral("2interceptors.qml")
-            << Result { { Message { QStringLiteral("Duplicate interceptor on property \"x\"") } } };
-    QTest::newRow("ValueSource+2Interceptors")
-            << QStringLiteral("valueSourceBetween2interceptors.qml")
-            << Result { { Message { QStringLiteral("Duplicate interceptor on property \"x\"") } } };
-    QTest::newRow("2ValueSources") << QStringLiteral("2valueSources.qml")
-                                   << Result { { Message { QStringLiteral(
-                                              "Duplicate value source on property \"x\"") } } };
-    QTest::newRow("ValueSource+Value")
-            << QStringLiteral("valueSource_Value.qml")
-            << Result { { Message { QStringLiteral(
-                       "Cannot combine value source and binding on property \"obj\"") } } };
-    QTest::newRow("ValueSource+ListValue")
-            << QStringLiteral("valueSource_listValue.qml")
-            << Result { { Message { QStringLiteral(
-                       "Cannot combine value source and binding on property \"objs\"") } } };
-    QTest::newRow("NonExistentListProperty")
-            << QStringLiteral("nonExistentListProperty.qml")
-            << Result { { Message { QStringLiteral("Could not find property \"objs\".") } } };
-    QTest::newRow("QtQuick.Window 2.0")
-            << QStringLiteral("qtquickWindow20.qml")
-            << Result { { Message { QStringLiteral(
-                       "Member \"window\" not found on type \"QQuickWindow\"") } } };
-    QTest::newRow("unresolvedAttachedType")
-            << QStringLiteral("unresolvedAttachedType.qml")
-            << Result { { Message { QStringLiteral(
-                                "unknown attached property scope UnresolvedAttachedType.") } },
-                        { Message { QStringLiteral("Could not find property \"property\".") } } };
     QTest::newRow("nestedInlineComponents")
             << QStringLiteral("nestedInlineComponents.qml")
             << Result { { Message {
-                       QStringLiteral("Nested inline components are not supported") } } };
-    QTest::newRow("inlineComponentNoComponent")
-            << QStringLiteral("inlineComponentNoComponent.qml")
-            << Result { { Message {
-                          QStringLiteral("Inline component declaration must be followed by a typename"),
-                         3, 2 } } };
-    QTest::newRow("WithStatement") << QStringLiteral("WithStatement.qml")
-                                   << Result { { Message { QStringLiteral(
-                                              "with statements are strongly discouraged") } } };
-    QTest::newRow("BadLiteralBinding")
-            << QStringLiteral("badLiteralBinding.qml")
-            << Result { { Message {
-                       QStringLiteral("Cannot assign literal of type string to int") } } };
-    QTest::newRow("BadLiteralBindingDate")
-            << QStringLiteral("badLiteralBindingDate.qml")
-            << Result { { Message {
-                       QStringLiteral("Cannot assign binding of type QString to QDateTime") } } };
-    QTest::newRow("BadModulePrefix")
-            << QStringLiteral("badModulePrefix.qml")
-            << Result { { Message {
-                       QStringLiteral("Cannot access singleton as a property of an object") } } };
-    QTest::newRow("BadModulePrefix2")
-            << QStringLiteral("badModulePrefix2.qml")
-            << Result { { Message { QStringLiteral(
-                       "Cannot use non-QObject type QRectF to access prefixed import") } },
-                        { Message { QStringLiteral(
-                       "Type not found in namespace") },
-                          Message { QStringLiteral(
-                       "Member \"BirthdayParty\" not found on type \"QRectF\"") } },
-               };
-    QTest::newRow("AssignToReadOnlyProperty")
-            << QStringLiteral("assignToReadOnlyProperty.qml")
-            << Result{
-                   { Message{ QStringLiteral("Cannot assign to read-only property activeFocus") } },
-                   {},
-                   {}
-               };
-    QTest::newRow("AssignToReadOnlyProperty2")
-            << QStringLiteral("assignToReadOnlyProperty2.qml")
-            << Result { { Message {
-                       QStringLiteral("Cannot assign to read-only property activeFocus") } } };
-    QTest::newRow("cachedDependency")
-            << QStringLiteral("cachedDependency.qml")
-            << Result { { Message { QStringLiteral("Unused import"), 1, 1, QtInfoMsg } },
-                        { Message { QStringLiteral(
-                                "Cannot assign binding of type QQuickItem to QObject") } },
-                        {},
-                        Result::ExitsNormally };
-    QTest::newRow("cycle in import")
-            << QStringLiteral("cycleHead.qml")
-            << Result { { Message { QStringLiteral(
-                       "MenuItem is part of an inheritance cycle: MenuItem -> MenuItem") } } };
-    QTest::newRow("badGeneralizedGroup1")
-            << QStringLiteral("badGeneralizedGroup1.qml")
-            << Result{ { Message{ QStringLiteral("Could not find property \"aaaa\".") } } };
-    QTest::newRow("badGeneralizedGroup2")
-            << QStringLiteral("badGeneralizedGroup2.qml")
-            << Result { { Message { QStringLiteral("unknown grouped property scope aself") } } };
-    QTest::newRow("missingQmltypes")
-            << QStringLiteral("missingQmltypes.qml")
-            << Result { { Message { QStringLiteral("QML types file does not exist") } } };
-    QTest::newRow("enumInvalid")
-            << QStringLiteral("enumInvalid.qml")
-            << Result { {
-                Message { QStringLiteral("Member \"red\" not found on type \"QtObject\""), 5, 25 },
-                Message { QStringLiteral("Member \"red\" not found on type \"QtObject\""), 6, 25 },
-                Message {
-                    QStringLiteral("You cannot access unscoped enum \"Unscoped\" from here."),
-                    8, 32
-                },
-                Message {
-                    QStringLiteral("You cannot access unscoped enum \"Unscoped\" from here."),
-                    9, 38
-                },
-                Message {
-                    QStringLiteral("Member \"S2\" not found on type \"EnumTesterScoped\""),
-                    10, 38
-                },
-               }, {
-                Message { QStringLiteral("Did you mean \"S2\"?"), 0, 0, QtInfoMsg }
-               }, {
-                Message { QStringLiteral("Did you mean \"U2\"?"), 10, 38, QtInfoMsg }
-               } };
-    QTest::newRow("inaccessibleId")
-            << QStringLiteral("inaccessibleId.qml")
-            << Result { { Message {
-                       QStringLiteral("Member \"objectName\" not found on type \"int\"") } } };
-    QTest::newRow("inaccessibleId2")
-            << QStringLiteral("inaccessibleId2.qml")
-            << Result { { Message {
-                       QStringLiteral("Member \"objectName\" not found on type \"int\"") } } };
-    QTest::newRow("unknownTypeCustomParser")
-            << QStringLiteral("unknownTypeCustomParser.qml")
-            << Result { { Message { QStringLiteral("TypeDoesNotExist was not found.") } } };
+                                  QStringLiteral("Nested inline components are not supported") } } };
     QTest::newRow("nonNullStored")
             << QStringLiteral("nonNullStored.qml")
             << Result { { Message { QStringLiteral(
-                                "Member \"objectName\" not found on type \"Foozle\"") } },
-                        { Message { QStringLiteral("Unqualified access") } } };
-    QTest::newRow("cppPropertyChangeHandlers-wrong-parameters-size-bindable")
-            << QStringLiteral("badCppPropertyChangeHandlers1.qml")
-            << Result { { Message { QStringLiteral(
-                       "Signal handler for \"onAChanged\" has more formal parameters than "
-                       "the signal it handles") } } };
-    QTest::newRow("cppPropertyChangeHandlers-wrong-parameters-size-notify")
-            << QStringLiteral("badCppPropertyChangeHandlers2.qml")
-            << Result { { Message { QStringLiteral(
-                       "Signal handler for \"onBChanged\" has more formal parameters than "
-                       "the signal it handles") } } };
-    QTest::newRow("cppPropertyChangeHandlers-no-property")
-            << QStringLiteral("badCppPropertyChangeHandlers3.qml")
-            << Result { { Message {
-                       QStringLiteral("no matching signal found for handler \"onXChanged\"") } } };
-    QTest::newRow("cppPropertyChangeHandlers-not-a-signal")
-            << QStringLiteral("badCppPropertyChangeHandlers4.qml")
-            << Result { { Message { QStringLiteral(
-                       "no matching signal found for handler \"onWannabeSignal\"") } } };
-    QTest::newRow("didYouMean(binding)")
-            << QStringLiteral("didYouMeanBinding.qml")
-            << Result{ { Message{ QStringLiteral("Could not find property \"witdh\".") } },
-                       {},
-                       { Message{ QStringLiteral("width") } } };
-    QTest::newRow("didYouMean(unqualified)")
-            << QStringLiteral("didYouMeanUnqualified.qml")
-            << Result { { Message { QStringLiteral("Unqualified access") } },
-                        {},
-                        { Message { QStringLiteral("height") } } };
-    QTest::newRow("didYouMean(unqualifiedCall)")
-            << QStringLiteral("didYouMeanUnqualifiedCall.qml")
-            << Result { { Message { QStringLiteral("Unqualified access") } },
-                        {},
-                        { Message { QStringLiteral("func") } } };
-    QTest::newRow("didYouMean(property)")
-            << QStringLiteral("didYouMeanProperty.qml")
-            << Result { { Message { QStringLiteral(
-                                  "Member \"hoight\" not found on type \"Rectangle\"") },
-                          {},
-                          { Message { QStringLiteral("height") } } } };
-    QTest::newRow("didYouMean(propertyCall)")
-            << QStringLiteral("didYouMeanPropertyCall.qml")
-            << Result {
-                   { Message { QStringLiteral("Member \"lgg\" not found on type \"Console\"") },
-                     {},
-                     { Message { QStringLiteral("log") } } }
-               };
-    QTest::newRow("didYouMean(component)")
-            << QStringLiteral("didYouMeanComponent.qml")
-            << Result { { Message { QStringLiteral(
-                                  "Itym was not found. Did you add all imports and dependencies?")
-                                  }, {},
-                        { Message { QStringLiteral("Item") } } } };
-    QTest::newRow("didYouMean(enum)")
-            << QStringLiteral("didYouMeanEnum.qml")
-            << Result { { Message { QStringLiteral(
-                                  "Member \"Readx\" not found on type \"QQuickImage\"") },
-                          {},
-                          { Message { QStringLiteral("Ready") } } } };
-    QTest::newRow("nullBinding") << QStringLiteral("nullBinding.qml")
-                                 << Result{ { Message{ QStringLiteral(
-                                            "Cannot assign literal of type null to double") } } };
-    QTest::newRow("missingRequiredAlias")
-            << QStringLiteral("missingRequiredAlias.qml")
-            << Result{ { Message{ u"Component is missing required property foo from Item"_s } } };
-    QTest::newRow("missingSingletonPragma")
-            << QStringLiteral("missingSingletonPragma.qml")
-            << Result { { Message { QStringLiteral(
-                       "Type MissingPragma declared as singleton in qmldir but missing "
-                       "pragma Singleton") } } };
-    QTest::newRow("missingSingletonQmldir")
-            << QStringLiteral("missingSingletonQmldir.qml")
-            << Result { { Message { QStringLiteral(
-                       "Type MissingQmldirSingleton not declared as singleton in qmldir but using "
-                       "pragma Singleton") } } };
-    QTest::newRow("jsVarDeclarationsWriteConst")
-            << QStringLiteral("jsVarDeclarationsWriteConst.qml")
-            << Result { { Message {
-                       QStringLiteral("Cannot assign to read-only property constProp") } } };
-    QTest::newRow("shadowedSignal")
-            << QStringLiteral("shadowedSignal.qml")
-            << Result { { Message {
-                       QStringLiteral("Signal \"pressed\" is shadowed by a property.") } } };
-    QTest::newRow("shadowedSignalWithId")
-            << QStringLiteral("shadowedSignalWithId.qml")
-            << Result { { Message {
-                       QStringLiteral("Signal \"pressed\" is shadowed by a property") } } };
-    QTest::newRow("shadowedSlot") << QStringLiteral("shadowedSlot.qml")
-                                  << Result { { Message { QStringLiteral(
-                                             "Slot \"move\" is shadowed by a property") } } };
-    QTest::newRow("shadowedMethod") << QStringLiteral("shadowedMethod.qml")
-                                    << Result { { Message { QStringLiteral(
-                                               "Method \"foo\" is shadowed by a property.") } } };
-    QTest::newRow("callVarProp")
-            << QStringLiteral("callVarProp.qml")
-            << Result { { Message { QStringLiteral(
-                       "Property \"foo\" is a var property. It may or may not be a "
-                       "method. Use a regular function instead.") } } };
-    QTest::newRow("callJSValue")
-            << QStringLiteral("callJSValueProp.qml")
-            << Result { { Message { QStringLiteral(
-                       "Property \"jsValue\" is a QJSValue property. It may or may not be "
-                       "a method. Use a regular Q_INVOKABLE instead.") } } };
-    QTest::newRow("assignNonExistingTypeToVarProp")
-            << QStringLiteral("assignNonExistingTypeToVarProp.qml")
-            << Result { { Message { QStringLiteral(
-                       "NonExistingType was not found. Did you add all imports and dependencies?")
-               } } };
-    QTest::newRow("unboundComponents")
-            << QStringLiteral("unboundComponents.qml")
-            << Result { {
-                         Message { QStringLiteral("Unqualified access"), 10, 25 },
-                         Message { QStringLiteral("Unqualified access"), 14, 33 }
-               } };
-    QTest::newRow("badlyBoundComponents")
-            << QStringLiteral("badlyBoundComponents.qml")
-            << Result{ { Message{ QStringLiteral("Unqualified access"), 18, 36 } } };
-    QTest::newRow("NotScopedEnumCpp")
-            << QStringLiteral("NotScopedEnumCpp.qml")
-            << Result{ { Message{
-                       QStringLiteral("You cannot access unscoped enum \"TheEnum\" from here."), 5,
-                       49 } } };
-
-    QTest::newRow("unresolvedArrayBinding")
-            << QStringLiteral("unresolvedArrayBinding.qml")
-            << Result{ { Message{ QStringLiteral(u"Declaring an object which is not an Qml object"
-                                                 " as a list member.") } },
-                       {},
-                       {} };
-    QTest::newRow("duplicatedPropertyName")
-            << QStringLiteral("duplicatedPropertyName.qml")
-            << Result{ { Message{ QStringLiteral("Duplicated property name \"cat\"."), 5, 5 } } };
-    QTest::newRow("duplicatedSignalName")
-            << QStringLiteral("duplicatedPropertyName.qml")
-            << Result{ { Message{ QStringLiteral("Duplicated signal name \"clicked\"."), 8, 5 } } };
-    QTest::newRow("missingComponentBehaviorBound")
-            << QStringLiteral("missingComponentBehaviorBound.qml")
-            << Result {
-                    {  Message{ QStringLiteral("Unqualified access"), 8, 31  } },
-                    {},
-                    {  Message{ QStringLiteral("Set \"pragma ComponentBehavior: Bound\" in "
-                                               "order to use IDs from outer components "
-                                               "in nested components."), 0, 0, QtInfoMsg } },
-                    Result::AutoFixable
-                };
-    QTest::newRow("IsNotAnEntryOfEnum")
-            << QStringLiteral("IsNotAnEntryOfEnum.qml")
-            << Result{ {
-                         Message {
-                                  QStringLiteral("Member \"Mode\" not found on type \"Item\""), 12,
-                                  29},
-                          Message{
-                                  QStringLiteral("\"Hour\" is not an entry of enum \"Mode\"."), 13,
-                                  62}
-                       },
-                       {},
-                       { Message{ QStringLiteral("Hours") } }
-               };
-
-    QTest::newRow("StoreNameMethod")
-            << QStringLiteral("storeNameMethod.qml")
-            << Result { { Message { QStringLiteral("Cannot assign to method foo") } } };
-
-    QTest::newRow("CoerceToVoid")
-            << QStringLiteral("coercetovoid.qml")
-            << Result { { Message {
-                    QStringLiteral("Function without return type annotation returns double")
-               } } };
-
-    QTest::newRow("annotatedDefaultParameter")
-            << QStringLiteral("annotatedDefaultParameter.qml")
-            << Result { { Message {
-                       QStringLiteral("Type annotations on default parameters are not supported")
-               } } };
-
-
-    QTest::newRow("lowerCaseQualifiedImport")
-            << QStringLiteral("lowerCaseQualifiedImport.qml")
-            << Result{
-                   {
-                           Message{
-                                   u"Import qualifier 'test' must start with a capital letter."_s },
-                           Message{
-                                   u"Namespace 'test' of 'test.Rectangle' must start with an upper case letter."_s },
-                   },
-                   {},
-                   {}
-               };
-    QTest::newRow("lowerCaseQualifiedImport2")
-            << QStringLiteral("lowerCaseQualifiedImport2.qml")
-            << Result{
-                   {
-                           Message{
-                                   u"Import qualifier 'test' must start with a capital letter."_s },
-                           Message{
-                                   u"Namespace 'test' of 'test.Item' must start with an upper case letter."_s },
-                           Message{
-                                   u"Namespace 'test' of 'test.Rectangle' must start with an upper case letter."_s },
-                           Message{
-                                   u"Namespace 'test' of 'test.color' must start with an upper case letter."_s },
-                           Message{
-                                   u"Namespace 'test' of 'test.Grid' must start with an upper case letter."_s },
-                   },
-                   {},
-                   {}
-               };
+                               "Member \"objectName\" not found on type \"Foozle\"") } },
+                       { Message { QStringLiteral("Unqualified access") } } };
     QTest::newRow("notQmlRootMethods")
             << QStringLiteral("notQmlRootMethods.qml")
             << Result{ {
-                       Message{ u"Member \"deleteLater\" not found on type \"QtObject\""_s },
-                       Message{ u"Member \"destroyed\" not found on type \"QtObject\""_s },
-               } };
-
-    QTest::newRow("connectionsBinding")
-            << QStringLiteral("autofix/ConnectionsHandler.qml")
-            << Result{
-                   { Message{
-                             u"Implicitly defining \"onWidthChanged\" as signal handler in "
-                             u"Connections is deprecated. "
-                             u"Create a function instead: \"function onWidthChanged() { ... }\"."_s },
-                     Message{
-                             u"Implicitly defining \"onColorChanged\" as signal handler in "
-                             u"Connections is deprecated. "
-                             u"Create a function instead: \"function onColorChanged(collie) { ... }\"."_s } },
-               };
-    QTest::newRow("autoFixConnectionsBinding")
-            << QStringLiteral("autofix/ConnectionsHandler.qml")
-            << Result{
-                   { Message{
-                             u"Implicitly defining \"onWidthChanged\" as signal handler in "
-                             u"Connections is deprecated. "
-                             u"Create a function instead: \"function onWidthChanged() { ... }\"."_s },
-                     Message{
-                             u"Implicitly defining \"onColorChanged\" as signal handler in "
-                             u"Connections is deprecated. "
-                             u"Create a function instead: \"function onColorChanged(collie) { ... }\"."_s } },
-                   {},
-                   {
-                           Message{ u"function onWidthChanged() { console.log(\"new width:\", width) }"_s },
-                           Message{ u"function onColorChanged(col) { console.log(\"new color:\", col) }"_s },
-                   },
-                   };
-    QTest::newRow("unresolvedTypeAnnotation")
-            << QStringLiteral("unresolvedTypeAnnotations.qml")
-            << Result{{
-                       { uR"("A" was not found for the type of parameter "a" in method "f".)"_s, 4, 17 },
-                       { uR"("B" was not found for the type of parameter "b" in method "f".)"_s, 4, 23 },
-                       { uR"("R" was not found for the return type of method "g".)"_s, 5, 18 },
-                       { uR"("C" was not found for the type of parameter "c" in method "h".)"_s, 6, 17 },
-                       { uR"("R" was not found for the return type of method "h".)"_s, 6, 22 },
-                       { uR"("D" was not found for the type of parameter "d" in method "i".)"_s, 7, 17 },
-                       { uR"("G" was not found for the type of parameter "g" in method "i".)"_s, 7, 26 },
-               }};
-
-    {
-        const QString warning = u"Do not mix translation functions"_s;
-        QTest::addRow("BadTranslationMix") << testFile(u"translations/BadMix.qml"_s)
-                                           << Result{ {
-                                                      Message{ warning, 5, 49 },
-                                                      Message{ warning, 6, 56 },
-                                              } };
-        QTest::addRow("BadTranslationMixWithMacros")
-                << testFile(u"translations/BadMixWithMacros.qml"_s)
-                << Result{ {
-                           Message{ warning, 5, 29 },
-                   } };
-    }
-
-    // We want to see the warning about the missing type only once.
-    QTest::newRow("unresolvedType2")
-            << QStringLiteral("unresolvedType2.qml")
-            << Result { { Message { QStringLiteral(
-                           "QQC2.Label was not found. Did you add all imports and dependencies?") } },
-                       { Message { QStringLiteral(
-                           "'QQC2.Label' is used but it is not resolved") },
-                         Message { QStringLiteral(
-                           "Type QQC2.Label is used but it is not resolved") } },
-                       };
-
-    // The warning should show up only once even though
-    // we have to run the type propagator multiple times.
-    QTest::newRow("multiplePasses")
-            << testFile("multiplePasses.qml")
-            << Result {{ Message { QStringLiteral("Unqualified access") }}};
-    QTest::newRow("missingRequiredOnObjectDefinitionBinding")
-            << QStringLiteral("missingRequiredPropertyOnObjectDefinitionBinding.qml")
-            << Result{ { { uR"(Component is missing required property i from QtObject)"_s, 4, 26 } } };
-
-    QTest::newRow("PropertyAliasCycles") << QStringLiteral("settings/propertyAliasCycle/file.qml")
-                                         << Result::cleanWithSettings();
-    // make sure that warnings are triggered without settings:
-    QTest::newRow("PropertyAliasCycles2")
-            << QStringLiteral("settings/propertyAliasCycle/file.qml")
-            << Result{ { { "\"cycle1\" is part of an alias cycle"_L1 },
-                         { "\"cycle1\" is part of an alias cycle"_L1 } } };
+                         Message{ u"Member \"deleteLater\" not found on type \"QtObject\""_s },
+                         Message{ u"Member \"destroyed\" not found on type \"QtObject\""_s },
+                         } };
+    QTest::newRow("nullBinding") << QStringLiteral("nullBinding.qml")
+                                 << Result{ { Message{ QStringLiteral(
+                                            "Cannot assign literal of type null to double") } } };
+    QTest::newRow("parentIsComponent")
+            << QStringLiteral("parentIsComponent.qml")
+            << Result { { Message {
+                                  QStringLiteral("Member \"progress\" not found on type \"QQuickItem\""), 7,
+                                  39 } } };
     QTest::newRow("redundantOptionalChainingEnums")
             << QStringLiteral("RedundantOptionalChainingEnums.qml")
             << Result{ { { "Redundant optional chaining for enum lookup"_L1, 5, 54 },
                          { "Redundant optional chaining for enum lookup"_L1, 6, 26 } } };
+    QTest::newRow("segFault (bad)")
+            << QStringLiteral("SegFault.bad.qml")
+            << Result { { Message { QStringLiteral(
+                       "Member \"foobar\" not found on type \"QQuickScreenAttached\"") } } };
+    QTest::newRow("shadowedMethod") << QStringLiteral("shadowedMethod.qml")
+                                    << Result { { Message { QStringLiteral(
+                                               "Method \"foo\" is shadowed by a property.") } } };
+    QTest::newRow("shadowedSignal")
+            << QStringLiteral("shadowedSignal.qml")
+            << Result { { Message {
+                                  QStringLiteral("Signal \"pressed\" is shadowed by a property.") } } };
+    QTest::newRow("shadowedSignalWithId")
+            << QStringLiteral("shadowedSignalWithId.qml")
+            << Result { { Message {
+                                  QStringLiteral("Signal \"pressed\" is shadowed by a property") } } };
+    QTest::newRow("shadowedSlot") << QStringLiteral("shadowedSlot.qml")
+                                  << Result { { Message { QStringLiteral(
+                                             "Slot \"move\" is shadowed by a property") } } };
     {
         const auto msgGen = [](const QString &name, quint32 line, quint32 col) {
             return Message{ "Reading non-constant and non-notifiable property %1. Binding might "_L1
@@ -1336,6 +1259,64 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)",
                              msgGen("cppConstantNotifiable"_L1, 16, 24), msgGen("i"_L1, 17, 24),
                              msgGen("ro"_L1, 18, 24) } };
     }
+    QTest::newRow("string as id") << QStringLiteral("stringAsId.qml")
+                                  << Result { { Message { QStringLiteral(
+                                             "ids do not need quotation marks") } } };
+    QTest::newRow("stringIdUsedInWarning")
+            << QStringLiteral("stringIdUsedInWarning.qml")
+            << Result { { Message {
+                               QStringLiteral("i is a member of a parent element"),
+                       } },
+                       {},
+                       { Message { QStringLiteral("stringy.") } } };
+    QTest::newRow("unboundComponents")
+            << QStringLiteral("unboundComponents.qml")
+            << Result { {
+                       Message { QStringLiteral("Unqualified access"), 10, 25 },
+                       Message { QStringLiteral("Unqualified access"), 14, 33 }
+               } };
+    QTest::newRow("unknownTypeCustomParser")
+            << QStringLiteral("unknownTypeCustomParser.qml")
+            << Result { { Message { QStringLiteral("TypeDoesNotExist was not found.") } } };
+    QTest::newRow("unresolvedArrayBinding")
+            << QStringLiteral("unresolvedArrayBinding.qml")
+            << Result{ { Message{ QStringLiteral(u"Declaring an object which is not an Qml object"
+                                                 " as a list member.") } },
+                       {},
+                       {} };
+    QTest::newRow("unresolvedAttachedType")
+            << QStringLiteral("unresolvedAttachedType.qml")
+            << Result { { Message { QStringLiteral(
+                               "unknown attached property scope UnresolvedAttachedType.") } },
+                       { Message { QStringLiteral("Could not find property \"property\".") } } };
+    QTest::newRow("unresolvedType")
+            << QStringLiteral("unresolvedType.qml")
+            << Result { { Message { QStringLiteral(
+                                       "UnresolvedType was not found. "
+                                       "Did you add all imports and dependencies?")
+                       } },
+                       { Message { QStringLiteral("incompatible type") } } };
+    // We want to see the warning about the missing type only once.
+    QTest::newRow("unresolvedType2")
+            << QStringLiteral("unresolvedType2.qml")
+            << Result { { Message { QStringLiteral(
+                               "QQC2.Label was not found. Did you add all imports and dependencies?") } },
+                       { Message { QStringLiteral(
+                                 "'QQC2.Label' is used but it is not resolved") },
+                         Message { QStringLiteral(
+                                 "Type QQC2.Label is used but it is not resolved") } },
+                       };
+    QTest::newRow("unresolvedTypeAnnotation")
+            << QStringLiteral("unresolvedTypeAnnotations.qml")
+            << Result{{
+                         { uR"("A" was not found for the type of parameter "a" in method "f".)"_s, 4, 17 },
+                         { uR"("B" was not found for the type of parameter "b" in method "f".)"_s, 4, 23 },
+                         { uR"("R" was not found for the return type of method "g".)"_s, 5, 18 },
+                         { uR"("C" was not found for the type of parameter "c" in method "h".)"_s, 6, 17 },
+                         { uR"("R" was not found for the return type of method "h".)"_s, 6, 22 },
+                         { uR"("D" was not found for the type of parameter "d" in method "i".)"_s, 7, 17 },
+                         { uR"("G" was not found for the type of parameter "g" in method "i".)"_s, 7, 26 },
+                         }};
 }
 
 void TestQmllint::dirtyQmlCode()
@@ -1403,63 +1384,6 @@ void TestQmllint::dirtyQmlSnippet_data()
 
     const CallQmllintOptions defaultOptions;
 
-    QTest::newRow("testSnippet")
-            << u"property int qwer: \"Hello\""_s
-            << Result{ { { "Cannot assign literal of type string to int"_L1 } } } << defaultOptions;
-
-    QTest::newRow("enum") << u"enum Hello { World, Kitty, World, dlrow }"_s
-                          << Result{ { { "Enum key 'World' has already been declared"_L1, 1, 28 },
-                                       { "Note: previous declaration of 'World' here"_L1, 1, 14 },
-                                       { "Enum keys should start with an uppercase"_L1, 1, 35 } } }
-                          << defaultOptions;
-
-    QTest::newRow("duplicateObjectBinding")
-            << u"property Item i; i: Item {} i: Item {}"_s
-            << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 29 },
-                         { "Note: previous binding on 'i' here"_L1, 1, 18 } } }
-            << defaultOptions;
-
-    QTest::newRow("duplicateObjectBinding2")
-            << u"property Item i: Item {} i: Item {}"_s
-            << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 26 },
-                         { "Note: previous binding on 'i' here"_L1, 1, 15 } } }
-            << defaultOptions;
-
-    QTest::newRow("duplicateBinding")
-            << u"property int i; i: 42; i: 43;"_s
-            << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 27 },
-                         { "Note: previous binding on 'i' here"_L1, 1, 20 } } }
-            << defaultOptions;
-
-    QTest::newRow("duplicateBinding2")
-            << u"property int i: 42; i: 43;"_s
-            << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 24 },
-                         { "Note: previous binding on 'i' here"_L1, 1, 17 } } }
-            << defaultOptions;
-
-    QTest::newRow("duplicateGrouped")
-            << u"Text { font.pixelSize: 5; font.pixelSize: 10; }"_s
-            << Result{ { { "Duplicate binding on property 'pixelSize'"_L1, 1, 43 },
-                         { "Note: previous binding on 'pixelSize' here"_L1, 1, 24 } } }
-            << defaultOptions;
-
-    QTest::newRow("duplicateGrouped2")
-            << u"Text { font.pixelSize: 5; font { pixelSize: 10 } }"_s
-            << Result{ { { "Duplicate binding on property 'pixelSize'"_L1, 1, 45 },
-                         { "Note: previous binding on 'pixelSize' here"_L1, 1, 24 } } }
-            << defaultOptions;
-
-    QTest::newRow("duplicateGrouped3")
-            << u"Text { font { pixelSize: 5; pixelSize: 10 } }"_s
-            << Result{ { { "Duplicate binding on property 'pixelSize'"_L1, 1, 40 },
-                         { "Note: previous binding on 'pixelSize' here"_L1, 1, 26 } } }
-            << defaultOptions;
-
-    QTest::newRow("color-name") << u"property color myColor: \"lbue\""_s
-                                << Result{ { { "Invalid color \"lbue\""_L1, 1, 25 } },
-                                           {},
-                                           { { "Did you mean \"blue\"?", 1, 25 } } }
-                                << defaultOptions;
     QTest::newRow("color-hex") << u"property color myColor: \"#12345\""_s
                                << Result{ { { "Invalid color"_L1, 1, 25 } } } << defaultOptions;
     QTest::newRow("color-hex2") << u"property color myColor: \"#123456789\""_s
@@ -1472,12 +1396,55 @@ void TestQmllint::dirtyQmlSnippet_data()
                                 << Result{ { { "Invalid color"_L1, 1, 25 } } } << defaultOptions;
     QTest::newRow("color-hex6") << u"property color myColor: \"#1234567\""_s
                                 << Result{ { { "Invalid color"_L1, 1, 25 } } } << defaultOptions;
-
+    QTest::newRow("color-name") << u"property color myColor: \"lbue\""_s
+                                << Result{ { { "Invalid color \"lbue\""_L1, 1, 25 } },
+                                           {},
+                                           { { "Did you mean \"blue\"?", 1, 25 } } }
+                                << defaultOptions;
+    QTest::newRow("duplicateBinding")
+            << u"property int i; i: 42; i: 43;"_s
+            << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 27 },
+                         { "Note: previous binding on 'i' here"_L1, 1, 20 } } }
+            << defaultOptions;
+    QTest::newRow("duplicateBinding2")
+            << u"property int i: 42; i: 43;"_s
+            << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 24 },
+                         { "Note: previous binding on 'i' here"_L1, 1, 17 } } }
+            << defaultOptions;
+    QTest::newRow("duplicateGrouped")
+            << u"Text { font.pixelSize: 5; font.pixelSize: 10; }"_s
+            << Result{ { { "Duplicate binding on property 'pixelSize'"_L1, 1, 43 },
+                         { "Note: previous binding on 'pixelSize' here"_L1, 1, 24 } } }
+            << defaultOptions;
+    QTest::newRow("duplicateGrouped2")
+            << u"Text { font.pixelSize: 5; font { pixelSize: 10 } }"_s
+            << Result{ { { "Duplicate binding on property 'pixelSize'"_L1, 1, 45 },
+                         { "Note: previous binding on 'pixelSize' here"_L1, 1, 24 } } }
+            << defaultOptions;
+    QTest::newRow("duplicateGrouped3")
+            << u"Text { font { pixelSize: 5; pixelSize: 10 } }"_s
+            << Result{ { { "Duplicate binding on property 'pixelSize'"_L1, 1, 40 },
+                         { "Note: previous binding on 'pixelSize' here"_L1, 1, 26 } } }
+            << defaultOptions;
+    QTest::newRow("duplicateObjectBinding")
+            << u"property Item i; i: Item {} i: Item {}"_s
+            << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 29 },
+                         { "Note: previous binding on 'i' here"_L1, 1, 18 } } }
+            << defaultOptions;
+    QTest::newRow("duplicateObjectBinding2")
+            << u"property Item i: Item {} i: Item {}"_s
+            << Result{ { { "Duplicate binding on property 'i'"_L1, 1, 26 },
+                         { "Note: previous binding on 'i' here"_L1, 1, 15 } } }
+            << defaultOptions;
+    QTest::newRow("enum") << u"enum Hello { World, Kitty, World, dlrow }"_s
+                          << Result{ { { "Enum key 'World' has already been declared"_L1, 1, 28 },
+                                       { "Note: previous declaration of 'World' here"_L1, 1, 14 },
+                                       { "Enum keys should start with an uppercase"_L1, 1, 35 } } }
+                          << defaultOptions;
     QTest::newRow("requiredInInlineComponent")
             << u"Item { component Foo: Item { required property var bla; } } Foo {}"_s
             << Result{ { { "Component is missing required property bla from Foo"_L1, 1, 61 } } }
             << defaultOptions;
-
     QTest::newRow("requiredPropertyOwnerMixup")
             << u"component Foo: Item { required property var bla }\n"_s
                u"Foo { Item { property int bla: 43 } }\n"_s
@@ -1485,7 +1452,9 @@ void TestQmllint::dirtyQmlSnippet_data()
             << Result{ { { "Component is missing required property bla from Foo"_L1, 2, 1 },
                          { "Component is missing required property bla from Foo"_L1, 3, 1 } } }
             << defaultOptions;
-
+    QTest::newRow("testSnippet")
+            << u"property int qwer: \"Hello\""_s
+            << Result{ { { "Cannot assign literal of type string to int"_L1 } } } << defaultOptions;
     QTest::newRow("upperCaseId")
             << u"id: Root"_s
             << Result{ { { "Id must start with a lower case letter or an '_'"_L1, 1, 5 } } }
@@ -1515,25 +1484,22 @@ void TestQmllint::cleanQmlSnippet_data()
 
     const CallQmllintOptions defaultOptions;
 
-    QTest::newRow("testSnippet") << u"property int qwer: 123"_s << defaultOptions;
-    QTest::newRow("enum") << u"enum Hello { World, Kitty, DlroW }"_s << defaultOptions;
-
-    QTest::newRow("duplicateList") << u"Item {} Item {}"_s << defaultOptions;
-    QTest::newRow("duplicateList2")
-            << u"property list<Item> myList; myList: Item {} myList: Item {}"_s << defaultOptions;
-
-    QTest::newRow("color-name") << u"property color myColor: \"blue\""_s << defaultOptions;
-    QTest::newRow("color-name2") << u"property color myColor\nmyColor: \"green\""_s
-                                 << defaultOptions;
     QTest::newRow("color-hex") << u"property color myColor: \"#123456\""_s << defaultOptions;
     QTest::newRow("color-hex2") << u"property color myColor: \"#FFFFFFFF\""_s << defaultOptions;
     QTest::newRow("color-hex3") << u"property color myColor: \"#A0AAff1f\""_s << defaultOptions;
-
+    QTest::newRow("color-name") << u"property color myColor: \"blue\""_s << defaultOptions;
+    QTest::newRow("color-name2") << u"property color myColor\nmyColor: \"green\""_s
+                                 << defaultOptions;
+    QTest::newRow("duplicateList") << u"Item {} Item {}"_s << defaultOptions;
+    QTest::newRow("duplicateList2")
+            << u"property list<Item> myList; myList: Item {} myList: Item {}"_s << defaultOptions;
+    QTest::newRow("enum") << u"enum Hello { World, Kitty, DlroW }"_s << defaultOptions;
     QTest::newRow("lowerCaseId") << u"id: root"_s << defaultOptions;
     QTest::newRow("requiredInComponent")
             << u"Item { Component { id: comp; required property var bla; } }"_s << defaultOptions;
     QTest::newRow("requiredInInlineComponent")
             << u"Item { component Foo: Item { required property var bla; } }"_s << defaultOptions;
+    QTest::newRow("testSnippet") << u"property int qwer: 123"_s << defaultOptions;
     QTest::newRow("underScoreId") << u"id: _Root"_s << defaultOptions;
 }
 
@@ -1558,27 +1524,68 @@ void TestQmllint::dirtyJsSnippet_data()
 
     const CallQmllintOptions defaultOptions;
 
-    QTest::newRow("doubleLet")
-            << u"let x = 4; let x = 4;"_s
-            << Result{ { { "Identifier 'x' has already been declared"_L1, 1, 16 },
-                         { "Note: previous declaration of 'x' here"_L1, 1, 5 } } }
-            << defaultOptions;
-    QTest::newRow("doubleConst")
-            << u"const x = 4; const x = 4;"_s
-            << Result{ { { "Identifier 'x' has already been declared"_L1, 1, 20 },
-                         { "Note: previous declaration of 'x' here"_L1, 1, 7 } } }
-            << defaultOptions;
-
     QTest::newRow("assignmentInCondition")
             << u"let xxx = 3; if (xxx=3) return;"_s
             << Result{ { { "Assignment in condition: did you meant to use \"===\" or \"==\" "
                            "instead of \"=\"?"_L1,
                            1, 21 } } }
             << defaultOptions;
+    QTest::newRow("assignmentWarningLocation")
+            << u"console.log(a = 1)"_s
+            << Result{ { { "Unqualified access"_L1, 1, 13 } } }
+            << defaultOptions;
+    QTest::newRow("codeAfterBreak")
+            << u"for (;;) { break; return 1;}"_s << Result{ { { "Unreachable code"_L1, 1, 19 } } }
+            << defaultOptions;
+    QTest::newRow("codeAfterContinue")
+            << u"for (;;) { continue; return 1;}"_s
+            << Result{ { { "Unreachable code"_L1, 1, 22 } } } << defaultOptions;
+    QTest::newRow("codeAfterReturn")
+            << u"return 1; return 2;"_s << Result{ { { "Unreachable code"_L1, 1, 11 } } }
+            << defaultOptions;
+    QTest::newRow("codeAfterThrow")
+            << u"for (;;) { throw 1; return 1;}"_s << Result{ { { "Unreachable code"_L1, 1, 21 } } }
+            << defaultOptions;
+    QTest::newRow("doubleConst")
+            << u"const x = 4; const x = 4;"_s
+            << Result{ { { "Identifier 'x' has already been declared"_L1, 1, 20 },
+                         { "Note: previous declaration of 'x' here"_L1, 1, 7 } } }
+            << defaultOptions;
+    QTest::newRow("doubleLet")
+            << u"let x = 4; let x = 4;"_s
+            << Result{ { { "Identifier 'x' has already been declared"_L1, 1, 16 },
+                         { "Note: previous declaration of 'x' here"_L1, 1, 5 } } }
+            << defaultOptions;
     QTest::newRow("eval") << u"let x = eval();"_s << Result{ { { "Do not use 'eval'"_L1, 1, 9 } } }
                           << defaultOptions;
     QTest::newRow("eval2") << u"let x = eval(\"1 + 1\");"_s
                            << Result{ { { "Do not use 'eval'"_L1, 1, 9 } } } << defaultOptions;
+    QTest::newRow("functionAfterThrow")
+            << u"throw 1; function f() {}; let x = 1; function g() {}; let y = 1;"_s
+            << Result{ {
+                         { "Unreachable code"_L1, 1, 27 },
+                         { "Unreachable code"_L1, 1, 55 },
+                         } }
+            << defaultOptions;
+    QTest::newRow("functionAfterThrow2")
+            << u"throw 1; if (x) { function f() {}; } let x = 1; if (x) { function g() {};} let y = 1;"_s
+            << Result{ {
+                         { "Unreachable code"_L1, 1, 38 },
+                         { "Unreachable code"_L1, 1, 76 },
+                         } }
+            << defaultOptions;
+    {
+        CallQmllintOptions options;
+        options.enableCategories.append("function-used-before-declaration"_L1);
+        QTest::newRow("functionUsedBeforeDeclaration")
+                << u"fff(); function fff() {}"_s
+                << Result{ {
+                                   { "Function 'fff' is used here before its declaration"_L1, 1, 1 },
+                                   { "Note: declaration of 'fff' here"_L1, 1, 17 },
+                                   },
+                           }
+                << options;
+    }
     QTest::newRow("indirectEval") << u"let x = (1, eval)();"_s
                                   << Result{ { { "Do not use 'eval'"_L1, 1, 13 } } }
                                   << defaultOptions;
@@ -1591,7 +1598,6 @@ void TestQmllint::dirtyJsSnippet_data()
                            "non-nullable type QRegularExpression"_L1,
                            1, 6 } } }
             << defaultOptions;
-
     QTest::newRow("shadowArgument")
             << u"function f(a) { const a = 33; }"_s
             << Result{ { { "Identifier 'a' has already been declared"_L1, 1, 23 },
@@ -1606,52 +1612,6 @@ void TestQmllint::dirtyJsSnippet_data()
             << u"const f = 33; function f() {}"_s
             << Result{ { { "Identifier 'f' has already been declared"_L1, 1, 24 },
                          { "Note: previous declaration of 'f' here"_L1, 1, 7 } } }
-            << defaultOptions;
-    QTest::newRow("assignmentWarningLocation")
-            << u"console.log(a = 1)"_s
-            << Result{ { { "Unqualified access"_L1, 1, 13 } } }
-            << defaultOptions;
-    {
-        CallQmllintOptions options;
-        options.enableCategories.append("function-used-before-declaration"_L1);
-        QTest::newRow("functionUsedBeforeDeclaration")
-                << u"fff(); function fff() {}"_s
-                << Result{ {
-                                   { "Function 'fff' is used here before its declaration"_L1, 1, 1 },
-                                   { "Note: declaration of 'fff' here"_L1, 1, 17 },
-                           },
-                }
-                << options;
-    }
-
-    QTest::newRow("codeAfterReturn")
-            << u"return 1; return 2;"_s << Result{ { { "Unreachable code"_L1, 1, 11 } } }
-            << defaultOptions;
-
-    QTest::newRow("codeAfterBreak")
-            << u"for (;;) { break; return 1;}"_s << Result{ { { "Unreachable code"_L1, 1, 19 } } }
-            << defaultOptions;
-    QTest::newRow("codeAfterContinue")
-            << u"for (;;) { continue; return 1;}"_s
-            << Result{ { { "Unreachable code"_L1, 1, 22 } } } << defaultOptions;
-    QTest::newRow("codeAfterThrow")
-            << u"for (;;) { throw 1; return 1;}"_s << Result{ { { "Unreachable code"_L1, 1, 21 } } }
-            << defaultOptions;
-
-    QTest::newRow("functionAfterThrow")
-            << u"throw 1; function f() {}; let x = 1; function g() {}; let y = 1;"_s
-            << Result{ {
-                       { "Unreachable code"_L1, 1, 27 },
-                       { "Unreachable code"_L1, 1, 55 },
-               } }
-            << defaultOptions;
-
-    QTest::newRow("functionAfterThrow2")
-            << u"throw 1; if (x) { function f() {}; } let x = 1; if (x) { function g() {};} let y = 1;"_s
-            << Result{ {
-                       { "Unreachable code"_L1, 1, 38 },
-                       { "Unreachable code"_L1, 1, 76 },
-               } }
             << defaultOptions;
 }
 
@@ -1681,33 +1641,29 @@ void TestQmllint::cleanJsSnippet_data()
 
     const CallQmllintOptions defaultOptions;
 
-    QTest::newRow("testSnippet") << u"let x = 5"_s << defaultOptions;
-    QTest::newRow("doubleVar") << u"var x = 5; var y = 5"_s << defaultOptions;
+    QTest::newRow("codeAfterBreak") << u"for (;;) { if (x) break; return 1;}"_s << defaultOptions;
+    QTest::newRow("codeAfterContinue")
+            << u"for (;;) { if (x) continue; return 1;}"_s << defaultOptions;
+    QTest::newRow("codeAfterReturn") << u"if (x) return 1; return 2;"_s << defaultOptions;
+    QTest::newRow("codeAfterReturn2")
+            << u"switch (1) { case 1: break; default: return 4;} return 3;"_s << defaultOptions;
+    QTest::newRow("codeAfterThrow") << u"for (;;) { if (x) throw 1; return 1;}"_s << defaultOptions;
     QTest::newRow("doubleInDifferentScopes")
             << u"const a = 42; for (let a = 1; a < 10; ++a) {}"_s << defaultOptions;
-
+    QTest::newRow("doubleVar") << u"var x = 5; var y = 5"_s << defaultOptions;
+    QTest::newRow("functionAfterThrow") << u"throw 1; function f() {}"_s << defaultOptions;
     QTest::newRow("notAssignmentInCondition")
             << u"let x = 3; if (x==3) return;"_s << defaultOptions;
-
     QTest::newRow("shadowArgument")
             << u"function f(a) { if (1){ const a = 33; } }"_s << defaultOptions;
     QTest::newRow("shadowFunction") << u"function f() { function f() {} }"_s << defaultOptions;
-
+    QTest::newRow("testSnippet") << u"let x = 5"_s << defaultOptions;
     QTest::newRow("varUsedBeforeDeclarationWithIgnore")
             << u"// qmllint disable var-used-before-declaration\n"
                "f(x) ;\n"
                "// qmllint enable var-used-before-declaration\n"
                "let x = 3;"_s
             << defaultOptions;
-
-    QTest::newRow("codeAfterReturn") << u"if (x) return 1; return 2;"_s << defaultOptions;
-    QTest::newRow("codeAfterReturn2")
-            << u"switch (1) { case 1: break; default: return 4;} return 3;"_s << defaultOptions;
-    QTest::newRow("codeAfterBreak") << u"for (;;) { if (x) break; return 1;}"_s << defaultOptions;
-    QTest::newRow("codeAfterContinue")
-            << u"for (;;) { if (x) continue; return 1;}"_s << defaultOptions;
-    QTest::newRow("codeAfterThrow") << u"for (;;) { if (x) throw 1; return 1;}"_s << defaultOptions;
-    QTest::newRow("functionAfterThrow") << u"throw 1; function f() {}"_s << defaultOptions;
 }
 
 void TestQmllint::cleanJsSnippet()
@@ -1727,176 +1683,177 @@ void TestQmllint::cleanJsSnippet()
 void TestQmllint::cleanQmlCode_data()
 {
     QTest::addColumn<QString>("filename");
-    QTest::newRow("Simple_QML")                << QStringLiteral("Simple.qml");
-    QTest::newRow("QML_importing_JS")          << QStringLiteral("importing_js.qml");
-    QTest::newRow("JS_with_pragma_and_import") << QStringLiteral("QTBUG-45916.js");
-    QTest::newRow("uiQml")                     << QStringLiteral("FormUser.qml");
-    QTest::newRow("methodInScope")             << QStringLiteral("MethodInScope.qml");
-    QTest::newRow("importWithPrefix")          << QStringLiteral("ImportWithPrefix.qml");
-    QTest::newRow("catchIdentifier")           << QStringLiteral("catchIdentifierNoWarning.qml");
-    QTest::newRow("qmldirAndQmltypes")         << QStringLiteral("qmldirAndQmltypes.qml");
-    QTest::newRow("forLoop")                   << QStringLiteral("forLoop.qml");
-    QTest::newRow("esmodule")                  << QStringLiteral("esmodule.mjs");
-    QTest::newRow("methodsInJavascript")       << QStringLiteral("javascriptMethods.qml");
-    QTest::newRow("goodAlias")                 << QStringLiteral("goodAlias.qml");
-    QTest::newRow("goodParent")                << QStringLiteral("goodParent.qml");
-    QTest::newRow("goodTypeAssertion")         << QStringLiteral("goodTypeAssertion.qml");
+
+    QTest::newRow("2Behavior") << QStringLiteral("2behavior.qml");
+    QTest::newRow("Accessible") << QStringLiteral("accessible.qml");
+    QTest::newRow("AddressableValue") << QStringLiteral("addressableValue.qml");
     QTest::newRow("AttachedProps")             << QStringLiteral("AttachedProps.qml");
-    QTest::newRow("unknownBuiltinFont")        << QStringLiteral("ButtonLoader.qml");
-    QTest::newRow("confusingImport")           << QStringLiteral("Dialog.qml");
-    QTest::newRow("qualifiedAttached")         << QStringLiteral("Drawer.qml");
+    QTest::newRow("AttachedType") << QStringLiteral("AttachedType.qml");
+    QTest::newRow("BindingBeforeDeclaration") << QStringLiteral("bindingBeforeDeclaration.qml");
+    QTest::newRow("BindingTypeMismatch") << QStringLiteral("bindingTypeMismatch.qml");
+    QTest::newRow("BindingTypeMismatchFunction") << QStringLiteral("bindingTypeMismatchFunction.qml");
+    QTest::newRow("BindingsOnGroupAndAttachedProperties")
+            << QStringLiteral("goodBindingsOnGroupAndAttached.qml");
+    QTest::newRow("CustomParserUnqualifiedAccess")
+            << QStringLiteral("customParserUnqualifiedAccess.qml");
     QTest::newRow("EnumAccess1") << QStringLiteral("EnumAccess1.qml");
     QTest::newRow("EnumAccess2") << QStringLiteral("EnumAccess2.qml");
-    QTest::newRow("ListProperty") << QStringLiteral("ListProperty.qml");
-    QTest::newRow("AttachedType") << QStringLiteral("AttachedType.qml");
-    QTest::newRow("qmldirImportAndDepend") << QStringLiteral("qmldirImportAndDepend/good.qml");
-    QTest::newRow("ParentEnum") << QStringLiteral("parentEnum.qml");
-    QTest::newRow("Signals") << QStringLiteral("Signal.qml");
-    QTest::newRow("javascriptMethodsInModule")
-            << QStringLiteral("javascriptMethodsInModuleGood.qml");
-    QTest::newRow("enumFromQtQml") << QStringLiteral("enumFromQtQml.qml");
-    QTest::newRow("anchors1") << QStringLiteral("anchors1.qml");
-    QTest::newRow("anchors2") << QStringLiteral("anchors2.qml");
-    QTest::newRow("defaultImport") << QStringLiteral("defaultImport.qml");
-    QTest::newRow("goodAliasObject") << QStringLiteral("goodAliasObject.qml");
-    QTest::newRow("jsmoduleimport") << QStringLiteral("jsmoduleimport.qml");
-    QTest::newRow("overridescript") << QStringLiteral("overridescript.qml");
-    QTest::newRow("multiExtension") << QStringLiteral("multiExtension.qml");
-    QTest::newRow("segFault") << QStringLiteral("SegFault.qml");
-    QTest::newRow("grouped scope failure") << QStringLiteral("groupedScope.qml");
-    QTest::newRow("layouts depends quick") << QStringLiteral("layouts.qml");
-    QTest::newRow("attached") << QStringLiteral("attached.qml");
-    QTest::newRow("enumProperty") << QStringLiteral("enumProperty.qml");
-    QTest::newRow("externalEnumProperty") << QStringLiteral("externalEnumProperty.qml");
-    QTest::newRow("shapes") << QStringLiteral("shapes.qml");
-    QTest::newRow("var") << QStringLiteral("var.qml");
-    QTest::newRow("defaultProperty") << QStringLiteral("defaultProperty.qml");
-    QTest::newRow("defaultPropertyList") << QStringLiteral("defaultPropertyList.qml");
-    QTest::newRow("defaultPropertyComponent") << QStringLiteral("defaultPropertyComponent.qml");
-    QTest::newRow("defaultPropertyComponent2") << QStringLiteral("defaultPropertyComponent.2.qml");
-    QTest::newRow("defaultPropertyListModel") << QStringLiteral("defaultPropertyListModel.qml");
-    QTest::newRow("defaultPropertyVar") << QStringLiteral("defaultPropertyVar.qml");
-    QTest::newRow("multiDefaultProperty") << QStringLiteral("multiDefaultPropertyOk.qml");
-    QTest::newRow("propertyDelegate") << QStringLiteral("propertyDelegate.qml");
-    QTest::newRow("duplicateQmldirImport") << QStringLiteral("qmldirImport/duplicate.qml");
-    QTest::newRow("Used imports") << QStringLiteral("used.qml");
-    QTest::newRow("Unused imports (multi)") << QStringLiteral("unused_multi.qml");
-    QTest::newRow("Unused static module") << QStringLiteral("unused_static.qml");
-    QTest::newRow("compositeSingleton") << QStringLiteral("compositesingleton.qml");
-    QTest::newRow("stringLength") << QStringLiteral("stringLength.qml");
-    QTest::newRow("stringLength2") << QStringLiteral("stringLength2.qml");
-    QTest::newRow("stringLength3") << QStringLiteral("stringLength3.qml");
-    QTest::newRow("attachedPropertyAssignments")
-            << QStringLiteral("attachedPropertyAssignments.qml");
-    QTest::newRow("groupedPropertyAssignments") << QStringLiteral("groupedPropertyAssignments.qml");
-    QTest::newRow("goodAttachedProperty") << QStringLiteral("goodAttachedProperty.qml");
-    QTest::newRow("objectBindingOnVarProperty") << QStringLiteral("objectBoundToVar.qml");
-    QTest::newRow("Unversioned change signal without arguments") << QStringLiteral("unversionChangedSignalSansArguments.qml");
-    QTest::newRow("deprecatedFunctionOverride") << QStringLiteral("deprecatedFunctionOverride.qml");
-    QTest::newRow("multilineStringEscaped") << QStringLiteral("multilineStringEscaped.qml");
-    QTest::newRow("propertyOverride") << QStringLiteral("propertyOverride.qml");
-    QTest::newRow("propertyBindingValue") << QStringLiteral("propertyBindingValue.qml");
-    QTest::newRow("customParser") << QStringLiteral("customParser.qml");
-    QTest::newRow("customParser.recursive") << QStringLiteral("customParser.recursive.qml");
-    QTest::newRow("2Behavior") << QStringLiteral("2behavior.qml");
-    QTest::newRow("interceptor") << QStringLiteral("interceptor.qml");
-    QTest::newRow("valueSource") << QStringLiteral("valueSource.qml");
-    QTest::newRow("interceptor+valueSource") << QStringLiteral("interceptor_valueSource.qml");
-    QTest::newRow("groupedProperty (valueSource+interceptor)")
-            << QStringLiteral("groupedProperty_valueSource_interceptor.qml");
-    QTest::newRow("QtQuick.Window 2.1") << QStringLiteral("qtquickWindow21.qml");
-    QTest::newRow("attachedTypeIndirect") << QStringLiteral("attachedTypeIndirect.qml");
-    QTest::newRow("objectArray") << QStringLiteral("objectArray.qml");
-    QTest::newRow("aliasToList") << QStringLiteral("aliasToList.qml");
-    QTest::newRow("QVariant") << QStringLiteral("qvariant.qml");
-    QTest::newRow("Accessible") << QStringLiteral("accessible.qml");
-    QTest::newRow("qjsroot") << QStringLiteral("qjsroot.qml");
-    QTest::newRow("qmlRootMethods") << QStringLiteral("qmlRootMethods.qml");
+    QTest::newRow("EnumAccessCpp") << QStringLiteral("EnumAccessCpp.qml");
+    QTest::newRow("GoodModulePrefix") << QStringLiteral("goodModulePrefix.qml");
+    QTest::newRow("ID overrides property") << QStringLiteral("accessibleId.qml");
+    QTest::newRow("ImportDirectoryQmldir") << QStringLiteral("Things/LintDirectly.qml");
+    QTest::newRow("ImportQMLModule") << QStringLiteral("importQMLModule.qml");
     QTest::newRow("InlineComponent") << QStringLiteral("inlineComponent.qml");
     QTest::newRow("InlineComponentWithComponents") << QStringLiteral("inlineComponentWithComponents.qml");
     QTest::newRow("InlineComponentsChained") << QStringLiteral("inlineComponentsChained.qml");
-    QTest::newRow("ignoreWarnings") << QStringLiteral("ignoreWarnings.qml");
-    QTest::newRow("BindingBeforeDeclaration") << QStringLiteral("bindingBeforeDeclaration.qml");
-    QTest::newRow("CustomParserUnqualifiedAccess")
-            << QStringLiteral("customParserUnqualifiedAccess.qml");
-    QTest::newRow("ImportQMLModule") << QStringLiteral("importQMLModule.qml");
-    QTest::newRow("ImportDirectoryQmldir") << QStringLiteral("Things/LintDirectly.qml");
-    QTest::newRow("BindingsOnGroupAndAttachedProperties")
-            << QStringLiteral("goodBindingsOnGroupAndAttached.qml");
-    QTest::newRow("QQmlEasingEnums::Type") << QStringLiteral("animationEasing.qml");
-    QTest::newRow("ValidLiterals") << QStringLiteral("validLiterals.qml");
-    QTest::newRow("GoodModulePrefix") << QStringLiteral("goodModulePrefix.qml");
-    QTest::newRow("required_property_in_Component") << QStringLiteral("requiredPropertyInComponent.qml");
-    QTest::newRow("requiredPropertyInGroupedPropertyScope") << QStringLiteral("requiredPropertyInGroupedPropertyScope.qml");
-    QTest::newRow("bytearray") << QStringLiteral("bytearray.qml");
-    QTest::newRow("initReadonly") << QStringLiteral("initReadonly.qml");
-    QTest::newRow("connectionNoParent") << QStringLiteral("connectionNoParent.qml"); // QTBUG-97600
-    QTest::newRow("goodGeneralizedGroup") << QStringLiteral("goodGeneralizedGroup.qml");
-    QTest::newRow("on binding in grouped property") << QStringLiteral("onBindingInGroupedProperty.qml");
-    QTest::newRow("declared property of JS object") << QStringLiteral("bareQt.qml");
-    QTest::newRow("ID overrides property") << QStringLiteral("accessibleId.qml");
-    QTest::newRow("matchByName") << QStringLiteral("matchByName.qml");
-    QTest::newRow("QObject.hasOwnProperty") << QStringLiteral("qobjectHasOwnProperty.qml");
-    QTest::newRow("cppPropertyChangeHandlers")
-            << QStringLiteral("goodCppPropertyChangeHandlers.qml");
-    QTest::newRow("unexportedCppBase") << QStringLiteral("unexportedCppBase.qml");
-    QTest::newRow("requiredWithRootLevelAlias") << QStringLiteral("RequiredWithRootLevelAlias.qml");
-    QTest::newRow("jsVarDeclarations") << QStringLiteral("jsVarDeclarations.qml");
-    QTest::newRow("qmodelIndex") << QStringLiteral("qmodelIndex.qml");
-    QTest::newRow("boundComponents") << QStringLiteral("boundComponents.qml");
-    QTest::newRow("prefixedAttachedProperty") << QStringLiteral("prefixedAttachedProperty.qml");
-    QTest::newRow("callLater") << QStringLiteral("callLater.qml");
-    QTest::newRow("listPropertyMethods") << QStringLiteral("listPropertyMethods.qml");
-    QTest::newRow("v4SequenceMethods") << QStringLiteral("v4SequenceMethods.qml");
-    QTest::newRow("stringToByteArray") << QStringLiteral("stringToByteArray.qml");
-    QTest::newRow("jsLibrary") << QStringLiteral("jsLibrary.qml");
-    QTest::newRow("nullBindingFunction") << QStringLiteral("nullBindingFunction.qml");
-    QTest::newRow("BindingTypeMismatchFunction") << QStringLiteral("bindingTypeMismatchFunction.qml");
-    QTest::newRow("BindingTypeMismatch") << QStringLiteral("bindingTypeMismatch.qml");
-    QTest::newRow("template literal (substitution)") << QStringLiteral("templateStringSubstitution.qml");
-    QTest::newRow("enumsOfScrollBar") << QStringLiteral("enumsOfScrollBar.qml");
-    QTest::newRow("optionalChainingCall") << QStringLiteral("optionalChainingCall.qml");
-    QTest::newRow("EnumAccessCpp") << QStringLiteral("EnumAccessCpp.qml");
-    QTest::newRow("qtquickdialog") << QStringLiteral("qtquickdialog.qml");
-    QTest::newRow("callBase") << QStringLiteral("callBase.qml");
-    QTest::newRow("propertyWithOn") << QStringLiteral("switcher.qml");
-    QTest::newRow("constructorProperty") << QStringLiteral("constructorProperty.qml");
-    QTest::newRow("onlyMajorVersion") << QStringLiteral("onlyMajorVersion.qml");
-    QTest::newRow("attachedImportUse") << QStringLiteral("attachedImportUse.qml");
-    QTest::newRow("VariantMapGetPropertyLookup") << QStringLiteral("variantMapLookup.qml");
-    QTest::newRow("StringToDateTime") << QStringLiteral("stringToDateTime.qml");
-    QTest::newRow("ScriptInTemplate") << QStringLiteral("scriptInTemplate.qml");
-    QTest::newRow("AddressableValue") << QStringLiteral("addressableValue.qml");
-    QTest::newRow("WriteListProperty") << QStringLiteral("writeListProperty.qml");
-    QTest::newRow("dontConfuseMemberPrintWithGlobalPrint") << QStringLiteral("findMemberPrint.qml");
-    QTest::newRow("groupedAttachedLayout") << QStringLiteral("groupedAttachedLayout.qml");
-    QTest::newRow("QQmlScriptString") << QStringLiteral("scriptstring.qml");
+    QTest::newRow("JS_with_pragma_and_import") << QStringLiteral("QTBUG-45916.js");
+    QTest::newRow("ListProperty") << QStringLiteral("ListProperty.qml");
+    QTest::newRow("ParentEnum") << QStringLiteral("parentEnum.qml");
     QTest::newRow("QEventPoint") << QStringLiteral("qEventPoint.qml");
-    QTest::newRow("locale") << QStringLiteral("locale.qml");
-    QTest::newRow("constInvokable") << QStringLiteral("useConstInvokable.qml");
-    QTest::newRow("dontCheckJSTypes") << QStringLiteral("dontCheckJSTypes.qml");
-    QTest::newRow("jsonObjectIsRecognized") << QStringLiteral("jsonObjectIsRecognized.qml");
-    QTest::newRow("jsonArrayIsRecognized") << QStringLiteral("jsonArrayIsRecognized.qml");
-    QTest::newRow("itemviewattached") << QStringLiteral("itemViewAttached.qml");
-    QTest::newRow("scopedAndUnscopedEnums") << QStringLiteral("enumValid.qml");
-    QTest::newRow("dependsOnDuplicateType") << QStringLiteral("dependsOnDuplicateType.qml");
-#ifdef HAS_QC_BASIC
-    QTest::newRow("overlay") << QStringLiteral("overlayFromControls.qml");
-#endif
-    QTest::newRow("thisObject") << QStringLiteral("thisObject.qml");
-    QTest::newRow("aliasGroup") << QStringLiteral("aliasGroup.qml");
-
+    QTest::newRow("QML_importing_JS")          << QStringLiteral("importing_js.qml");
+    QTest::newRow("QObject.hasOwnProperty") << QStringLiteral("qobjectHasOwnProperty.qml");
+    QTest::newRow("QQmlEasingEnums::Type") << QStringLiteral("animationEasing.qml");
+    QTest::newRow("QQmlScriptString") << QStringLiteral("scriptstring.qml");
+    QTest::newRow("QVariant") << QStringLiteral("qvariant.qml");
+    QTest::newRow("QtQuick.Window 2.1") << QStringLiteral("qtquickWindow21.qml");
+    QTest::newRow("ScriptInTemplate") << QStringLiteral("scriptInTemplate.qml");
+    QTest::newRow("Signals") << QStringLiteral("Signal.qml");
+    QTest::newRow("Simple_QML")                << QStringLiteral("Simple.qml");
+    QTest::newRow("StringToDateTime") << QStringLiteral("stringToDateTime.qml");
+    QTest::newRow("Unused imports (multi)") << QStringLiteral("unused_multi.qml");
+    QTest::newRow("Unused static module") << QStringLiteral("unused_static.qml");
+    QTest::newRow("Unversioned change signal without arguments")
+            << QStringLiteral("unversionChangedSignalSansArguments.qml");
+    QTest::newRow("Used imports") << QStringLiteral("used.qml");
+    QTest::newRow("ValidLiterals") << QStringLiteral("validLiterals.qml");
     QTest::addRow("ValidTranslations") << u"translations/qsTranslateTranslation.qml"_s;
     QTest::addRow("ValidTranslations2") << u"translations/qsTrTranslation.qml"_s;
     QTest::addRow("ValidTranslations3") << u"translations/qsTrIdTranslation.qml"_s;
     QTest::addRow("ValidTranslations4") << u"translations/Good.qml"_s;
-    QTest::addRow("deceptiveLayout") << u"deceptiveLayout.qml"_s;
-    QTest::addRow("regExp") << u"regExp.qml"_s;
+    QTest::newRow("VariantMapGetPropertyLookup") << QStringLiteral("variantMapLookup.qml");
+    QTest::newRow("WriteListProperty") << QStringLiteral("writeListProperty.qml");
+    QTest::newRow("aliasGroup") << QStringLiteral("aliasGroup.qml");
+    QTest::newRow("aliasToList") << QStringLiteral("aliasToList.qml");
     QTest::newRow("aliasToRequiredProperty")
             << QStringLiteral("aliasToRequiredPropertyIsNotRequiredItself.qml");
+    QTest::newRow("anchors1") << QStringLiteral("anchors1.qml");
+    QTest::newRow("anchors2") << QStringLiteral("anchors2.qml");
+    QTest::newRow("attached") << QStringLiteral("attached.qml");
+    QTest::newRow("attachedImportUse") << QStringLiteral("attachedImportUse.qml");
+    QTest::newRow("attachedPropertyAssignments")
+            << QStringLiteral("attachedPropertyAssignments.qml");
+    QTest::newRow("attachedTypeIndirect") << QStringLiteral("attachedTypeIndirect.qml");
+    QTest::newRow("boundComponents") << QStringLiteral("boundComponents.qml");
+    QTest::newRow("bytearray") << QStringLiteral("bytearray.qml");
+    QTest::newRow("callBase") << QStringLiteral("callBase.qml");
+    QTest::newRow("callLater") << QStringLiteral("callLater.qml");
+    QTest::newRow("catchIdentifier")           << QStringLiteral("catchIdentifierNoWarning.qml");
+    QTest::newRow("compositeSingleton") << QStringLiteral("compositesingleton.qml");
+    QTest::newRow("confusingImport")           << QStringLiteral("Dialog.qml");
+    QTest::newRow("connectionNoParent") << QStringLiteral("connectionNoParent.qml"); // QTBUG-97600
+    QTest::newRow("constInvokable") << QStringLiteral("useConstInvokable.qml");
+    QTest::newRow("constructorProperty") << QStringLiteral("constructorProperty.qml");
+    QTest::newRow("cppPropertyChangeHandlers")
+            << QStringLiteral("goodCppPropertyChangeHandlers.qml");
+    QTest::newRow("customParser") << QStringLiteral("customParser.qml");
+    QTest::newRow("customParser.recursive") << QStringLiteral("customParser.recursive.qml");
+    QTest::addRow("deceptiveLayout") << u"deceptiveLayout.qml"_s;
+    QTest::newRow("declared property of JS object") << QStringLiteral("bareQt.qml");
+    QTest::newRow("defaultImport") << QStringLiteral("defaultImport.qml");
+    QTest::newRow("defaultProperty") << QStringLiteral("defaultProperty.qml");
+    QTest::newRow("defaultPropertyComponent") << QStringLiteral("defaultPropertyComponent.qml");
+    QTest::newRow("defaultPropertyComponent2") << QStringLiteral("defaultPropertyComponent.2.qml");
+    QTest::newRow("defaultPropertyList") << QStringLiteral("defaultPropertyList.qml");
+    QTest::newRow("defaultPropertyListModel") << QStringLiteral("defaultPropertyListModel.qml");
+    QTest::newRow("defaultPropertyVar") << QStringLiteral("defaultPropertyVar.qml");
+    QTest::newRow("dependsOnDuplicateType") << QStringLiteral("dependsOnDuplicateType.qml");
+    QTest::newRow("deprecatedFunctionOverride") << QStringLiteral("deprecatedFunctionOverride.qml");
+    QTest::newRow("dontCheckJSTypes") << QStringLiteral("dontCheckJSTypes.qml");
+    QTest::newRow("dontConfuseMemberPrintWithGlobalPrint") << QStringLiteral("findMemberPrint.qml");
+    QTest::newRow("duplicateQmldirImport") << QStringLiteral("qmldirImport/duplicate.qml");
+    QTest::newRow("enumFromQtQml") << QStringLiteral("enumFromQtQml.qml");
+    QTest::newRow("enumProperty") << QStringLiteral("enumProperty.qml");
+    QTest::newRow("enumsOfScrollBar") << QStringLiteral("enumsOfScrollBar.qml");
+    QTest::newRow("esmodule")                  << QStringLiteral("esmodule.mjs");
+    QTest::newRow("externalEnumProperty") << QStringLiteral("externalEnumProperty.qml");
+    QTest::newRow("forLoop")                   << QStringLiteral("forLoop.qml");
+    QTest::newRow("goodAlias")                 << QStringLiteral("goodAlias.qml");
+    QTest::newRow("goodAliasObject") << QStringLiteral("goodAliasObject.qml");
+    QTest::newRow("goodAttachedProperty") << QStringLiteral("goodAttachedProperty.qml");
+    QTest::newRow("goodGeneralizedGroup") << QStringLiteral("goodGeneralizedGroup.qml");
+    QTest::newRow("goodParent")                << QStringLiteral("goodParent.qml");
+    QTest::newRow("goodTypeAssertion")         << QStringLiteral("goodTypeAssertion.qml");
+    QTest::newRow("grouped scope failure") << QStringLiteral("groupedScope.qml");
+    QTest::newRow("groupedAttachedLayout") << QStringLiteral("groupedAttachedLayout.qml");
+    QTest::newRow("groupedProperty (valueSource+interceptor)")
+            << QStringLiteral("groupedProperty_valueSource_interceptor.qml");
+    QTest::newRow("groupedPropertyAssignments") << QStringLiteral("groupedPropertyAssignments.qml");
+    QTest::newRow("ignoreWarnings") << QStringLiteral("ignoreWarnings.qml");
+    QTest::newRow("importWithPrefix")          << QStringLiteral("ImportWithPrefix.qml");
+    QTest::newRow("initReadonly") << QStringLiteral("initReadonly.qml");
+    QTest::newRow("interceptor") << QStringLiteral("interceptor.qml");
+    QTest::newRow("interceptor+valueSource") << QStringLiteral("interceptor_valueSource.qml");
+    QTest::newRow("itemviewattached") << QStringLiteral("itemViewAttached.qml");
+    QTest::newRow("javascriptMethodsInModule")
+            << QStringLiteral("javascriptMethodsInModuleGood.qml");
+    QTest::newRow("jsLibrary") << QStringLiteral("jsLibrary.qml");
+    QTest::newRow("jsVarDeclarations") << QStringLiteral("jsVarDeclarations.qml");
+    QTest::newRow("jsmoduleimport") << QStringLiteral("jsmoduleimport.qml");
+    QTest::newRow("jsonArrayIsRecognized") << QStringLiteral("jsonArrayIsRecognized.qml");
+    QTest::newRow("jsonObjectIsRecognized") << QStringLiteral("jsonObjectIsRecognized.qml");
+    QTest::newRow("layouts depends quick") << QStringLiteral("layouts.qml");
+    QTest::newRow("listPropertyMethods") << QStringLiteral("listPropertyMethods.qml");
+    QTest::newRow("locale") << QStringLiteral("locale.qml");
+    QTest::newRow("matchByName") << QStringLiteral("matchByName.qml");
+    QTest::newRow("methodInScope")             << QStringLiteral("MethodInScope.qml");
+    QTest::newRow("methodsInJavascript")       << QStringLiteral("javascriptMethods.qml");
+    QTest::newRow("multiDefaultProperty") << QStringLiteral("multiDefaultPropertyOk.qml");
+    QTest::newRow("multiExtension") << QStringLiteral("multiExtension.qml");
+    QTest::newRow("multilineStringEscaped") << QStringLiteral("multilineStringEscaped.qml");
+    QTest::newRow("nullBindingFunction") << QStringLiteral("nullBindingFunction.qml");
+    QTest::newRow("objectArray") << QStringLiteral("objectArray.qml");
+    QTest::newRow("objectBindingOnVarProperty") << QStringLiteral("objectBoundToVar.qml");
+    QTest::newRow("on binding in grouped property") << QStringLiteral("onBindingInGroupedProperty.qml");
+    QTest::newRow("onlyMajorVersion") << QStringLiteral("onlyMajorVersion.qml");
+    QTest::newRow("optionalChainingCall") << QStringLiteral("optionalChainingCall.qml");
+#ifdef HAS_QC_BASIC
+    QTest::newRow("overlay") << QStringLiteral("overlayFromControls.qml");
+#endif
+    QTest::newRow("overridescript") << QStringLiteral("overridescript.qml");
+    QTest::newRow("prefixedAttachedProperty") << QStringLiteral("prefixedAttachedProperty.qml");
+    QTest::newRow("propertyBindingValue") << QStringLiteral("propertyBindingValue.qml");
+    QTest::newRow("propertyDelegate") << QStringLiteral("propertyDelegate.qml");
+    QTest::newRow("propertyOverride") << QStringLiteral("propertyOverride.qml");
+    QTest::newRow("propertyWithOn") << QStringLiteral("switcher.qml");
+    QTest::newRow("qjsroot") << QStringLiteral("qjsroot.qml");
+    QTest::newRow("qmlRootMethods") << QStringLiteral("qmlRootMethods.qml");
+    QTest::newRow("qmldirAndQmltypes")         << QStringLiteral("qmldirAndQmltypes.qml");
+    QTest::newRow("qmldirImportAndDepend") << QStringLiteral("qmldirImportAndDepend/good.qml");
+    QTest::newRow("qmodelIndex") << QStringLiteral("qmodelIndex.qml");
+    QTest::newRow("qtquickdialog") << QStringLiteral("qtquickdialog.qml");
+    QTest::newRow("qualifiedAttached")         << QStringLiteral("Drawer.qml");
+    QTest::addRow("regExp") << u"regExp.qml"_s;
+    QTest::newRow("requiredPropertyInGroupedPropertyScope") << QStringLiteral("requiredPropertyInGroupedPropertyScope.qml");
+    QTest::newRow("requiredWithRootLevelAlias") << QStringLiteral("RequiredWithRootLevelAlias.qml");
+    QTest::newRow("required_property_in_Component") << QStringLiteral("requiredPropertyInComponent.qml");
+    QTest::newRow("scopedAndUnscopedEnums") << QStringLiteral("enumValid.qml");
+    QTest::newRow("segFault") << QStringLiteral("SegFault.qml");
     QTest::newRow("setRequiredTroughAlias") << QStringLiteral("setRequiredPropertyThroughAlias.qml");
     QTest::newRow("setRequiredTroughAliasOfAlias")
             << QStringLiteral("setRequiredPropertyThroughAliasOfAlias.qml");
+    QTest::newRow("shapes") << QStringLiteral("shapes.qml");
+    QTest::newRow("stringLength") << QStringLiteral("stringLength.qml");
+    QTest::newRow("stringLength2") << QStringLiteral("stringLength2.qml");
+    QTest::newRow("stringLength3") << QStringLiteral("stringLength3.qml");
+    QTest::newRow("stringToByteArray") << QStringLiteral("stringToByteArray.qml");
+    QTest::newRow("template literal (substitution)") << QStringLiteral("templateStringSubstitution.qml");
+    QTest::newRow("thisObject") << QStringLiteral("thisObject.qml");
+    QTest::newRow("uiQml")                     << QStringLiteral("FormUser.qml");
+    QTest::newRow("unexportedCppBase") << QStringLiteral("unexportedCppBase.qml");
+    QTest::newRow("unknownBuiltinFont")        << QStringLiteral("ButtonLoader.qml");
+    QTest::newRow("v4SequenceMethods") << QStringLiteral("v4SequenceMethods.qml");
+    QTest::newRow("valueSource") << QStringLiteral("valueSource.qml");
+    QTest::newRow("var") << QStringLiteral("var.qml");
 }
 
 void TestQmllint::cleanQmlCode()
