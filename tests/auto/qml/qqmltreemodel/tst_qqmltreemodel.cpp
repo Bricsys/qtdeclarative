@@ -30,6 +30,7 @@ private slots:
     void appendRow();
     void clear();
     void getRow();
+    void removeRow();
     void setRow();
 };
 
@@ -472,6 +473,72 @@ void tst_QQmlTreeModel::getRow()
     QCOMPARE(rowValues.value("fruitName"), "Cavendish");
     QCOMPARE(rowValues.value("fruitPrice"), 3.5);
     QCOMPARE(rowValues.value("fruitType"), "Banana");
+}
+
+void tst_QQmlTreeModel::removeRow()
+{
+    QQuickView view;
+    QVERIFY(QQuickTest::showView(view, testFileUrl("common.qml")));
+
+    auto *model = view.rootObject()->property("testModel").value<QQmlTreeModel*>();
+    QVERIFY(model);
+
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 8);
+
+    QSignalSpy columnCountSpy(model, SIGNAL(columnCountChanged()));
+    QVERIFY(columnCountSpy.isValid());
+
+    QSignalSpy rowsChangedSpy(model, SIGNAL(rowsChanged()));
+    QVERIFY(rowsChangedSpy.isValid());
+    int rowsChangedSignalEmissions = 0;
+
+    QQuickTreeView *treeView = view.rootObject()->property("treeView").value<QQuickTreeView*>();
+    QVERIFY(treeView);
+    QCOMPARE(treeView->columns(), 5);
+    QCOMPARE(treeView->rows(), 2);  // treeView cannot call our treeSize
+
+    // Call removeRow with an invalid tree index (contains negative number)
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* could not find any node at the specified index"));
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* could not find any node at the specified index"));
+    model->removeRow(model->index({0,-5, 1}, 0));
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 8);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), rowsChangedSignalEmissions);
+    QCOMPARE(treeView->columns(), 5);
+    QCOMPARE(treeView->rows(), 2);
+
+    // invalid tree index (nonexistent element)
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* could not find any node at the specified index"));
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* could not find any node at the specified index"));
+    model->removeRow(model->index({1, 13, 9}, 0));
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 8);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), rowsChangedSignalEmissions);
+    QCOMPARE(treeView->columns(), 5);
+    QCOMPARE(treeView->rows(), 2);
+
+    // remove a leaf
+    model->removeRow(model->index({0,1,0}, 0));
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 7);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), ++rowsChangedSignalEmissions);
+    QCOMPARE(treeView->columns(), 5);
+    QCOMPARE(treeView->rows(), 2);
+
+    // remove a subtree
+    std::vector<int> treeIndex = {1};
+    model->removeRow(model->index(treeIndex, 0));
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 4);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), ++rowsChangedSignalEmissions);
+    // Wait until updatePolish() gets called, which is where the size is recalculated.
+    QTRY_COMPARE(treeView->rows(), 1);
+    QCOMPARE(treeView->columns(), 5);
 }
 
 void tst_QQmlTreeModel::setRow()
