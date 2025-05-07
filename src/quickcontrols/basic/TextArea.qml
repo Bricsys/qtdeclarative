@@ -28,6 +28,14 @@ T.TextArea {
         control: control
     }
 
+    background: Rectangle {
+        visible: Qt.styleHints.accessibility.contrastPreference === Qt.HighContrast
+        color: "transparent"
+        border.width: control.activeFocus ? 2 : 1
+        border.color: control.activeFocus ? control.palette.highlight :
+                      control.enabled ? control.palette.mid : control.palette.midlight
+    }
+
     PlaceholderText {
         id: placeholder
         x: control.leftPadding

@@ -18,14 +18,15 @@ T.HeaderViewDelegate {
     highlighted: selected
 
     background: Rectangle {
-        border.color: "#e4e4e4"
-        color: "#f6f6f6"
+        border.color: Qt.styleHints.accessibility.contrastPreference === Qt.HighContrast ?
+                      control.palette.windowText : control.palette.midlight
+        color: control.palette.light
     }
 
     contentItem: Label {
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        color: "#ff26282a"
+        color: control.palette.windowText
         text: control.model[control.headerView.textRole]
     }
 }
