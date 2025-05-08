@@ -64,6 +64,27 @@ Item {
                             })
     }
 
+    function setRows() {
+        testModel.rows = [
+                            {
+                                checked: true,
+                                amount: 5,
+                                fruitType: "Strawberry",
+                                fruitName: "Perry the Berry",
+                                fruitPrice: 3.80,
+                                color: "red",
+                            },
+                            {
+                                checked: false,
+                                amount: 6,
+                                fruitType:"Pear",
+                                fruitName: "Bear Pear",
+                                fruitPrice: 1.50,
+                                color: "green",
+                            }
+                        ]
+    }
+
     TreeModel {
         id: treeModel
         objectName: "testModel"

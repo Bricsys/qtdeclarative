@@ -32,6 +32,7 @@ private slots:
     void clear();
     void getRow();
     void removeRow();
+    void setRowsForEmptyModel();
     void setRow();
 };
 
@@ -627,6 +628,99 @@ void tst_QQmlTreeModel::removeRow()
     // Wait until updatePolish() gets called, which is where the size is recalculated.
     QTRY_COMPARE(treeView->rows(), 1);
     QCOMPARE(treeView->columns(), 5);
+}
+
+void tst_QQmlTreeModel::setRowsForEmptyModel()
+{
+    QQuickView view;
+    QVERIFY(QQuickTest::showView(view, testFileUrl("empty.qml")));
+
+    auto *model = view.rootObject()->property("testModel").value<QQmlTreeModel*>();
+    QVERIFY(model);
+    QCOMPARE(model->treeSize(), 0);
+    QCOMPARE(model->columnCount(), 5);
+
+    QSignalSpy columnCountSpy(model, SIGNAL(columnCountChanged()));
+    QVERIFY(columnCountSpy.isValid());
+
+    QSignalSpy rowsChangedSpy(model, SIGNAL(rowsChanged()));
+    QVERIFY(rowsChangedSpy.isValid());
+    int rowsChangedSignalEmissions = 0;
+
+    QQuickTreeView *treeView = view.rootObject()->property("treeView").value<QQuickTreeView*>();
+    QVERIFY(treeView);
+    QCOMPARE(treeView->columns(), 5);
+    QCOMPARE(treeView->rows(), 0);  // treeView cannot call our treeSize
+
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "setRows"));
+    QCOMPARE(model->treeSize(), 2);
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), ++rowsChangedSignalEmissions);
+    QTRY_COMPARE(treeView->rows(), 2);
+    QCOMPARE(treeView->columns(), 5);
+
+    const QHash<int, QByteArray> roleNames = model->roleNames();
+    QCOMPARE(roleNames.size(), 2);
+    QVERIFY(roleNames.values().contains("display"));
+    QVERIFY(roleNames.values().contains("decoration"));
+
+    QCOMPARE(model->data(model->index(0, 0, QModelIndex()), roleNames.key("display")).toBool(), true);
+    QCOMPARE(model->data(model->index(0, 0, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 1, QModelIndex()), roleNames.key("display")).toInt(), 5);
+    QCOMPARE(model->data(model->index(0, 1, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 2, QModelIndex()), roleNames.key("display")).toString(), u"Strawberry"_s);
+    QCOMPARE(model->data(model->index(0, 2, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 3, QModelIndex()), roleNames.key("display")).toString(), u"Perry the Berry"_s);
+    QCOMPARE(model->data(model->index(0, 3, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 4, QModelIndex()), roleNames.key("display")).toDouble(), 3.8);
+    QCOMPARE(model->data(model->index(0, 4, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+
+    QCOMPARE(model->data(model->index(1, 0, QModelIndex()), roleNames.key("display")).toBool(), false);
+    QCOMPARE(model->data(model->index(1, 0, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(1, 1, QModelIndex()), roleNames.key("display")).toInt(), 6);
+    QCOMPARE(model->data(model->index(1, 1, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(1, 2, QModelIndex()), roleNames.key("display")).toString(), u"Pear"_s);
+    QCOMPARE(model->data(model->index(1, 2, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(1, 3, QModelIndex()), roleNames.key("display")).toString(), u"Bear Pear"_s);
+    QCOMPARE(model->data(model->index(1, 3, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(1, 4, QModelIndex()), roleNames.key("display")).toDouble(), 1.5);
+    QCOMPARE(model->data(model->index(1, 4, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+
+    // the model is no longer empty, it can verify the input and reject invalid entries
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* expected the property named"));
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendInvalid"));
+    // the tree does not change
+    QCOMPARE(model->treeSize(), 2);
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), rowsChangedSignalEmissions);
+    QCOMPARE(treeView->rows(), 2);
+    QCOMPARE(treeView->columns(), 5);
+
+    // this also means that roles that were not present in the initial data will be rejected,
+    // but the rest will be appended
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* could not find any node at the specified index"));
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendWithExtraData"));
+    QCOMPARE(model->treeSize(), 3);
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), ++rowsChangedSignalEmissions);
+    // Wait until updatePolish() gets called, which is where the size is recalculated.
+    QTRY_COMPARE(treeView->rows(), 3);
+    QCOMPARE(treeView->columns(), 5);
+
+    // check the new node
+    QCOMPARE(model->data(model->index(2, 0, QModelIndex()), roleNames.key("display")).toBool(), true);
+    QCOMPARE(model->data(model->index(2, 0, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(2, 1, QModelIndex()), roleNames.key("display")).toInt(), 1);
+    QCOMPARE(model->data(model->index(2, 1, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(2, 2, QModelIndex()), roleNames.key("display")).toString(), u"Pear"_s);
+    QCOMPARE(model->data(model->index(2, 2, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(2, 3, QModelIndex()), roleNames.key("display")).toString(), u"Williams"_s);
+    QCOMPARE(model->data(model->index(2, 3, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(2, 4, QModelIndex()), roleNames.key("display")).toDouble(), 1.5);
+    QCOMPARE(model->data(model->index(2, 4, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
 }
 
 void tst_QQmlTreeModel::setRow()
