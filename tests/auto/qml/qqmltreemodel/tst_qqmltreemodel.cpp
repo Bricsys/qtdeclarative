@@ -26,6 +26,7 @@ public:
     tst_QQmlTreeModel() : QQmlDataTest(QT_QMLTEST_DATADIR, FailOnWarningsPolicy::FailOnWarnings) {}
 
 private slots:
+    void appendToEmptyModel();
     void appendToRoot();
     void appendRow();
     void clear();
@@ -33,6 +34,93 @@ private slots:
     void removeRow();
     void setRow();
 };
+
+void tst_QQmlTreeModel::appendToEmptyModel()
+{
+    QQuickView view;
+    QVERIFY(QQuickTest::showView(view, testFileUrl("empty.qml")));
+
+    auto *model = view.rootObject()->property("testModel").value<QQmlTreeModel*>();
+    QVERIFY(model);
+    QCOMPARE(model->treeSize(), 0);
+    QCOMPARE(model->columnCount(), 5);
+
+    QSignalSpy columnCountSpy(model, SIGNAL(columnCountChanged()));
+    QVERIFY(columnCountSpy.isValid());
+
+    QSignalSpy rowsChangedSpy(model, SIGNAL(rowsChanged()));
+    QVERIFY(rowsChangedSpy.isValid());
+    int rowsChangedSignalEmissions = 0;
+
+    QQuickTreeView *treeView = view.rootObject()->property("treeView").value<QQuickTreeView*>();
+    QVERIFY(treeView);
+    QCOMPARE(treeView->columns(), 5);
+    QCOMPARE(treeView->rows(), 0);  // treeView cannot call our treeSize
+
+    // append to an empty model
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* could not find any node at the specified index"));
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendSubTree"));
+    // we have a subtree with three nodes
+    QCOMPARE(model->treeSize(), 3);
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), ++rowsChangedSignalEmissions);
+    // now we also have roles
+    const QHash<int, QByteArray> roleNames = model->roleNames();
+    QCOMPARE(roleNames.size(), 2);
+    QVERIFY(roleNames.values().contains("display"));
+    QVERIFY(roleNames.values().contains("decoration"));
+    // Wait until updatePolish() gets called, which is where the size is recalculated.
+    QTRY_COMPARE(treeView->rows(), 1);
+    QCOMPARE(treeView->columns(), 5);
+
+    // check the node on the top level
+    QCOMPARE(model->data(model->index(0, 0, QModelIndex()), roleNames.key("display")).toBool(), false);
+    QCOMPARE(model->data(model->index(0, 0, QModelIndex()), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index(0, 1, QModelIndex()), roleNames.key("display")).toInt(), 4);
+    QCOMPARE(model->data(model->index(0, 1, QModelIndex()), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index(0, 2, QModelIndex()), roleNames.key("display")).toString(), u"Peach"_s);
+    QCOMPARE(model->data(model->index(0, 2, QModelIndex()), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index(0, 3, QModelIndex()), roleNames.key("display")).toString(), u"Princess Peach"_s);
+    QCOMPARE(model->data(model->index(0, 3, QModelIndex()), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index(0, 4, QModelIndex()), roleNames.key("display")).toDouble(), 1.45);
+    QCOMPARE(model->data(model->index(0, 4, QModelIndex()), roleNames.key("decoration")).toString(), u"yellow"_s);
+
+    // the model is no longer empty, it can verify the input and reject invalid entries
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* could not find any node at the specified index"));
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* expected the property named"));
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendInvalid"));
+    // the tree does not change
+    QCOMPARE(model->treeSize(), 3);
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), rowsChangedSignalEmissions);
+    QCOMPARE(treeView->rows(), 1);
+    QCOMPARE(treeView->columns(), 5);
+
+    // this also means that roles that were not present in the initial data will be rejected,
+    // but the rest will be appended
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendWithExtraData"));   // TODO - Suppress warning ?
+    QCOMPARE(model->treeSize(), 4);
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), ++rowsChangedSignalEmissions);
+    // Wait until updatePolish() gets called, which is where the size is recalculated.
+    QTRY_COMPARE(treeView->rows(), 2);
+    QCOMPARE(treeView->columns(), 5);
+
+    // check the new node
+    QCOMPARE(model->data(model->index(1, 0, QModelIndex()), roleNames.key("display")).toBool(), true);
+    QCOMPARE(model->data(model->index(1, 0, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(1, 1, QModelIndex()), roleNames.key("display")).toInt(), 1);
+    QCOMPARE(model->data(model->index(1, 1, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(1, 2, QModelIndex()), roleNames.key("display")).toString(), u"Pear"_s);
+    QCOMPARE(model->data(model->index(1, 2, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(1, 3, QModelIndex()), roleNames.key("display")).toString(), u"Williams"_s);
+    QCOMPARE(model->data(model->index(1, 3, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+    QCOMPARE(model->data(model->index(1, 4, QModelIndex()), roleNames.key("display")).toDouble(), 1.5);
+    QCOMPARE(model->data(model->index(1, 4, QModelIndex()), roleNames.key("decoration")).toString(), u"green"_s);
+}
 
 void tst_QQmlTreeModel::appendToRoot()
 {
