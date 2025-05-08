@@ -343,13 +343,19 @@ void QQuickQmlGenerator::generatePropertyAnimation(const QQuickAnimatedProperty 
             stream() << "loops: " << repeatCount;
 
         int previousTime = 0;
+        QVariant previousValue;
         for (auto it = animation.frames.constBegin(); it != animation.frames.constEnd(); ++it) {
             const int time = it.key();
+            const int frameTime = time - previousTime;
             const QVariant &value = it.value();
 
-            // We special case bools, with PauseAnimation and then a setter at the end
-            if (animationType == AnimationType::Auto && value.typeId() == QMetaType::Bool) {
-                stream() << "PauseAnimation { duration: " << (time - previousTime) << " }";
+            if (previousValue.isValid() && previousValue == value) {
+                if (frameTime > 0)
+                    stream() << "PauseAnimation { duration: " << frameTime << " }";
+            } else if (animationType == AnimationType::Auto && value.typeId() == QMetaType::Bool) {
+                // We special case bools, with PauseAnimation and then a setter at the end
+                if (frameTime > 0)
+                    stream() << "PauseAnimation { duration: " << frameTime << " }";
                 stream() << "ScriptAction {";
                 m_indentLevel++;
 
@@ -377,13 +383,14 @@ void QQuickQmlGenerator::generatePropertyAnimation(const QQuickAnimatedProperty 
                     stream() << "to: \"" << value.toString() << '"';
                 else
                     stream() << "to: " << value.toReal();
-                stream() << "duration: " << (time - previousTime);
+                stream() << "duration: " << frameTime;
 
                 m_indentLevel--;
                 stream() << "}";
             }
 
             previousTime = time;
+            previousValue = value;
         }
 
         if (!(animation.flags & QQuickAnimatedProperty::PropertyAnimation::FreezeAtEnd)) {
@@ -768,6 +775,7 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
             m_indentLevel++;
 
             int previousTime = 0;
+            QVariantList previousParameters;
             for (auto it = animation.frames.constBegin(); it != animation.frames.constEnd(); ++it) {
                 const int time = it.key();
                 const int frameTime = time - previousTime;
@@ -775,108 +783,114 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
                 if (parameters.isEmpty())
                     continue;
 
-                stream() << "ParallelAnimation {";
-                m_indentLevel++;
+                if (parameters == previousParameters) {
+                    if (frameTime > 0)
+                        stream() << "PauseAnimation { duration: " << frameTime << " }";
+                } else {
+                    stream() << "ParallelAnimation {";
+                    m_indentLevel++;
 
-                switch (animation.subtype) {
-                case QTransform::TxTranslate:
-                {
-                    const QPointF translation = parameters.first().value<QPointF>();
-                    stream() << "PropertyAnimation {";
-                    m_indentLevel++;
-                    stream() << "duration: " << frameTime;
-                    stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                    stream() << "property: \"x\"";
-                    stream() << "to: " << translation.x();
-                    m_indentLevel--;
-                    stream() << "}";
+                    switch (animation.subtype) {
+                    case QTransform::TxTranslate:
+                    {
+                        const QPointF translation = parameters.first().value<QPointF>();
+                        stream() << "PropertyAnimation {";
+                        m_indentLevel++;
+                        stream() << "duration: " << frameTime;
+                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
+                        stream() << "property: \"x\"";
+                        stream() << "to: " << translation.x();
+                        m_indentLevel--;
+                        stream() << "}";
 
-                    stream() << "PropertyAnimation {";
-                    m_indentLevel++;
-                    stream() << "duration: " << frameTime;
-                    stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                    stream() << "property: \"y\"";
-                    stream() << "to: " << translation.y();
-                    m_indentLevel--;
-                    stream() << "}";
-                    break;
-                }
-                case QTransform::TxScale:
-                {
-                    const QPointF scale = parameters.first().value<QPointF>();
-                    stream() << "PropertyAnimation {";
-                    m_indentLevel++;
-                    stream() << "duration: " << frameTime;
-                    stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                    stream() << "property: \"xScale\"";
-                    stream() << "to: " << scale.x();
-                    m_indentLevel--;
-                    stream() << "}";
+                        stream() << "PropertyAnimation {";
+                        m_indentLevel++;
+                        stream() << "duration: " << frameTime;
+                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
+                        stream() << "property: \"y\"";
+                        stream() << "to: " << translation.y();
+                        m_indentLevel--;
+                        stream() << "}";
+                        break;
+                    }
+                    case QTransform::TxScale:
+                    {
+                        const QPointF scale = parameters.first().value<QPointF>();
+                        stream() << "PropertyAnimation {";
+                        m_indentLevel++;
+                        stream() << "duration: " << frameTime;
+                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
+                        stream() << "property: \"xScale\"";
+                        stream() << "to: " << scale.x();
+                        m_indentLevel--;
+                        stream() << "}";
 
-                    stream() << "PropertyAnimation {";
-                    m_indentLevel++;
-                    stream() << "duration: " << frameTime;
-                    stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                    stream() << "property: \"yScale\"";
-                    stream() << "to: " << scale.y();
-                    m_indentLevel--;
-                    stream() << "}";
-                    break;
-                }
-                case QTransform::TxRotate:
-                {
-                    Q_ASSERT(parameters.size() == 2);
-                    const QPointF center = parameters.value(0).value<QPointF>();
-                    const qreal angle = parameters.value(1).toReal();
-                    stream() << "PropertyAnimation {";
-                    m_indentLevel++;
-                    stream() << "duration: " << frameTime;
-                    stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                    stream() << "property: \"origin\"";
-                    stream() << "to: Qt.vector3d(" << center.x() << ", " << center.y() << ", 0.0)";
-                    m_indentLevel--;
-                    stream() << "}";
+                        stream() << "PropertyAnimation {";
+                        m_indentLevel++;
+                        stream() << "duration: " << frameTime;
+                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
+                        stream() << "property: \"yScale\"";
+                        stream() << "to: " << scale.y();
+                        m_indentLevel--;
+                        stream() << "}";
+                        break;
+                    }
+                    case QTransform::TxRotate:
+                    {
+                        Q_ASSERT(parameters.size() == 2);
+                        const QPointF center = parameters.value(0).value<QPointF>();
+                        const qreal angle = parameters.value(1).toReal();
+                        stream() << "PropertyAnimation {";
+                        m_indentLevel++;
+                        stream() << "duration: " << frameTime;
+                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
+                        stream() << "property: \"origin\"";
+                        stream() << "to: Qt.vector3d(" << center.x() << ", " << center.y() << ", 0.0)";
+                        m_indentLevel--;
+                        stream() << "}";
 
-                    stream() << "PropertyAnimation {";
-                    m_indentLevel++;
-                    stream() << "duration: " << frameTime;
-                    stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                    stream() << "property: \"angle\"";
-                    stream() << "to: " << angle;
-                    m_indentLevel--;
-                    stream() << "}";
-                    break;
-                }
-                case QTransform::TxShear:
-                {
-                    const QPointF skew = parameters.first().value<QPointF>();
-                    stream() << "PropertyAnimation {";
-                    m_indentLevel++;
-                    stream() << "duration: " << frameTime;
-                    stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                    stream() << "property: \"xAngle\"";
-                    stream() << "to: " << skew.x();
-                    m_indentLevel--;
-                    stream() << "}";
+                        stream() << "PropertyAnimation {";
+                        m_indentLevel++;
+                        stream() << "duration: " << frameTime;
+                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
+                        stream() << "property: \"angle\"";
+                        stream() << "to: " << angle;
+                        m_indentLevel--;
+                        stream() << "}";
+                        break;
+                    }
+                    case QTransform::TxShear:
+                    {
+                        const QPointF skew = parameters.first().value<QPointF>();
+                        stream() << "PropertyAnimation {";
+                        m_indentLevel++;
+                        stream() << "duration: " << frameTime;
+                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
+                        stream() << "property: \"xAngle\"";
+                        stream() << "to: " << skew.x();
+                        m_indentLevel--;
+                        stream() << "}";
 
-                    stream() << "PropertyAnimation {";
-                    m_indentLevel++;
-                    stream() << "duration: " << frameTime;
-                    stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                    stream() << "property: \"yAngle\"";
-                    stream() << "to: " << skew.y();
+                        stream() << "PropertyAnimation {";
+                        m_indentLevel++;
+                        stream() << "duration: " << frameTime;
+                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
+                        stream() << "property: \"yAngle\"";
+                        stream() << "to: " << skew.y();
+                        m_indentLevel--;
+                        stream() << "}";
+                        break;
+                    }
+                    default:
+                        Q_UNREACHABLE();
+                    }
+
                     m_indentLevel--;
-                    stream() << "}";
-                    break;
-                }
-                default:
-                    Q_UNREACHABLE();
+                    stream() << "}"; // Parallel key frame animation
                 }
 
                 previousTime = time;
-
-                m_indentLevel--;
-                stream() << "}"; // Parallel key frame animation
+                previousParameters = parameters;
             }
 
             m_indentLevel--;
