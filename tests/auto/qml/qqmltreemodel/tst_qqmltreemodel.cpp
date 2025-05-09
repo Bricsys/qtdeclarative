@@ -32,6 +32,7 @@ private slots:
     void clear();
     void getRow();
     void removeRow();
+    void setDataThroughDelegate();
     void setRowsForEmptyModel();
     void setRowsOnNonEmptyModel();
     void setRow();
@@ -629,6 +630,149 @@ void tst_QQmlTreeModel::removeRow()
     // Wait until updatePolish() gets called, which is where the size is recalculated.
     QTRY_COMPARE(treeView->rows(), 1);
     QCOMPARE(treeView->columns(), 5);
+}
+
+void tst_QQmlTreeModel::setDataThroughDelegate()
+{
+    QQuickView view;
+    QVERIFY(QQuickTest::showView(view, testFileUrl("setDataThroughDelegate.qml")));
+
+    auto *model = view.rootObject()->property("testModel").value<QQmlTreeModel*>();
+    QVERIFY(model);
+
+    QCOMPARE(model->columnCount(), 5);
+    QCOMPARE(model->treeSize(), 8);
+
+    QSignalSpy columnCountSpy(model, SIGNAL(columnCountChanged()));
+    QVERIFY(columnCountSpy.isValid());
+
+    QSignalSpy rowsChangedSpy(model, SIGNAL(rowsChanged()));
+    QVERIFY(rowsChangedSpy.isValid());
+
+    const QHash<int, QByteArray> roleNames = model->roleNames();
+    QCOMPARE(roleNames.size(), 2);
+    QVERIFY(roleNames.values().contains("display"));
+    QVERIFY(roleNames.values().contains("decoration"));
+
+    // check the node on the top level
+    QCOMPARE(model->data(model->index(0, 0, QModelIndex()), roleNames.key("display")).toBool(), false);
+    QCOMPARE(model->data(model->index(0, 0, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 1, QModelIndex()), roleNames.key("display")).toInt(), 1);
+    QCOMPARE(model->data(model->index(0, 1, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 2, QModelIndex()), roleNames.key("display")).toString(), u"Apple"_s);
+    QCOMPARE(model->data(model->index(0, 2, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 3, QModelIndex()), roleNames.key("display")).toString(), u"Granny Smith"_s);
+    QCOMPARE(model->data(model->index(0, 3, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 4, QModelIndex()), roleNames.key("display")).toDouble(), 1.5);
+    QCOMPARE(model->data(model->index(0, 4, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+
+    // Check the leaf node at the index {0,1,1}
+    QCOMPARE(model->data(model->index({0,1,1}, 0), roleNames.key("display")).toBool(), false);
+    QCOMPARE(model->data(model->index({0,1,1}, 0), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 1), roleNames.key("display")).toInt(), 1);
+    QCOMPARE(model->data(model->index({0,1,1}, 1), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 2), roleNames.key("display")).toString(), u"Banana"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 2), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 3), roleNames.key("display")).toString(), u"Cavendish"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 3), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 4), roleNames.key("display")).toDouble(), 3.5);
+    QCOMPARE(model->data(model->index({0,1,1}, 4), roleNames.key("decoration")).toString(), u"yellow"_s);
+
+    // in this example the tree is expanded, so every element should change
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "modify"));
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), 8);
+
+    // check the node on the top level
+    QCOMPARE(model->data(model->index(0, 0, QModelIndex()), roleNames.key("display")).toBool(), false);
+    QCOMPARE(model->data(model->index(0, 0, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 1, QModelIndex()), roleNames.key("display")).toInt(), 18);     // here is the change, everything else is the same
+    QCOMPARE(model->data(model->index(0, 1, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 2, QModelIndex()), roleNames.key("display")).toString(), u"Apple"_s);
+    QCOMPARE(model->data(model->index(0, 2, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 3, QModelIndex()), roleNames.key("display")).toString(), u"Granny Smith"_s);
+    QCOMPARE(model->data(model->index(0, 3, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 4, QModelIndex()), roleNames.key("display")).toDouble(), 1.5);
+    QCOMPARE(model->data(model->index(0, 4, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+
+    // Check the leaf node at the index {0,1,1}
+    QCOMPARE(model->data(model->index({0,1,1}, 0), roleNames.key("display")).toBool(), false);
+    QCOMPARE(model->data(model->index({0,1,1}, 0), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 1), roleNames.key("display")).toInt(), 18);   // here is the change, everything else is the same
+    QCOMPARE(model->data(model->index({0,1,1}, 1), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 2), roleNames.key("display")).toString(), u"Banana"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 2), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 3), roleNames.key("display")).toString(), u"Cavendish"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 3), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 4), roleNames.key("display")).toDouble(), 3.5);
+    QCOMPARE(model->data(model->index({0,1,1}, 4), roleNames.key("decoration")).toString(), u"yellow"_s);
+
+    // Test setting a role that doesn't exist for a certain column.
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "modifyInvalidRole"));
+    // Everything is unchanged
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), 8);
+
+    // check the node on the top level
+    QCOMPARE(model->data(model->index(0, 0, QModelIndex()), roleNames.key("display")).toBool(), false);
+    QCOMPARE(model->data(model->index(0, 0, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 1, QModelIndex()), roleNames.key("display")).toInt(), 18);
+    QCOMPARE(model->data(model->index(0, 1, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 2, QModelIndex()), roleNames.key("display")).toString(), u"Apple"_s);
+    QCOMPARE(model->data(model->index(0, 2, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 3, QModelIndex()), roleNames.key("display")).toString(), u"Granny Smith"_s);
+    QCOMPARE(model->data(model->index(0, 3, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 4, QModelIndex()), roleNames.key("display")).toDouble(), 1.5);
+    QCOMPARE(model->data(model->index(0, 4, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+
+    // Check the leaf node at the index {0,1,1}
+    QCOMPARE(model->data(model->index({0,1,1}, 0), roleNames.key("display")).toBool(), false);
+    QCOMPARE(model->data(model->index({0,1,1}, 0), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 1), roleNames.key("display")).toInt(), 18);
+    QCOMPARE(model->data(model->index({0,1,1}, 1), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 2), roleNames.key("display")).toString(), u"Banana"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 2), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 3), roleNames.key("display")).toString(), u"Cavendish"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 3), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 4), roleNames.key("display")).toDouble(), 3.5);
+    QCOMPARE(model->data(model->index({0,1,1}, 4), roleNames.key("decoration")).toString(), u"yellow"_s);
+
+    // Test setting a role with a value of the wrong type.
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* failed converting value"));
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* failed converting value"));
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* failed converting value"));
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* failed converting value"));
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* failed converting value"));
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* failed converting value"));
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* failed converting value"));
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".* failed converting value"));
+    QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "modifyInvalidType"));
+    QCOMPARE(columnCountSpy.size(), 0);
+    QCOMPARE(rowsChangedSpy.size(), 8);
+
+    // check the node on the top level
+    QCOMPARE(model->data(model->index(0, 0, QModelIndex()), roleNames.key("display")).toBool(), false);
+    QCOMPARE(model->data(model->index(0, 0, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 1, QModelIndex()), roleNames.key("display")).toInt(), 18);
+    QCOMPARE(model->data(model->index(0, 1, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 2, QModelIndex()), roleNames.key("display")).toString(), u"Apple"_s);
+    QCOMPARE(model->data(model->index(0, 2, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 3, QModelIndex()), roleNames.key("display")).toString(), u"Granny Smith"_s);
+    QCOMPARE(model->data(model->index(0, 3, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+    QCOMPARE(model->data(model->index(0, 4, QModelIndex()), roleNames.key("display")).toDouble(), 1.5);
+    QCOMPARE(model->data(model->index(0, 4, QModelIndex()), roleNames.key("decoration")).toString(), u"red"_s);
+
+    // Check the leaf node at the index {0,1,1}
+    QCOMPARE(model->data(model->index({0,1,1}, 0), roleNames.key("display")).toBool(), false);
+    QCOMPARE(model->data(model->index({0,1,1}, 0), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 1), roleNames.key("display")).toInt(), 18);
+    QCOMPARE(model->data(model->index({0,1,1}, 1), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 2), roleNames.key("display")).toString(), u"Banana"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 2), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 3), roleNames.key("display")).toString(), u"Cavendish"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 3), roleNames.key("decoration")).toString(), u"yellow"_s);
+    QCOMPARE(model->data(model->index({0,1,1}, 4), roleNames.key("display")).toDouble(), 3.5);
+    QCOMPARE(model->data(model->index({0,1,1}, 4), roleNames.key("decoration")).toString(), u"yellow"_s);
 }
 
 void tst_QQmlTreeModel::setRowsForEmptyModel()
