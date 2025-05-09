@@ -1144,7 +1144,7 @@ bool Codegen::visit(ClassDeclaration *ast)
     return false;
 }
 
-bool Codegen::visit(Expression *ast)
+bool Codegen::visit(CommaExpression *ast)
 {
     if (hasError())
         return false;
