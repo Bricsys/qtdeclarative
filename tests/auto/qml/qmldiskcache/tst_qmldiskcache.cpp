@@ -443,7 +443,7 @@ class TypeVersion1 : public QObject
 public:
 
 
-    int m_value = 14;
+    int m_value = 0;
     int value() const { return m_value; }
     void setValue(int v) { m_value = v; emit valueChanged(); }
 
@@ -459,7 +459,7 @@ class TypeVersion2 : public QObject
 public:
 
 
-    QString m_value = QLatin1StringView("hello");
+    QString m_value;
     QString value() const { return m_value; }
     void setValue(QString v) { m_value = v; emit valueChanged(); }
 
@@ -492,7 +492,6 @@ void tst_qmldiskcache::recompileAfterChange()
         CleanlyLoadingComponent component(&engine, testCompiler.testFilePath);
         QScopedPointer<TypeVersion1> obj(qobject_cast<TypeVersion1*>(component.create()));
         QVERIFY(!obj.isNull());
-        QCOMPARE(obj->value(), 14);
         QCOMPARE(QFileInfo(testCompiler.cacheFilePath).lastModified(), initialCacheTimeStamp);
     }
 
@@ -502,7 +501,6 @@ void tst_qmldiskcache::recompileAfterChange()
         CleanlyLoadingComponent component(&engine, testCompiler.testFilePath);
         QScopedPointer<TypeVersion1> obj(qobject_cast<TypeVersion1*>(component.create()));
         QVERIFY(!obj.isNull());
-        QCOMPARE(obj->value(), 14);
         QCOMPARE(QFileInfo(testCompiler.cacheFilePath).lastModified(), initialCacheTimeStamp);
     }
 
@@ -516,7 +514,7 @@ void tst_qmldiskcache::recompileAfterChange()
         CleanlyLoadingComponent component(&engine, testCompiler.testFilePath);
         QScopedPointer<TypeVersion2> obj(qobject_cast<TypeVersion2*>(component.create()));
         QVERIFY(!obj.isNull());
-        QCOMPARE(obj->value(), QLatin1StringView("hello"));
+        QVERIFY(QFileInfo(testCompiler.cacheFilePath).lastModified() > initialCacheTimeStamp);
     }
 }
 
@@ -865,11 +863,9 @@ void tst_qmldiskcache::stableOrderOfDependentCompositeTypes()
     }
 
     {
-        // We don't need to re-generate the cache for testFilePath.
-        // It's independent of FirstDependentType.qml
         QVERIFY(QFile::exists(testFileCachePath));
         QDateTime newCacheTimeStamp = QFileInfo(testFileCachePath).lastModified();
-        QCOMPARE(newCacheTimeStamp, initialCacheTimeStamp);
+        QVERIFY2(newCacheTimeStamp > initialCacheTimeStamp, qPrintable(newCacheTimeStamp.toString()));
     }
 }
 
@@ -920,11 +916,9 @@ void tst_qmldiskcache::singletonDependency()
     }
 
     {
-        // We don't need to re-generate the cache for testFilePath.
-        // It's independent of the singleton
         QVERIFY(QFile::exists(testFileCachePath));
         QDateTime newCacheTimeStamp = QFileInfo(testFileCachePath).lastModified();
-        QCOMPARE(newCacheTimeStamp, initialCacheTimeStamp);
+        QVERIFY2(newCacheTimeStamp > initialCacheTimeStamp, qPrintable(newCacheTimeStamp.toString()));
     }
 }
 
@@ -978,11 +972,9 @@ void tst_qmldiskcache::cppRegisteredSingletonDependency()
         QVERIFY(!obj.isNull());
 
         {
-            // We don't need to re-generate the cache for testFilePath.
-            // It's independent of the singleton
             QVERIFY(QFile::exists(testFileCachePath));
             QDateTime newCacheTimeStamp = QFileInfo(testFileCachePath).lastModified();
-            QCOMPARE(newCacheTimeStamp, initialCacheTimeStamp);
+            QVERIFY2(newCacheTimeStamp > initialCacheTimeStamp, qPrintable(newCacheTimeStamp.toString()));
         }
 
         QVariant value;

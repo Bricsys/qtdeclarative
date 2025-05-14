@@ -28,6 +28,9 @@ private slots:
     void signalHandlersDerived();
     void passForeignEnums();
     void passQGadget();
+    void metaObjectSize_data();
+    void metaObjectSize();
+    void metaObjectChecksum();
     void metaObjectsForRootElements();
     void derivedGadgetMethod();
     void restrictRegistrationVersion();
@@ -505,6 +508,148 @@ void tst_qqmlpropertycache::passQGadget()
     QVERIFY(after.toBool());
 }
 
+class TestClass : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(int prop READ prop WRITE setProp NOTIFY propChanged)
+    int m_prop;
+
+public:
+    enum MyEnum {
+        First, Second
+    };
+    Q_ENUM(MyEnum)
+
+    Q_CLASSINFO("Foo", "Bar")
+
+    TestClass() {}
+
+    int prop() const
+    {
+        return m_prop;
+    }
+
+public slots:
+    void setProp(int prop)
+    {
+        if (m_prop == prop)
+            return;
+
+        m_prop = prop;
+        emit propChanged(prop);
+    }
+signals:
+    void propChanged(int prop);
+};
+
+class TestClassWithParameters : public QObject
+{
+    Q_OBJECT
+
+public:
+    Q_INVOKABLE void slotWithArguments(int firstArg) {
+        Q_UNUSED(firstArg);
+    }
+};
+
+class TestClassWithClassInfo : public QObject
+{
+    Q_OBJECT
+    Q_CLASSINFO("Key", "Value")
+};
+
+#include "tst_qqmlpropertycache.moc"
+
+template <typename T, typename = void>
+struct SizeofOffsetsAndSizes_helper
+{
+    static constexpr size_t value = sizeof(T::offsetsAndSize); // old moc
+};
+
+template <typename T>
+struct SizeofOffsetsAndSizes_helper<T, std::void_t<decltype(T::offsetsAndSizes)>>
+{
+    static constexpr size_t value = sizeof(T::offsetsAndSizes); // new moc
+};
+
+template <typename T>
+constexpr size_t sizeofOffsetsAndSizes(const T &)
+{
+    return SizeofOffsetsAndSizes_helper<T>::value;
+}
+
+// NOTE: ScopeCounter might change new metaobjects are added
+// check the moc file and adjust as necessary if tests fails to compile
+#define TEST_CLASS(Class, Fields, Strings) \
+    QTest::newRow(#Class) \
+            << &Class::staticMetaObject \
+            << Fields \
+            << Strings
+
+Q_DECLARE_METATYPE(const QMetaObject*);
+
+void tst_qqmlpropertycache::metaObjectSize_data()
+{
+    QTest::addColumn<const QMetaObject*>("metaObject");
+    QTest::addColumn<int>("expectedFieldCount");
+    QTest::addColumn<int>("expectedStringCount");
+
+    TEST_CLASS(TestClass, 49, 10);
+    TEST_CLASS(TestClassWithParameters, 24, 4);
+    TEST_CLASS(TestClassWithClassInfo, 17, 3);
+}
+
+void tst_qqmlpropertycache::metaObjectSize()
+{
+    QFETCH(const QMetaObject *, metaObject);
+    QFETCH(int, expectedFieldCount);
+    QFETCH(int, expectedStringCount);
+
+    int size = 0;
+    int stringDataSize = 0;
+    bool valid = QQmlPropertyCache::determineMetaObjectSizes(*metaObject, &size, &stringDataSize);
+    QVERIFY(valid);
+
+    QCOMPARE(size, expectedFieldCount - 1); // Remove trailing zero field until fixed in moc.
+    QCOMPARE(stringDataSize, expectedStringCount);
+}
+
+void tst_qqmlpropertycache::metaObjectChecksum()
+{
+    QMetaObjectBuilder builder;
+    builder.setClassName("Test");
+    builder.addClassInfo("foo", "bar");
+
+    QCryptographicHash hash(QCryptographicHash::Md5);
+
+    QScopedPointer<QMetaObject, QScopedPointerPodDeleter> mo(builder.toMetaObject());
+    QVERIFY(!mo.isNull());
+
+    QVERIFY(QQmlPropertyCache::addToHash(hash, *mo.data()));
+    QByteArray initialHash = hash.result();
+    QVERIFY(!initialHash.isEmpty());
+    hash.reset();
+
+    {
+        QVERIFY(QQmlPropertyCache::addToHash(hash, *mo.data()));
+        QByteArray nextHash = hash.result();
+        QVERIFY(!nextHash.isEmpty());
+        hash.reset();
+        QCOMPARE(initialHash, nextHash);
+    }
+
+    builder.addProperty("testProperty", "int", -1);
+
+    mo.reset(builder.toMetaObject());
+    {
+        QVERIFY(QQmlPropertyCache::addToHash(hash, *mo.data()));
+        QByteArray nextHash = hash.result();
+        QVERIFY(!nextHash.isEmpty());
+        hash.reset();
+        QVERIFY(initialHash != nextHash);
+    }
+}
+
 void tst_qqmlpropertycache::metaObjectsForRootElements()
 {
     QQmlEngine engine;
@@ -645,5 +790,3 @@ void tst_qqmlpropertycache::duplicateIdsAndGeneralizedGroupProperties()
 }
 
 QTEST_MAIN(tst_qqmlpropertycache)
-
-#include "tst_qqmlpropertycache.moc"

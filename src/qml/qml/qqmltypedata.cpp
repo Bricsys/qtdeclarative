@@ -541,16 +541,27 @@ void QQmlTypeData::done()
         }
     }
 
+    const auto dependencyHasher = [&resolvedTypeCache, this]() {
+        return typeLoader()->hashDependencies(&resolvedTypeCache, m_compositeSingletons);
+    };
+
     // verify if any dependencies changed if we're using a cache
     if (m_document.isNull() && verifyCaches) {
         const QQmlError error = createTypeAndPropertyCaches(typeNameCache, resolvedTypeCache);
-        if (!error.isValid()) {
+        if (!error.isValid() && m_compiledData->verifyChecksum(dependencyHasher)) {
             setCompileUnit(m_compiledData);
         } else {
-            qCDebug(DBG_DISK_CACHE)
-                    << "Failed to create property caches for"
-                    << m_compiledData->fileName()
-                    << "because" << error.description();
+
+            if (error.isValid()) {
+                qCDebug(DBG_DISK_CACHE)
+                        << "Failed to create property caches for"
+                        << m_compiledData->fileName()
+                        << "because" << error.description();
+            } else {
+                qCDebug(DBG_DISK_CACHE)
+                        << "Checksum mismatch for cached version of"
+                        << m_compiledData->fileName();
+            }
 
             if (!loadFromSource())
                 return;
@@ -580,7 +591,7 @@ void QQmlTypeData::done()
     if (!m_document.isNull()) {
         Q_ASSERT(verifyCaches);
         // Compile component
-        compile(typeNameCache, &resolvedTypeCache);
+        compile(typeNameCache, &resolvedTypeCache, dependencyHasher);
         if (isError())
             return;
         else
@@ -911,7 +922,8 @@ QString QQmlTypeData::stringAt(int index) const
 }
 
 void QQmlTypeData::compile(const QQmlRefPointer<QQmlTypeNameCache> &typeNameCache,
-                           QV4::CompiledData::ResolvedTypeReferenceMap *resolvedTypeCache)
+                           QV4::CompiledData::ResolvedTypeReferenceMap *resolvedTypeCache,
+                           const QV4::CompiledData::DependentTypesHasher &dependencyHasher)
 {
     assertTypeLoaderThread();
 
@@ -923,7 +935,8 @@ void QQmlTypeData::compile(const QQmlRefPointer<QQmlTypeNameCache> &typeNameCach
             && (m_document->javaScriptCompilationUnit->unitData()->flags
                 & QV4::CompiledData::Unit::PendingTypeCompilation);
 
-    QQmlTypeCompiler compiler(typeLoader(), this, m_document.data(), resolvedTypeCache);
+    QQmlTypeCompiler compiler(
+            typeLoader(), this, m_document.data(), resolvedTypeCache, dependencyHasher);
     auto compilationUnit = compiler.compile();
     if (!compilationUnit) {
         qDeleteAll(*resolvedTypeCache);

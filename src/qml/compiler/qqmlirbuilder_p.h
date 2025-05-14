@@ -622,7 +622,7 @@ public:
 
 struct Q_QML_COMPILER_EXPORT QmlUnitGenerator
 {
-    void generate(Document &output);
+    void generate(Document &output, const QV4::CompiledData::DependentTypesHasher &dependencyHasher = QV4::CompiledData::DependentTypesHasher());
 
 private:
     typedef bool (Binding::*BindingFilter)() const;

@@ -85,7 +85,10 @@ namespace CompiledData {
 using BindingPropertyData = QVector<const QQmlPropertyData *>;
 
 // map from name index
-using ResolvedTypeReferenceMap = QHash<int, ResolvedTypeReference*>;
+struct ResolvedTypeReferenceMap: public QHash<int, ResolvedTypeReference*>
+{
+    bool addToHash(QCryptographicHash *hash, QHash<quintptr, QByteArray> *checksums) const;
+};
 
 struct String;
 struct Function;
@@ -1207,7 +1210,7 @@ struct Unit
     quint32_le unitSize; // Size of the Unit and any depending data.
 
     char md5Checksum[16]; // checksum of all bytes following this field.
-    char reserved2[16];   // Was dependency checksum. 0 means "No checksum needed" to old versions.
+    char dependencyMD5Checksum[16];
 
     enum : unsigned int {
         IsJavascript = 0x1,
@@ -1439,6 +1442,8 @@ struct TypeReferenceMap : QHash<int, TypeReference>
     }
 };
 
+using DependentTypesHasher = std::function<QByteArray()>;
+
 struct InlineComponentData {
 
     InlineComponentData() = default;
@@ -1668,6 +1673,8 @@ public:
     }
 
     void finalizeCompositeType(const QQmlType &type);
+
+    bool verifyChecksum(const CompiledData::DependentTypesHasher &dependencyHasher) const;
 
     enum class ListPropertyAssignBehavior { Append, Replace, ReplaceIfNotDefault };
     ListPropertyAssignBehavior listPropertyAssignBehavior() const

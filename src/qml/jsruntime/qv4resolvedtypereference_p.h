@@ -39,6 +39,7 @@ public:
 
     QQmlPropertyCache::ConstPtr propertyCache() const;
     QQmlPropertyCache::ConstPtr createPropertyCache();
+    bool addToHash(QCryptographicHash *hash, QHash<quintptr, QByteArray> *checksums);
 
     void doDynamicTypeCheck();
 

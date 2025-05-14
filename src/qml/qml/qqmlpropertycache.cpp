@@ -927,6 +927,15 @@ const QQmlPropertyData *QQmlPropertyCache::property(
     return qQmlPropertyCacheProperty<const QLatin1String &>(obj, name, context, local);
 }
 
+// this function is copied from qmetaobject.cpp
+static inline const QByteArray stringData(const QMetaObject *mo, int index)
+{
+    uint offset = mo->d.stringdata[2*index];
+    uint length = mo->d.stringdata[2*index + 1];
+    const char *string = reinterpret_cast<const char *>(mo->d.stringdata) + offset;
+    return QByteArray::fromRawData(string, length);
+}
+
 const char *QQmlPropertyCache::className() const
 {
     if (const QMetaObject *mo = _metaObject.metaObject())
@@ -1069,7 +1078,209 @@ void QQmlPropertyCache::toMetaObjectBuilder(QMetaObjectBuilder &builder) const
         builder.addClassInfo("QML.ListPropertyAssignBehavior", _listPropertyAssignBehavior);
 }
 
+namespace {
+template <typename StringVisitor, typename TypeInfoVisitor>
+int visitMethods(const QMetaObject &mo, int methodOffset, int methodCount,
+                 StringVisitor visitString, TypeInfoVisitor visitTypeInfo)
+{
+    int fieldsForParameterData = 0;
 
+    bool hasOldStyleRevisionedMethods = false;
+
+    for (int i = 0; i < methodCount; ++i) {
+        const int handle = methodOffset + i * QMetaObjectPrivate::IntsPerMethod;
+
+        const uint flags = mo.d.data[handle + 4];
+        if (flags & MethodRevisioned) {
+            if (mo.d.data[0] < 13)
+                hasOldStyleRevisionedMethods = true;
+            else
+                fieldsForParameterData += 1;    // revision
+        }
+
+        visitString(mo.d.data[handle + 0]); // name
+        visitString(mo.d.data[handle + 3]); // tag
+
+        const int argc = mo.d.data[handle + 1];
+        const int paramIndex = mo.d.data[handle + 2];
+
+        fieldsForParameterData += argc * 2; // type and name
+        fieldsForParameterData += 1; // + return type
+
+        // return type + args
+        for (int i = 0; i < 1 + argc; ++i) {
+            // type name (maybe)
+            visitTypeInfo(mo.d.data[paramIndex + i]);
+
+            // parameter name
+            if (i > 0)
+                visitString(mo.d.data[paramIndex + argc + i]);
+        }
+    }
+
+    int fieldsForRevisions = 0;
+    if (hasOldStyleRevisionedMethods)
+        fieldsForRevisions = methodCount;
+
+    return methodCount * QMetaObjectPrivate::IntsPerMethod
+            + fieldsForRevisions + fieldsForParameterData;
+}
+
+template <typename StringVisitor, typename TypeInfoVisitor>
+int visitProperties(const QMetaObject &mo, StringVisitor visitString, TypeInfoVisitor visitTypeInfo)
+{
+    const QMetaObjectPrivate *const priv = reinterpret_cast<const QMetaObjectPrivate*>(mo.d.data);
+
+    for (int i = 0; i < priv->propertyCount; ++i) {
+        const int handle = priv->propertyData + i * QMetaObjectPrivate::IntsPerProperty;
+
+        visitString(mo.d.data[handle]); // name
+        visitTypeInfo(mo.d.data[handle + 1]);
+    }
+
+    return priv->propertyCount * QMetaObjectPrivate::IntsPerProperty;
+}
+
+template <typename StringVisitor>
+int visitClassInfo(const QMetaObject &mo, StringVisitor visitString)
+{
+    const QMetaObjectPrivate *const priv = reinterpret_cast<const QMetaObjectPrivate*>(mo.d.data);
+    const int intsPerClassInfo = 2;
+
+    for (int i = 0; i < priv->classInfoCount; ++i) {
+        const int handle = priv->classInfoData + i * intsPerClassInfo;
+
+        visitString(mo.d.data[handle]); // key
+        visitString(mo.d.data[handle + 1]); // value
+    }
+
+    return priv->classInfoCount * intsPerClassInfo;
+}
+
+template <typename StringVisitor>
+int visitEnumerations(const QMetaObject &mo, StringVisitor visitString)
+{
+    const QMetaObjectPrivate *const priv = reinterpret_cast<const QMetaObjectPrivate*>(mo.d.data);
+
+    int fieldCount = priv->enumeratorCount * QMetaObjectPrivate::IntsPerEnum;
+
+    for (int i = 0; i < priv->enumeratorCount; ++i) {
+        const uint *enumeratorData = mo.d.data + priv->enumeratorData + i * QMetaObjectPrivate::IntsPerEnum;
+
+        const uint keyCount = enumeratorData[3];
+        fieldCount += keyCount * 2;
+
+        visitString(enumeratorData[0]); // name
+        visitString(enumeratorData[1]); // enum name
+
+        const uint keyOffset = enumeratorData[4];
+
+        for (uint j = 0; j < keyCount; ++j) {
+            visitString(mo.d.data[keyOffset + 2 * j]);
+        }
+    }
+
+    return fieldCount;
+}
+
+template <typename StringVisitor>
+int countMetaObjectFields(const QMetaObject &mo, StringVisitor stringVisitor)
+{
+    const QMetaObjectPrivate *const priv = reinterpret_cast<const QMetaObjectPrivate*>(mo.d.data);
+
+    const auto typeInfoVisitor = [&stringVisitor](uint typeInfo) {
+        if (typeInfo & IsUnresolvedType)
+            stringVisitor(typeInfo & TypeNameIndexMask);
+    };
+
+    int fieldCount = MetaObjectPrivateFieldCount;
+
+    fieldCount += visitMethods(mo, priv->methodData, priv->methodCount, stringVisitor,
+                               typeInfoVisitor);
+    fieldCount += visitMethods(mo, priv->constructorData, priv->constructorCount, stringVisitor,
+                               typeInfoVisitor);
+
+    fieldCount += visitProperties(mo, stringVisitor, typeInfoVisitor);
+    fieldCount += visitClassInfo(mo, stringVisitor);
+    fieldCount += visitEnumerations(mo, stringVisitor);
+
+    return fieldCount;
+}
+
+} // anonymous namespace
+
+static_assert(QMetaObjectPrivate::OutputRevision == 13, "Check and adjust determineMetaObjectSizes");
+
+bool QQmlPropertyCache::determineMetaObjectSizes(const QMetaObject &mo, int *fieldCount,
+                                                 int *stringCount)
+{
+    const QMetaObjectPrivate *priv = reinterpret_cast<const QMetaObjectPrivate*>(mo.d.data);
+    if (priv->revision != QMetaObjectPrivate::OutputRevision)
+        return false;
+
+    uint highestStringIndex = 0;
+    const auto stringIndexVisitor = [&highestStringIndex](uint index) {
+        highestStringIndex = qMax(highestStringIndex, index);
+    };
+
+    *fieldCount = countMetaObjectFields(mo, stringIndexVisitor);
+    *stringCount = highestStringIndex + 1;
+
+    return true;
+}
+
+bool QQmlPropertyCache::addToHash(QCryptographicHash &hash, const QMetaObject &mo)
+{
+    int fieldCount = 0;
+    int stringCount = 0;
+    if (!determineMetaObjectSizes(mo, &fieldCount, &stringCount)) {
+        return false;
+    }
+
+    hash.addData({reinterpret_cast<const char *>(mo.d.data), qsizetype(fieldCount * sizeof(uint))});
+    for (int i = 0; i < stringCount; ++i) {
+        hash.addData(stringData(&mo, i));
+    }
+
+    return true;
+}
+
+QByteArray QQmlPropertyCache::checksum(QHash<quintptr, QByteArray> *checksums, bool *ok) const
+{
+    auto it = checksums->constFind(quintptr(this));
+    if (it != checksums->constEnd()) {
+        *ok = true;
+        return *it;
+    }
+
+    // Generate a checksum on the meta-object data only on C++ types.
+    if (_metaObject.isShared()) {
+        *ok = false;
+        return QByteArray();
+    }
+
+    QCryptographicHash hash(QCryptographicHash::Md5);
+
+    if (_parent) {
+        hash.addData(_parent->checksum(checksums, ok));
+        if (!*ok)
+            return QByteArray();
+    }
+
+    if (!addToHash(hash, *_metaObject.metaObject())) {
+        *ok = false;
+        return QByteArray();
+    }
+
+    const QByteArray result = hash.result();
+    if (result.isEmpty()) {
+        *ok = false;
+    } else {
+        *ok = true;
+        checksums->insert(quintptr(this), result);
+    }
+    return result;
+}
 
 /*! \internal
     \a index MUST be in the signal index range (see QObjectPrivate::signalIndex()).

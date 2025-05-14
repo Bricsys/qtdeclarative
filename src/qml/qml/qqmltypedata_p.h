@@ -97,7 +97,8 @@ private:
             QV4::CompiledData::ResolvedTypeReferenceMap *resolvedTypeCache
             ) const;
     void compile(const QQmlRefPointer<QQmlTypeNameCache> &typeNameCache,
-                 QV4::CompiledData::ResolvedTypeReferenceMap *resolvedTypeCache);
+                 QV4::CompiledData::ResolvedTypeReferenceMap *resolvedTypeCache,
+                 const QV4::CompiledData::DependentTypesHasher &dependencyHasher);
     QQmlError createTypeAndPropertyCaches(
             const QQmlRefPointer<QQmlTypeNameCache> &typeNameCache,
             const QV4::CompiledData::ResolvedTypeReferenceMap &resolvedTypeCache);

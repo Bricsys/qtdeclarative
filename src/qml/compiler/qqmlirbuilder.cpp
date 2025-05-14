@@ -1645,7 +1645,7 @@ bool IRBuilder::isRedundantNullInitializerForPropertyDeclaration(Property *prope
     return QQmlJS::AST::cast<QQmlJS::AST::NullExpression *>(expr);
 }
 
-void QmlUnitGenerator::generate(Document &output)
+void QmlUnitGenerator::generate(Document &output, const QV4::CompiledData::DependentTypesHasher &dependencyHasher)
 {
     using namespace QV4::CompiledData;
 
@@ -1737,6 +1737,14 @@ void QmlUnitGenerator::generate(Document &output)
                     if (quint32_le *index = createdUnit->translationContextIndex())
                         *index = p->translationContextIndex;
                 break;
+            }
+        }
+
+        if (dependencyHasher) {
+            const QByteArray checksum = dependencyHasher();
+            if (checksum.size() == sizeof(createdUnit->dependencyMD5Checksum)) {
+                memcpy(createdUnit->dependencyMD5Checksum, checksum.constData(),
+                       sizeof(createdUnit->dependencyMD5Checksum));
             }
         }
 
