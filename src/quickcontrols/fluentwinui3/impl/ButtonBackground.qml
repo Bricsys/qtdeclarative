@@ -36,7 +36,7 @@ Rectangle {
                 if (control.enabled && !control.down)
                     return control.palette.highlight
             } else if (control.enabled && (control.hovered || control.down)) {
-                return control.palette.highlightedText
+                return (control as T.MenuBarItem) ? control.palette.button : control.palette.highlightedText
             }
             return control.palette.button
         }
@@ -97,7 +97,7 @@ Rectangle {
         radius: !buttonBackground.hasGradientStroke ? buttonBackground.radius : buttonBackground.radius - border.width
         border.width: 1
         border.color: buttonBackground.hasGradientStroke || buttonBackground.subtle
-            || (highContrastScheme && !buttonBackground.accented && control.down)
+            || (highContrastScheme && !buttonBackground.accented && control.down && !(control as T.MenuBarItem))
             || (!highContrastScheme && buttonBackground.accented && (!control.enabled || control.down))
             ? "transparent" : buttonBackground.defaultStrokeColor
         color: buttonBackground.backgroundColor
