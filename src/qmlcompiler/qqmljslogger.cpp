@@ -88,6 +88,9 @@ using namespace Qt::StringLiterals;
       "Warn about non-list properties", QtWarningMsg, false, false)                                \
     X(qmlNonRootEnums, "non-root-enum", "NonRootEnum",                                             \
       "Warn about enums defined outside the root component", QtWarningMsg, false, false)           \
+    X(qmlUnterminatedCase, "unterminated-case", "UnterminatedCase", "Warn about non-empty case "   \
+      "blocks that are not terminated by control flow or by a fallthrough comment",                \
+      QtWarningMsg, false, false)                                                                  \
     X(qmlPlugin, "plugin", "LintPluginWarnings", "Warn if a qmllint plugin finds an issue",        \
       QtWarningMsg, true, false)                                                                   \
     X(qmlPrefixedImportType, "prefixed-import-type", "PrefixedImportType",                         \
@@ -138,7 +141,6 @@ using namespace Qt::StringLiterals;
       "Warn about with statements as they can cause false "                                        \
       "positives when checking for unqualified access",                                            \
       QtWarningMsg, false, false)
-
 
 #define X(category, name, setting, description, level, ignored, isDefault) \
     const QQmlSA::LoggerWarningId category{ name };

@@ -608,7 +608,7 @@ QQmlJSLinter::LintResult QQmlJSLinter::lintFile(const QString &filename,
     QQmlJS::LinterVisitor v{ target, &m_importer, m_logger.get(),
                              QQmlJSImportVisitor::implicitImportDirectory(
                                      m_logger->filePath(), m_importer.resourceFileMapper()),
-                             qmldirFiles };
+                             qmldirFiles, &engine };
 
     if (m_enablePlugins) {
         for (const Plugin &plugin : m_plugins) {

@@ -17,6 +17,15 @@ namespace QQmlJS {
    are purely syntactic checks, or style-checks warnings that don't make sense during compilation.
  */
 
+LinterVisitor::LinterVisitor(
+        const QQmlJSScope::Ptr &target, QQmlJSImporter *importer, QQmlJSLogger *logger,
+        const QString &implicitImportDirectory, const QStringList &qmldirFiles,
+        QQmlJS::Engine *engine)
+    : QQmlJSImportVisitor(target, importer, logger, implicitImportDirectory, qmldirFiles)
+    , m_engine(engine)
+{
+}
+
 bool LinterVisitor::visit(StringLiteral *sl)
 {
     QQmlJSImportVisitor::visit(sl);
@@ -264,6 +273,62 @@ bool LinterVisitor::visit(QQmlJS::AST::UiEnumDeclaration *uied)
         }
     }
 
+    return true;
+}
+
+void LinterVisitor::checkCaseFallthrough(StatementList *statements, SourceLocation errorLoc,
+                                         SourceLocation nextLoc)
+{
+    if (!statements || !nextLoc.isValid())
+        return;
+
+    quint32 afterLastStatement = 0;
+    for (StatementList *it = statements; it; it = it->next) {
+        if (!it->next) {
+            Node::Kind kind = (Node::Kind) it->statement->kind;
+            if (kind == Node::Kind_BreakStatement || kind == Node::Kind_ReturnStatement
+                || kind == Node::Kind_ThrowStatement) {
+                return;
+            }
+            afterLastStatement = it->statement->lastSourceLocation().end();
+        }
+    }
+
+    const auto &comments = m_engine->comments();
+    auto it = std::find_if(comments.cbegin(), comments.cend(),
+                           [&](auto c) { return afterLastStatement < c.offset; });
+    auto end = std::find_if(it, comments.cend(),
+                            [&](auto c) { return c.offset >= nextLoc.offset; });
+
+    for (; it != end; ++it) {
+        const QString &commentText = m_engine->code().mid(it->offset, it->length);
+        if (commentText.contains("fall through"_L1)
+            || commentText.contains("fall-through"_L1)
+            || commentText.contains("fallthrough"_L1)) {
+            return;
+        }
+    }
+
+    m_logger->log("Unterminated non-empty case block"_L1, qmlUnterminatedCase, errorLoc);
+}
+
+bool LinterVisitor::visit(QQmlJS::AST::CaseBlock *block)
+{
+    QQmlJSImportVisitor::visit(block);
+
+    std::vector<std::pair<SourceLocation, StatementList *>> clauses;
+    for (CaseClauses *it = block->clauses; it; it = it->next)
+        clauses.push_back({ it->clause->caseToken, it->clause->statements });
+    if (block->defaultClause)
+        clauses.push_back({ block->defaultClause->defaultToken, block->defaultClause->statements });
+    for (CaseClauses *it = block->moreClauses; it; it = it->next)
+        clauses.push_back({ it->clause->caseToken, it->clause->statements });
+
+    // check all but the last clause for fallthrough
+    for (size_t i = 0; i < clauses.size() - 1; ++i) {
+        const SourceLocation nextToken = clauses[i + 1].first;
+        checkCaseFallthrough(clauses[i].second, clauses[i].first, nextToken);
+    }
     return true;
 }
 

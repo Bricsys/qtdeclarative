@@ -88,6 +88,7 @@ extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUnqualified;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUnreachableCode;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUnresolvedAlias;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUnresolvedType;
+extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUnterminatedCase;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUnusedImports;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlUseProperFunction;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlVarUsedBeforeDeclaration;

@@ -1515,6 +1515,29 @@ void TestQmllint::dirtyJsSnippet_data()
             << Result{ { { "Identifier 'f' has already been declared"_L1, 1, 24 },
                          { "Note: previous declaration of 'f' here"_L1, 1, 7 } } }
             << defaultOptions;
+    QTest::newRow("unterminatedCaseBlock")
+            << uR"(
+                switch (0) {
+                case 0:                 // ok: empty
+                case 1:                 // ok: terminated
+                    return 1
+                case 2:                 // ko: non-empty, non-terminated, no comment
+                    console.log("2")
+                default:                // ko: non-empty, non-terminated, no comment
+                    1 + 1
+                case 3:                 // ok: comment
+                    4 + 4
+                    // fallthrough
+                case 4:                 // ok: nothing to fall through to ...
+                    1 + 2
+                })"_s
+            << Result{ { { "Unterminated non-empty case block"_L1, 6, 17 },
+                         { "Unterminated non-empty case block"_L1, 8, 17 } },
+                       { { "Unterminated non-empty case block"_L1, 3, 17 },
+                         { "Unterminated non-empty case block"_L1, 4, 17 },
+                         { "Unterminated non-empty case block"_L1, 10, 17 },
+                         { "Unterminated non-empty case block"_L1, 13, 17 } } }
+            << defaultOptions;
     {
         CallQmllintOptions options;
         options.enableCategories.append(qmlVoid.name().toString());

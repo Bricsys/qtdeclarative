@@ -16,6 +16,8 @@
 
 #include <private/qqmljsimportvisitor_p.h>
 
+#include <private/qqmljsengine_p.h>
+
 QT_BEGIN_NAMESPACE
 
 namespace QQmlJS {
@@ -29,7 +31,9 @@ namespace QQmlJS {
 class LinterVisitor final : public QQmlJSImportVisitor
 {
 public:
-    using QQmlJSImportVisitor::QQmlJSImportVisitor;
+    LinterVisitor(const QQmlJSScope::Ptr &target, QQmlJSImporter *importer, QQmlJSLogger *logger,
+                  const QString &implicitImportDirectory,
+                  const QStringList &qmldirFiles = QStringList(), QQmlJS::Engine *engine = nullptr);
 
 protected:
     using QQmlJSImportVisitor::endVisit;
@@ -46,6 +50,7 @@ protected:
     bool visit(QQmlJS::AST::BinaryExpression *) override;
     bool visit(QQmlJS::AST::UiImport *import) override;
     bool visit(QQmlJS::AST::UiEnumDeclaration *uied) override;
+    bool visit(QQmlJS::AST::CaseBlock *) override;
 
 private:
     struct SeenImport
@@ -75,11 +80,15 @@ private:
             return qHashMulti(seed, i.filename, i.uri, i.version, i.id);
         }
     };
+    QQmlJS::Engine *m_engine = nullptr;
     QSet<SeenImport> m_seenImports;
     std::vector<QQmlJS::AST::Node *> m_ancestryIncludingCurrentNode;
 
     void handleDuplicateEnums(QQmlJS::AST::UiEnumMemberList *members, QStringView key,
                               const QQmlJS::SourceLocation &location);
+    void warnCaseNoFlowControl(QQmlJS::SourceLocation caseToken) const;
+    void checkCaseFallthrough(QQmlJS::AST::StatementList *statements, SourceLocation errorLoc,
+                              SourceLocation nextLoc);
 };
 
 } // namespace QQmlJS
