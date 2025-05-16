@@ -4890,23 +4890,17 @@ void tst_QmlCppCodegen::scopedEnum()
     QTest::ignoreMessage(
             QtWarningMsg,
             qPrintable(url + u":6:5: Unable to assign [undefined] to int"_s));
-    QTest::ignoreMessage(
-            QtWarningMsg,
-            qPrintable(url + u":8: TypeError: Cannot read property 'C' of undefined"_s));
-    QTest::ignoreMessage(
-            QtWarningMsg,
-            qPrintable(url + u":14: TypeError: Cannot read property 'C' of undefined"_s));
 
     QScopedPointer<QObject> object(component.create());
     QVERIFY(!object.isNull());
     QCOMPARE(object->property("good").toInt(), 27);
     QCOMPARE(object->property("bad").toInt(), 0);
-    QCOMPARE(object->property("wrong").toInt(), 0);
+    QCOMPARE(object->property("noLongerWrong").toInt(), 7);
     QCOMPARE(object->property("right").toInt(), 7);
 
     QCOMPARE(object->property("notgood").toInt(), 26);
     QCOMPARE(object->property("notbad").toInt(), 26);
-    QCOMPARE(object->property("notwrong").toInt(), 0);
+    QCOMPARE(object->property("notwrongAnymore").toInt(), 6);
     QCOMPARE(object->property("notright").toInt(), 6);
 
     QCOMPARE(object->property("passable").toInt(), 2);

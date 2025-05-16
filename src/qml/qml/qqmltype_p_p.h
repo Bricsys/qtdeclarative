@@ -49,11 +49,18 @@ public:
 
     struct Enums
     {
-        ~Enums() { qDeleteAll(scopedEnums); }
+        enum Scoping { Scoped, Unscoped };
+        ~Enums()
+        {
+            qDeleteAll(scopedEnums);
+            qDeleteAll(unscopedEnums);
+        }
 
         QStringHash<int> enums;
         QStringHash<int> scopedEnumIndex; // maps from enum name to index in scopedEnums
+        QStringHash<int> unscopedEnumIndex; // maps from enum name to index in unscopedEnums
         QList<QStringHash<int> *> scopedEnums;
+        QList<QStringHash<int> *> unscopedEnums;
     };
 
     QQmlTypePrivate(QQmlType::RegistrationType type);
@@ -169,40 +176,58 @@ public:
         }, ok);
     }
 
-    template<typename String>
-    static int scopedEnumIndex(
+    template<Enums::Scoping scoping, typename String>
+    static int enumIndex(
             const QQmlRefPointer<const QQmlTypePrivate> &d, QQmlTypeLoader *typeLoader,
             const String &name, bool *ok)
     {
         return doGetEnumValue(d, typeLoader, [&](const QQmlTypePrivate::Enums *enums) {
-            return enums->scopedEnumIndex.value(name);
+            if constexpr (scoping == Enums::Scoped)
+                return enums->scopedEnumIndex.value(name);
+            else
+                return enums->unscopedEnumIndex.value(name);
         }, ok);
     }
 
-    template<typename String>
-    static int scopedEnumValue(
+    template<Enums::Scoping scoping, typename String>
+    static int enumValue(
             const QQmlRefPointer<const QQmlTypePrivate> &d, QQmlTypeLoader *typeLoader, int index,
             const String &name, bool *ok)
     {
         return doGetEnumValue(d, typeLoader, [&](const QQmlTypePrivate::Enums *enums) {
-            Q_ASSERT(index > -1 && index < enums->scopedEnums.size());
-            return enums->scopedEnums.at(index)->value(name);
+            if constexpr (scoping == Enums::Scoped) {
+                Q_ASSERT(index > -1 && index < enums->scopedEnums.size());
+                return enums->scopedEnums.at(index)->value(name);
+            } else {
+                Q_ASSERT(index > -1 && index < enums->unscopedEnums.size());
+                return enums->unscopedEnums.at(index)->value(name);
+            }
         }, ok);
     }
 
-    template<typename String1, typename String2>
-    static int scopedEnumValue(
+    template<Enums::Scoping scoping, typename String1, typename String2>
+    static int enumValue(
             const QQmlRefPointer<const QQmlTypePrivate> &d, QQmlTypeLoader *typeLoader,
             const String1 &scopedEnumName, const String2 &name, bool *ok)
     {
         return doGetEnumValue(d, typeLoader, [&](const QQmlTypePrivate::Enums *enums) -> const int * {
-            const int *rv = enums->scopedEnumIndex.value(scopedEnumName);
+            const QStringHash<int> *enumIndex;
+            const QList<QStringHash<int> *> *_enums;
+            if constexpr (scoping == Enums::Scoped) {
+                enumIndex = &enums->scopedEnumIndex;
+                _enums = &enums->scopedEnums;
+            } else {
+                enumIndex = &enums->unscopedEnumIndex;
+                _enums = &enums->unscopedEnums;
+            }
+
+            const int *rv = enumIndex->value(scopedEnumName);
             if (!rv)
                 return nullptr;
 
             const int index = *rv;
-            Q_ASSERT(index > -1 && index < enums->scopedEnums.size());
-            return enums->scopedEnums.at(index)->value(name);
+            Q_ASSERT(index > -1 && index < _enums->size());
+            return _enums->at(index)->value(name);
         }, ok);
     }
 

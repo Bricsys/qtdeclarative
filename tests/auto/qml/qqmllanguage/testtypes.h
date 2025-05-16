@@ -3302,4 +3302,26 @@ public:
     int m_d = 16;
 };
 
+class CppEnum : public QObject
+{
+    Q_OBJECT
+    QML_ELEMENT
+
+public:
+    enum class Scoped { S1, S2 };
+    Q_ENUM(Scoped)
+    enum Unscoped { U1, U2 };
+    Q_ENUM(Unscoped)
+};
+
+namespace EnumNamespace {
+Q_NAMESPACE
+QML_ELEMENT
+
+enum Unscoped { U1, U2 };
+Q_ENUM_NS(Unscoped)
+enum class Scoped { S1, S2 };
+Q_ENUM_NS(Scoped)
+} // namespace EnumNamespace
+
 #endif // TESTTYPES_H

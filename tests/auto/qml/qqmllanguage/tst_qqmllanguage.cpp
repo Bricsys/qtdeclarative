@@ -521,6 +521,8 @@ private slots:
 
     void urlWithFragment();
 
+    void enumScoping();
+
 private:
     QQmlEngine engine;
     QStringList defaultImportPathList;
@@ -9796,6 +9798,31 @@ void tst_qqmllanguage::urlWithFragment()
     QVERIFY(!o.isNull());
 
     QCOMPARE(o->objectName(), "outer");
+}
+
+void tst_qqmllanguage::enumScoping()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl("EnumScoping.qml"));
+
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+
+    QCOMPARE(o->property("qmlAsScoped").toInt(), 1);
+    QCOMPARE(o->property("qmlAsUnscoped").toInt(), 1);
+
+    QCOMPARE(o->property("cppScopedAsScoped").toInt(), 1);
+    QCOMPARE(o->property("cppScopedAsUnscoped").toInt(), 1);
+
+    QCOMPARE(o->property("cppUnscopedAsScoped").toInt(), 1);
+    QCOMPARE(o->property("cppUnscopedAsUnscoped").toInt(), 1);
+
+    QCOMPARE(o->property("nsScopedAsScoped").toInt(), 1);
+    QCOMPARE(o->property("nsScopedAsUnscoped").toInt(), 1);
+
+    QCOMPARE(o->property("nsUnscopedAsScoped").toInt(), 1);
+    QCOMPARE(o->property("nsUnscopedAsUnscoped").toInt(), 1);
 }
 
 QTEST_MAIN(tst_qqmllanguage)
