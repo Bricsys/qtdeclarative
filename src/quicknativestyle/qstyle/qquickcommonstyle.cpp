@@ -3683,6 +3683,20 @@ QStyle::SubControl QCommonStyle::hitTestComplexControl(ComplexControl cc, const 
             }
         }
         break;
+    case CC_SearchField:
+        if (const QStyleOptionSearchField *sf = qstyleoption_cast<const QStyleOptionSearchField *>(opt)) {
+            QRect r;
+            uint ctrl = SC_SearchFieldSearch;
+            while (ctrl <= SC_SearchFieldPopup) {
+                r = proxy()->subControlRect(cc, sf, QStyle::SubControl(ctrl));
+                if (r.isValid() && r.contains(pt)) {
+                    sc = QStyle::SubControl(ctrl);
+                    break;
+                }
+                ctrl <<= 1;
+            }
+        }
+        break;
     case CC_GroupBox:
         if (const QStyleOptionGroupBox *groupBox = qstyleoption_cast<const QStyleOptionGroupBox *>(opt)) {
             QRect r;

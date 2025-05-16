@@ -20,6 +20,7 @@ set(qml_files
     "controls/DefaultRadioButton.qml"
     "controls/DefaultRadioDelegate.qml"
     "controls/DefaultScrollBar.qml"
+    "controls/DefaultSearchField.qml"
     "controls/DefaultSlider.qml"
     "controls/DefaultSpinBox.qml"
     "controls/DefaultTextArea.qml"
@@ -99,6 +100,7 @@ qt_internal_extend_target(qtquickcontrols2nativestyleplugin CONDITION QT_FEATURE
 qt_internal_extend_target(qtquickcontrols2nativestyleplugin CONDITION QT_FEATURE_qml_delegate_model
     SOURCES
         items/qquickstyleitemcombobox.cpp items/qquickstyleitemcombobox.h
+        items/qquickstyleitemsearchfield.cpp items/qquickstyleitemsearchfield.h
 )
 
 qt_internal_extend_target(qtquickcontrols2nativestyleplugin CONDITION MACOS

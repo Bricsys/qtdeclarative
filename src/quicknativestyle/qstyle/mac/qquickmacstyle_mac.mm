@@ -1412,6 +1412,9 @@ NSView *QMacStylePrivate::cocoaControl(CocoaControl cocoaControl) const
             [bv retain];
             break;
         }
+        case SearchField:
+            bv = [[NSSearchField alloc] init];
+            break;
         case ComboBox:
             bv = [[NSComboBox alloc] init];
             break;
@@ -1980,6 +1983,7 @@ int QMacStyle::pixelMetric(PixelMetric metric, const QStyleOption *opt) const
     case PM_CheckBoxFocusFrameRadius:
         ret = LargeSmallMini(opt, 3, 2, 1);
         break;
+    case PM_SearchFieldFocusFrameRadius:
     case PM_ComboBoxFocusFrameRadius:
         ret = LargeSmallMini(opt, 5, 4, 1);
         break;
@@ -4142,6 +4146,14 @@ QRect QMacStyle::subElementRect(SubElement sr, const QStyleOption *opt) const
             setLayoutItemMargins(-0, +0, -1, -0, &rect, opt->direction);
         }
         break;
+    case SE_SearchFieldLayoutItem:
+      if (qstyleoption_cast<const QStyleOptionSearchField *>(opt)) {
+        rect = LargeSmallMini(opt,
+                              opt->rect.adjusted(4, 6, -4, -7),
+                              opt->rect.adjusted(4, 7, -4, -7),
+                              opt->rect.adjusted(3, 6, -3, -6));
+      }
+      break;
     case SE_ComboBoxLayoutItem:
         if (const auto *combo = qstyleoption_cast<const QStyleOptionComboBox *>(opt)) {
             //#ifndef QT_NO_TOOLBAR
@@ -4753,6 +4765,36 @@ void QMacStyle::drawComplexControl(ComplexControl cc, const QStyleOptionComplex 
             }
         }
         break;
+    case CC_SearchField:
+        if (const auto *sf = qstyleoption_cast<const QStyleOptionSearchField *>(opt)) {
+            const bool isEnabled = sf->state & State_Enabled;
+
+            const auto cs = d->effectiveAquaSizeConstrain(sf);
+            const auto cw = QMacStylePrivate::CocoaControl(QMacStylePrivate::SearchField, cs);
+            auto *searchField = static_cast<NSSearchField *>(d->cocoaControl(cw));
+            auto *cell = static_cast<NSSearchFieldCell *>(searchField.cell);
+
+            searchField.enabled = isEnabled;
+
+            if (sf->subControls == QStyle::SC_SearchFieldSearch) {
+                // Draw only the search icon
+                CGRect rect = [cell searchButtonRectForBounds:searchField.bounds];
+                [cell drawWithFrame:rect inView:searchField];
+            } else if (sf->subControls == QStyle::SC_SearchFieldClear) {
+                // Draw only the clear icon
+                CGRect rect = [cell cancelButtonRectForBounds:searchField.bounds];
+                [cell drawWithFrame:rect inView:searchField];
+            } else {
+                // Draw the frame
+                QRectF frameRect = cw.adjustedControlFrame(sf->rect);
+                searchField.frame = frameRect.toCGRect();
+                [cell setStringValue:sf->text.toNSString()];
+                d->drawNSViewInRect(searchField, frameRect, p, ^(CGContextRef, const CGRect &r) {
+                    [cell drawWithFrame:r inView:searchField];
+                });
+            }
+        }
+        break;
     case CC_TitleBar:
         if (const auto *titlebar = qstyleoption_cast<const QStyleOptionTitleBar *>(opt)) {
             const bool isActive = (titlebar->state & State_Active)
@@ -5013,6 +5055,37 @@ QStyle::SubControl QMacStyle::hitTestComplexControl(ComplexControl cc, const QSt
                 else
                     sc = SC_ScrollBarSlider;
             }
+        }
+        break;
+    case CC_SearchField:
+        if (const auto *sf = qstyleoption_cast<const QStyleOptionSearchField *>(opt)) {
+            if (!sf->rect.contains(pt))
+                break;
+
+            const auto cs = d->effectiveAquaSizeConstrain(sf);
+            const auto cw = QMacStylePrivate::CocoaControl(QMacStylePrivate::SearchField, cs);
+            auto *searchField = static_cast<NSSearchField *>(d->cocoaControl(cw));
+            searchField.frame = cw.adjustedControlFrame(sf->rect).toCGRect();
+
+            auto *cell = static_cast<NSSearchFieldCell *>(searchField.cell);
+            const CGRect bounds = searchField.bounds;
+
+            const QRectF cancelRect = QRectF::fromCGRect([cell cancelButtonRectForBounds:bounds]);
+            const QRectF searchIconRect = QRectF::fromCGRect([cell searchButtonRectForBounds:bounds]);
+            const QRectF textFieldRect = QRectF::fromCGRect([cell searchTextRectForBounds:bounds]);
+
+            const QPointF localPt = pt - sf->rect.topLeft();
+
+            if (cancelRect.contains(localPt))
+                sc = SC_SearchFieldClear;
+            else if (searchIconRect.contains(localPt))
+                sc = SC_SearchFieldSearch;
+            else if (textFieldRect.contains(localPt))
+                sc = SC_SearchFieldEditField;
+            else
+                sc = SC_SearchFieldPopup;
+
+            break;
         }
         break;
     default:
@@ -5359,6 +5432,54 @@ QRect QMacStyle::subControlRect(ComplexControl cc, const QStyleOptionComplex *op
             ret.adjust(-1, 0, 0, 0);
         }
         break;
+    case CC_SearchField:
+        if (const QStyleOptionSearchField *sf = qstyleoption_cast<const QStyleOptionSearchField *>(opt)) {
+          const auto cs = d->effectiveAquaSizeConstrain(sf);
+          const auto cw = QMacStylePrivate::CocoaControl(QMacStylePrivate::SearchField, cs);
+
+          QRectF editRect;
+          switch (cs) {
+          case QStyleHelper::SizeLarge:
+              editRect = sf->rect.adjusted(16, 7, -22, -6);
+              break;
+          case QStyleHelper::SizeSmall:
+              editRect = sf->rect.adjusted(16, 5, -22, -7);
+              break;
+          default:
+              editRect = sf->rect.adjusted(16, 5, -18, -7);
+              break;
+          }
+
+          auto *searchField = static_cast<NSSearchField *>(d->cocoaControl(cw));
+          auto *cell = static_cast<NSSearchFieldCell *>(searchField.cell);
+          switch (sc) {
+          case SC_SearchFieldEditField:{
+              ret = editRect.toAlignedRect();
+              ret.setX(ret.x() + QMacStylePrivate::PushButtonContentPadding);
+              break;
+          }
+          case SC_SearchFieldClear: {
+              ret = QRectF::fromCGRect([cell cancelButtonRectForBounds:searchField.bounds]).toAlignedRect();
+              break;
+          }
+          case SC_SearchFieldSearch: {
+              ret = QRectF::fromCGRect([cell searchButtonRectForBounds:searchField.bounds]).toAlignedRect();
+              break;
+          }
+          case SC_SearchFieldPopup: {
+              const CGRect inner = QMacStylePrivate::comboboxInnerBounds(sf->rect.toCGRect(), cw);
+              const int searchTop = sf->rect.top();
+              ret = QRect(qRound(inner.origin.x),
+                          searchTop,
+                          qRound(inner.origin.x - sf->rect.left() + inner.size.width),
+                          editRect.bottom() - searchTop + 2);
+              break;
+          }
+          default:
+              break;
+          }
+        }
+        break;
     default:
         ret = QCommonStyle::subControlRect(cc, opt, sc);
         break;
@@ -5653,6 +5774,44 @@ QSize QMacStyle::sizeFromContents(ContentsType ct, const QStyleOption *opt, cons
                 sz.setHeight(pushButtonDefaultHeight[controlSize]);
 
             return sz;
+        }
+        break;
+    case CT_SearchField:
+        if (const QStyleOptionSearchField *sf = qstyleoption_cast<const QStyleOptionSearchField *>(opt)) {
+            const QSize clearButton = proxy()->subControlRect(CC_SearchField, sf, SC_SearchFieldClear).size();
+            const QSize searchButton = proxy()->subControlRect(CC_SearchField, sf, SC_SearchFieldSearch).size();
+            if (sf->subControls == SC_SearchFieldFrame) {
+              const int controlSize = getControlSize(opt);
+              int padding;
+              int iconSpacing;
+
+              if (controlSize == QStyleHelper::SizeLarge) {
+                  padding = 6;
+                  iconSpacing = 6;
+                  sz.setHeight(32);
+              } else if (controlSize == QStyleHelper::SizeSmall) {
+                  padding = 5;
+                  iconSpacing = 5;
+                  sz.setHeight(28);
+              } else {
+                  padding = 4;
+                  iconSpacing = 4;
+                  sz.setHeight(22);
+              }
+
+              // minimum width
+              if (sz.width() < 60)
+                  sz.setWidth(60);
+
+              const int totalIconsSize = clearButton.width() + searchButton.width() + (padding + iconSpacing) * 2;
+              sz.rwidth() += totalIconsSize;
+
+              return sz;
+            } else if (sf->subControls == SC_SearchFieldClear) {
+              return clearButton;
+            } else if (sf->subControls == SC_SearchFieldSearch) {
+              return searchButton;
+            }
         }
         break;
     case CT_Menu: {

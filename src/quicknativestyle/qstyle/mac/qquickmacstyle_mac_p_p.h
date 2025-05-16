@@ -99,6 +99,7 @@ public:
         ProgressIndicator_Indeterminate,
         Scroller_Horizontal,
         Scroller_Vertical,
+        SearchField,
         SegmentedControl_First, // QTabBar buttons focus ring
         SegmentedControl_Middle,
         SegmentedControl_Last,
