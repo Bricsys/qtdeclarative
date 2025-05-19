@@ -1151,7 +1151,7 @@ void QSvgVisitorImpl::applyAnimationsToProperty(const QList<AnimationPair> &anim
         if (property->type() == QSvgAbstractAnimatedProperty::Transform) {
             const auto *transformProperty = static_cast<const QSvgAnimatedPropertyTransform *>(property);
             const auto &components = transformProperty->components();
-            Q_ASSERT(components.size() >= transformProperty->transformCount());
+            Q_ASSERT(q20::cmp_greater_equal(components.size(),transformProperty->transformCount()));
             for (uint i = 0; i < transformProperty->transformCount(); ++i) {
                 QQuickAnimatedProperty::PropertyAnimation outAnimation;
                 outAnimation.repeatCount = repeatCount;
