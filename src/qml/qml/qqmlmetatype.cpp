@@ -715,6 +715,9 @@ static QQmlType doRegisterInlineComponentType(QQmlMetaTypeData *data, const QUrl
     addQQmlMetaTypeInterfaces(priv, className);
     data->urlToType.insert(url, priv);
 
+    data->idToType.insert(priv->typeId.id(), priv);
+    data->idToType.insert(priv->listId.id(), priv);
+
     return QQmlType(priv);
 }
 
