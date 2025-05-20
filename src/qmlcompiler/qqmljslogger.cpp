@@ -40,6 +40,8 @@ using namespace Qt::StringLiterals;
       false)                                                                                       \
     X(qmlCompiler, "compiler", "CompilerWarnings", "Warn about compiler issues", QtWarningMsg,     \
       true, false)                                                                                 \
+    X(qmlComponentChildrenCount, "component-children-count", "ComponentChildrenCount",             \
+      "Warn about Components that don't have exactly one child", QtWarningMsg, false, false)       \
     X(qmlConfusingExpressionStatement, "confusing-expression-statement",                           \
       "ConfusingExpressionStatement",                                                              \
       "Warn about expression statement that has no obvious effect.", QtWarningMsg, false, false)   \

@@ -255,7 +255,7 @@ protected:
     // true if the scope already exists and \c false if the new scope is created
     bool enterEnvironmentNonUnique(QQmlJSScope::ScopeType type, const QString &name,
                                    const QQmlJS::SourceLocation &location);
-    void leaveEnvironment();
+    virtual void leaveEnvironment();
 
     // A set of types that have not been resolved but have been used during the
     // AST traversal

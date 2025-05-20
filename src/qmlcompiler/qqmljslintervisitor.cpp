@@ -26,6 +26,25 @@ LinterVisitor::LinterVisitor(
 {
 }
 
+void LinterVisitor::leaveEnvironment()
+{
+    const auto leaveEnv = qScopeGuard([this] { QQmlJSImportVisitor::leaveEnvironment(); });
+
+    if (auto base = m_currentScope->baseType()) {
+        if (base->internalName() == u"QQmlComponent"_s) {
+            const auto nChildren = std::count_if(
+                    m_currentScope->childScopesBegin(), m_currentScope->childScopesEnd(),
+                    [](const QQmlJSScope::ConstPtr &scope) {
+                        return scope->scopeType() == QQmlSA::ScopeType::QMLScope;
+                    });
+            if (nChildren != 1) {
+                m_logger->log("Components must have exactly one child"_L1,
+                              qmlComponentChildrenCount, m_currentScope->sourceLocation());
+            }
+        }
+    }
+}
+
 bool LinterVisitor::visit(StringLiteral *sl)
 {
     QQmlJSImportVisitor::visit(sl);

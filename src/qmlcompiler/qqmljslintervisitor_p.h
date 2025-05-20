@@ -43,6 +43,8 @@ protected:
     void postVisit(QQmlJS::AST::Node *) override;
     QQmlJS::AST::Node *astParentOfVisitedNode() const;
 
+    void leaveEnvironment() override;
+
     bool visit(QQmlJS::AST::StringLiteral *) override;
     bool visit(AST::CommaExpression *) override;
     bool visit(QQmlJS::AST::NewMemberExpression *) override;

@@ -1246,6 +1246,14 @@ void TestQmllint::dirtyQmlSnippet_data()
                        {},
                        { { "Did you mean \"blue\"?", 1, 25 } } }
             << defaultOptions;
+    QTest::newRow("componentExactlyOneChild1")
+            << u"Component { Item {} Item {} }"_s
+            << Result{ { { "Components must have exactly one child"_L1, 1, 1 } } }
+            << defaultOptions;
+    QTest::newRow("componentExactlyOneChild2")
+            << u"Component {}"_s
+            << Result{ { { "Components must have exactly one child"_L1, 1, 1 } } }
+            << defaultOptions;
     {
         CallQmllintOptions options;
         options.rootUrls.append(testFile("ContextProperties/src"_L1));
@@ -1499,7 +1507,11 @@ void TestQmllint::cleanQmlSnippet_data()
     QTest::newRow("enum") << u"enum Hello { World, Kitty, DlroW }"_s << defaultOptions;
     QTest::newRow("lowerCaseId") << u"id: root"_s << defaultOptions;
     QTest::newRow("requiredInComponent")
-            << u"Item { Component { id: comp; required property var bla; } }"_s << defaultOptions;
+            << u"Item { Component { id: comp; required property var bla; Item {} } }"_s
+            << defaultOptions;
+    QTest::newRow("requiredInComponent2")
+            << u"Item { Component { id: comp; Item { required property var bla } } }"_s
+            << defaultOptions;
     QTest::newRow("requiredInInlineComponent")
             << u"Item { component Foo: Item { required property var bla; } }"_s << defaultOptions;
     QTest::newRow("testSnippet") << u"property int qwer: 123"_s << defaultOptions;
