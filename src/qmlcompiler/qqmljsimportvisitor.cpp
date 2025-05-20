@@ -2167,7 +2167,7 @@ QQmlJSImportVisitor::parseBindingExpression(const QString &name,
     }
     if (!QQmlJSMetaPropertyBinding::isLiteralBinding(binding.bindingType()))
         return BindingExpressionParseResult::Script;
-    m_literalScopesToCheck << m_currentScope;
+
     return BindingExpressionParseResult::Literal;
 }
 

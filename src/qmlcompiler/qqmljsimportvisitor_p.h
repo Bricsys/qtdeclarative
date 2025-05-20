@@ -65,7 +65,6 @@ public:
     {
         return m_signalHandlers;
     }
-    QSet<QQmlJSScope::ConstPtr> literalScopesToCheck() const { return m_literalScopesToCheck; }
     QList<QQmlJSScope::ConstPtr> qmlTypes() const { return m_qmlTypes; }
     QHash<QV4::CompiledData::Location, QQmlJSScope::ConstPtr> scopesBylocation() const
     {
@@ -376,7 +375,6 @@ protected:
     QHash<Property, QList<Alias>> m_propertyAliases;
 
     QHash<QQmlJS::SourceLocation, QQmlJSMetaSignalHandler> m_signalHandlers;
-    QSet<QQmlJSScope::ConstPtr> m_literalScopesToCheck;
     QQmlJS::SourceLocation m_pendingSignalHandler;
     QStringList m_seenModuleQualifiers;
     QHash<QStringView, QQmlJS::SourceLocation> m_seenInlineComponents;
