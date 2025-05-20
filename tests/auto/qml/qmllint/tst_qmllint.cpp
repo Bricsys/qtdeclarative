@@ -1640,6 +1640,11 @@ void TestQmllint::dirtyJsSnippet_data()
                            "non-nullable type QRegularExpression"_L1,
                            1, 6 } } }
             << defaultOptions;
+    QTest::newRow("math_typo")
+            << u"Math.minj(1,2)"_s
+            << Result{ { {"Member \"minj\" not found on Math object", 1, 6},
+                         {"Did you mean \"min\"?", 1, 6} }}
+            << defaultOptions;
     QTest::newRow("shadowArgument")
             << u"function f(a) { const a = 33; }"_s
             << Result{ { { "Identifier 'a' has already been declared"_L1, 1, 23 },
