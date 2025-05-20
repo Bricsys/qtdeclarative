@@ -817,53 +817,122 @@ void QQmlJSTypePropagator::propagatePropertyLookup_SAcheck(const QString &proper
                     currentNonEmptySourceLocation()));
 }
 
+
+bool QQmlJSTypePropagator::handleImportNamespaceLookup(const QString &propertyName)
+{
+    const QQmlJSRegisterContent accumulatorIn = m_state.accumulatorIn();
+
+    if (m_typeResolver->isPrefix(propertyName)) {
+        Q_ASSERT(accumulatorIn.isValid());
+
+        if (!accumulatorIn.containedType()->isReferenceType()) {
+            m_logger->log(u"Cannot use non-QObject type %1 to access prefixed import"_s.arg(
+                                  accumulatorIn.containedType()->internalName()),
+                          qmlPrefixedImportType,
+                          currentSourceLocation());
+            setVarAccumulatorAndError();
+            return true;
+        }
+
+        addReadAccumulator();
+        setAccumulator(m_pool->createImportNamespace(
+                m_jsUnitGenerator->getStringId(propertyName),
+                accumulatorIn.containedType(),
+                QQmlJSRegisterContent::ModulePrefix,
+                accumulatorIn));
+        return true;
+    }
+
+    if (accumulatorIn.isImportNamespace()) {
+        m_logger->log(u"Type not found in namespace"_s, qmlUnresolvedType,
+                      currentSourceLocation());
+    }
+
+    return false;
+}
+
+void QQmlJSTypePropagator::handleLookupError(const QString &propertyName)
+{
+    const QQmlJSRegisterContent accumulatorIn = m_state.accumulatorIn();
+
+    setVarAccumulatorAndError();
+    if (checkForEnumProblems(accumulatorIn, propertyName))
+        return;
+
+    addError(u"Cannot load property %1 from %2."_s
+                     .arg(propertyName, accumulatorIn.descriptiveName()));
+
+    const QString typeName = accumulatorIn.containedTypeName();
+
+    if (typeName == u"QVariant")
+        return;
+    if (accumulatorIn.isList() && propertyName == u"length")
+        return;
+
+    auto baseType = accumulatorIn.containedType();
+    // Warn separately when a property is only not found because of a missing type
+
+    if (propertyResolution(baseType, propertyName) != PropertyMissing)
+        return;
+
+    if (baseType->isScript())
+        return;
+
+    std::optional<QQmlJSFixSuggestion> fixSuggestion;
+
+    if (auto suggestion = QQmlJSUtils::didYouMean(propertyName, baseType->properties().keys(),
+                                                  currentSourceLocation());
+        suggestion.has_value()) {
+        fixSuggestion = suggestion;
+    }
+
+    if (!fixSuggestion.has_value()
+        && accumulatorIn.variant() == QQmlJSRegisterContent::MetaType) {
+
+        const QQmlJSScope::ConstPtr scopeType = accumulatorIn.scopeType();
+        const auto metaEnums = scopeType->enumerations();
+        const bool enforcesScoped = scopeType->enforcesScopedEnums();
+
+        QStringList enumKeys;
+        for (const QQmlJSMetaEnum &metaEnum : metaEnums) {
+            if (!enforcesScoped || !metaEnum.isScoped())
+                enumKeys << metaEnum.keys();
+        }
+
+        if (auto suggestion = QQmlJSUtils::didYouMean(
+                    propertyName, enumKeys, currentSourceLocation());
+            suggestion.has_value()) {
+            fixSuggestion = suggestion;
+        }
+    }
+
+    m_logger->log(u"Member \"%1\" not found on type \"%2\""_s.arg(propertyName).arg(typeName),
+                  qmlMissingProperty, currentSourceLocation(), true, true, fixSuggestion);
+}
+
 void QQmlJSTypePropagator::propagatePropertyLookup(const QString &propertyName, int lookupIndex)
 {
+    const QQmlJSRegisterContent accumulatorIn = m_state.accumulatorIn();
     setAccumulator(
             m_typeResolver->memberType(
-                m_state.accumulatorIn(),
-                m_state.accumulatorIn().isImportNamespace()
-                    ? m_jsUnitGenerator->stringForIndex(m_state.accumulatorIn().importNamespace())
+                accumulatorIn,
+                accumulatorIn.isImportNamespace()
+                    ? m_jsUnitGenerator->stringForIndex(accumulatorIn.importNamespace())
                       + u'.' + propertyName
                     : propertyName, lookupIndex));
 
-    if (!m_state.accumulatorOut().isValid()) {
-        if (m_typeResolver->isPrefix(propertyName)) {
-
-            const QQmlJSRegisterContent accumulatorIn = m_state.accumulatorIn();
-            Q_ASSERT(accumulatorIn.isValid());
-
-            if (!accumulatorIn.containedType()->isReferenceType()) {
-                m_logger->log(u"Cannot use non-QObject type %1 to access prefixed import"_s.arg(
-                                      accumulatorIn.containedType()->internalName()),
-                              qmlPrefixedImportType,
-                              currentSourceLocation());
-                setVarAccumulatorAndError();
-                return;
-            }
-
-            addReadAccumulator();
-            setAccumulator(m_pool->createImportNamespace(
-                        m_jsUnitGenerator->getStringId(propertyName),
-                        m_state.accumulatorIn().containedType(),
-                        QQmlJSRegisterContent::ModulePrefix,
-                        m_state.accumulatorIn()));
-            return;
-        }
-        if (m_state.accumulatorIn().isImportNamespace())
-            m_logger->log(u"Type not found in namespace"_s, qmlUnresolvedType,
-                          currentSourceLocation());
-    }
+    if (!m_state.accumulatorOut().isValid() && handleImportNamespaceLookup(propertyName))
+        return;
 
     if (m_state.accumulatorOut().variant() == QQmlJSRegisterContent::Singleton
-        && m_state.accumulatorIn().variant() == QQmlJSRegisterContent::ModulePrefix
-        && !isQmlScopeObject(m_state.accumulatorIn().scope())) {
+            && accumulatorIn.variant() == QQmlJSRegisterContent::ModulePrefix
+            && !isQmlScopeObject(accumulatorIn.scope())) {
         m_logger->log(
                 u"Cannot access singleton as a property of an object. Did you want to access an attached object?"_s,
                 qmlAccessSingleton, currentSourceLocation());
         setAccumulator(QQmlJSRegisterContent());
     } else if (m_state.accumulatorOut().isEnumeration()) {
-        switch (m_state.accumulatorIn().variant()) {
+        switch (accumulatorIn.variant()) {
         case QQmlJSRegisterContent::MetaType:
         case QQmlJSRegisterContent::Attachment:
         case QQmlJSRegisterContent::Enum:
@@ -876,60 +945,7 @@ void QQmlJSTypePropagator::propagatePropertyLookup(const QString &propertyName, 
     }
 
     if (m_state.instructionHasError || !m_state.accumulatorOut().isValid()) {
-        setVarAccumulatorAndError();
-        if (checkForEnumProblems(m_state.accumulatorIn(), propertyName))
-            return;
-
-        addError(u"Cannot load property %1 from %2."_s
-                         .arg(propertyName, m_state.accumulatorIn().descriptiveName()));
-
-        const QString typeName = m_state.accumulatorIn().containedTypeName();
-
-        if (typeName == u"QVariant")
-            return;
-        if (m_state.accumulatorIn().isList() && propertyName == u"length")
-            return;
-
-        auto baseType = m_state.accumulatorIn().containedType();
-        // Warn separately when a property is only not found because of a missing type
-
-        if (propertyResolution(baseType, propertyName) != PropertyMissing)
-            return;
-
-        if (baseType->isScript())
-            return;
-
-        std::optional<QQmlJSFixSuggestion> fixSuggestion;
-
-        if (auto suggestion = QQmlJSUtils::didYouMean(propertyName, baseType->properties().keys(),
-                                                      currentSourceLocation());
-            suggestion.has_value()) {
-            fixSuggestion = suggestion;
-        }
-
-        if (!fixSuggestion.has_value()
-                && m_state.accumulatorIn().variant() == QQmlJSRegisterContent::MetaType) {
-
-            const QQmlJSScope::ConstPtr scopeType
-                    = m_state.accumulatorIn().scopeType();
-            const auto metaEnums = scopeType->enumerations();
-            const bool enforcesScoped = scopeType->enforcesScopedEnums();
-
-            QStringList enumKeys;
-            for (const QQmlJSMetaEnum &metaEnum : metaEnums) {
-                if (!enforcesScoped || !metaEnum.isScoped())
-                    enumKeys << metaEnum.keys();
-            }
-
-            if (auto suggestion = QQmlJSUtils::didYouMean(
-                        propertyName, enumKeys, currentSourceLocation());
-                suggestion.has_value()) {
-                fixSuggestion = suggestion;
-            }
-        }
-
-        m_logger->log(u"Member \"%1\" not found on type \"%2\""_s.arg(propertyName).arg(typeName),
-                      qmlMissingProperty, currentSourceLocation(), true, true, fixSuggestion);
+        handleLookupError(propertyName);
         return;
     }
 
@@ -941,14 +957,14 @@ void QQmlJSTypePropagator::propagatePropertyLookup(const QString &propertyName, 
     if (m_state.accumulatorOut().isProperty()) {
         const QQmlJSScope::ConstPtr mathObject
                 = m_typeResolver->jsGlobalObject()->property(u"Math"_s).type();
-        if (m_state.accumulatorIn().contains(mathObject)) {
+        if (accumulatorIn.contains(mathObject)) {
             QQmlJSMetaProperty prop;
             prop.setPropertyName(propertyName);
             prop.setTypeName(u"double"_s);
             prop.setType(m_typeResolver->realType());
             setAccumulator(
                 m_pool->createProperty(
-                    prop, m_state.accumulatorIn().resultLookupIndex(), lookupIndex,
+                    prop, accumulatorIn.resultLookupIndex(), lookupIndex,
                     // Use pre-determined scope type here to avoid adjusting it later.
                     QQmlJSRegisterContent::Property, m_state.accumulatorOut().scope())
             );
@@ -958,7 +974,7 @@ void QQmlJSTypePropagator::propagatePropertyLookup(const QString &propertyName, 
 
         if (m_state.accumulatorOut().contains(m_typeResolver->voidType())) {
             addError(u"Type %1 does not have a property %2 for reading"_s
-                             .arg(m_state.accumulatorIn().descriptiveName(), propertyName));
+                             .arg(accumulatorIn.descriptiveName(), propertyName));
             return;
         }
 
@@ -977,7 +993,7 @@ void QQmlJSTypePropagator::propagatePropertyLookup(const QString &propertyName, 
     case QQmlJSRegisterContent::Singleton:
         // For reading enums or singletons, we don't need to access anything, unless it's an
         // import namespace. Then we need the name.
-        if (m_state.accumulatorIn().isImportNamespace())
+        if (accumulatorIn.isImportNamespace())
             addReadAccumulator();
         break;
     default:

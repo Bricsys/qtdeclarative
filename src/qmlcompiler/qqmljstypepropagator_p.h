@@ -279,6 +279,9 @@ private:
                                const QQmlJSScope::ConstPtr &baseType);
     void generate_GetOptionalLookup_SAcheck();
 
+    bool handleImportNamespaceLookup(const QString &propertyName);
+    void handleLookupError(const QString &propertyName);
+
     void addError(const QString &message)
     {
         QQmlJSCompilePass::addError(message);
