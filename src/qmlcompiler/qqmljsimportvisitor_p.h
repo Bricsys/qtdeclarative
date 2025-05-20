@@ -304,8 +304,10 @@ protected:
     bool rootScopeIsValid() const { return m_exportedRootScope->sourceLocation().isValid(); }
 
     enum class BindingExpressionParseResult { Invalid, Script, Literal, Translation };
-    BindingExpressionParseResult parseBindingExpression(const QString &name,
-                                                        const QQmlJS::AST::Statement *statement);
+    enum class BindingForPropertyDefintion { Yes, No };
+    BindingExpressionParseResult parseBindingExpression(
+            const QString &name, const QQmlJS::AST::Statement *statement,
+            const QQmlJS::AST::UiPublicMember *associatedPropertyDefinition = nullptr);
     bool isImportPrefix(QString prefix) const;
 
     // Used to temporarily store annotations for functions and generators wrapped in UiSourceElements
@@ -389,6 +391,8 @@ private:
     void populatePropertyAliases();
     void resolveGroupProperties();
     void handleIdDeclaration(QQmlJS::AST::UiScriptBinding *scriptBinding);
+    virtual void handleLiteralBinding(const QQmlJSMetaPropertyBinding &,
+                                      const QQmlJS::AST::UiPublicMember *);
 
     void visitFunctionExpressionHelper(QQmlJS::AST::FunctionExpression *fexpr);
     void processImportWarnings(

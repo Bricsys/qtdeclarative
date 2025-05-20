@@ -100,6 +100,8 @@ using namespace Qt::StringLiterals;
       QtWarningMsg, false, false)                                                                  \
     X(qmlPlugin, "plugin", "LintPluginWarnings", "Warn if a qmllint plugin finds an issue",        \
       QtWarningMsg, true, false)                                                                   \
+    X(qmlPreferNonVarProperties, "prefer-non-var-properties", "PreferNonVarProperties",            \
+      "Warn about var properties that could use a more specific type", QtWarningMsg, false, false) \
     X(qmlPrefixedImportType, "prefixed-import-type", "PrefixedImportType",                         \
       "Warn about prefixed import types", QtWarningMsg, false, false)                              \
     X(qmlReadOnlyProperty, "read-only-property", "ReadOnlyProperty",                               \

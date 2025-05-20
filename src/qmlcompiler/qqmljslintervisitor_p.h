@@ -92,6 +92,8 @@ private:
     void warnCaseNoFlowControl(QQmlJS::SourceLocation caseToken) const;
     void checkCaseFallthrough(QQmlJS::AST::StatementList *statements, SourceLocation errorLoc,
                               SourceLocation nextLoc);
+    void handleLiteralBinding(const QQmlJSMetaPropertyBinding &binding,
+                              const AST::UiPublicMember *associatedPropertyDefinition) override;
 };
 
 } // namespace QQmlJS

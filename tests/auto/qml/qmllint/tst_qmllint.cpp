@@ -1437,6 +1437,16 @@ void TestQmllint::dirtyQmlSnippet_data()
                        { { "Enum declared outside the root element. It won't be accessible."_L1,
                            1, 40 } } }
             << defaultOptions;
+    QTest::newRow("preferNonVarProperties")
+            << u"readonly property var i: 1     \n"_s
+               u"readonly property var r: 1.0   \n"_s
+               u"readonly property var s: \"s\" \n"_s
+               u"readonly property var b: true  \n"_s
+            << Result{ { { "Prefer more specific type int over var", 1, 1 },
+                         { "Prefer more specific type real or double over var", 2, 1 },
+                         { "Prefer more specific type string over var", 3, 1 },
+                         { "Prefer more specific type bool over var", 4, 1 } } }
+            << defaultOptions;
     QTest::newRow("requiredInInlineComponent")
             << u"Item { component Foo: Item { required property var bla; } } Foo {}"_s
             << Result{ { { "Component is missing required property bla from Foo"_L1, 1, 61 } } }
@@ -1506,6 +1516,12 @@ void TestQmllint::cleanQmlSnippet_data()
             << u"property list<Item> myList; myList: Item {} myList: Item {}"_s << defaultOptions;
     QTest::newRow("enum") << u"enum Hello { World, Kitty, DlroW }"_s << defaultOptions;
     QTest::newRow("lowerCaseId") << u"id: root"_s << defaultOptions;
+    QTest::newRow("preferNonVarProperties_nonReadOnly")
+            << u"property var i: 1     \n"_s
+               u"property var r: 1.0   \n"_s
+               u"property var s: \"s\" \n"_s
+               u"property var b: true  \n"_s
+            << defaultOptions;
     QTest::newRow("requiredInComponent")
             << u"Item { Component { id: comp; required property var bla; Item {} } }"_s
             << defaultOptions;

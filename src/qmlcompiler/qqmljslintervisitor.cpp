@@ -416,6 +416,49 @@ bool LinterVisitor::visit(ExpressionStatement *ast)
     return true;
 }
 
+void LinterVisitor::handleLiteralBinding(const QQmlJSMetaPropertyBinding &binding,
+                                         const UiPublicMember *associatedPropertyDefinition)
+{
+    if (!m_currentScope->hasOwnProperty(binding.propertyName()))
+        return;
+
+    if (!associatedPropertyDefinition->isReadonly())
+        return;
+
+    const auto &prop = m_currentScope->property(binding.propertyName());
+    const auto log = [&](const QString &preferredType) {
+        m_logger->log("Prefer more specific type %1 over var"_L1.arg(preferredType),
+                      qmlPreferNonVarProperties, prop.sourceLocation());
+    };
+
+    if (prop.typeName() != "QVariant"_L1)
+        return;
+
+    switch (binding.bindingType()) {
+    case QQmlSA::BindingType::BoolLiteral: {
+        log("bool"_L1);
+        break;
+    }
+    case QQmlSA::BindingType::NumberLiteral: {
+        double v = binding.numberValue();
+        auto loc = binding.sourceLocation();
+        QStringView literal = QStringView(m_engine->code()).mid(loc.offset, loc.length);
+        if (literal.contains(u'.') || double(int(v)) != v)
+            log("real or double"_L1);
+        else
+            log("int"_L1);
+        break;
+    }
+    case QQmlSA::BindingType::StringLiteral: {
+        log("string"_L1);
+        break;
+    }
+    default: {
+        break;
+    }
+    }
+}
+
 } // namespace QQmlJS
 
 QT_END_NAMESPACE

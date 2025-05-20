@@ -1840,7 +1840,8 @@ bool QQmlJSImportVisitor::visit(UiPublicMember *publicMember)
         // if property is an alias, initialization expression is not a binding
         if (!isAlias) {
             parseResult =
-                    parseBindingExpression(publicMember->name.toString(), publicMember->statement);
+                    parseBindingExpression(publicMember->name.toString(), publicMember->statement,
+                                           publicMember);
         }
 
         // however, if we have a property with a script binding assigned to it,
@@ -2062,8 +2063,9 @@ void handleTranslationBinding(QQmlJSMetaPropertyBinding &binding, QStringView ba
 }
 
 QQmlJSImportVisitor::BindingExpressionParseResult
-QQmlJSImportVisitor::parseBindingExpression(const QString &name,
-                                            const QQmlJS::AST::Statement *statement)
+QQmlJSImportVisitor::parseBindingExpression(
+        const QString &name, const QQmlJS::AST::Statement *statement,
+        const UiPublicMember *associatedPropertyDefinition)
 {
     if (statement == nullptr)
         return BindingExpressionParseResult::Invalid;
@@ -2168,6 +2170,9 @@ QQmlJSImportVisitor::parseBindingExpression(const QString &name,
     if (!QQmlJSMetaPropertyBinding::isLiteralBinding(binding.bindingType()))
         return BindingExpressionParseResult::Script;
 
+    if (associatedPropertyDefinition)
+        handleLiteralBinding(binding, associatedPropertyDefinition);
+
     return BindingExpressionParseResult::Literal;
 }
 
@@ -2229,6 +2234,14 @@ void QQmlJSImportVisitor::handleIdDeclaration(QQmlJS::AST::UiScriptBinding *scri
     }
     if (!name.isEmpty())
         m_scopesById.insert(name, m_currentScope);
+}
+
+void QQmlJSImportVisitor::handleLiteralBinding(const QQmlJSMetaPropertyBinding &binding,
+                                               const UiPublicMember *associatedPropertyDefinition)
+{
+    // stub
+    Q_UNUSED(binding);
+    Q_UNUSED(associatedPropertyDefinition);
 }
 
 /*! \internal
