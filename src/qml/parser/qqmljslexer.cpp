@@ -945,12 +945,12 @@ again:
                 scanChar();
             }
 
-            _tokenLength = _codePtr - _tokenStartPtr - 1;
-
+            const auto token = QStringView(_tokenStartPtr, _codePtr - 1);
+            _tokenLength = token.size();
             int kind = T_IDENTIFIER;
 
             if (!identifierWithEscapeChars)
-                kind = classify(_tokenStartPtr, _tokenLength, parseModeFlags());
+                kind = classify(token, parseModeFlags());
 
             if (_engine) {
                 if (kind == T_IDENTIFIER && identifierWithEscapeChars)

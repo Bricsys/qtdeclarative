@@ -230,7 +230,7 @@ public:
     void setState(const State &state);
 
 protected:
-    static int classify(const QChar *s, int n, int parseModeFlags);
+    static int classify(QStringView s, int parseModeFlags);
 
 private:
     int parseModeFlags() const;
