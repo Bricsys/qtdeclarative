@@ -960,6 +960,10 @@ void TestQmllint::dirtyQmlCode_data()
             << QStringLiteral("inlineComponentNoComponent.qml")
             << Result{ { { "Inline component declaration must be followed by a typename"_L1,
                            3, 2 } } };
+    QTest::newRow("inlineComponentSearchInfiniteLoop")
+            << QStringLiteral("InlineComponentSearchInfiniteLoop_Main.qml")
+            << Result{ { { "InlineComponentSearchInfiniteLoop_Other.a was not found. "
+                           "Did you add all imports and dependencies?"_L1, 5, 5 } } };
     QTest::newRow("invalidAliasTarget1")
             << QStringLiteral("invalidAliasTarget.qml")
             << Result{ { { "Invalid alias expression - an initalizer is needed."_L1, 6, 18 } } };
