@@ -717,6 +717,9 @@ void ColorValidatorPass::onBinding(const QQmlSA::Element &element, const QString
     if (std::binary_search(m_colorNames.cbegin(), m_colorNames.cend(), colorName))
         return;
 
+    if (colorName == u"transparent")
+        return;
+
     auto suggestion = QQmlJSUtils::didYouMean(
             colorName, m_colorNames,
             QQmlSA::SourceLocationPrivate::sourceLocation(binding.sourceLocation()));

@@ -1531,6 +1531,7 @@ void TestQmllint::cleanQmlSnippet_data()
     QTest::newRow("color-name") << u"property color myColor: \"blue\""_s << defaultOptions;
     QTest::newRow("color-name2") << u"property color myColor\nmyColor: \"grEen\""_s
                                  << defaultOptions;
+    QTest::newRow("color-transparent") << u"property color myColor: \"transparent\""_s << defaultOptions;
     {
         CallQmllintOptions options;
         options.rootUrls.append(testFile("ContextProperties/src"_L1));
