@@ -16,6 +16,7 @@
 //
 
 #include <QtCore/qobject.h>
+#include <QtCore/qhash.h>
 #include <QtQml/qqmllist.h>
 #include <QtQuick/qquickitem.h>
 #include <QtQuickVectorImageHelpers/qtquickvectorimagehelpersexports.h>
