@@ -1971,6 +1971,7 @@ void TestQmllint::cleanQmlCode_data()
     QTest::newRow("requiredPropertyInGroupedPropertyScope") << QStringLiteral("requiredPropertyInGroupedPropertyScope.qml");
     QTest::newRow("requiredWithRootLevelAlias") << QStringLiteral("RequiredWithRootLevelAlias.qml");
     QTest::newRow("required_property_in_Component") << QStringLiteral("requiredPropertyInComponent.qml");
+    QTest::newRow("retrieveFunction") << QStringLiteral("retrieveFunction.qml");
     QTest::newRow("scopedAndUnscopedEnums") << QStringLiteral("enumValid.qml");
     QTest::newRow("segFault") << QStringLiteral("SegFault.qml");
     QTest::newRow("setRequiredTroughAlias") << QStringLiteral("setRequiredPropertyThroughAlias.qml");
