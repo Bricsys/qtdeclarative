@@ -1160,6 +1160,10 @@ expression: \${expr} \${expr} \\\${expr} \\\${expr}`)"_L1, 16, 27 } },
                          { uR"("D" was not found for the type of parameter "d" in method "i".)"_s, 7, 17 },
                          { uR"("G" was not found for the type of parameter "g" in method "i".)"_s, 7, 26 },
                          }};
+
+    QTest::newRow("jsdeclInQmlScope")
+            << QStringLiteral("jsdeclInQmlScope.qml")
+            << Result{ { { "JavaScript declarations are not allowed in QML elements"_L1 , 4, 13 } } };
 }
 
 void TestQmllint::dirtyQmlCode()
