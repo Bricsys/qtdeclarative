@@ -49,7 +49,7 @@ QQmlThread::QQmlThread() : d(new QQmlThreadPrivate(this)) {}
 QQmlThread::~QQmlThread() { delete d; }
 
 void QQmlThread::startup() {}
-void QQmlThread::shutdown() { discardMessages(); }
+void QQmlThread::shutdown() {}
 
 void QQmlThread::lock() {}
 void QQmlThread::unlock() {}

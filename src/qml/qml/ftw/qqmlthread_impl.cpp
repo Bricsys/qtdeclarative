@@ -196,10 +196,6 @@ void QQmlThread::shutdown()
     d->unlock();
     d->QThread::wait();
 
-    // Discard all remaining messages.
-    // We don't need the lock anymore because the thread is dead.
-    discardMessages();
-
     d->m_shutdown = false;
 }
 

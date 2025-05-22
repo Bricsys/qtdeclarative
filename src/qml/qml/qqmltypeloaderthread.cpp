@@ -14,13 +14,16 @@ QT_BEGIN_NAMESPACE
 QQmlTypeLoaderThread::QQmlTypeLoaderThread(QQmlTypeLoader *loader)
     : m_loader(loader)
 {
-    // Do that after initializing all the members.
-    startup();
 }
 
 QQmlTypeLoaderThread::~QQmlTypeLoaderThread()
 {
-    shutdown();
+    // The thread has to be shutdown() first.
+    Q_ASSERT(!thread()->isRunning());
+
+    // Discard all remaining messages.
+    // We don't need the lock anymore because the thread is dead.
+    discardMessages();
 }
 
 #if QT_CONFIG(qml_network)

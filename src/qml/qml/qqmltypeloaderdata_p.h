@@ -156,14 +156,19 @@ public:
     {
         Q_ASSERT(m_engine->thread()->isCurrentThread());
         m_thread = new QQmlTypeLoaderThread(loader);
+        m_thread->startup();
     }
 
     void deleteThread()
     {
         Q_ASSERT(m_engine->thread()->isCurrentThread());
         Q_ASSERT(m_thread);
-        delete m_thread;
-        m_thread = nullptr;
+
+        // Shut it down first, then set it to nullptr, then delete it.
+        // This makes sure that any blobs deleted as part of the deletion
+        // do not see the thread anymore.
+        m_thread->shutdown();
+        delete std::exchange(m_thread, nullptr);
     }
 
     QQmlEngine *engine() const
