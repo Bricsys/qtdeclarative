@@ -604,6 +604,8 @@ void QQmlCodeModel::addFileWatches(const DomItem &qmlFile)
 {
     const auto filesToWatch = fileNamesToWatch(qmlFile);
     const QStringList filepathsToWatch = findFilePathsFromFileNames(filesToWatch);
+    if (filepathsToWatch.isEmpty())
+        return;
     const auto unwatchedPaths = m_cppFileWatcher.addPaths(filepathsToWatch);
     if (!unwatchedPaths.isEmpty()) {
         qCDebug(codeModelLog) << "Cannot watch paths" << unwatchedPaths << "from requested"
