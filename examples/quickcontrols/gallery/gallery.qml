@@ -143,6 +143,8 @@ ApplicationWindow {
                 ListElement { title: qsTr("Delegates"); source: "qrc:/pages/DelegatePage.qml" }
                 ListElement { title: qsTr("Frame"); source: "qrc:/pages/FramePage.qml" }
                 ListElement { title: qsTr("GroupBox"); source: "qrc:/pages/GroupBoxPage.qml" }
+                ListElement { title: qsTr("MenuBar"); source: "qrc:/pages/MenuBarPage.qml" }
+                ListElement { title: qsTr("MonthGrid"); source: "qrc:/pages/MonthGridPage.qml" }
                 ListElement { title: qsTr("PageIndicator"); source: "qrc:/pages/PageIndicatorPage.qml" }
                 ListElement { title: qsTr("ProgressBar"); source: "qrc:/pages/ProgressBarPage.qml" }
                 ListElement { title: qsTr("RadioButton"); source: "qrc:/pages/RadioButtonPage.qml" }
@@ -152,13 +154,17 @@ ApplicationWindow {
                 ListElement { title: qsTr("SearchField"); source: "qrc:/pages/SearchFieldPage.qml" }
                 ListElement { title: qsTr("Slider"); source: "qrc:/pages/SliderPage.qml" }
                 ListElement { title: qsTr("SpinBox"); source: "qrc:/pages/SpinBoxPage.qml" }
+                ListElement { title: qsTr("SplitView"); source: "qrc:/pages/SplitViewPage.qml" }
                 ListElement { title: qsTr("StackView"); source: "qrc:/pages/StackViewPage.qml" }
                 ListElement { title: qsTr("SwipeView"); source: "qrc:/pages/SwipeViewPage.qml" }
                 ListElement { title: qsTr("Switch"); source: "qrc:/pages/SwitchPage.qml" }
                 ListElement { title: qsTr("TabBar"); source: "qrc:/pages/TabBarPage.qml" }
+                ListElement { title: qsTr("TableView"); source: "qrc:/pages/TableViewPage.qml" }
                 ListElement { title: qsTr("TextArea"); source: "qrc:/pages/TextAreaPage.qml" }
                 ListElement { title: qsTr("TextField"); source: "qrc:/pages/TextFieldPage.qml" }
+                ListElement { title: qsTr("ToolBar"); source: "qrc:/pages/ToolBarPage.qml" }
                 ListElement { title: qsTr("ToolTip"); source: "qrc:/pages/ToolTipPage.qml" }
+                ListElement { title: qsTr("TreeView"); source: "qrc:/pages/TreeViewPage.qml" }
                 ListElement { title: qsTr("Tumbler"); source: "qrc:/pages/TumblerPage.qml" }
             }
 

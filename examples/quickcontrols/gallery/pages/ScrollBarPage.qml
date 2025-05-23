@@ -19,6 +19,12 @@ Flickable {
             spacing: 40
             width: parent.width
 
+            CheckBox {
+                id: alwaysOnCheckBox
+                width: parent.width
+                text: qsTr("Always on")
+            }
+
             Label {
                 width: parent.width
                 wrapMode: Label.Wrap
@@ -36,5 +42,7 @@ Flickable {
         }
     }
 
-    ScrollBar.vertical: ScrollBar { }
+    ScrollBar.vertical: ScrollBar {
+        policy: alwaysOnCheckBox.checked ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
+    }
 }
