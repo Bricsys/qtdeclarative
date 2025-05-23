@@ -39,46 +39,50 @@ void QQuickBasicTheme::initialize(QQuickTheme *theme)
     const QRgb disabledWindowText(isDarkSystemTheme ? 0xFF3F4040 : 0xFFBDBEBF);
     const QRgb placeholderText(isDarkSystemTheme ? 0x88C8C9CB : 0x88353637);
 
-    systemPalette.setColor(QPalette::Base, base);
-    systemPalette.setColor(QPalette::Disabled, QPalette::Base, disabledBase);
+    systemPalette.setColor(QPalette::Base, QColor::fromRgba(base));
+    systemPalette.setColor(QPalette::Disabled, QPalette::Base, QColor::fromRgba(disabledBase));
 
-    systemPalette.setColor(QPalette::Button, button);
+    systemPalette.setColor(QPalette::Button, QColor::fromRgba(button));
 
-    systemPalette.setColor(QPalette::ButtonText, buttonText);
-    systemPalette.setColor(QPalette::Disabled, QPalette::ButtonText, disabledButtonText);
+    systemPalette.setColor(QPalette::ButtonText, QColor::fromRgba(buttonText));
+    systemPalette.setColor(QPalette::Disabled, QPalette::ButtonText,
+                           QColor::fromRgba(disabledButtonText));
 
-    systemPalette.setColor(QPalette::BrightText, brightText);
-    systemPalette.setColor(QPalette::Disabled, QPalette::BrightText, disabledBrightText);
+    systemPalette.setColor(QPalette::BrightText, QColor::fromRgba(brightText));
+    systemPalette.setColor(QPalette::Disabled, QPalette::BrightText,
+                           QColor::fromRgba(disabledBrightText));
 
-    systemPalette.setColor(QPalette::Dark, dark);
+    systemPalette.setColor(QPalette::Dark, QColor::fromRgba(dark));
 
-    systemPalette.setColor(QPalette::Highlight, highlight);
-    systemPalette.setColor(QPalette::Disabled, QPalette::Highlight, disabledHighlight);
+    systemPalette.setColor(QPalette::Highlight, QColor::fromRgba(highlight));
+    systemPalette.setColor(QPalette::Disabled, QPalette::Highlight,
+                           QColor::fromRgba(disabledHighlight));
 
-    systemPalette.setColor(QPalette::HighlightedText, highlightedText);
+    systemPalette.setColor(QPalette::HighlightedText, QColor::fromRgba(highlightedText));
 
-    systemPalette.setColor(QPalette::Light, light);
+    systemPalette.setColor(QPalette::Light, QColor::fromRgba(light));
 
-    systemPalette.setColor(QPalette::Link, link);
+    systemPalette.setColor(QPalette::Link, QColor::fromRgba(link));
 
-    systemPalette.setColor(QPalette::Mid, mid);
+    systemPalette.setColor(QPalette::Mid, QColor::fromRgba(mid));
 
-    systemPalette.setColor(QPalette::Midlight, midlight);
+    systemPalette.setColor(QPalette::Midlight, QColor::fromRgba(midlight));
 
-    systemPalette.setColor(QPalette::Text, text);
-    systemPalette.setColor(QPalette::Disabled, QPalette::Text, disabledText);
+    systemPalette.setColor(QPalette::Text, QColor::fromRgba(text));
+    systemPalette.setColor(QPalette::Disabled, QPalette::Text, QColor::fromRgba(disabledText));
 
-    systemPalette.setColor(QPalette::Shadow, shadow);
+    systemPalette.setColor(QPalette::Shadow, QColor::fromRgba(shadow));
 
-    systemPalette.setColor(QPalette::ToolTipBase, toolTipBase);
-    systemPalette.setColor(QPalette::ToolTipText, toolTipText);
+    systemPalette.setColor(QPalette::ToolTipBase, QColor::fromRgba(toolTipBase));
+    systemPalette.setColor(QPalette::ToolTipText, QColor::fromRgba(toolTipText));
 
-    systemPalette.setColor(QPalette::Window, window);
+    systemPalette.setColor(QPalette::Window, QColor::fromRgba(window));
 
-    systemPalette.setColor(QPalette::WindowText, windowText);
-    systemPalette.setColor(QPalette::Disabled, QPalette::WindowText, disabledWindowText);
+    systemPalette.setColor(QPalette::WindowText, QColor::fromRgba(windowText));
+    systemPalette.setColor(QPalette::Disabled, QPalette::WindowText,
+                           QColor::fromRgba(disabledWindowText));
 
-    systemPalette.setColor(QPalette::PlaceholderText, placeholderText);
+    systemPalette.setColor(QPalette::PlaceholderText, QColor::fromRgba(placeholderText));
 
     theme->setPalette(QQuickTheme::System, systemPalette);
 }
