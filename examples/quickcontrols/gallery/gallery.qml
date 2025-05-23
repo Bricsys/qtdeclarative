@@ -240,6 +240,7 @@ ApplicationWindow {
         standardButtons: Dialog.Ok | Dialog.Cancel
         onAccepted: {
             settings.style = styleBox.displayText
+            GalleryConfig.disabled = disableControlsCheckBox.checked
             settingsDialog.close()
         }
         onRejected: {
@@ -314,6 +315,13 @@ ApplicationWindow {
                 id: orientationCheckBox
                 text: qsTr("Enable Landscape")
                 checked: false
+                Layout.fillWidth: true
+            }
+
+            CheckBox {
+                id: disableControlsCheckBox
+                checked: GalleryConfig.disabled
+                text: qsTr("Disable Controls")
                 Layout.fillWidth: true
             }
 

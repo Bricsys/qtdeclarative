@@ -26,17 +26,14 @@ ScrollablePage {
 
             Button {
                 text: qsTr("First")
+                enabled: !GalleryConfig.disabled
                 Layout.fillWidth: true
             }
             Button {
                 id: button
                 text: qsTr("Second")
+                enabled: !GalleryConfig.disabled
                 highlighted: true
-                Layout.fillWidth: true
-            }
-            Button {
-                text: qsTr("Third")
-                enabled: false
                 Layout.fillWidth: true
             }
         }

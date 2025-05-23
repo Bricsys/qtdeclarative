@@ -12,6 +12,8 @@ qt_add_executable(galleryexample WIN32 MACOSX_BUNDLE
     gallery.cpp
 )
 
+set_source_files_properties(pages/GalleryConfig.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+
 qt_add_qml_module(galleryexample
     URI gallery
     NO_RESOURCE_TARGET_PATH
@@ -28,6 +30,7 @@ qt_add_qml_module(galleryexample
         "pages/DialPage.qml"
         "pages/DialogPage.qml"
         "pages/FramePage.qml"
+        "pages/GalleryConfig.qml"
         "pages/GroupBoxPage.qml"
         "pages/PageIndicatorPage.qml"
         "pages/ProgressBarPage.qml"
