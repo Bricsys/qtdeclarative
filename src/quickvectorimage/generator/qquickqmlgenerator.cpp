@@ -290,11 +290,13 @@ void QQuickQmlGenerator::generateGradient(const QGradient *grad)
 
 void QQuickQmlGenerator::generateAnimationBindings()
 {
-    stream() << "loops: " << m_topLevelIdString << ".animations.loops";
-    stream() << "paused: " << m_topLevelIdString << ".animations.paused";
-    stream() << "running: true";
+    QString prefix;
+    if (Q_UNLIKELY(!isRuntimeGenerator()))
+        prefix = QStringLiteral(".animations");
 
-    stream() << "property bool wasRunning: false";
+    stream() << "loops: " << m_topLevelIdString << prefix << ".loops";
+    stream() << "paused: " << m_topLevelIdString << prefix << ".paused";
+    stream() << "running: true";
 
     // We need to reset the animation when the loop count changes
     stream() << "onLoopsChanged: { if (running) { restart() } }";
@@ -314,7 +316,11 @@ void QQuickQmlGenerator::generatePropertyAnimation(const QQuickAnimatedProperty 
                               + QStringLiteral("_animation");
     mainAnimationId.replace(QLatin1Char('.'), QLatin1Char('_'));
 
-    stream() << "Connections { target: " << m_topLevelIdString << ".animations; function onRestart() {" << mainAnimationId << ".restart() } }";
+    QString prefix;
+    if (Q_UNLIKELY(!isRuntimeGenerator()))
+        prefix = QStringLiteral(".animations");
+
+    stream() << "Connections { target: " << m_topLevelIdString << prefix << "; function onRestart() {" << mainAnimationId << ".restart() } }";
 
     stream() << "ParallelAnimation {";
     m_indentLevel++;
@@ -722,7 +728,11 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
 
     const QString mainAnimationId = targetName
                                     + QStringLiteral("_transform_animation");
-    stream() << "Connections { target: " << m_topLevelIdString << ".animations; function onRestart() {" << mainAnimationId << ".restart() } }";
+
+    QString prefix;
+    if (Q_UNLIKELY(!isRuntimeGenerator()))
+        prefix = QStringLiteral(".animations");
+    stream() << "Connections { target: " << m_topLevelIdString << prefix << "; function onRestart() {" << mainAnimationId << ".restart() } }";
 
     stream() << "ParallelAnimation {";
     m_indentLevel++;
@@ -1030,18 +1040,21 @@ bool QQuickQmlGenerator::generateRootNode(const StructureNodeInfo &info)
         if (h > 0)
             stream() << "implicitHeight: " << h;
 
-        stream() << "component AnimationsInfo : QtObject";
-        stream() << "{";
-        m_indentLevel++;
+        if (Q_UNLIKELY(!isRuntimeGenerator())) {
+            stream() << "component AnimationsInfo : QtObject";
+            stream() << "{";
+            m_indentLevel++;
+        }
 
         stream() << "property bool paused: false";
         stream() << "property int loops: 1";
         stream() << "signal restart()";
 
-        m_indentLevel--;
-        stream() << "}";
-
-        stream() << "property AnimationsInfo animations : AnimationsInfo {}";
+        if (Q_UNLIKELY(!isRuntimeGenerator())) {
+            m_indentLevel--;
+            stream() << "}";
+            stream() << "property AnimationsInfo animations : AnimationsInfo {}";
+        }
 
         if (!info.viewBox.isEmpty()) {
             stream() << "transform: [";

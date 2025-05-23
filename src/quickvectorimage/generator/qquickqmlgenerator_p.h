@@ -89,6 +89,11 @@ public:
         return m_extraImports;
     }
 
+    bool isRuntimeGenerator() const
+    {
+        return !m_urlPrefix.isEmpty();
+    }
+
 protected:
     QString generateNodeBase(const NodeInfo &info) override;
     bool generateDefsNode(const NodeInfo &info) override;

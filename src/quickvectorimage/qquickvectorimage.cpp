@@ -197,12 +197,9 @@ void QQuickVectorImage::updateAnimationProperties()
         return;
 
     QQuickItem *childItem = d->svgItem->childItems().first();
-    if (Q_UNLIKELY(d->animations != nullptr)) {
-        QObject *animationsInfo = childItem->property("animations").value<QObject*>();
-        if (Q_UNLIKELY(animationsInfo != nullptr)) {
-            animationsInfo->setProperty("loops", d->animations->loops());
-            animationsInfo->setProperty("paused", d->animations->paused());
-        }
+    if (Q_LIKELY(d->animations != nullptr)) {
+        childItem->setProperty("loops", d->animations->loops());
+        childItem->setProperty("paused", d->animations->paused());
     }
 }
 
@@ -371,14 +368,7 @@ void QQuickVectorImageAnimations::restart()
         return;
 
     QQuickItem *childItem = d->svgItem->childItems().first();
-    QObject *animationsInfo = childItem->property("animations").value<QObject*>();
-
-    if (Q_UNLIKELY(animationsInfo == nullptr)) {
-        qCWarning(lcQuickVectorImage) << Q_FUNC_INFO << "Item does not have animations property";
-        return;
-    }
-
-    QMetaObject::invokeMethod(animationsInfo, "restart");
+    QMetaObject::invokeMethod(childItem, "restart");
 }
 
 QT_END_NAMESPACE
