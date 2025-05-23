@@ -79,6 +79,16 @@ public:
         return m_urlPrefix;
     }
 
+    void addExtraImport(const QString &import)
+    {
+        m_extraImports.append(import);
+    }
+
+    QStringList extraImports() const
+    {
+        return m_extraImports;
+    }
+
 protected:
     QString generateNodeBase(const NodeInfo &info) override;
     bool generateDefsNode(const NodeInfo &info) override;
@@ -128,6 +138,7 @@ private:
     QString m_assetFilePrefix;
     QString m_urlPrefix;
     QString m_topLevelIdString;
+    QStringList m_extraImports;
 };
 
 QT_END_NAMESPACE

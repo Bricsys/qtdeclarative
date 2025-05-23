@@ -1016,8 +1016,11 @@ bool QQuickQmlGenerator::generateRootNode(const StructureNodeInfo &info)
         stream() << "import QtQuick";
         stream() << "import QtQuick.VectorImage";
         stream() << "import QtQuick.VectorImage.Helpers";
-        stream() << "import QtQuick.Shapes" << Qt::endl;
-        stream() << "Item {";
+        stream() << "import QtQuick.Shapes";
+        for (const auto &import : std::as_const(m_extraImports))
+            stream() << "import " << import;
+
+        stream() << Qt::endl << "Item {";
         m_indentLevel++;
 
         double w = info.size.width();
