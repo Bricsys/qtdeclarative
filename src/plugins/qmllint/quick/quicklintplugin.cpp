@@ -19,6 +19,7 @@ static constexpr QQmlSA::LoggerWarningId quickPropertyChangesParsed { "Quick.pro
 static constexpr QQmlSA::LoggerWarningId quickControlsAttachedPropertyReuse { "Quick.controls-attached-property-reuse" };
 static constexpr QQmlSA::LoggerWarningId quickAttachedPropertyReuse { "Quick.attached-property-reuse" };
 static constexpr QQmlSA::LoggerWarningId quickColor { "Quick.color" };
+static constexpr QQmlSA::LoggerWarningId quickStateNoChildItem { "Quick.state-no-child-item" };
 
 ForbiddenChildrenPropertyValidatorPass::ForbiddenChildrenPropertyValidatorPass(
         QQmlSA::PassManager *manager)
@@ -824,6 +825,7 @@ void QmlLintQuickPlugin::registerPasses(QQmlSA::PassManager *manager,
     if (hasQuick) {
         manager->registerElementPass(std::make_unique<AnchorsValidatorPass>(manager));
         manager->registerElementPass(std::make_unique<PropertyChangesValidatorPass>(manager));
+        manager->registerElementPass(std::make_unique<StateNoItemChildrenValidator>(manager));
         manager->registerPropertyPass(std::make_unique<QQuickLiteralBindingCheck>(manager),
                                       QAnyStringView(), QAnyStringView());
         manager->registerPropertyPass(std::make_unique<ColorValidatorPass>(manager),
@@ -1008,6 +1010,40 @@ void PropertyChangesValidatorPass::run(const QQmlSA::Element &element)
         emitWarning("You should remove any bindings on the \"target\" property and avoid "
                     "custom-parsed bindings in PropertyChanges.",
                     quickPropertyChangesParsed, targetLocation);
+    }
+}
+
+StateNoItemChildrenValidator::StateNoItemChildrenValidator(QQmlSA::PassManager *manager)
+    : QQmlSA::ElementPass(manager)
+    , m_state(resolveType("QtQuick", "State"))
+    , m_anchorChanges(resolveType("QtQuick", "AnchorChanges"))
+    , m_parentChanges(resolveType("QtQuick", "ParentChange"))
+    , m_propertyChanges(resolveType("QtQuick", "PropertyChanges"))
+    , m_stateChangeScript(resolveType("QtQuick", "StateChangeScript"))
+{}
+
+bool StateNoItemChildrenValidator::shouldRun(const QQmlSA::Element &element)
+{
+    return element.inherits(m_state);
+}
+
+void StateNoItemChildrenValidator::run(const QQmlSA::Element &element)
+{
+    const auto &childScopes = QQmlJSScope::scope(element)->childScopes();
+    for (const auto &child : childScopes) {
+        if (child->scopeType() != QQmlSA::ScopeType::QMLScope)
+            continue;
+
+        if (child->inherits(QQmlJSScope::scope(m_anchorChanges))
+            || child->inherits(QQmlJSScope::scope(m_parentChanges))
+            || child->inherits(QQmlJSScope::scope(m_propertyChanges))
+            || child->inherits(QQmlJSScope::scope(m_stateChangeScript))) {
+            continue;
+        }
+        QString msg = "A State cannot have a child item of type %1"_L1.arg(child->baseTypeName());
+        auto loc = QQmlSA::SourceLocationPrivate::createQQmlSASourceLocation(
+                child->sourceLocation());
+        emitWarning(msg, quickStateNoChildItem, loc);
     }
 }
 
