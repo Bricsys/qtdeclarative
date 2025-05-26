@@ -1052,8 +1052,9 @@ void QQmlTypeData::resolveTypes()
         }
         if (ref.type.isInlineComponentType()) {
             QUrl containingTypeUrl = ref.type.sourceUrl();
-            containingTypeUrl.setFragment(QString());
-            if (!containingTypeUrl.isEmpty()) {
+            if (!containingTypeUrl.isEmpty()
+                    && !QQmlMetaType::equalBaseUrls(finalUrl(), containingTypeUrl)) {
+                containingTypeUrl.setFragment(QString());
                 auto typeData = typeLoader()->getType(containingTypeUrl);
                 if (typeData.data() != this) {
                     ref.typeData = typeData;
