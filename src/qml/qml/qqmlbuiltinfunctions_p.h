@@ -158,6 +158,10 @@ public:
     Q_INVOKABLE QJSValue binding(const QJSValue &function) const;
     Q_INVOKABLE void callLater(QQmlV4FunctionPtr args);
 
+    Q_INVOKABLE QVariant enumStringToValue(QJSValue enumType, QJSValue value);
+    Q_INVOKABLE QVariant enumValueToString(QJSValue enumType, QJSValue value);
+    Q_INVOKABLE QVariant enumValueToStrings(QJSValue enumType, QJSValue value);
+
 #if QT_CONFIG(translation)
     QString uiLanguage() const;
     void setUiLanguage(const QString &uiLanguage);

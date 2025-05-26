@@ -884,7 +884,7 @@ ReturnedValue QQmlEnumWrapper::virtualGet(const Managed *m, PropertyKey id, cons
     if (ok)
         return QV4::Value::fromInt32(value).asReturnedValue();
 
-    return Encode::undefined();
+    return Object::virtualGet(m, id, receiver, hasProperty);
 }
 
 QT_END_NAMESPACE

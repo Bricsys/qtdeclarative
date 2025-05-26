@@ -522,6 +522,9 @@ private slots:
     void urlWithFragment();
 
     void enumScoping();
+    void enumStringToValue();
+    void enumValueToString();
+    void enumValueToStrings();
 
 private:
     QQmlEngine engine;
@@ -9823,6 +9826,128 @@ void tst_qqmllanguage::enumScoping()
 
     QCOMPARE(o->property("nsUnscopedAsScoped").toInt(), 1);
     QCOMPARE(o->property("nsUnscopedAsUnscoped").toInt(), 1);
+}
+
+void tst_qqmllanguage::enumStringToValue()
+{
+    QQmlEngine engine;
+    QUrl url(testFileUrl("EnumStringToValue.qml"));
+    QQmlComponent c(&engine, url);
+
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+
+    // QML
+    QCOMPARE(o->property("p1").toInt(), 1);
+    // CppEnum
+    QCOMPARE(o->property("p2").toInt(), (int)CppEnum::Scoped::S2);
+    QCOMPARE(o->property("p3").toInt(), (int)CppEnum::Unscoped::U2);
+    // EnumNamespace
+    QCOMPARE(o->property("p4").toInt(), (int)EnumNamespace::Scoped::S2);
+    QCOMPARE(o->property("p5").toInt(), (int)EnumNamespace::Unscoped::U2);
+
+
+    // Invalid arg
+    QCOMPARE(o->property("p7"), QVariant());
+    QCOMPARE(o->property("p8"), QVariant());
+
+    // Conflicts
+    QCOMPARE(o->property("p9").toInt(), (int)ConflictingEnums::E1::A);
+    QCOMPARE(o->property("p10").toInt(), (int)ConflictingEnums::E2::A);
+}
+
+void tst_qqmllanguage::enumValueToString()
+{
+    QQmlEngine engine;
+    QUrl url(testFileUrl("EnumValueToString.qml"));
+    QQmlComponent c(&engine, url);
+
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+
+    // QML
+    QCOMPARE(o->property("p1").toString(), "B");
+    QCOMPARE(o->property("p2").toString(), "B");
+
+    // CppEnum
+    QCOMPARE(o->property("p3").toString(), "S2");
+    QCOMPARE(o->property("p4").toString(), "S2");
+
+    QCOMPARE(o->property("p5").toString(), "U2");
+    QCOMPARE(o->property("p6").toString(), "U2");
+
+    // EnumNamespace
+    QCOMPARE(o->property("p7").toString(), "S2");
+    QCOMPARE(o->property("p8").toString(), "S2");
+
+    QCOMPARE(o->property("p9").toString(), "U2");
+    QCOMPARE(o->property("p10").toString(), "U2");
+
+
+    // Invalid arg
+    QCOMPARE(o->property("p11"), QVariant());
+    QCOMPARE(o->property("p12"), QVariant());
+    QCOMPARE(o->property("p13"), QVariant());
+
+    // Conflicts
+    QCOMPARE(o->property("p14"), QVariant("A"));
+    QCOMPARE(o->property("p15"), QVariant());
+}
+
+void tst_qqmllanguage::enumValueToStrings()
+{
+    QQmlEngine engine;
+    QUrl url(testFileUrl("EnumValueToStrings.qml"));
+    QQmlComponent c(&engine, url);
+
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
+
+    // QML
+    QList l({ QVariant("A") });
+    QCOMPARE(o->property("p1").toList(), l);
+
+    l = QList({ QVariant("B"), QVariant("C") });
+    QCOMPARE(o->property("p2").toList(), l);
+
+    // CppEnum
+    l = QList({ QVariant("S1") });
+    QCOMPARE(o->property("p3").toList(), l);
+
+    l = QList({ QVariant("S3"), QVariant("S4") });
+    QCOMPARE(o->property("p4").toList(), l);
+
+    l = QList({ QVariant("U1") });
+    QCOMPARE(o->property("p5").toList(), l);
+
+    l = QList({ QVariant("U3"), QVariant("U4") });
+    QCOMPARE(o->property("p6").toList(), l);
+
+    // EnumNamespace
+    l = QList({ QVariant("S1") });
+    QCOMPARE(o->property("p7").toList(), l);
+
+    l = QList({ QVariant("S3"), QVariant("S4") });
+    QCOMPARE(o->property("p8").toList(), l);
+
+    l = QList({ QVariant("U1") });
+    QCOMPARE(o->property("p9").toList(), l);
+
+    l = QList({ QVariant("U3"), QVariant("U4") });
+    QCOMPARE(o->property("p10").toList(), l);
+
+
+    // Invalid arg
+    QCOMPARE(o->property("p11"), QVariant());
+    QCOMPARE(o->property("p12"), QVariant());
+
+    // Conflicts
+    l = QList({ QVariant("A") });
+    QCOMPARE(o->property("p13").toList(), l);
+    QCOMPARE(o->property("p14"), QVariant());
 }
 
 QTEST_MAIN(tst_qqmllanguage)

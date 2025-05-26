@@ -157,9 +157,16 @@ public:
     int scopedEnumValue(QQmlTypeLoader *typeLoader, int index, const QV4::String *, bool *ok) const;
     int scopedEnumValue(QQmlTypeLoader *typeLoader, int index, const QString &, bool *ok) const;
     int scopedEnumValue(QQmlTypeLoader *typeLoader, const QHashedStringRef &, const QHashedStringRef &, bool *ok) const;
+
     int unscopedEnumValue(QQmlTypeLoader *typeLoader, int index, const QV4::String *, bool *ok) const;
     int unscopedEnumValue(QQmlTypeLoader *typeLoader, int index, const QString &, bool *ok) const;
     int unscopedEnumValue(QQmlTypeLoader *typeLoader, const QHashedStringRef &, const QHashedStringRef &, bool *ok) const;
+
+    QString scopedEnumKey(QQmlTypeLoader *typeLoader, int index, int value, bool *ok) const;
+    QStringList scopedEnumKeys(QQmlTypeLoader *typeLoader, int index, int value, bool *ok) const;
+
+    QString unscopedEnumKey(QQmlTypeLoader *typeLoader, int index, int value, bool *ok) const;
+    QStringList unscopedEnumKeys(QQmlTypeLoader *typeLoader, int index, int value, bool *ok) const;
 
     const QQmlTypePrivate *priv() const { return d.data(); }
     static void refHandle(const QQmlTypePrivate *priv);

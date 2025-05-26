@@ -859,6 +859,32 @@ int QQmlType::unscopedEnumValue(QQmlTypeLoader *typeLoader, const QHashedStringR
             d, typeLoader, scopedEnumName, name, ok);
 }
 
+QString QQmlType::scopedEnumKey(QQmlTypeLoader *typeLoader, int index, int value, bool *ok) const
+{
+    return QQmlTypePrivate::enumKey<QQmlTypePrivate::Enums::Scoped>(
+            d, typeLoader, index, value, ok);
+}
+
+QStringList QQmlType::scopedEnumKeys(QQmlTypeLoader *typeLoader, int index, int value, bool *ok) const
+{
+    return QQmlTypePrivate::enumKeys<QQmlTypePrivate::Enums::Scoped>(
+            d, typeLoader, index, value, ok);
+}
+
+QString QQmlType::unscopedEnumKey(QQmlTypeLoader *typeLoader, int index, int value, bool *ok) const
+{
+    return QQmlTypePrivate::enumKey<QQmlTypePrivate::Enums::Unscoped>(
+            d, typeLoader, index, value, ok);
+}
+
+QStringList QQmlType::unscopedEnumKeys(QQmlTypeLoader *typeLoader, int index, int value,
+                                       bool *ok) const
+{
+    return QQmlTypePrivate::enumKeys<QQmlTypePrivate::Enums::Unscoped>(
+            d, typeLoader, index, value, ok);
+}
+
+
 void QQmlType::refHandle(const QQmlTypePrivate *priv)
 {
     if (priv)

@@ -1717,6 +1717,104 @@ void QtObject::callLater(QQmlV4FunctionPtr args)
     m_engine->delayedCallQueue()->addUniquelyAndExecuteLater(m_engine, args);
 }
 
+/*!
+    \qmlmethod Qt::enumStringToValue(enumType, keyName)
+
+    Returns the numeric value of key \a keyName in enum \a enumType. If the
+    enum could not be found or if the key is not an entry of the enum,
+    \c undefined is returned instead.
+ */
+QVariant QtObject::enumStringToValue(QJSValue enumType, QJSValue string)
+{
+    if (!enumType.isObject() || !string.isString())
+        return QVariant();
+
+    const auto *enumWrapper = QJSValuePrivate::takeManagedValue(&enumType)->as<QQmlEnumWrapper>();
+    if (!enumWrapper)
+        return QVariant();
+
+    bool ok = false;
+    QQmlType type = enumWrapper->d()->type();
+    int enumIndex = enumWrapper->d()->enumIndex;
+    QString keyString = string.toString();
+    auto &typeLoader = QQmlEnginePrivate::get(m_engine->qmlEngine())->typeLoader;
+    int value = enumWrapper->d()->scoped
+            ? type.scopedEnumValue(&typeLoader, enumIndex, keyString, &ok)
+            : type.unscopedEnumValue(&typeLoader, enumIndex, keyString, &ok);
+
+    if (ok)
+        return value;
+
+    return QVariant();
+}
+
+/*!
+    \qmlmethod Qt::enumValueToString(enumType, keyNumericValue)
+
+    Returns the string representation of a key of enum \a enumType that has the
+    value \a keyNumericValue. If the enum could not be found or if the value
+    does not match any key of the enum, \c undefined is returned instead.
+
+    \note If multiple keys match the value of \a keyNumericValue, which of the
+    matching keys will be returned is unspecified. Use enumValueToStrings in
+    that case.
+ */
+QVariant QtObject::enumValueToString(QJSValue enumType, QJSValue value)
+{
+    if (!enumType.isObject() || !value.isNumber())
+        return QVariant();
+
+    const auto *enumWrapper = QJSValuePrivate::takeManagedValue(&enumType)->as<QQmlEnumWrapper>();
+    if (!enumWrapper)
+        return QVariant();
+
+    bool ok = false;
+    QQmlType type = enumWrapper->d()->type();
+    int enumIndex = enumWrapper->d()->enumIndex;
+    int keyValue = value.toInt();
+    auto &typeLoader = QQmlEnginePrivate::get(m_engine->qmlEngine())->typeLoader;
+    QString key = enumWrapper->d()->scoped
+            ? type.scopedEnumKey(&typeLoader, enumIndex, keyValue, &ok)
+            : type.unscopedEnumKey(&typeLoader, enumIndex, keyValue, &ok);
+
+    if (ok)
+        return key;
+
+    return QVariant();
+}
+
+/*!
+    \qmlmethod Qt::enumValueToStrings(enumType, keyNumericValue)
+
+    Returns a list of the string representation of all the keys of enum
+    \a enumType that have the value \a keyNumericValue. If the enum could not
+    be found, undefined is retured instead. If no key matches the provided
+    value, the returned list is empty.
+ */
+QVariant QtObject::enumValueToStrings(QJSValue enumType, QJSValue value)
+{
+    if (!enumType.isObject() || !value.isNumber())
+        return QVariant();
+
+    const auto *enumWrapper = QJSValuePrivate::takeManagedValue(&enumType)->as<QQmlEnumWrapper>();
+    if (!enumWrapper)
+        return QVariant();
+
+    bool ok = false;
+    QQmlType type = enumWrapper->d()->type();
+    int enumIndex = enumWrapper->d()->enumIndex;
+    int keyValue = value.toInt();
+    auto &typeLoader = QQmlEnginePrivate::get(m_engine->qmlEngine())->typeLoader;
+    Scope scope(m_engine);
+    QStringList keys = enumWrapper->d()->scoped
+            ? type.scopedEnumKeys(&typeLoader, enumIndex, keyValue, &ok)
+            : type.unscopedEnumKeys(&typeLoader, enumIndex, keyValue, &ok);
+
+    if (ok)
+        return keys;
+
+    return QVariant();
+}
 
 QQmlPlatform *QtObject::platform()
 {
