@@ -11,17 +11,17 @@
     \inherits Layout
     \inqmlmodule QtQuick.Layouts
     \ingroup layouts
-    \brief The FlexboxLayout QML construct provides a flex layout for the
-    quick items.
     \since 6.10
     \preliminary
+    \brief The FlexboxLayout QML construct provides a flex layout for the
+    quick items.
 
     The FlexboxLayout enables to layout the quick items in a flexible way as
     similar to that of
     \l {https://www.w3.org/TR/css-flexbox-1/}{CSS Flexible Box Layout}.
-    Internally Qt FlexboxLayout uses
-    the yoga engine to derive the geometry of the flex items. The
-    \l {https://www.yogalayout.dev/}{yoga library} is a subset of the
+    Internally Qt FlexboxLayout uses the yoga engine to derive the geometry of
+    the flex items. The \l {https://www.yogalayout.dev/}{yoga library} is a
+    subset of the
     \l {https://www.w3.org/TR/css-flexbox-1/}{CSS Flexible Box Layout}. Thus
     FlexboxLayout can be limited to the feature as supported in the
     \l {https://www.yogalayout.dev/}{yoga library}.
@@ -85,11 +85,11 @@ private:
     QQuickFlexboxLayout::FlexboxDirection m_direction = QQuickFlexboxLayout::Row;
     QQuickFlexboxLayout::FlexboxWrap m_wrap = QQuickFlexboxLayout::NoWrap;
     QQuickFlexboxLayout::FlexboxAlignment m_alignItems = QQuickFlexboxLayout::AlignStart;
-    // Align items within the layout in the multi-line containter (i.e. with wrap enabled) and
-    // its aligned to the cross axis of the flexbox layout
+    // Align items within the layout in the multi-line containter (i.e. with
+    // wrap enabled) and its aligned to the cross axis of the flexbox layout
     QQuickFlexboxLayout::FlexboxAlignment m_alignContent = QQuickFlexboxLayout::AlignStart;
-    // Align content item in the multi-line containter and its aligned to the main axis of the
-    // flexbox layout
+    // Align content item in the multi-line containter and its aligned to the
+    // main axis of the flexbox layout
     QQuickFlexboxLayout::FlexboxJustify m_justifyContent = QQuickFlexboxLayout::JustifyStart;
     qreal m_gap = 0.;
     qreal m_rowGap = 0.;
@@ -423,9 +423,9 @@ void QQuickFlexboxLayout::resetRowGap()
     \qmlproperty real FlexboxLayout::columnGap
 
     This property holds the amount of space that need to be applied
-    to the \l {FlexboxLayout} along the {inline axis}
-    {https://www.w3.org/TR/css-align-3/#gaps}. Setting this property
-    override the \l {FlexboxLayout::gap} value affecting the
+    to the \l {FlexboxLayout} along the
+    \l {https://www.w3.org/TR/css-align-3/#gaps}{inline axis}. Setting this
+    property override the \l {FlexboxLayout::gap} value affecting the
     \l {https://www.w3.org/TR/css-align-3/#gaps}{inline axis}.
 
     The default value is \c 0.
@@ -623,11 +623,11 @@ QQuickFlexboxLayoutAttached::QQuickFlexboxLayoutAttached(QObject *object)
     This attached property allows to align this item in the flex box layout
     along the \l {https://www.w3.org/TR/css-flexbox-1/#box-model}{cross-axis}
     and it overrides the parent flex box layout property
-    \l {alignItems} {FlexboxLayout::alignItems}.
+    \l {FlexboxLayout::alignItems}.
 
     By default, the child item inherit the alignment from the parent and it can
     override the parent flex box layout
-    \l {alignItems} {FlexboxLayout::alignItems} property with the values
+    \l {FlexboxLayout::alignItems} property with the values
     \l {FlexboxLayout::AlignStart}, \l {FlexboxLayout::AlignCenter}
     and \l {FlexboxLayout::AlignEnd}.
 
