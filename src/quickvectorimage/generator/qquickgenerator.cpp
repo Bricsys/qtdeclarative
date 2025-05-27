@@ -41,7 +41,7 @@ QQuickVectorImageGenerator::GeneratorFlags QQuickGenerator::generatorFlags()
 
 bool QQuickGenerator::generate()
 {
-    QSvgVisitorImpl loader(m_fileName, this);
+    QSvgVisitorImpl loader(m_fileName, this, m_flags.testFlag(QQuickVectorImageGenerator::AssumeTrustedSource));
     return loader.traverse();
 }
 

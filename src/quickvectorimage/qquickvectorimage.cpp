@@ -73,6 +73,9 @@ void QQuickVectorImagePrivate::loadSvg()
     QQuickVectorImageGenerator::GeneratorFlags flags;
     if (preferredRendererType == QQuickVectorImage::CurveRenderer)
         flags.setFlag(QQuickVectorImageGenerator::CurveRenderer);
+    if (assumeTrustedSource)
+        flags.setFlag(QQuickVectorImageGenerator::AssumeTrustedSource);
+
     QQuickItemGenerator generator(localFile, flags, svgItem, qmlContext(q));
     generator.generate();
 
@@ -280,6 +283,35 @@ void QQuickVectorImage::setPreferredRendererType(RendererType newPreferredRender
     d->preferredRendererType = newPreferredRendererType;
     d->loadSvg();
     emit preferredRendererTypeChanged();
+}
+
+/*!
+    \qmlproperty bool QtQuick.VectorImage::VectorImage::assumeTrustedSource
+    \since 6.10
+
+    Setting this to true when loading trusted source files expands support for some features that
+    may be unsafe in an uncontrolled setting. For SVG in particular, this maps to the
+    \l{QtSvg::Option}{AssumeTrustedSource option}.
+
+    By default this property is \c false.
+
+    \sa svgtoqml
+ */
+
+bool QQuickVectorImage::assumeTrustedSource() const
+{
+    Q_D(const QQuickVectorImage);
+    return d->assumeTrustedSource;
+}
+
+void QQuickVectorImage::setAssumeTrustedSource(bool assumeTrustedSource)
+{
+    Q_D(QQuickVectorImage);
+    if (d->assumeTrustedSource == assumeTrustedSource)
+        return;
+    d->assumeTrustedSource = assumeTrustedSource;
+    d->loadSvg();
+    emit assumeTrustedSourceChanged();
 }
 
 /*!

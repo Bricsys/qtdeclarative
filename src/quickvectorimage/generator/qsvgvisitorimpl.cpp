@@ -267,9 +267,12 @@ static QString dashArrayString(QList<qreal> dashArray)
 }
 };
 
-QSvgVisitorImpl::QSvgVisitorImpl(const QString svgFileName, QQuickGenerator *generator)
+QSvgVisitorImpl::QSvgVisitorImpl(const QString svgFileName,
+                                 QQuickGenerator *generator,
+                                 bool assumeTrustedSource)
     : m_svgFileName(svgFileName)
     , m_generator(generator)
+    , m_assumeTrustedSource(assumeTrustedSource)
 {
 }
 
@@ -280,7 +283,11 @@ bool QSvgVisitorImpl::traverse()
         return false;
     }
 
-    auto *doc = QSvgTinyDocument::load(m_svgFileName);
+    QtSvg::Options options;
+    if (m_assumeTrustedSource)
+        options.setFlag(QtSvg::AssumeTrustedSource);
+
+    auto *doc = QSvgTinyDocument::load(m_svgFileName, options);
     if (!doc) {
         qCDebug(lcQuickVectorImage) << "Not a valid Svg File : " << m_svgFileName;
         return false;

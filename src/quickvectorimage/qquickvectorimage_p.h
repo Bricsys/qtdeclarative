@@ -32,6 +32,7 @@ class Q_QUICKVECTORIMAGE_EXPORT QQuickVectorImage : public QQuickItem
     Q_PROPERTY(FillMode fillMode READ fillMode WRITE setFillMode NOTIFY fillModeChanged)
     Q_PROPERTY(RendererType preferredRendererType READ preferredRendererType WRITE setPreferredRendererType NOTIFY preferredRendererTypeChanged)
     Q_PROPERTY(QQuickVectorImageAnimations *animations READ animations CONSTANT REVISION(6, 10) FINAL)
+    Q_PROPERTY(bool assumeTrustedSource READ assumeTrustedSource WRITE setAssumeTrustedSource NOTIFY assumeTrustedSourceChanged FINAL)
     QML_NAMED_ELEMENT(VectorImage)
 
 public:
@@ -62,11 +63,15 @@ public:
 
     QQuickVectorImageAnimations *animations();
 
+    bool assumeTrustedSource() const;
+    void setAssumeTrustedSource(bool assumeTrustedSource);
+
 signals:
     void sourceChanged();
     void fillModeChanged();
 
     void preferredRendererTypeChanged();
+    void assumeTrustedSourceChanged();
 
 private slots:
     void updateSvgItemScale();

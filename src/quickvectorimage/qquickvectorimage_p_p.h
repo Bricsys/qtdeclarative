@@ -48,6 +48,7 @@ public:
     QQuickVectorImage::FillMode fillMode = QQuickVectorImage::Stretch;
     QQuickVectorImage::RendererType preferredRendererType = QQuickVectorImage::GeometryRenderer;
     QQuickVectorImageAnimations *animations = nullptr;
+    bool assumeTrustedSource = false;
 };
 
 QT_END_NAMESPACE

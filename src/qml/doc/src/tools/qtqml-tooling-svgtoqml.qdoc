@@ -33,6 +33,11 @@ In addition, it supports the following options:
     \li Option
     \li Description
 \row
+    \li --no-assume-trusted-source
+    \li Indicates that the input is an untrusted file and additional checks and restrictions should
+        be enabled. By default the SVG file will be parsed with the
+        \l{QtSvg::Option}{AssumeTrustedSource option}. Passing this argument will unset that option.
+\row
     \li --copyright-statement <string>
     \li Adds <string> as a comment at the beginning of the generated file.
 \row

@@ -29,7 +29,7 @@ class QQuickItem;
 class QSvgVisitorImpl : public QSvgVisitor
 {
 public:
-    QSvgVisitorImpl(const QString svgFileName, QQuickGenerator *generator);
+    QSvgVisitorImpl(const QString svgFileName, QQuickGenerator *generator, bool assumeTrustedSource);
     bool traverse();
 
 protected:
@@ -76,6 +76,7 @@ private:
 private:
     QString m_svgFileName;
     QQuickGenerator *m_generator;
+    bool m_assumeTrustedSource;
 };
 
 QT_END_NAMESPACE
