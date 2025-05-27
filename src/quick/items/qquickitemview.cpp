@@ -127,8 +127,12 @@ QQuickItemView::~QQuickItemView()
 {
     Q_D(QQuickItemView);
     d->clear(true);
-    if (d->ownModel)
+    if (d->ownModel) {
         delete d->model;
+    } else {
+        QQmlDelegateModelPointer model(d->model);
+        d->disconnectModel(this, &model);
+    }
     delete d->header;
     delete d->footer;
 }
@@ -157,28 +161,7 @@ void QQuickItemView::setModel(const QVariant &m)
         return;
 
     QQmlDelegateModelPointer oldModel(d->model);
-    if (QQmlInstanceModel *instanceModel = oldModel.instanceModel()) {
-        disconnect(instanceModel, &QQmlInstanceModel::modelUpdated,
-                   this, &QQuickItemView::modelUpdated);
-        disconnect(instanceModel, &QQmlInstanceModel::initItem,
-                   this, &QQuickItemView::initItem);
-        disconnect(instanceModel, &QQmlInstanceModel::createdItem,
-                   this, &QQuickItemView::createdItem);
-        disconnect(instanceModel, &QQmlInstanceModel::destroyingItem,
-                   this, &QQuickItemView::destroyingItem);
-        if (QQmlDelegateModel *delegateModel = oldModel.delegateModel()) {
-            disconnect(delegateModel, &QQmlInstanceModel::itemPooled,
-                       this, &QQuickItemView::onItemPooled);
-            disconnect(delegateModel, &QQmlInstanceModel::itemReused,
-                       this, &QQuickItemView::onItemReused);
-            QObjectPrivate::disconnect(
-                    delegateModel, &QQmlDelegateModel::delegateChanged,
-                    d, &QQuickItemViewPrivate::applyDelegateChange);
-            QObjectPrivate::disconnect(
-                    delegateModel, &QQmlDelegateModel::delegateModelAccessChanged,
-                    d, &QQuickItemViewPrivate::applyDelegateModelAccessChange);
-        }
-    }
+    d->disconnectModel(this, &oldModel);
 
     d->clear();
     d->model = nullptr;
@@ -245,49 +228,7 @@ void QQuickItemView::setModel(const QVariant &m)
         newModel.delegateModel()->setModel(model);
     }
 
-    if (QQmlInstanceModel *instanceModel = newModel.instanceModel()) {
-        d->bufferMode = QQuickItemViewPrivate::BufferBefore | QQuickItemViewPrivate::BufferAfter;
-        connect(instanceModel, &QQmlInstanceModel::createdItem,
-                this, &QQuickItemView::createdItem);
-        connect(instanceModel, &QQmlInstanceModel::initItem,
-                this, &QQuickItemView::initItem);
-        connect(instanceModel, &QQmlInstanceModel::destroyingItem,
-                this, &QQuickItemView::destroyingItem);
-        if (QQmlDelegateModel *delegateModel = newModel.delegateModel()) {
-            connect(delegateModel, &QQmlInstanceModel::itemPooled,
-                    this, &QQuickItemView::onItemPooled);
-            connect(delegateModel, &QQmlInstanceModel::itemReused,
-                    this, &QQuickItemView::onItemReused);
-        }
-        if (isComponentComplete()) {
-            d->updateSectionCriteria();
-            d->refill();
-            /* Setting currentIndex to -2 ensures that we always enter the "currentIndex changed"
-               code path in setCurrentIndex, updating bindings depending on currentIndex.*/
-            d->currentIndex = -2;
-            setCurrentIndex(instanceModel->count() > 0 ? 0 : -1);
-            d->updateViewport();
-
-#if QT_CONFIG(quick_viewtransitions)
-            if (d->transitioner && d->transitioner->populateTransition) {
-                d->transitioner->setPopulateTransitionEnabled(true);
-                d->forceLayoutPolish();
-            }
-#endif
-        }
-
-        connect(instanceModel, &QQmlInstanceModel::modelUpdated,
-                this, &QQuickItemView::modelUpdated);
-        if (QQmlDelegateModel *dataModel = newModel.delegateModel()) {
-            QObjectPrivate::connect(
-                    dataModel, &QQmlDelegateModel::delegateChanged,
-                    d, &QQuickItemViewPrivate::applyDelegateChange);
-            QObjectPrivate::connect(
-                    dataModel, &QQmlDelegateModel::delegateModelAccessChanged,
-                    d, &QQuickItemViewPrivate::applyDelegateModelAccessChange);
-        }
-        d->emitCountChanged();
-    }
+    d->connectModel(this, &newModel);
     emit modelChanged();
     d->moveReason = QQuickItemViewPrivate::Other;
 }
@@ -1163,6 +1104,86 @@ qreal QQuickItemViewPrivate::calculatedMaxExtent() const
     else
         maxExtent = isContentFlowReversed() ? q->minXExtent() - size(): -q->maxXExtent();
     return maxExtent;
+}
+
+void QQuickItemViewPrivate::connectModel(QQuickItemView *q, QQmlDelegateModelPointer *model)
+{
+    QQmlInstanceModel *instanceModel = model->instanceModel();
+    if (!instanceModel)
+        return;
+
+    bufferMode = QQuickItemViewPrivate::BufferBefore | QQuickItemViewPrivate::BufferAfter;
+    QObject::connect(instanceModel, &QQmlInstanceModel::createdItem,
+                     q, &QQuickItemView::createdItem);
+    QObject::connect(instanceModel, &QQmlInstanceModel::initItem,
+                     q, &QQuickItemView::initItem);
+    QObject::connect(instanceModel, &QQmlInstanceModel::destroyingItem,
+                     q, &QQuickItemView::destroyingItem);
+    if (QQmlDelegateModel *delegateModel = model->delegateModel()) {
+        QObject::connect(delegateModel, &QQmlInstanceModel::itemPooled,
+                         q, &QQuickItemView::onItemPooled);
+        QObject::connect(delegateModel, &QQmlInstanceModel::itemReused,
+                         q, &QQuickItemView::onItemReused);
+    }
+
+    if (q->isComponentComplete()) {
+        updateSectionCriteria();
+        refill();
+        /* Setting currentIndex to -2 ensures that we always enter the "currentIndex changed"
+           code path in setCurrentIndex, updating bindings depending on currentIndex.*/
+        currentIndex = -2;
+        q->setCurrentIndex(instanceModel->count() > 0 ? 0 : -1);
+        updateViewport();
+
+#if QT_CONFIG(quick_viewtransitions)
+        if (transitioner && transitioner->populateTransition) {
+            transitioner->setPopulateTransitionEnabled(true);
+            forceLayoutPolish();
+        }
+#endif
+    }
+
+    QObject::connect(instanceModel, &QQmlInstanceModel::modelUpdated,
+                     q, &QQuickItemView::modelUpdated);
+    if (QQmlDelegateModel *dataModel = model->delegateModel()) {
+        QObjectPrivate::connect(
+                dataModel, &QQmlDelegateModel::delegateChanged,
+                this, &QQuickItemViewPrivate::applyDelegateChange);
+        QObjectPrivate::connect(
+                dataModel, &QQmlDelegateModel::delegateModelAccessChanged,
+                this, &QQuickItemViewPrivate::applyDelegateModelAccessChange);
+    }
+
+    emitCountChanged();
+}
+
+void QQuickItemViewPrivate::disconnectModel(QQuickItemView *q, QQmlDelegateModelPointer *model)
+{
+    QQmlInstanceModel *instanceModel = model->instanceModel();
+    if (!instanceModel)
+        return;
+
+
+    QObject::disconnect(instanceModel, &QQmlInstanceModel::modelUpdated,
+                        q, &QQuickItemView::modelUpdated);
+    QObject::disconnect(instanceModel, &QQmlInstanceModel::initItem,
+                        q, &QQuickItemView::initItem);
+    QObject::disconnect(instanceModel, &QQmlInstanceModel::createdItem,
+                        q, &QQuickItemView::createdItem);
+    QObject::disconnect(instanceModel, &QQmlInstanceModel::destroyingItem,
+                        q, &QQuickItemView::destroyingItem);
+    if (QQmlDelegateModel *delegateModel = model->delegateModel()) {
+        QObject::disconnect(delegateModel, &QQmlInstanceModel::itemPooled,
+                            q, &QQuickItemView::onItemPooled);
+        QObject::disconnect(delegateModel, &QQmlInstanceModel::itemReused,
+                            q, &QQuickItemView::onItemReused);
+        QObjectPrivate::disconnect(
+                delegateModel, &QQmlDelegateModel::delegateChanged,
+                this, &QQuickItemViewPrivate::applyDelegateChange);
+        QObjectPrivate::disconnect(
+                delegateModel, &QQmlDelegateModel::delegateModelAccessChanged,
+                this, &QQuickItemViewPrivate::applyDelegateModelAccessChange);
+    }
 }
 
 void QQuickItemViewPrivate::applyDelegateChange()

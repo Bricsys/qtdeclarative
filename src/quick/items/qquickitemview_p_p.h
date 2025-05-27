@@ -168,6 +168,9 @@ public:
     qreal calculatedMinExtent() const;
     qreal calculatedMaxExtent() const;
 
+    void connectModel(QQuickItemView *q, QQmlDelegateModelPointer *model);
+    void disconnectModel(QQuickItemView *q, QQmlDelegateModelPointer *model);
+
     void applyDelegateChange();
     void applyDelegateModelAccessChange()
     {
