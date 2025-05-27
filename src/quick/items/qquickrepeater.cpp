@@ -125,6 +125,9 @@ QQuickRepeater::QQuickRepeater(QQuickItem *parent)
 
 QQuickRepeater::~QQuickRepeater()
 {
+    Q_D(QQuickRepeater);
+    QQmlDelegateModelPointer model(d->model);
+    d->disconnectModel(this, &model);
 }
 
 /*!
@@ -170,22 +173,7 @@ void QQuickRepeater::setModel(const QVariant &m)
     clear();
 
     QQmlDelegateModelPointer oldModel(d->model);
-    if (QQmlInstanceModel *instanceModel = oldModel.instanceModel()) {
-        disconnect(instanceModel, &QQmlInstanceModel::modelUpdated,
-                   this, &QQuickRepeater::modelUpdated);
-        disconnect(instanceModel, &QQmlInstanceModel::createdItem,
-                   this, &QQuickRepeater::createdItem);
-        disconnect(instanceModel, &QQmlInstanceModel::initItem,
-                   this, &QQuickRepeater::initItem);
-        if (QQmlDelegateModel *delegateModel = oldModel.delegateModel()) {
-            QObjectPrivate::disconnect(
-                    delegateModel, &QQmlDelegateModel::delegateChanged,
-                    d, &QQuickRepeaterPrivate::applyDelegateChange);
-            QObjectPrivate::disconnect(
-                    delegateModel, &QQmlDelegateModel::delegateModelAccessChanged,
-                    d, &QQuickRepeaterPrivate::applyDelegateModelAccessChange);
-        }
-    }
+    d->disconnectModel(this, &oldModel);
 
     d->model = nullptr;
     d->dataSource = model;
@@ -252,23 +240,7 @@ void QQuickRepeater::setModel(const QVariant &m)
         newModel.delegateModel()->setModel(model);
     }
 
-    if (QQmlInstanceModel *instanceModel = newModel.instanceModel()) {
-        connect(instanceModel, &QQmlInstanceModel::modelUpdated,
-                this, &QQuickRepeater::modelUpdated);
-        connect(instanceModel, &QQmlInstanceModel::createdItem,
-                this, &QQuickRepeater::createdItem);
-        connect(instanceModel, &QQmlInstanceModel::initItem,
-                this, &QQuickRepeater::initItem);
-        if (QQmlDelegateModel *dataModel = newModel.delegateModel()) {
-            QObjectPrivate::connect(
-                    dataModel, &QQmlDelegateModel::delegateChanged,
-                    d, &QQuickRepeaterPrivate::applyDelegateChange);
-            QObjectPrivate::connect(
-                    dataModel, &QQmlDelegateModel::delegateModelAccessChanged,
-                    d, &QQuickRepeaterPrivate::applyDelegateModelAccessChange);
-        }
-        regenerate();
-    }
+    d->connectModel(this, &newModel);
     emit modelChanged();
     emit countChanged();
 }
@@ -459,6 +431,51 @@ void QQuickRepeaterPrivate::requestItems()
         QObject *object = model->object(i, QQmlIncubator::AsynchronousIfNested);
         if (object)
             model->release(object);
+    }
+}
+
+void QQuickRepeaterPrivate::connectModel(QQuickRepeater *q, QQmlDelegateModelPointer *model)
+{
+    QQmlInstanceModel *instanceModel = model->instanceModel();
+    if (!instanceModel)
+        return;
+
+    QObject::connect(instanceModel, &QQmlInstanceModel::modelUpdated,
+                     q, &QQuickRepeater::modelUpdated);
+    QObject::connect(instanceModel, &QQmlInstanceModel::createdItem,
+                     q, &QQuickRepeater::createdItem);
+    QObject::connect(instanceModel, &QQmlInstanceModel::initItem,
+                     q, &QQuickRepeater::initItem);
+    if (QQmlDelegateModel *dataModel = model->delegateModel()) {
+        QObjectPrivate::connect(
+                dataModel, &QQmlDelegateModel::delegateChanged,
+                this, &QQuickRepeaterPrivate::applyDelegateChange);
+        QObjectPrivate::connect(
+                dataModel, &QQmlDelegateModel::delegateModelAccessChanged,
+                this, &QQuickRepeaterPrivate::applyDelegateModelAccessChange);
+    }
+    q->regenerate();
+}
+
+void QQuickRepeaterPrivate::disconnectModel(QQuickRepeater *q, QQmlDelegateModelPointer *model)
+{
+    QQmlInstanceModel *instanceModel = model->instanceModel();
+    if (!instanceModel)
+        return;
+
+    QObject::disconnect(instanceModel, &QQmlInstanceModel::modelUpdated,
+                        q, &QQuickRepeater::modelUpdated);
+    QObject::disconnect(instanceModel, &QQmlInstanceModel::createdItem,
+                        q, &QQuickRepeater::createdItem);
+    QObject::disconnect(instanceModel, &QQmlInstanceModel::initItem,
+                        q, &QQuickRepeater::initItem);
+    if (QQmlDelegateModel *delegateModel = model->delegateModel()) {
+        QObjectPrivate::disconnect(
+                delegateModel, &QQmlDelegateModel::delegateChanged,
+                this, &QQuickRepeaterPrivate::applyDelegateChange);
+        QObjectPrivate::disconnect(
+                delegateModel, &QQmlDelegateModel::delegateModelAccessChanged,
+                this, &QQuickRepeaterPrivate::applyDelegateModelAccessChange);
     }
 }
 

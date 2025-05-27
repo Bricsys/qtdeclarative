@@ -49,6 +49,9 @@ private:
         QQmlDelegateModel::applyDelegateModelAccessChangeOnView(q_func(), this);
     }
 
+    void connectModel(QQuickRepeater *q, QQmlDelegateModelPointer *model);
+    void disconnectModel(QQuickRepeater *q, QQmlDelegateModelPointer *model);
+
     QPointer<QQmlInstanceModel> model;
     QVariant dataSource;
     QPointer<QObject> dataSourceAsObject;
