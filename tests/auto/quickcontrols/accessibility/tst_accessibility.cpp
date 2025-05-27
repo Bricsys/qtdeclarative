@@ -36,6 +36,9 @@ private slots:
     void actionAccessibilityImplicitName();
 
     void sliderTest();
+
+    void locale();
+
 private:
     QQmlEngine engine;
 };
@@ -383,6 +386,48 @@ void tst_accessibility::sliderTest()
         QCOMPARE(valueIface->minimumValue(), 0);
         QCOMPARE(valueIface->maximumValue(), 100);
     }
+#endif
+}
+
+void tst_accessibility::locale()
+{
+#if QT_CONFIG(accessibility)
+    if (!QAccessible::isActive()) {
+        QPlatformAccessibility *accessibility = platformAccessibility();
+        if (!accessibility)
+            QSKIP("No QPlatformAccessibility available.");
+        accessibility->setActive(true);
+    }
+
+    QQmlComponent component(&engine);
+
+    // verify that locale is the default locale if none was set explicitly
+    component.loadUrl(testFileUrl("locale/button.qml"));
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY2(!object.isNull(), qPrintable(component.errorString()));
+    QAccessibleInterface *buttonAcc = QAccessible::queryAccessibleInterface(object.get());
+    QVERIFY(buttonAcc);
+    QVERIFY(buttonAcc->attributesInterface());
+    QVERIFY(buttonAcc->attributesInterface()->attributeKeys().contains(
+            QAccessible::Attribute::Locale));
+    const QVariant localeVariant =
+            buttonAcc->attributesInterface()->attributeValue(QAccessible::Attribute::Locale);
+    QVERIFY(localeVariant.isValid() && localeVariant.canConvert<QLocale>());
+    QCOMPARE(localeVariant.toLocale(), QLocale());
+
+    // verify that locale is the one explicitly set for the button
+    component.loadUrl(testFileUrl("locale/button2.qml"));
+    QScopedPointer<QObject> object2(component.create());
+    QVERIFY2(!object2.isNull(), qPrintable(component.errorString()));
+    QAccessibleInterface *chineseButtonAcc = QAccessible::queryAccessibleInterface(object2.get());
+    QVERIFY(chineseButtonAcc);
+    QVERIFY(chineseButtonAcc->attributesInterface());
+    QVERIFY(chineseButtonAcc->attributesInterface()->attributeKeys().contains(
+            QAccessible::Attribute::Locale));
+    const QVariant chineseLocaleVariant =
+            chineseButtonAcc->attributesInterface()->attributeValue(QAccessible::Attribute::Locale);
+    QVERIFY(chineseLocaleVariant.isValid() && localeVariant.canConvert<QLocale>());
+    QCOMPARE(chineseLocaleVariant.toLocale(), QLocale("zh_CN"));
 #endif
 }
 
