@@ -61,6 +61,16 @@ const QQmlSA::LoggerWarningId qmlTopLevelComponent{ "top-level-component" };
 const QQmlSA::LoggerWarningId qmlUncreatableType{ "uncreatable-type" };
 const QQmlSA::LoggerWarningId qmlMissingEnumEntry{ "missing-enum-entry" };
 
+// custom added
+const QQmlSA::LoggerWarningId quickLayoutPositioning { "Quick.layout-positioning" };
+const QQmlSA::LoggerWarningId quickAttachedPropertyType { "Quick.attached-property-type" };
+const QQmlSA::LoggerWarningId quickControlsNativeCustomize { "Quick.controls-native-customize" };
+const QQmlSA::LoggerWarningId quickAnchorCombinations { "Quick.anchor-combinations" };
+const QQmlSA::LoggerWarningId quickUnexpectedVarType { "Quick.unexpected-var-type" };
+const QQmlSA::LoggerWarningId quickPropertyChangesParsed { "Quick.property-changes-parsed" };
+const QQmlSA::LoggerWarningId quickControlsAttachedPropertyReuse { "Quick.controls-attached-property-reuse" };
+const QQmlSA::LoggerWarningId quickAttachedPropertyReuse { "Quick.attached-property-reuse" };
+
 QQmlJSLogger::QQmlJSLogger()
 {
     static const QList<QQmlJS::LoggerCategory> cats = defaultCategories();
@@ -84,7 +94,7 @@ const QList<QQmlJS::LoggerCategory> &QQmlJSLogger::defaultCategories()
                                 QStringLiteral("PropertyAliasCycles"),
                                 QStringLiteral("Warn about alias cycles"), QtWarningMsg },
         QQmlJS::LoggerCategory{ qmlUnresolvedAlias.name().toString(),
-                                QStringLiteral("PropertyAliasCycles"),
+                                QStringLiteral("UnresolvedAlias"),
                                 QStringLiteral("Warn about unresolved aliases"), QtWarningMsg },
         QQmlJS::LoggerCategory{
                 qmlImport.name().toString(), QStringLiteral("ImportFailure"),
@@ -186,7 +196,41 @@ const QList<QQmlJS::LoggerCategory> &QQmlJSLogger::defaultCategories()
                 QStringLiteral("Fail when a top level Component are encountered"), QtWarningMsg },
         QQmlJS::LoggerCategory{
                 qmlUncreatableType.name().toString(), QStringLiteral("UncreatableType"),
-                QStringLiteral("Warn if uncreatable types are created"), QtWarningMsg }
+	        QStringLiteral("Warn if uncreatable types are created"), QtWarningMsg },
+
+        // bricsys added
+        QQmlJS::LoggerCategory { quickLayoutPositioning.name().toString(),
+                                 QStringLiteral("Quick.LayoutPositioning"),
+                                 QStringLiteral("Warn LayoutPositioning"),
+                                 QtWarningMsg },
+        QQmlJS::LoggerCategory { quickAttachedPropertyType.name().toString(),
+                                 QStringLiteral("Quick.AttachedPropertyType"),
+                                 QStringLiteral("Warn AttachedPropertyType"),
+                                 QtWarningMsg },
+        QQmlJS::LoggerCategory { quickControlsNativeCustomize.name().toString(),
+                                 QStringLiteral("Quick.ControlsNativeCustomize"),
+                                 QStringLiteral("Warn ControlsNativeCustomize"),
+                                 QtWarningMsg },
+        QQmlJS::LoggerCategory { quickAnchorCombinations.name().toString(),
+                                 QStringLiteral("Quick.AnchorCombinations"),
+                                 QStringLiteral("Warn AnchorCombinations"),
+                                 QtWarningMsg },
+        QQmlJS::LoggerCategory { quickUnexpectedVarType.name().toString(),
+                                 QStringLiteral("Quick.UnexpectedVarType"),
+                                 QStringLiteral("Warn UnexpectedVarType"),
+                                 QtWarningMsg },
+        QQmlJS::LoggerCategory { quickPropertyChangesParsed.name().toString(),
+                                 QStringLiteral("Quick.PropertyChangesParsed"),
+                                 QStringLiteral("Warn PropertyChangesParsed"),
+                                 QtWarningMsg },
+        QQmlJS::LoggerCategory { quickControlsAttachedPropertyReuse.name().toString(),
+                                 QStringLiteral("Quick.ControlsAttachedPropertyReuse"),
+                                 QStringLiteral("Warn ControlsAttachedPropertyReuse"),
+                                 QtWarningMsg },
+        QQmlJS::LoggerCategory { quickAttachedPropertyReuse.name().toString(),
+                                 QStringLiteral("Quick.AttachedPropertyReuse"),
+                                 QStringLiteral("Warn AttachedPropertyReuse"),
+                                 QtWarningMsg }
     };
 
     return cats;
