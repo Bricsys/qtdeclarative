@@ -47,4 +47,6 @@ qt_internal_extend_target(QuickLayouts CONDITION NOT INTEGRITY
         ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/YGConfig.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/Utils.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga/log.cpp
+    ATTRIBUTION_FILE_DIR_PATHS
+        "${CMAKE_CURRENT_SOURCE_DIR}/../3rdparty/yoga"
     )
