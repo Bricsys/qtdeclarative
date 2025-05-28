@@ -885,11 +885,12 @@ void tst_QQuickAccessible::relations_data()
 
     QTest::addRow("label labels textInput")
         << "label" << "textInput"
-        << QAccessible::Relation(QAccessible::Label);
+        << QAccessible::Relation(QAccessible::Labelled);
     QTest::addRow("textInput labelled by label")
         << "textInput" << "label"
-        << QAccessible::Relation(QAccessible::Labelled);
+        << QAccessible::Relation(QAccessible::Label);
 }
+
 void tst_QQuickAccessible::relations()
 {
     auto clearEvents = qScopeGuard([]{ QTestAccessibility::clearEvents(); });

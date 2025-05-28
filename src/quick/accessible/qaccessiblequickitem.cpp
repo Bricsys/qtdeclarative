@@ -469,15 +469,15 @@ QAccessibleQuickItem::relations(QAccessible::Relation match) const
             QAccessibleObject::relations(match);
     if (QQuickAccessibleAttached *attached = QQuickAccessibleAttached::attachedProperties(item())) {
         if (match & QAccessible::Labelled) {
-            if (auto *labelledBy = attached->labelledBy()) {
-                rels.append({QAccessible::queryAccessibleInterface(labelledBy),
+            if (auto *labelFor = attached->labelFor()) {
+                rels.append({QAccessible::queryAccessibleInterface(labelFor),
                              QAccessible::Labelled});
             }
         }
 
         if (match & QAccessible::Label) {
-            if (auto *labelFor = attached->labelFor()) {
-                rels.append({QAccessible::queryAccessibleInterface(labelFor),
+            if (auto *labelledBy = attached->labelledBy()) {
+                rels.append({QAccessible::queryAccessibleInterface(labelledBy),
                              QAccessible::Label});
             }
         }
