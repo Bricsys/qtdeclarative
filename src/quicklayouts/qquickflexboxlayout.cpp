@@ -33,20 +33,20 @@
     The items within the FlexboxLayout can be configured with preferred,
     minimum and maximum sizes through the existing layout attached properties.
     For instance, if the item within the FlexboxLayout need to be stretched,
-    the layout attached property \l {Layout.fillWidth} or
-    \l {Layout.fillHeight} can be set.
+    the layout attached property \l{Layout::fillWidth}{Layout.fillWidth} or
+    \l{Layout::fillHeight}{Layout.fillHeight} can be set.
 
     Items in a FlexboxLayout support these attached properties:
     \list
-        \li \l{FlexboxLayout.alignSelf}
-        \li \l{Layout.minimumWidth}
-        \li \l{Layout.minimumHeight}
-        \li \l{Layout.preferredWidth}
-        \li \l{Layout.preferredHeight}
-        \li \l{Layout.maximumWidth}
-        \li \l{Layout.maximumHeight}
-        \li \l{Layout.fillWidth}
-        \li \l{Layout.fillHeight}
+        \li \l{FlexboxLayout::alignSelf}{FlexboxLayout.alignSelf}
+        \li \l{Layout::minimumWidth}{Layout.minimumWidth}
+        \li \l{Layout::minimumHeight}{Layout.minimumHeight}
+        \li \l{Layout::preferredWidth}{Layout.preferredWidth}
+        \li \l{Layout::preferredHeight}{Layout.preferredHeight}
+        \li \l{Layout::maximumWidth}{Layout.maximumWidth}
+        \li \l{Layout::maximumHeight}{Layout.maximumHeight}
+        \li \l{Layout::fillWidth}{Layout.fillWidth}
+        \li \l{Layout::fillHeight}{Layout.fillHeight}
     \endlist
 
     Read more about attached properties \l{QML Object Attributes}{here}.
@@ -200,9 +200,9 @@ void QQuickFlexboxLayout::setWrap(QQuickFlexboxLayout::FlexboxWrap wrapMode)
     flex box layout and its aligned along the
     \l {https://www.w3.org/TR/css-flexbox-1/#box-model}{cross-axis}
     (which is orthogonal to the main-axis, as defined by the property
-    \l {FlexboxLayout::direction}). This property can be overridden by the items
-    within the flex box layout through the property
-    \l {FlexboxLayoutAttached::alignSelf}.
+    \l {direction}). This property can be overridden by the
+    items within the flex box layout through the attached property
+    \l {FlexboxLayout::alignSelf}{FlexboxLayout.alignSelf}.
 
     Possible values:
 
@@ -215,7 +215,7 @@ void QQuickFlexboxLayout::setWrap(QQuickFlexboxLayout::FlexboxWrap wrapMode)
                                             flex box layout cross-axis.
 
     \note The alignments mentioned in possible values are only applicable for
-    the \l {FlexboxLayout::alignItems} property
+    the \l{alignItems} property
 
     The default value is \c FlexboxLayout.AlignStart.
 */
@@ -388,7 +388,7 @@ void QQuickFlexboxLayout::resetGap()
     This property holds the amount of space that need to be applied to the
     \l {FlexboxLayout} along the
     \l {https://www.w3.org/TR/css-align-3/#gaps}{block axis}. Setting this
-    property override the \l {FlexboxLayout::gap} value affecting the
+    property overrides the \l{gap} value affecting the
     \l {https://www.w3.org/TR/css-align-3/#gaps}{block axis}.
 
     The default value is \c 0.
@@ -426,7 +426,7 @@ void QQuickFlexboxLayout::resetRowGap()
     This property holds the amount of space that need to be applied
     to the \l {FlexboxLayout} along the
     \l {https://www.w3.org/TR/css-align-3/#gaps}{inline axis}. Setting this
-    property override the \l {FlexboxLayout::gap} value affecting the
+    property override the \l{gap} value affecting the
     \l {https://www.w3.org/TR/css-align-3/#gaps}{inline axis}.
 
     The default value is \c 0.
@@ -624,15 +624,15 @@ QQuickFlexboxLayoutAttached::QQuickFlexboxLayoutAttached(QObject *object)
     This attached property allows to align this item in the flex box layout
     along the \l {https://www.w3.org/TR/css-flexbox-1/#box-model}{cross-axis}
     and it overrides the parent flex box layout property
-    \l {FlexboxLayout::alignItems}.
+    \l{alignItems}.
 
     By default, the child item inherit the alignment from the parent and it can
     override the parent flex box layout
-    \l {FlexboxLayout::alignItems} property with the values
-    \l {FlexboxLayout::AlignStart}, \l {FlexboxLayout::AlignCenter}
-    and \l {FlexboxLayout::AlignEnd}.
+    \l{alignItems} property with the values
+    \c {FlexboxLayout.AlignStart}, \c {FlexboxLayout.AlignCenter}
+    and \c {FlexboxLayout.AlignEnd}.
 
-    The default value is \l {FlexboxLayout::AlignAuto}.
+    The default value is \c {FlexboxLayout.AlignAuto}.
 */
 QQuickFlexboxLayout::FlexboxAlignment QQuickFlexboxLayoutAttached::alignSelf() const
 {
