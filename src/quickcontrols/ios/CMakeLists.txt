@@ -55,6 +55,7 @@ set(qml_files
     "SelectionRectangle.qml"
     "ToolTip.qml"
     "ToolSeparator.qml"
+    "ApplicationWindow.qml"
 )
 
 set_source_files_properties(Slider.qml PROPERTIES
