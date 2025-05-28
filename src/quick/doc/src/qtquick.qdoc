@@ -158,4 +158,9 @@ these free software licenses are
 \l{GNU Lesser General Public License, version 3}, or
 the \l{GNU General Public License, version 2}.
 See \l{Qt Licensing} for further details.
+
+Furthermore Qt Quick in Qt \QtVersion may contain third party
+modules under following permissive licenses:
+
+\generatelist{groupsbymodule attributions-qtquick}
 */

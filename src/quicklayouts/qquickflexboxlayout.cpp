@@ -19,7 +19,8 @@
     The FlexboxLayout enables to layout the quick items in a flexible way as
     similar to that of
     \l {https://www.w3.org/TR/css-flexbox-1/}{CSS Flexible Box Layout}.
-    Internally Qt FlexboxLayout uses the yoga engine to derive the geometry of
+    Internally Qt FlexboxLayout uses the \l{qtquick-attribution-yoga.html}{yoga engine}
+    to derive the geometry of
     the flex items. The \l {https://www.yogalayout.dev/}{yoga library} is a
     subset of the
     \l {https://www.w3.org/TR/css-flexbox-1/}{CSS Flexible Box Layout}. Thus
