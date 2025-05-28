@@ -305,7 +305,7 @@ protected:
 
     enum class BindingExpressionParseResult { Invalid, Script, Literal, Translation };
     enum class BindingForPropertyDefintion { Yes, No };
-    BindingExpressionParseResult parseBindingExpression(
+    virtual BindingExpressionParseResult parseBindingExpression(
             const QString &name, const QQmlJS::AST::Statement *statement,
             const QQmlJS::AST::UiPublicMember *associatedPropertyDefinition = nullptr);
     bool isImportPrefix(QString prefix) const;

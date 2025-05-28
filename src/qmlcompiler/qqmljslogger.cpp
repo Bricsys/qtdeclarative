@@ -131,6 +131,8 @@ using namespace Qt::StringLiterals;
       false, false)                                                                                \
     X(qmlUncreatableType, "uncreatable-type", "UncreatableType",                                   \
       "Warn if uncreatable types are created", QtWarningMsg, false, false)                         \
+    X(qmlUnintentionalEmptyBlock, "unintentional-empty-block", "UnintentionalEmptyBlock",          \
+      "Warn about bindings that contain only an empty block", QtWarningMsg, false, false)          \
     X(qmlUnqualified, "unqualified", "UnqualifiedAccess",                                          \
       "Warn about unqualified identifiers and how to fix them", QtWarningMsg, false, false)        \
     X(qmlUnreachableCode, "unreachable-code", "UnreachableCode", "Warn about unreachable code.",   \

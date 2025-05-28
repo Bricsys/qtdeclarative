@@ -1462,15 +1462,17 @@ void TestQmllint::dirtyQmlSnippet_data()
             << u"property int qwer: \"Hello\""_s
             << Result{ { { "Cannot assign literal of type string to int"_L1 } } }
             << defaultOptions;
-
-    QTest::newRow("uselessExpressionStatement")
-            << u"property int i: { let x = 0; 0 + 1; return i + 3; }"_s
-            << Result{ { { "Expression statement has no obvious effect."_L1, 1, 30 } } }
+    QTest::newRow("unintentionalEmptyBlock-dirty")
+            << u"property var v: {}"_s
+            << Result{ { { "Unintentional empty block, use ({}) for empty object literal"_L1, 1, 17 } } }
             << defaultOptions;
-
     QTest::newRow("upperCaseId")
             << u"id: Root"_s
             << Result{ { { "Id must start with a lower case letter or an '_'"_L1, 1, 5 } } }
+            << defaultOptions;
+    QTest::newRow("uselessExpressionStatement")
+            << u"property int i: { let x = 0; 0 + 1; return i + 3; }"_s
+            << Result{ { { "Expression statement has no obvious effect."_L1, 1, 30 } } }
             << defaultOptions;
 }
 
@@ -1532,6 +1534,15 @@ void TestQmllint::cleanQmlSnippet_data()
             << u"Item { component Foo: Item { required property var bla; } }"_s << defaultOptions;
     QTest::newRow("testSnippet") << u"property int qwer: 123"_s << defaultOptions;
     QTest::newRow("underScoreId") << u"id: _Root"_s << defaultOptions;
+    QTest::newRow("unintentionalEmptyBlock-clean")
+            << uR"(
+                    property var p1: ({})
+                    property var p2: {
+                        {}
+                        return {}
+                    }
+                )"_s
+            << defaultOptions;
     QTest::newRow("usefulExpressionStatement") << u"x: y + 3;"_s << defaultOptions;
     QTest::newRow("usefulExpressionStatement") << u"x: 3;"_s << defaultOptions;
     QTest::newRow("void") << u"function f(): void {}"_s << defaultOptions;

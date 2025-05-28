@@ -92,6 +92,9 @@ private:
     void warnCaseNoFlowControl(QQmlJS::SourceLocation caseToken) const;
     void checkCaseFallthrough(QQmlJS::AST::StatementList *statements, SourceLocation errorLoc,
                               SourceLocation nextLoc);
+    BindingExpressionParseResult parseBindingExpression(
+            const QString &name, const QQmlJS::AST::Statement *statement,
+            const QQmlJS::AST::UiPublicMember *associatedPropertyDefinition = nullptr) override;
     void handleLiteralBinding(const QQmlJSMetaPropertyBinding &binding,
                               const AST::UiPublicMember *associatedPropertyDefinition) override;
 };

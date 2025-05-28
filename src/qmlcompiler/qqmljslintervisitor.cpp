@@ -416,6 +416,22 @@ bool LinterVisitor::visit(ExpressionStatement *ast)
     return true;
 }
 
+QQmlJSImportVisitor::BindingExpressionParseResult LinterVisitor::parseBindingExpression(
+        const QString &name, const QQmlJS::AST::Statement *statement,
+        const QQmlJS::AST::UiPublicMember *associatedPropertyDefinition)
+{
+    if (statement && statement->kind == (int)AST::Node::Kind::Kind_Block) {
+        const auto *block = static_cast<const AST::Block *>(statement);
+        if (!block->statements && associatedPropertyDefinition) {
+            m_logger->log("Unintentional empty block, use ({}) for empty object literal"_L1,
+                          qmlUnintentionalEmptyBlock,
+                          combine(block->lbraceToken, block->rbraceToken));
+        }
+    }
+
+    return QQmlJSImportVisitor::parseBindingExpression(name, statement, associatedPropertyDefinition);
+}
+
 void LinterVisitor::handleLiteralBinding(const QQmlJSMetaPropertyBinding &binding,
                                          const UiPublicMember *associatedPropertyDefinition)
 {
