@@ -1975,6 +1975,7 @@ void TestQmllint::cleanQmlCode_data()
     QTest::newRow("dontConfuseMemberPrintWithGlobalPrint") << QStringLiteral("findMemberPrint.qml");
     QTest::newRow("duplicateQmldirImport") << QStringLiteral("qmldirImport/duplicate.qml");
     QTest::newRow("enumFromQtQml") << QStringLiteral("enumFromQtQml.qml");
+    QTest::newRow("enumList") << QStringLiteral("enumListTest.qml");
     QTest::newRow("enumProperty") << QStringLiteral("enumProperty.qml");
     QTest::newRow("enumsOfScrollBar") << QStringLiteral("enumsOfScrollBar.qml");
     QTest::newRow("esmodule")                  << QStringLiteral("esmodule.mjs");
