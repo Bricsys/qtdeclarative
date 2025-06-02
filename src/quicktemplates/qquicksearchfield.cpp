@@ -824,12 +824,12 @@ void QQuickSearchField::setPopup(QQuickPopup *popup)
         // QQuickItemChangeListener::itemDestroyed so we have to use QObject::destroyed
         QObjectPrivate::connect(popup, &QQuickPopup::destroyed, d,
                                 &QQuickSearchFieldPrivate::popupDestroyed);
-    }
 
 #if QT_CONFIG(quick_itemview)
-    if (QQuickItemView *itemView = popup->findChild<QQuickItemView *>())
-        itemView->setHighlightRangeMode(QQuickItemView::NoHighlightRange);
+        if (QQuickItemView *itemView = popup->findChild<QQuickItemView *>())
+            itemView->setHighlightRangeMode(QQuickItemView::NoHighlightRange);
 #endif
+    }
 
     d->popup = popup;
     if (!d->popup.isExecuting())
