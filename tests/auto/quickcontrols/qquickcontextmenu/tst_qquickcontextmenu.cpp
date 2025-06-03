@@ -175,7 +175,7 @@ void tst_QQuickContextMenu::tapHandler()
 
     const auto *tapHandler = window->findChild<QObject *>("tapHandler");
     QVERIFY(tapHandler);
-    const QSignalSpy tappedSpy(tapHandler, SIGNAL(tapped(QEventPoint, Qt::MouseButton)));
+    const QSignalSpy tappedSpy(tapHandler, SIGNAL(tapped(QEventPoint,Qt::MouseButton)));
     QVERIFY(tappedSpy.isValid());
 
     const QPoint &windowCenter = mapCenterToWindow(window->contentItem());
@@ -307,7 +307,7 @@ void tst_QQuickContextMenu::menuItemShouldntTriggerOnRelease() // QTBUG-133302
 
     auto *tomatoItem = window->findChild<QQuickItem *>("tomato");
     QVERIFY(tomatoItem);
-    QSignalSpy triggeredSpy(window, SIGNAL(triggered(QObject *)));
+    QSignalSpy triggeredSpy(window, SIGNAL(triggered(QObject*)));
     QVERIFY(triggeredSpy.isValid());
 
     const QPoint &tomatoCenter = mapCenterToWindow(tomatoItem);
