@@ -8,7 +8,7 @@
 QT_BEGIN_NAMESPACE
 
 using namespace Qt::Literals::StringLiterals;
-static const QString ROWS_PROPERTY_NAME = u"rows"_s;
+static const QString TREE_ROWS_PROPERTY_NAME = u"rows"_s;
 
 QQmlTreeRow::QQmlTreeRow(QQmlTreeRow *parentItem)
     : m_parent(parentItem)
@@ -42,7 +42,7 @@ void QQmlTreeRow::unpackVariantMap(const QVariantMap &variantMap)
         const QString& key = it.key();
         const QVariant& value = it.value();
 
-        if ((value.typeId() == QMetaType::Type::QVariantList) && (key == ROWS_PROPERTY_NAME)) {
+        if ((value.typeId() == QMetaType::Type::QVariantList) && (key == TREE_ROWS_PROPERTY_NAME)) {
             for (const QVariant &rowAsVariant : value.toList())
                 m_children.push_back(std::unique_ptr<QQmlTreeRow>(new QQmlTreeRow(rowAsVariant, this)));
         } else {
@@ -89,7 +89,7 @@ QVariant QQmlTreeRow::toVariant() const
         for (const auto &child : m_children)
             children.append(child->toVariant());
 
-        variantMap[ROWS_PROPERTY_NAME] = children;
+        variantMap[TREE_ROWS_PROPERTY_NAME] = children;
     }
 
     return variantMap;
