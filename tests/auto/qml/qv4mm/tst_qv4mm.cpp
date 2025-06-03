@@ -15,6 +15,7 @@
 #include <private/qqmlcomponentattached_p.h>
 #include <private/qv4mapobject_p.h>
 #include <private/qv4setobject_p.h>
+#include <private/qv4variantassociationobject_p.h>
 #if QT_CONFIG(qml_jit)
 #include <private/qv4baselinejit_p.h>
 #endif
@@ -47,6 +48,7 @@ private slots:
     void forInOnProxyMarksTarget();
     void allocWithMemberDataMidwayDrain();
     void markObjectWrappersAfterMarkWeakValues();
+    void variantAssociationObjectMarksMember();
 };
 
 tst_qv4mm::tst_qv4mm()
@@ -833,6 +835,29 @@ void tst_qv4mm::markObjectWrappersAfterMarkWeakValues()
     const QVariant retrieved = engine.rootContext()->contextProperty("prop");
     QVERIFY(qvariant_cast<QObject *>(retrieved));
     QCOMPARE(qvariant_cast<QObject *>(retrieved)->objectName(), "yep");
+}
+
+void tst_qv4mm::variantAssociationObjectMarksMember()
+{
+    QJSEngine jsEngine;
+    QV4::ExecutionEngine &engine = *jsEngine.handle();
+
+    QV4::Scope scope(&engine);
+    QVariantHash assoc;
+    assoc[QLatin1String("test")] = 2;
+    QV4::ScopedObject o(scope, engine.newObject());
+    QV4::Scoped<QV4::VariantAssociationObject> varAssocObject(
+            scope,
+            QV4::VariantAssociationPrototype::fromQVariantHash(&engine, assoc, o->d(), -1, QV4::Heap::ReferenceObject::NoFlag)
+    );
+    bool hasProperty = false;
+    // ensure that the propertyIndexMapping gets initialized
+    varAssocObject->getElement(QLatin1String("test"), &hasProperty);
+    QVERIFY(hasProperty);
+    gc(engine);
+    auto mapping = varAssocObject->d()->propertyIndexMapping;
+    QVERIFY(mapping);
+    QVERIFY(mapping->inUse());
 }
 
 QTEST_MAIN(tst_qv4mm)

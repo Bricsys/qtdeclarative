@@ -50,6 +50,8 @@ namespace QV4 {
 
         DECLARE_HEAP_OBJECT(VariantAssociationObject, ReferenceObject)
         {
+            DECLARE_MARKOBJECTS(VariantAssociationObject)
+
             enum class AssociationType: quint8 {
                 VariantMap,
                 VariantHash
