@@ -864,7 +864,7 @@ bool QQmlObjectCreator::setPropertyBinding(const QQmlPropertyData *bindingProper
             return false;
         }
 
-        const int objectIndex = sharedState->allCreatedObjects.size();
+        const size_t objectIndex = sharedState->allCreatedObjects.size();
         sharedState->allCreatedObjects.push_back(qmlObject);
         const QQmlType attachedObjectType = QQmlMetaType::qmlType(attachedType.attachedPropertiesType(QQmlEnginePrivate::get((engine))));
         const int parserStatusCast = attachedObjectType.parserStatusCast();
@@ -1321,7 +1321,7 @@ QObject *QQmlObjectCreator::createInstance(int index, QObject *parent, bool isCo
 
     QQmlParserStatus *parserStatus = nullptr;
     int parserStatusCast = 0;
-    int instanceIndex = 0;
+    size_t instanceIndex = 0;
 
     bool installPropertyCache = true;
 

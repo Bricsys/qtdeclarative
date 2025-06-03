@@ -111,7 +111,7 @@ private:
 };
 
 struct ParserStatus {
-    int objectIndex = 0;
+    size_t objectIndex = 0;
     int parserStatusCast = 0;
 };
 
