@@ -30,7 +30,7 @@ int QQmlTreeModel::rowCount(const QModelIndex &parent) const
     if (!parent.isValid())
         return static_cast<int>(mRows.size());
 
-    const QQmlTreeRow *row = static_cast<const QQmlTreeRow*>(parent.internalPointer());
+    const auto *row = static_cast<const QQmlTreeRow *>(parent.internalPointer());
     return static_cast<int>(row->rowCount());
 }
 
@@ -69,7 +69,7 @@ QModelIndex QQmlTreeModel::index(int row, int column, const QModelIndex &parent)
         return createIndex(row, column, mRows.at(row).get());
     }
 
-    const QQmlTreeRow *treeRow = static_cast<const QQmlTreeRow*>(parent.internalPointer());
+    const auto *treeRow = static_cast<const QQmlTreeRow *>(parent.internalPointer());
     if (treeRow->rowCount() <= static_cast<size_t>(row))
         return {};
 
@@ -106,7 +106,7 @@ QModelIndex QQmlTreeModel::parent(const QModelIndex &index) const
     if (!index.isValid())
         return {};
 
-    const QQmlTreeRow *thisRow = static_cast<const QQmlTreeRow*>(index.internalPointer());
+    const auto *thisRow = static_cast<const QQmlTreeRow *>(index.internalPointer());
     const QQmlTreeRow *parentRow = thisRow->parent();
 
     if (!parentRow) // parent is root
@@ -178,7 +178,7 @@ QVariant QQmlTreeModel::data(const QModelIndex &index, int role) const
     if (roleData.columnRole == ColumnRole::stringRole) {
         // We know the data structure, so we can get the data for the user.
         const QString propertyName = columnMetadata.roles.value(roleName).name;
-        const QQmlTreeRow *thisRow = static_cast<const QQmlTreeRow*>(index.internalPointer());
+        const auto *thisRow = static_cast<const QQmlTreeRow *>(index.internalPointer());
         return thisRow->data(propertyName);
     }
 
@@ -207,7 +207,7 @@ void QQmlTreeModel::setRows(const QVariant &rows)
         return;
     }
 
-    const QJSValue rowsAsJSValue = rows.value<QJSValue>();
+    const auto rowsAsJSValue = rows.value<QJSValue>();
     const QVariantList rowsAsVariantList = rowsAsJSValue.toVariant().toList();
 
     if (!mComponentCompleted) {
@@ -267,8 +267,8 @@ void QQmlTreeModel::appendRow(QModelIndex index, const QVariant &row)
     const QVariant data = row.userType() == QMetaType::QVariantMap ? row : row.value<QJSValue>().toVariant();
 
     if (index.isValid()) {
-        QQmlTreeRow* parent = static_cast<QQmlTreeRow*>(index.internalPointer());
-        QQmlTreeRow *newChild = new QQmlTreeRow(data);
+        auto *parent = static_cast<QQmlTreeRow *>(index.internalPointer());
+        auto *newChild = new QQmlTreeRow(data);
 
         beginInsertRows(index, static_cast<int>(parent->rowCount()), static_cast<int>(parent->rowCount()));
         parent->addChild(newChild);
@@ -375,7 +375,7 @@ void QQmlTreeModel::setRow(QModelIndex rowIndex, const QVariant &rowData)
         return;
 
     const QVariant rowAsVariant = rowData.userType() == QMetaType::QVariantMap ? rowData : rowData.value<QJSValue>().toVariant();
-    QQmlTreeRow *row = static_cast<QQmlTreeRow*>(rowIndex.internalPointer());
+    auto *row = static_cast<QQmlTreeRow *>(rowIndex.internalPointer());
     row->setData(rowAsVariant);
 
     const QModelIndex topLeftModelIndex(createIndex(rowIndex.row(), 0, rowIndex.internalPointer()));
@@ -420,7 +420,7 @@ void QQmlTreeModel::removeRow(QModelIndex rowIndex)
         beginRemoveRows(mIndexParent, rowIndex.row(), rowIndex.row());
 
         if (mIndexParent.isValid()) {
-            QQmlTreeRow* parent = static_cast<QQmlTreeRow*>(mIndexParent.internalPointer());
+            auto *parent = static_cast<QQmlTreeRow *>(mIndexParent.internalPointer());
             parent->removeChildAt(rowIndex.row());
         } else {
             mRows.erase(std::next(mRows.begin(), rowIndex.row()));
@@ -497,11 +497,11 @@ bool QQmlTreeModel::setData(const QModelIndex &index, const QVariant &value, int
 
     if (roleData.columnRole == ColumnRole::stringRole) {
         // We know the data structure, so we can set it for the user.
-        QQmlTreeRow *row = static_cast<QQmlTreeRow*>(index.internalPointer());
+        auto *row = static_cast<QQmlTreeRow *>(index.internalPointer());
         row->setField(roleData.name, value);
     } else {
         // We don't know the data structure, so the user has to modify their data themselves.
-        auto engine = qmlEngine(this);
+        auto *engine = qmlEngine(this);
         auto args = QJSValueList()
                     // arg 0: modelIndex.
                     << engine->toScriptValue(index)
@@ -579,10 +579,10 @@ QQmlListProperty<QQmlTableModelColumn> QQmlTreeModel::columns()
 void QQmlTreeModel::columns_append(QQmlListProperty<QQmlTableModelColumn> *property,
                                     QQmlTableModelColumn *value)
 {
-    QQmlTreeModel *model = static_cast<QQmlTreeModel*>(property->object);
+    auto *model = static_cast<QQmlTreeModel *>(property->object);
     Q_ASSERT(value);
     Q_ASSERT(model);
-    QQmlTableModelColumn *column = qobject_cast<QQmlTableModelColumn*>(value);
+    auto *column = qobject_cast<QQmlTableModelColumn *>(value);
     if (column)
         model->mColumns.append(column);
 }
@@ -603,22 +603,22 @@ QQmlTableModelColumn *QQmlTreeModel::columns_at(QQmlListProperty<QQmlTableModelC
 
 void QQmlTreeModel::columns_clear(QQmlListProperty<QQmlTableModelColumn> *property)
 {
-    QQmlTreeModel *model = static_cast<QQmlTreeModel*>(property->object);
+    auto *model = static_cast<QQmlTreeModel *>(property->object);
     Q_ASSERT(model);
     return model->mColumns.clear();
 }
 
 void QQmlTreeModel::columns_replace(QQmlListProperty<QQmlTableModelColumn> *property, qsizetype index, QQmlTableModelColumn *value)
 {
-    QQmlTreeModel *model = static_cast<QQmlTreeModel*>(property->object);
+    auto *model = static_cast<QQmlTreeModel *>(property->object);
     Q_ASSERT(model);
-    if (QQmlTableModelColumn *column = qobject_cast<QQmlTableModelColumn*>(value))
+    if (auto *column = qobject_cast<QQmlTableModelColumn *>(value))
         return model->mColumns.replace(index, column);
 }
 
 void QQmlTreeModel::columns_removeLast(QQmlListProperty<QQmlTableModelColumn> *property)
 {
-    QQmlTreeModel *model = static_cast<QQmlTreeModel*>(property->object);
+    auto *model = static_cast<QQmlTreeModel *>(property->object);
     Q_ASSERT(model);
     model->mColumns.removeLast();
 }
@@ -735,7 +735,7 @@ bool QQmlTreeModel::validateRowType(QLatin1StringView functionName, const QVaria
         return false;
     }
 
-    const QJSValue rowAsJSValue = row.value<QJSValue>();
+    const auto rowAsJSValue = row.value<QJSValue>();
     if (!rowAsJSValue.isObject() && !rowAsJSValue.isArray()) {
         qmlWarning(this) << functionName << ": expected \"row\" argument "
                          << "to be an object or array, but got:\n" << rowAsJSValue.toString();
