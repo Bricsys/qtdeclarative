@@ -44,6 +44,8 @@ class Q_LABSQMLMODELS_EXPORT QQmlTreeModel : public QAbstractItemModel, public Q
     QML_ADDED_IN_VERSION(6, 10)
 
 public:
+    Q_DISABLE_COPY_MOVE(QQmlTreeModel)
+
     explicit QQmlTreeModel(QObject *parent = nullptr);
     ~QQmlTreeModel() override;
 
@@ -81,7 +83,7 @@ public:
     QModelIndex parent(const QModelIndex &index) const override;
 
 private:
-    QQmlTreeRow* getPointerToTreeRow(QModelIndex &index, const std::vector<int> rowIndex) const;
+    QQmlTreeRow *getPointerToTreeRow(QModelIndex &index, const std::vector<int> &rowIndex) const;
 
     bool validateRowType(QLatin1StringView functionName, const QVariant &row);
     bool validateRow(QLatin1StringView functionName, const QVariant &row, bool setRowsOperation = false);
@@ -89,7 +91,7 @@ private:
     int treeSize() const;
     friend class tst_QQmlTreeModel;
 
-    enum class ColumnRole
+    enum class ColumnRole : quint8
     {
         stringRole,
         functionRole
@@ -99,7 +101,7 @@ private:
     {
     public:
         ColumnRoleMetadata();
-        ColumnRoleMetadata(ColumnRole role, const QString &name, int type, const QString &typeName);
+        ColumnRoleMetadata(ColumnRole role, QString name, int type, QString typeName);
 
         bool isValid() const;
 

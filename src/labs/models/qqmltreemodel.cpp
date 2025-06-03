@@ -95,9 +95,8 @@ QModelIndex QQmlTreeModel::index(const std::vector<int> &treeIndex, int column)
 
     if (row)
         return createIndex(treeIndex.back(), column, row);
-    else
-        qmlWarning(this) << "TreeModel::index: could not find any node at the specified index";
 
+    qmlWarning(this) << "TreeModel::index: could not find any node at the specified index";
     return {};
 }
 
@@ -286,7 +285,7 @@ void QQmlTreeModel::appendRow(QModelIndex index, const QVariant &row)
                 static_cast<int>(mRows.size()),
                 static_cast<int>(mRows.size()));
 
-        mRows.push_back(std::unique_ptr<QQmlTreeRow>(new QQmlTreeRow(data)));
+        mRows.push_back(std::make_unique<QQmlTreeRow>(data));
 
         // Gather metadata the first time a row is added.
         if (mColumnMetadata.isEmpty())
@@ -303,7 +302,8 @@ void QQmlTreeModel::appendRow(const QVariant &row)
     appendRow({}, row);
 }
 
-QQmlTreeRow* QQmlTreeModel::getPointerToTreeRow(QModelIndex &modIndex, const std::vector<int> rowIndex) const
+QQmlTreeRow *QQmlTreeModel::getPointerToTreeRow(QModelIndex &modIndex,
+                                                const std::vector<int> &rowIndex) const
 {
     for (int r : rowIndex) {
         modIndex = index(r, 0, modIndex);
@@ -329,9 +329,8 @@ QVariant QQmlTreeModel::getRow(const QModelIndex &rowIndex) const
 {
     if (rowIndex.isValid())
         return static_cast<QQmlTreeRow*>(rowIndex.internalPointer())->toVariant();
-    else
-        qmlWarning(this) << "getRow: could not find any node at the specified index";
 
+    qmlWarning(this) << "getRow: could not find any node at the specified index";
     return {};
 }
 
@@ -623,16 +622,14 @@ void QQmlTreeModel::columns_removeLast(QQmlListProperty<QQmlTableModelColumn> *p
     model->mColumns.removeLast();
 }
 
-QQmlTreeModel::ColumnRoleMetadata::ColumnRoleMetadata()
-{
-}
+QQmlTreeModel::ColumnRoleMetadata::ColumnRoleMetadata() = default;
 
 QQmlTreeModel::ColumnRoleMetadata::ColumnRoleMetadata(
-    ColumnRole role, const QString &name, int type, const QString &typeName) :
+    ColumnRole role, QString name, int type, QString typeName) :
     columnRole(role),
-    name(name),
+    name(std::move(name)),
     type(type),
-    typeName(typeName)
+    typeName(std::move(typeName))
 {
 }
 
@@ -856,7 +853,7 @@ void QQmlTreeModel::setRowsPrivate(const QVariantList &rowsAsVariantList)
     mRows.clear();
 
     for (const auto &rowAsVariant : rowsAsVariantList)
-        mRows.push_back(std::unique_ptr<QQmlTreeRow>(new QQmlTreeRow(rowAsVariant)));
+        mRows.push_back(std::make_unique<QQmlTreeRow>(rowAsVariant));
 
     // Gather metadata the first time the rows are set.
     if (firstTimeValidRowsHaveBeenSet && !mInitialRows.isEmpty())
@@ -874,7 +871,7 @@ int QQmlTreeModel::treeSize() const
     int treeSize = 0;
 
     for (const auto &treeRow : mRows)
-        treeSize += treeRow.get()->subTreeSize();
+        treeSize += treeRow->subTreeSize();
 
     return treeSize;
 }

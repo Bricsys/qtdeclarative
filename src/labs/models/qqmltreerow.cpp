@@ -16,7 +16,7 @@ QQmlTreeRow::QQmlTreeRow(QQmlTreeRow *parentItem)
 
 }
 
-QQmlTreeRow::QQmlTreeRow(QVariant data, QQmlTreeRow *parentItem)
+QQmlTreeRow::QQmlTreeRow(const QVariant &data, QQmlTreeRow *parentItem)
     : m_parent(parentItem)
 {
     QVariantMap variantMap = data.toJsonObject().toVariantMap();
@@ -44,7 +44,7 @@ void QQmlTreeRow::unpackVariantMap(const QVariantMap &variantMap)
 
         if ((value.typeId() == QMetaType::Type::QVariantList) && (key == TREE_ROWS_PROPERTY_NAME)) {
             for (const QVariant &rowAsVariant : value.toList())
-                m_children.push_back(std::unique_ptr<QQmlTreeRow>(new QQmlTreeRow(rowAsVariant, this)));
+                m_children.push_back(std::make_unique<QQmlTreeRow>(rowAsVariant, this));
         } else {
             dataMap.insert(key, value);
         }
@@ -74,7 +74,7 @@ void QQmlTreeRow::setData(const QVariantMap &data)
     unpackVariantMap(data);
 }
 
-void QQmlTreeRow::setField(QString key, const QVariant &value)
+void QQmlTreeRow::setField(const QString &key, const QVariant &value)
 {
     if (dataMap.contains(key))
         dataMap[key] = value;

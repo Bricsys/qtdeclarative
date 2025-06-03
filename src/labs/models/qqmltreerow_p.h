@@ -31,8 +31,8 @@ class QQmlTreeRow
 {
 public:
     explicit QQmlTreeRow(QQmlTreeRow *parentItem = nullptr);
-    QQmlTreeRow(QVariant data, QQmlTreeRow *parentItem = nullptr);
-    QQmlTreeRow(const QVariantMap &data, QQmlTreeRow *parentItem = nullptr);
+    explicit QQmlTreeRow(const QVariant &data, QQmlTreeRow *parentItem = nullptr);
+    explicit QQmlTreeRow(const QVariantMap &data, QQmlTreeRow *parentItem = nullptr);
 
     QQmlTreeRow *parent() const { return m_parent; }
     void setParent(QQmlTreeRow *parent) { m_parent = parent; }
@@ -42,13 +42,13 @@ public:
     size_t rowCount() const { return m_children.size(); }
     int subTreeSize() const;
 
-    QVariant data(QString key) const { return dataMap[key]; }
+    QVariant data(const QString &key) const { return dataMap[key]; }
     const std::vector<std::unique_ptr<QQmlTreeRow>>& children() const { return m_children; }
     void removeChild(std::vector<std::unique_ptr<QQmlTreeRow>>::const_iterator &child);
     void removeChildAt(int i);
     void setData(const QVariant &data);
     void setData(const QVariantMap &data);
-    void setField(QString key, const QVariant &value);
+    void setField(const QString &key, const QVariant &value);
     QVariant toVariant() const;
 private:
     void unpackVariantMap(const QVariantMap &dataMap);
