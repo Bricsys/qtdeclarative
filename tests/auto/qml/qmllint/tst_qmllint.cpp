@@ -1523,7 +1523,7 @@ void TestQmllint::cleanQmlSnippet_data()
     QTest::newRow("color-hex2") << u"property color myColor: \"#FFFFFFFF\""_s << defaultOptions;
     QTest::newRow("color-hex3") << u"property color myColor: \"#A0AAff1f\""_s << defaultOptions;
     QTest::newRow("color-name") << u"property color myColor: \"blue\""_s << defaultOptions;
-    QTest::newRow("color-name2") << u"property color myColor\nmyColor: \"green\""_s
+    QTest::newRow("color-name2") << u"property color myColor\nmyColor: \"grEen\""_s
                                  << defaultOptions;
     {
         CallQmllintOptions options;

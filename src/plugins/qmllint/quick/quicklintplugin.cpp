@@ -706,7 +706,11 @@ void ColorValidatorPass::onBinding(const QQmlSA::Element &element, const QString
     if (!propertyType || propertyType != m_colorType)
         return;
 
-    const QString colorName = binding.stringValue();
+    QString colorName = binding.stringValue();
+    // for "named" colors, QColor::fromString does not care about
+    // the case
+    if (!colorName.startsWith(u'#'))
+        colorName = std::move(colorName).toLower();
     if (s_hexPattern.match(colorName).hasMatch())
         return;
 
