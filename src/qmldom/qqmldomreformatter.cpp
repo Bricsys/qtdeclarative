@@ -1175,8 +1175,8 @@ void ScriptFormatter::throwRecursionDepthError()
 
 // This is a set of characters that are not allowed to be at the beginning of a line
 // after a semicolon for ASI.
-using namespace Qt::StringLiterals;
-static constexpr QLatin1StringView restrictedChars = "([/+-"_L1;
+
+static constexpr QStringView restrictedChars = u"([/+-";
 
 // Given an existing semicolon, can we safely remove it without changing behavior
 bool ScriptFormatter::canRemoveSemicolon(AST::Node *node)
