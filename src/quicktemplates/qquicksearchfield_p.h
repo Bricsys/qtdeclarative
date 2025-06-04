@@ -24,6 +24,7 @@ class QQuickTextField;
 class QQuickPopup;
 class QQmlInstanceModel;
 class QQuickIndicatorButton;
+class QQmlComponent;
 
 class Q_QUICKTEMPLATES2_EXPORT QQuickSearchField : public QQuickControl
 {

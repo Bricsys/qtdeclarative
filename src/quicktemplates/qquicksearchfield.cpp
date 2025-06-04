@@ -10,6 +10,7 @@
 #include <private/qqmldelegatemodel_p.h>
 #include "qquickabstractbutton_p.h"
 #include "qquickabstractbutton_p_p.h"
+#include <QtQml/qqmlcomponent.h>
 #include <QtQuick/private/qquickaccessibleattached_p.h>
 #if QT_CONFIG(quick_itemview)
 #  include <QtQuick/private/qquickitemview_p.h>
