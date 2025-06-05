@@ -2369,21 +2369,27 @@ void tst_QQuickPopup::mirroredCombobox()
         const QPointF popupPos(popup->contentItem()->mapToItem(comboBox->parentItem(),
                                                                popup->contentItem()->position()));
         const QSizeF popupSize(popup->contentItem()->size());
+        const QRectF popupRect(popupPos, popupSize);
 
-        // ignore popup.{top,bottom}Padding() as not included in popup->contentItem()->size()
-        // some styles prefer to draw the popup "over" (in z-axis direction) the combobox to hide
-        // the combobox
-        const bool styleDrawsPopupOverCombobox =
-                comboBox->position().y() - popupSize.height() + comboBox->size().height()
-                == popupPos.y();
-        // some styles prefer to draw the popup below (in y-axis direction) the combobox
-        const bool styleDrawsPopupBelowCombobox =
-                comboBox->position().y() - popupSize.height() + comboBox->topPadding()
-                == popupPos.y();
+        if (QQuickStyle::name() == QLatin1String("FluentWinUI3")) {
+            // FluentWinUI3 style prefer to draw the popup on top of the combobox
+            const bool styleDrawsPopupOnTopOfAndCoveringCombobox =
+                    popupPos.y() < comboBox->y() && popupPos.y() + popupSize.height() > comboBox->y();
+            QVERIFY(styleDrawsPopupOnTopOfAndCoveringCombobox);
+        } else {
+            // ignore popup.{top,bottom}Padding() as not included in popup->contentItem()->size()
+            // some styles prefer to draw the popup "over" (in z-axis direction) the combobox to hide
+            // the combobox
+            const bool styleDrawsPopupOverCombobox =
+                    comboBox->position().y() - popupSize.height() + comboBox->size().height()
+                    == popupPos.y();
+            // some styles prefer to draw the popup below (in y-axis direction) the combobox
+            const bool styleDrawsPopupBelowCombobox =
+                    comboBox->position().y() - popupSize.height() + comboBox->topPadding()
+                    == popupPos.y();
 
-        if (QQuickStyle::name() == QLatin1String("FluentWinUI3"))
-            QEXPECT_FAIL("", "Rotated ComboBox is broken in FluentWinUI3 style", Abort);
-        QVERIFY(styleDrawsPopupOverCombobox || styleDrawsPopupBelowCombobox);
+            QVERIFY(styleDrawsPopupOverCombobox || styleDrawsPopupBelowCombobox);
+        }
 
         popup->close();
     }
@@ -2401,16 +2407,23 @@ void tst_QQuickPopup::mirroredCombobox()
 
         // some styles prefer to draw the popup "over" (in z-axis direction) the combobox to hide
         // the combobox
-        const bool styleDrawsPopupOverCombobox = comboBox->position().y() + comboBox->topPadding()
-                        + popup->topPadding() + popup->bottomPadding()
-                == popupPos.y();
-        // some styles prefer to draw the popup above (in y-axis direction) the combobox
-        const bool styleDrawsPopupAboveCombobox =
-                comboBox->position().y() + comboBox->height() - comboBox->topPadding()
-                == popupPos.y();
+        if (QQuickStyle::name() == QLatin1String("FluentWinUI3")) {
+            const QSizeF popupSize(popup->contentItem()->size());
+            // FluentWinUI3 style prefer to draw the popup on top of the combobox
+            const bool styleDrawsPopupOnTopOfAndCoveringCombobox =
+                    popupPos.y() < comboBox->y() && popupPos.y() + popupSize.height() > comboBox->y();
+            QVERIFY(styleDrawsPopupOnTopOfAndCoveringCombobox);
+        } else {
+            const bool styleDrawsPopupOverCombobox = comboBox->position().y() + comboBox->topPadding()
+                            + popup->topPadding() + popup->bottomPadding()
+                    == popupPos.y();
+            // some styles prefer to draw the popup above (in y-axis direction) the combobox
+            const bool styleDrawsPopupAboveCombobox =
+                    comboBox->position().y() + comboBox->height() - comboBox->topPadding()
+                    == popupPos.y();
 
-        QVERIFY(styleDrawsPopupOverCombobox || styleDrawsPopupAboveCombobox);
-
+            QVERIFY(styleDrawsPopupOverCombobox || styleDrawsPopupAboveCombobox);
+        }
         popup->close();
     }
 }
