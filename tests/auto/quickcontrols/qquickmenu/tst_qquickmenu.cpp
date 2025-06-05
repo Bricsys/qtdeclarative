@@ -391,6 +391,7 @@ void tst_QQuickMenu::contextMenuKeyboard()
     centerOnScreen(window);
     moveMouseAway(window);
     window->show();
+    QVERIFY(QTest::qWaitForWindowExposed(window));
     window->requestActivate();
     QVERIFY(QTest::qWaitForWindowActive(window));
     QVERIFY(QGuiApplication::focusWindow() == window);
@@ -418,6 +419,20 @@ void tst_QQuickMenu::contextMenuKeyboard()
     QVERIFY(firstItem);
     QSignalSpy visibleSpy(menu, SIGNAL(visibleChanged()));
 
+#if QT_CONFIG(xcb)
+    // The focus-out event is triggered when the expected focus-in event does not occur
+    // within a certain time frame. In this case, the xcb connection sends a focus-out event,
+    // causing the active window to lose focus. As a result, if the menu is already open,
+    // it will be closed automatically.
+    // To prevent this issue, we force the application to process pending and deferred events,
+    // ensuring that the focus-in event is handled before opening the menu.
+    // See also QXcbConnection::QXcbConnection() (line: m_focusInTimer.callOnTimeout(...)).
+    if (QGuiApplication::platformName().compare(QLatin1String("xcb"), Qt::CaseInsensitive)) {
+        QGuiApplication::processEvents();
+        QGuiApplication::sendPostedEvents();
+    }
+#endif
+
     QVERIFY(menu->hasFocus());
     menu->open();
 
@@ -428,7 +443,8 @@ void tst_QQuickMenu::contextMenuKeyboard()
         QTRY_VERIFY(menuPrivate->popupWindow);
         parentItem = menuPrivate->popupWindow->contentItem();
         QVERIFY(QTest::qWaitForWindowExposed(menuPrivate->popupWindow));
-        QQuickTest::qWaitForPolish(menuPrivate->popupWindow);
+        QVERIFY(QTest::qWaitForWindowActive(menuPrivate->popupWindow));
+        QVERIFY(QQuickTest::qWaitForPolish(menuPrivate->popupWindow));
     }
 
     QTRY_VERIFY(menu->isOpened());
