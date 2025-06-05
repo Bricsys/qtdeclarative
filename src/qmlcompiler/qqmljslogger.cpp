@@ -54,6 +54,8 @@ using namespace Qt::StringLiterals;
     X(qmlDeferredPropertyId, "deferred-property-id", "DeferredPropertyId",                         \
       "Warn about making deferred properties immediate by giving them an id.", QtInfoMsg, true,    \
       true)                                                                                        \
+    X(qmlEnumsAreNotTypes, "enums-are-not-types", "EnumsAreNotTypes",                              \
+      "Warn about the use of enumerations as types.", QtWarningMsg, false, false)                  \
     X(qmlEqualityTypeCoercion, "equality-type-coercion", "EqualityTypeCoercion",                   \
       "Warn about coercions due to usages of '==' and '!='", QtWarningMsg, false, false)           \
     X(qmlDeprecated, "deprecated", "Deprecated", "Warn about deprecated properties and types",     \
