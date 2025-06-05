@@ -54,7 +54,7 @@ void QQmlVMEGuard::guard(QQmlObjectCreator *creator)
     std::vector<QQmlGuard<QObject>> &objects = creator->allCreatedObjects();
     m_objectCount = objects.size();
     m_objects = new QQmlGuard<QObject>[m_objectCount];
-    for (int ii = 0; ii < m_objectCount; ++ii)
+    for (size_t ii = 0; ii < m_objectCount; ++ii)
         m_objects[ii] = objects[ii];
 
     m_contextCount = 1;
@@ -75,7 +75,7 @@ void QQmlVMEGuard::clear()
 
 bool QQmlVMEGuard::isOK() const
 {
-    for (int ii = 0; ii < m_objectCount; ++ii)
+    for (size_t ii = 0; ii < m_objectCount; ++ii)
         if (m_objects[ii].isNull())
             return false;
 
