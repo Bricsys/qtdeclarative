@@ -541,6 +541,7 @@ void QQuickWindowPrivate::syncSceneGraph()
     if (pendingFontUpdate) {
         QFont::cleanup();
         invalidateFontData(contentItem);
+        context->invalidateGlyphCaches();
     }
 
     if (Q_UNLIKELY(!renderer)) {
@@ -568,7 +569,7 @@ void QQuickWindowPrivate::syncSceneGraph()
     renderer->setVisualizationMode(visualizationMode);
 
     if (pendingFontUpdate) {
-        context->invalidateGlyphCaches();
+        context->flushGlyphCaches();
         pendingFontUpdate = false;
     }
 
