@@ -316,11 +316,18 @@ void QQuickBasePositioner::prePositioning()
         PositionedItem posItem(child);
         auto it = std::find(oldItems.begin(), oldItems.end(), posItem);
         if (it == oldItems.end()) {
+            // This is a newly added item.
             d->watchChanges(child);
             posItem.isNew = true;
             if (!childPrivate->explicitVisible || !child->width() || !child->height()) {
                 posItem.isVisible = false;
                 posItem.index = -1;
+                // If we hide a zero-width or height item by setting visible to false,
+                // the !childPrivate->explicitVisible will then always trigger. We can't
+                // overwrite what the user has set, and we don't want to introduce a separate
+                // flag to track whether the visible property was actually explicitly set so
+                // that we can implicitly set it, so instead we use culled for this.
+                childPrivate->setCulled(true);
                 unpositionedItems.push_back(std::move(posItem));
             } else {
                 const int posIndex = int(positionedItems.size());
@@ -340,12 +347,14 @@ void QQuickBasePositioner::prePositioning()
 #endif
             }
         } else {
+            // This item already existed within us.
             PositionedItem *item = &*it;
             // Items are only omitted from positioning if they are explicitly hidden
             // i.e. their positioning is not affected if an ancestor is hidden.
             if (!childPrivate->explicitVisible || !child->width() || !child->height()) {
                 item->isVisible = false;
                 item->index = -1;
+                childPrivate->setCulled(true);
                 unpositionedItems.push_back(std::move(*item));
             } else if (!item->isVisible) {
                 // item changed from non-visible to visible, treat it as a "new" item
@@ -353,6 +362,7 @@ void QQuickBasePositioner::prePositioning()
                 item->isNew = true;
                 const int itemIndex = int(positionedItems.size());
                 item->index = itemIndex;
+                childPrivate->setCulled(false);
                 positionedItems.push_back(std::move(*item));
 
 #if QT_CONFIG(quick_viewtransitions)
