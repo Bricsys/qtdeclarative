@@ -1380,12 +1380,18 @@ QQmlRefPointer<QQmlTypeData> QQmlTypeLoader::getType(
     return typeData;
 }
 
-QQmlRefPointer<QV4::CompiledData::CompilationUnit> QQmlTypeLoader::injectScript(
+static bool isModuleUrl(const QUrl &url)
+{
+    return url.path().endsWith(QLatin1String(".mjs"));
+}
+
+QQmlRefPointer<QV4::CompiledData::CompilationUnit> QQmlTypeLoader::injectModule(
         const QUrl &relativeUrl, const QV4::CompiledData::Unit *unit)
 {
     ASSERT_ENGINETHREAD();
 
-    QQmlRefPointer<QQmlScriptBlob> blob = QQml::makeRefPointer<QQmlScriptBlob>(relativeUrl, this);
+    QQmlRefPointer<QQmlScriptBlob> blob = QQml::makeRefPointer<QQmlScriptBlob>(
+            relativeUrl, this, QQmlScriptBlob::IsESModule::Yes);
     QQmlPrivate::CachedQmlUnit cached { unit, nullptr, nullptr};
 
     {
@@ -1425,7 +1431,9 @@ QQmlRefPointer<QQmlScriptBlob> QQmlTypeLoader::getScript(
         if (scriptBlob)
             return scriptBlob;
 
-        scriptBlob = QQml::makeRefPointer<QQmlScriptBlob>(url, this);
+        scriptBlob = QQml::makeRefPointer<QQmlScriptBlob>(url, this, isModuleUrl(url)
+                ? QQmlScriptBlob::IsESModule::Yes
+                : QQmlScriptBlob::IsESModule::No);
         data->scriptCache.insert(url, scriptBlob);
     }
 
