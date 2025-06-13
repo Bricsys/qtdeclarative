@@ -1052,6 +1052,7 @@ Check https://doc.qt.io/qt-6/qt-cmake-policy-qtp0001.html for policy details."
                 "cmake_language(DEFER DIRECTORY ${CMAKE_BINARY_DIR} "
                     "ID qmlls_build_ini_generation_id "
                     "CALL _qt_internal_write_deferred_qmlls_build_ini_file"
+                    "${QT_CMAKE_EXPORT_NAMESPACE}"
                 ")"
             )
         endif()
@@ -1265,7 +1266,14 @@ function(_qt_internal_list_to_ini list_var)
     set(${list_var} "${result}" PARENT_SCOPE)
 endfunction()
 
-function(_qt_internal_write_deferred_qmlls_build_ini_file)
+function(_qt_internal_write_deferred_qmlls_build_ini_file qt_cmake_export_namespace)
+    # _qt_internal_write_deferred_qmlls_build_ini_file is deferred to be called in the root
+    # CMAKE_BINARY_DIR. If find_package(Qt6) is not called in the root of the project (like in the
+    # Qt Creator super repo), QT_CMAKE_EXPORT_NAMESPACE will not be defined.
+    # Manually define it here, based on the value passed to the function, from a scope where it
+    # is available.
+    set(QT_CMAKE_EXPORT_NAMESPACE "${qt_cmake_export_namespace}")
+
     get_property(_qmlls_build_ini_targets GLOBAL PROPERTY _qmlls_build_ini_targets)
     list(REMOVE_DUPLICATES _qmlls_build_ini_targets)
 
