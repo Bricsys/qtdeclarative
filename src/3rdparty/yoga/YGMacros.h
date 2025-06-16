@@ -28,7 +28,7 @@
 #endif
 
 #ifdef _WINDLL
-#define WIN_EXPORT __declspec(dllexport)
+#define WIN_EXPORT // __declspec(dllexport)
 #else
 #define WIN_EXPORT
 #endif
@@ -37,7 +37,7 @@
 #ifdef _MSC_VER
 #define YOGA_EXPORT
 #else
-#define YOGA_EXPORT __attribute__((visibility("default")))
+#define YOGA_EXPORT // __attribute__((visibility("default")))
 #endif
 #endif
 
