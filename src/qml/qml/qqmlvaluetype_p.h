@@ -106,7 +106,7 @@ private:
     void *m_gadgetPtr = nullptr;
 };
 
-struct Q_QML_EXPORT QQmlPointFValueType : public QPointF
+struct Q_QML_EXPORT QQmlPointFValueType : private QPointF
 {
     Q_PROPERTY(qreal x READ x WRITE setX FINAL)
     Q_PROPERTY(qreal y READ y WRITE setY FINAL)
@@ -127,7 +127,7 @@ public:
     void setY(qreal);
 };
 
-struct Q_QML_EXPORT QQmlPointValueType : public QPoint
+struct Q_QML_EXPORT QQmlPointValueType : private QPoint
 {
     Q_PROPERTY(int x READ x WRITE setX FINAL)
     Q_PROPERTY(int y READ y WRITE setY FINAL)
@@ -148,7 +148,7 @@ public:
     void setY(int);
 };
 
-struct Q_QML_EXPORT QQmlSizeFValueType : public QSizeF
+struct Q_QML_EXPORT QQmlSizeFValueType : private QSizeF
 {
     Q_PROPERTY(qreal width READ width WRITE setWidth FINAL)
     Q_PROPERTY(qreal height READ height WRITE setHeight FINAL)
@@ -169,7 +169,7 @@ public:
     void setHeight(qreal);
 };
 
-struct Q_QML_EXPORT QQmlSizeValueType : QSize
+struct Q_QML_EXPORT QQmlSizeValueType : private QSize
 {
     Q_PROPERTY(int width READ width WRITE setWidth FINAL)
     Q_PROPERTY(int height READ height WRITE setHeight FINAL)
@@ -190,7 +190,7 @@ public:
     void setHeight(int);
 };
 
-struct Q_QML_EXPORT QQmlRectFValueType : public QRectF
+struct Q_QML_EXPORT QQmlRectFValueType : private QRectF
 {
     Q_PROPERTY(qreal x READ x WRITE setX FINAL)
     Q_PROPERTY(qreal y READ y WRITE setY FINAL)
@@ -227,7 +227,7 @@ public:
     qreal bottom() const;
 };
 
-struct Q_QML_EXPORT QQmlRectValueType : QRect
+struct Q_QML_EXPORT QQmlRectValueType : private QRect
 {
     Q_PROPERTY(int x READ x WRITE setX FINAL)
     Q_PROPERTY(int y READ y WRITE setY FINAL)
@@ -264,7 +264,7 @@ public:
     int bottom() const;
 };
 
-struct Q_QML_EXPORT QQmlMarginsFValueType : public QMarginsF
+struct Q_QML_EXPORT QQmlMarginsFValueType : private QMarginsF
 {
     Q_PROPERTY(qreal left READ left WRITE setLeft FINAL)
     Q_PROPERTY(qreal right READ right WRITE setRight FINAL)
@@ -291,7 +291,7 @@ public:
     void setBottom(qreal);
 };
 
-struct Q_QML_EXPORT QQmlMarginsValueType : public QMargins
+struct Q_QML_EXPORT QQmlMarginsValueType : private QMargins
 {
     Q_PROPERTY(int left READ left WRITE setLeft FINAL)
     Q_PROPERTY(int right READ right WRITE setRight FINAL)
@@ -355,7 +355,7 @@ enum Type {
 Q_ENUM_NS(Type)
 };
 
-struct Q_QML_EXPORT QQmlEasingValueType : public QEasingCurve
+struct Q_QML_EXPORT QQmlEasingValueType : private QEasingCurve
 {
     Q_GADGET
     QML_ANONYMOUS
