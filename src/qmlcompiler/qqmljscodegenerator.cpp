@@ -1159,6 +1159,16 @@ void QQmlJSCodeGenerator::generateWriteBack(int registerIndex)
         if (writeBack.isConversion())
             REJECT(u"write-back of converted value"_s);
 
+        switch (writeBack.variant()) {
+        case QQmlJSRegisterContent::Literal:
+        case QQmlJSRegisterContent::Operation:
+            // If the value type or list was produced as a literal or as result
+            // of an operation (like DefineArray ...), we don't have to write back.
+            return;
+        default:
+            break;
+        }
+
         const int lookupIndex = writeBack.resultLookupIndex();
 
         // This is essential for the soundness of the type system.

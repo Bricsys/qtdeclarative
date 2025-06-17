@@ -50,6 +50,7 @@ set(qml_files
     BaseMember.qml
     BindingExpression.qml
     BindingToScriptStringProperty.qml
+    Categorizer.qml
     CxxTypeFromDir.qml
     CxxTypeFromImplicit.qml
     Cycle1.qml
