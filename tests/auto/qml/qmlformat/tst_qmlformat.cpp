@@ -348,8 +348,8 @@ void TestQmlformat::qml_data()
             << "noSuperfluousSpaceInsertions.fail_id.qml"
             << "noSuperfluousSpaceInsertions.fail_id.formatted.qml";
     QTest::newRow("noSuperfluousSpaceInsertions.fail_QtObject")
-            << "noSuperfluousSpaceInsertions.fail_QtObject.qml"
-            << "noSuperfluousSpaceInsertions.fail_QtObject.formatted.qml";
+            << "noSuperfluousSpaceInsertions_QtObject.qml"
+            << "noSuperfluousSpaceInsertions_QtObject.formatted.qml";
     QTest::newRow("noSuperfluousSpaceInsertions.fail_signal")
             << "noSuperfluousSpaceInsertions.fail_signal.qml"
             << "noSuperfluousSpaceInsertions.fail_signal.formatted.qml";
@@ -382,8 +382,6 @@ void TestQmlformat::qml()
     QVERIFY(wasSuccessful && !output.isEmpty());
     auto exp = readTestFile(fileFormatted);
     QEXPECT_FAIL("noSuperfluousSpaceInsertions.fail_id",
-                 "Not all cases have been covered yet (QTBUG-133315, QTBUG-123386)", Abort);
-    QEXPECT_FAIL("noSuperfluousSpaceInsertions.fail_QtObject",
                  "Not all cases have been covered yet (QTBUG-133315, QTBUG-123386)", Abort);
     QEXPECT_FAIL("noSuperfluousSpaceInsertions.fail_signal",
                  "Not all cases have been covered yet (QTBUG-133315, QTBUG-123386)", Abort);
