@@ -6,11 +6,20 @@
 #include "qquickvectorimage_p_p.h"
 #include <QtQuickVectorImageGenerator/private/qquickitemgenerator_p.h>
 #include <QtQuickVectorImageGenerator/private/qquickvectorimageglobal_p.h>
+#include <QtQuickVectorImageGenerator/private/qquickvectorimageplugin_p.h>
 #include <QtCore/qloggingcategory.h>
 
 #include <private/qquicktranslate_p.h>
 
+#include <private/qfactoryloader_p.h>
+
 QT_BEGIN_NAMESPACE
+
+Q_GLOBAL_STATIC_WITH_ARGS(QFactoryLoader, vectorImagePluginLoader,
+                          (QQuickVectorImageFormatsPluginFactory_iid,
+                           QLatin1String("/vectorimageformats"),
+                           Qt::CaseInsensitive))
+
 
 /*!
     \qmlmodule QtQuick.VectorImage
@@ -43,13 +52,16 @@ void QQuickVectorImagePrivate::setSource(const QUrl &source)
         return;
 
     sourceFile = source;
-    loadSvg();
+    loadFile();
     emit q->sourceChanged();
 }
 
-void QQuickVectorImagePrivate::loadSvg()
+void QQuickVectorImagePrivate::loadFile()
 {
     Q_Q(QQuickVectorImage);
+
+    if (!q->isComponentComplete())
+        return;
 
     QUrl resolvedUrl = qmlContext(q)->resolvedUrl(sourceFile);
     QString localFile = QQmlFile::urlToLocalFileOrQrc(resolvedUrl);
@@ -57,18 +69,11 @@ void QQuickVectorImagePrivate::loadSvg()
     if (localFile.isEmpty())
         return;
 
-    QQuickVectorImagePrivate::Format fileFormat = formatFromFilePath(localFile);
+    if (rootItem)
+        rootItem->deleteLater();
 
-    if (fileFormat != QQuickVectorImagePrivate::Format::Svg) {
-        qCWarning(lcQuickVectorImage) << "Unsupported file format";
-        return;
-    }
-
-    if (svgItem)
-        svgItem->deleteLater();
-
-    svgItem = new QQuickItem(q);
-    svgItem->setParentItem(q);
+    rootItem = new QQuickItem(q);
+    rootItem->setParentItem(q);
 
     QQuickVectorImageGenerator::GeneratorFlags flags;
     if (preferredRendererType == QQuickVectorImage::CurveRenderer)
@@ -76,29 +81,30 @@ void QQuickVectorImagePrivate::loadSvg()
     if (assumeTrustedSource)
         flags.setFlag(QQuickVectorImageGenerator::AssumeTrustedSource);
 
-    QQuickItemGenerator generator(localFile, flags, svgItem, qmlContext(q));
-    generator.generate();
+    QQuickItemGenerator generator(localFile, flags, rootItem, qmlContext(q));
 
-    q->setImplicitWidth(svgItem->width());
-    q->setImplicitHeight(svgItem->height());
+    // If we assume trusted source, we try plugins first
+    bool generatedWithPlugin = false;
+    if (assumeTrustedSource) {
+        QFactoryLoader *loader = vectorImagePluginLoader();
 
-    q->updateAnimationProperties();
-    q->updateSvgItemScale();
-    q->update();
-}
-
-QQuickVectorImagePrivate::Format QQuickVectorImagePrivate::formatFromFilePath(const QString &filePath)
-{
-    Q_UNUSED(filePath)
-
-    QQuickVectorImagePrivate::Format res = QQuickVectorImagePrivate::Format::Unknown;
-
-    if (filePath.endsWith(QLatin1String(".svg")) || filePath.endsWith(QLatin1String(".svgz"))
-        || filePath.endsWith(QLatin1String(".svg.gz"))) {
-        res = QQuickVectorImagePrivate::Format::Svg;
+        const qsizetype count = loader->keyMap().size();
+        for (qsizetype i = 0; i <= count && !generatedWithPlugin; ++i) {
+            QQuickVectorImagePlugin *plugin = qobject_cast<QQuickVectorImagePlugin *>(loader->instance(i));
+            if (plugin != nullptr)
+                generatedWithPlugin = plugin->generate(localFile, &generator);
+        }
     }
 
-    return res;
+    if (!generatedWithPlugin)
+        generator.generate();
+
+    q->setImplicitWidth(rootItem->width());
+    q->setImplicitHeight(rootItem->height());
+
+    q->updateAnimationProperties();
+    q->updateRootItemScale();
+    q->update();
 }
 
 /*!
@@ -122,9 +128,9 @@ QQuickVectorImage::QQuickVectorImage(QQuickItem *parent)
 {
     setFlag(QQuickItem::ItemHasContents, true);
 
-    QObject::connect(this, &QQuickItem::widthChanged, this, &QQuickVectorImage::updateSvgItemScale);
-    QObject::connect(this, &QQuickItem::heightChanged, this, &QQuickVectorImage::updateSvgItemScale);
-    QObject::connect(this, &QQuickVectorImage::fillModeChanged, this, &QQuickVectorImage::updateSvgItemScale);
+    QObject::connect(this, &QQuickItem::widthChanged, this, &QQuickVectorImage::updateRootItemScale);
+    QObject::connect(this, &QQuickItem::heightChanged, this, &QQuickVectorImage::updateRootItemScale);
+    QObject::connect(this, &QQuickVectorImage::fillModeChanged, this, &QQuickVectorImage::updateRootItemScale);
 }
 
 /*!
@@ -146,29 +152,29 @@ void QQuickVectorImage::setSource(const QUrl &source)
     d->setSource(source);
 }
 
-void QQuickVectorImage::updateSvgItemScale()
+void QQuickVectorImage::updateRootItemScale()
 {
     Q_D(QQuickVectorImage);
 
-    if (d->svgItem == nullptr
-        || qFuzzyIsNull(d->svgItem->width())
-        || qFuzzyIsNull(d->svgItem->height())) {
+    if (d->rootItem == nullptr
+        || qFuzzyIsNull(d->rootItem->width())
+        || qFuzzyIsNull(d->rootItem->height())) {
         return;
     }
 
-    auto xformProp = d->svgItem->transform();
+    auto xformProp = d->rootItem->transform();
     QQuickScale *scaleTransform = nullptr;
     if (xformProp.count(&xformProp) == 0) {
         scaleTransform = new QQuickScale;
-        scaleTransform->setParent(d->svgItem);
+        scaleTransform->setParent(d->rootItem);
         xformProp.append(&xformProp, scaleTransform);
     } else {
         scaleTransform = qobject_cast<QQuickScale *>(xformProp.at(&xformProp, 0));
     }
 
     if (scaleTransform != nullptr) {
-        qreal xScale = width() / d->svgItem->width();
-        qreal yScale = height() / d->svgItem->height();
+        qreal xScale = width() / d->rootItem->width();
+        qreal yScale = height() / d->rootItem->height();
 
         switch (d->fillMode) {
         case QQuickVectorImage::NoResize:
@@ -193,10 +199,10 @@ void QQuickVectorImage::updateSvgItemScale()
 void QQuickVectorImage::updateAnimationProperties()
 {
     Q_D(QQuickVectorImage);
-    if (Q_UNLIKELY(d->svgItem == nullptr || d->svgItem->childItems().isEmpty()))
+    if (Q_UNLIKELY(d->rootItem == nullptr || d->rootItem->childItems().isEmpty()))
         return;
 
-    QQuickItem *childItem = d->svgItem->childItems().first();
+    QQuickItem *childItem = d->rootItem->childItems().first();
     if (Q_LIKELY(d->animations != nullptr)) {
         childItem->setProperty("loops", d->animations->loops());
         childItem->setProperty("paused", d->animations->paused());
@@ -278,7 +284,7 @@ void QQuickVectorImage::setPreferredRendererType(RendererType newPreferredRender
     if (d->preferredRendererType == newPreferredRendererType)
         return;
     d->preferredRendererType = newPreferredRendererType;
-    d->loadSvg();
+    d->loadFile();
     emit preferredRendererTypeChanged();
 }
 
@@ -307,8 +313,16 @@ void QQuickVectorImage::setAssumeTrustedSource(bool assumeTrustedSource)
     if (d->assumeTrustedSource == assumeTrustedSource)
         return;
     d->assumeTrustedSource = assumeTrustedSource;
-    d->loadSvg();
+    d->loadFile();
     emit assumeTrustedSourceChanged();
+}
+
+void QQuickVectorImage::componentComplete()
+{
+    Q_D(QQuickVectorImage);
+    QQuickItem::componentComplete();
+
+    d->loadFile();
 }
 
 /*!
@@ -364,10 +378,10 @@ void QQuickVectorImageAnimations::restart()
 
     QQuickVectorImagePrivate *d = QQuickVectorImagePrivate::get(parentVectorImage);
 
-    if (Q_UNLIKELY(d->svgItem == nullptr || d->svgItem->childItems().isEmpty()))
+    if (Q_UNLIKELY(d->rootItem == nullptr || d->rootItem->childItems().isEmpty()))
         return;
 
-    QQuickItem *childItem = d->svgItem->childItems().first();
+    QQuickItem *childItem = d->rootItem->childItems().first();
     QMetaObject::invokeMethod(childItem, "restart");
 }
 

@@ -66,6 +66,8 @@ public:
     bool assumeTrustedSource() const;
     void setAssumeTrustedSource(bool assumeTrustedSource);
 
+    void componentComplete() override;
+
 signals:
     void sourceChanged();
     void fillModeChanged();
@@ -74,7 +76,7 @@ signals:
     void assumeTrustedSourceChanged();
 
 private slots:
-    void updateSvgItemScale();
+    void updateRootItemScale();
     void updateAnimationProperties();
 
 private:
