@@ -3789,7 +3789,9 @@ public:
     UiEnumMemberList *next;
     QStringView member;
     double value;
+    SourceLocation commaToken;
     SourceLocation memberToken;
+    SourceLocation equalToken;
     SourceLocation valueToken;
 };
 

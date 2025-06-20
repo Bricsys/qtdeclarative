@@ -366,6 +366,8 @@ void TestQmlformat::qml_data()
                                       << "fromAsIdentifier.formatted.qml";
     QTest::newRow("finalProperties") << "finalProperties.qml"
                                      << "finalProperties.formatted.qml";
+    QTest::newRow("commentsStressTest_enum") << "commentsStressTest_enum.qml"
+                                             << "commentsStressTest_enum.formatted.qml";
 }
 void TestQmlformat::qml()
 {
@@ -382,8 +384,6 @@ void TestQmlformat::qml()
     QVERIFY(wasSuccessful && !output.isEmpty());
     auto exp = readTestFile(fileFormatted);
     QEXPECT_FAIL("noSuperfluousSpaceInsertions.fail_id",
-                 "Not all cases have been covered yet (QTBUG-133315, QTBUG-123386)", Abort);
-    QEXPECT_FAIL("noSuperfluousSpaceInsertions.fail_enum",
                  "Not all cases have been covered yet (QTBUG-133315, QTBUG-123386)", Abort);
     QEXPECT_FAIL("noSuperfluousSpaceInsertions.fail_parameters",
                  "Not all cases have been covered yet (QTBUG-133315, QTBUG-123386)", Abort);
