@@ -512,8 +512,11 @@ bool QQmlDomAstCreator::visit(AST::UiPublicMember *el)
                                                  Path::fromField(Fields::parameters).withIndex(idx));
             FileLocations::addRegion(argLocs, MainRegion, combineLocations(args));
             FileLocations::addRegion(argLocs, IdentifierRegion, args->identifierToken);
-            if (args->type)
+            if (args->type) {
+                if (args->colonToken.isValid())
+                    FileLocations::addRegion(argLocs, ColonTokenRegion, args->colonToken);
                 FileLocations::addRegion(argLocs, TypeIdentifierRegion, args->propertyTypeToken);
+            }
             args = args->next;
         }
         break;
