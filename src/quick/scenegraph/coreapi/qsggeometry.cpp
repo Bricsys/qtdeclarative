@@ -213,7 +213,7 @@ const QSGGeometry::AttributeSet &QSGGeometry::defaultAttributes_ColoredPoint2D()
     The number of vertices and indices can be changed after construction
     by using the allocate() method to resize the data buffer. However,
     allocate() requires updating all vertex and index data each time
-    called. Since Qt 6.9, setVertexCount() and setIndexCount() allow
+    called. Since Qt 6.10, setVertexCount() and setIndexCount() allow
     adjusting the number of vertices or indices without reallocating the
     data buffer and only require updating new vertices or indices. In
     either case, the caller must mark the geometry node as dirty, by calling
@@ -454,7 +454,7 @@ QSGGeometry::~QSGGeometry()
     it returns the number of vertices that can be accessed through indices.
 
     \sa setVertexCount()
-*/
+ */
 
 /*!
     Sets the number of vertices to be rendered.
@@ -467,10 +467,10 @@ QSGGeometry::~QSGGeometry()
     the geometry node as dirty, by calling \c{node->markDirty(QSGNode::DirtyGeometry)},
     to ensure that the renderer has a chance to update internal buffers.
 
-    \since 6.9
+    \since 6.10
 
     \sa vertexCount()
-*/
+ */
 void QSGGeometry::setVertexCount(int count)
 {
     m_vertex_count = count;
@@ -498,10 +498,10 @@ void QSGGeometry::setVertexCount(int count)
     mark the geometry node as dirty, by calling \c{node->markDirty(QSGNode::DirtyGeometry)},
     to ensure that the renderer has a chance to update internal buffers.
 
-    \since 6.9
+    \since 6.10
 
     \sa indexCount()
-*/
+ */
 void QSGGeometry::setIndexCount(int count)
 {
     m_index_count = count;
@@ -613,7 +613,7 @@ void QSGGeometry::setDrawingMode(unsigned int mode)
     \note The width of \c 1.0 is always supported.
 
     \sa setLineWidth(), drawingMode()
-*/
+ */
 float QSGGeometry::lineWidth() const
 {
     return m_line_width;
@@ -633,7 +633,7 @@ float QSGGeometry::lineWidth() const
     \note The width of \c 1.0 is always supported.
 
     \sa lineWidth(), drawingMode()
-*/
+ */
 void QSGGeometry::setLineWidth(float width)
 {
     m_line_width = width;
@@ -707,7 +707,6 @@ void QSGGeometry::allocate(int vertexCount, int indexCount)
         markIndexDataDirty();
         markVertexDataDirty();
     }
-
 }
 
 /*!
