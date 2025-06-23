@@ -43,6 +43,7 @@ TestCase {
         compare(control.suggestionModel, undefined)
         compare(control.suggestionCount, 0)
         compare(control.currentIndex, -1)
+        compare(control.highlightedIndex, -1)
         compare(control.text, "")
         compare(control.textRole, "")
         compare(control.live, true)
@@ -151,11 +152,13 @@ TestCase {
         textItem.text = "a"
         compare(control.suggestionCount, 2)
         compare(control.currentIndex, 0)
+        compare(control.highlightedIndex, 0)
         compare(control.popup.visible, true)
 
         textItem.text = "c"
         compare(control.suggestionCount, 3)
         compare(control.currentIndex, 0)
+        compare(control.highlightedIndex, 0)
         compare(control.popup.visible, true)
     }
 
@@ -184,6 +187,12 @@ TestCase {
         let control = createTemporaryObject(searchField, testCase)
         verify(control)
 
+        let activatedSpy = signalSpy.createObject(control, {target: control, signalName: "activated"})
+        verify(activatedSpy.valid)
+
+        let highlightedSpy = signalSpy.createObject(control, {target: control, signalName: "highlighted"})
+        verify(highlightedSpy.valid)
+
         let openedSpy = signalSpy.createObject(control, {target: control.popup, signalName: "opened"})
         verify(openedSpy.valid)
 
@@ -199,6 +208,9 @@ TestCase {
         control.forceActiveFocus()
         verify(control.activeFocus)
 
+        compare(control.currentIndex, -1)
+        compare(control.highlightedIndex, -1)
+
         control.suggestionModel = fruitModel
         control.textRole = "name"
 
@@ -208,13 +220,28 @@ TestCase {
         compare(control.popup.visible, true)
 
         keyClick(Qt.Key_Down)
-        compare(control.currentIndex, 1)
+        compare(control.currentIndex, 0)
+        compare(control.highlightedIndex, 1)
+        compare(activatedSpy.count, 0)
+        compare(highlightedSpy.count, 1)
+        compare(highlightedSpy.signalArguments[0][0], 1)
+        highlightedSpy.clear()
 
         keyClick(Qt.Key_Down)
-        compare(control.currentIndex, 2)
+        compare(control.currentIndex, 0)
+        compare(control.highlightedIndex, 2)
+        compare(activatedSpy.count, 0)
+        compare(highlightedSpy.count, 1)
+        compare(highlightedSpy.signalArguments[0][0], 2)
+        highlightedSpy.clear()
 
         keyClick(Qt.Key_Up)
-        compare(control.currentIndex, 1)
+        compare(control.currentIndex, 0)
+        compare(control.highlightedIndex, 1)
+        compare(activatedSpy.count, 0)
+        compare(highlightedSpy.count, 1)
+        compare(highlightedSpy.signalArguments[0][0], 1)
+        highlightedSpy.clear()
 
         keyClick(Qt.Key_Enter)
         compare(control.text, "Cherry")

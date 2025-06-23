@@ -84,6 +84,18 @@ QT_BEGIN_NAMESPACE
     \sa currentIndex
 */
 
+
+/*!
+    \qmlsignal void QtQuick.Controls::SearchField::highlighted(int index)
+
+    This signal is emitted when the item at \a index in the popup list is highlighted by the user.
+
+    The highlighted signal is only emitted when the popup is open and an item
+    is highlighted, but not necessarily \l activated.
+
+    \sa highlightedIndex
+*/
+
 /*!
     \qmlsignal void QtQuick.Controls::SearchField::accepted()
 
@@ -123,6 +135,11 @@ QT_BEGIN_NAMESPACE
     \sa searchTriggered()
  */
 
+namespace {
+    enum Activation { NoActivate, Activate };
+    enum Highlighting { NoHighlight, Highlight };
+}
+
 class QQuickSearchFieldPrivate : public QQuickControlPrivate
 {
 public:
@@ -130,7 +147,7 @@ public:
 
     bool isPopupVisible() const;
     void showPopup();
-    void hidePopup();
+    void hidePopup(bool accept);
     static void hideOldPopup(QQuickPopup *popup);
     void popupVisibleChanged();
     void popupDestroyed();
@@ -144,6 +161,9 @@ public:
     void increaseCurrentIndex();
     void decreaseCurrentIndex();
     void setCurrentIndex(int index);
+    void setCurrentItemAtIndex(int index, Activation activate);
+    void updateHighlightedIndex();
+    void setHighlightedIndex(int index, Highlighting highlight);
 
     void createDelegateModel();
 
@@ -171,6 +191,7 @@ public:
 
     QVariant suggestionModel;
     bool hasCurrentIndex = false;
+    int highlightedIndex = -1;
     int currentIndex = -1;
     QString text;
     QString textRole;
@@ -205,8 +226,15 @@ void QQuickSearchFieldPrivate::showPopup()
         popup->open();
 }
 
-void QQuickSearchFieldPrivate::hidePopup()
+void QQuickSearchFieldPrivate::hidePopup(bool accept)
 {
+    Q_Q(QQuickSearchField);
+    if (accept) {
+        setCurrentItemAtIndex(highlightedIndex, NoActivate);
+        // hiding the popup on user interaction should always emit activated,
+        // even if the current index didn't change
+        emit q->activated(highlightedIndex);
+    }
     if (popup && popup->isVisible())
         popup->close();
 }
@@ -239,14 +267,11 @@ void QQuickSearchFieldPrivate::popupVisibleChanged()
         itemView->setHighlightRangeMode(QQuickItemView::NoHighlightRange);
 #endif
 
-    if (popup->isVisible())
-        setCurrentIndex(currentIndex);
-    else
-        setCurrentIndex(0);
+    updateHighlightedIndex();
 
 #if QT_CONFIG(quick_itemview)
     if (itemView)
-        itemView->positionViewAtIndex(currentIndex, QQuickItemView::Beginning);
+        itemView->positionViewAtIndex(highlightedIndex, QQuickItemView::Beginning);
 #endif
 }
 
@@ -262,11 +287,8 @@ void QQuickSearchFieldPrivate::itemClicked()
     Q_Q(QQuickSearchField);
     int index = delegateModel->indexOf(q->sender(), nullptr);
     if (index != -1) {
-        setCurrentIndex(index);
-        updateDisplayText();
-        hidePopup();
-
-        emit q->activated(index);
+        setHighlightedIndex(index, Highlight);
+        hidePopup(true);
     }
 }
 
@@ -281,7 +303,7 @@ void QQuickSearchFieldPrivate::itemHovered()
 
     int index = delegateModel->indexOf(button, nullptr);
     if (index != -1) {
-        setCurrentIndex(index);
+        setHighlightedIndex(index, Highlight);
 
 #if QT_CONFIG(quick_itemview)
         if (QQuickItemView *itemView = popup->findChild<QQuickItemView *>())
@@ -317,21 +339,44 @@ void QQuickSearchFieldPrivate::suggestionCountChanged()
 {
     Q_Q(QQuickSearchField);
     if (q->suggestionCount() == 0)
-        q->setCurrentIndex(-1);
+        setCurrentItemAtIndex(-1, NoActivate);
+    // If the suggestionModel has been updated and the current text matches an item in
+    // the model, update currentIndex and highlightedIndex to the index of that item.
+    if (!text.isEmpty()) {
+        for (int idx = 0; idx < q->suggestionCount(); ++idx) {
+            QString t = textAt(idx);
+            if (t == text) {
+                setCurrentItemAtIndex(idx, NoActivate);
+                updateHighlightedIndex();
+                break;
+            }
+        }
+    }
+
     emit q->suggestionCountChanged();
 }
 
 void QQuickSearchFieldPrivate::increaseCurrentIndex()
 {
     Q_Q(QQuickSearchField);
-    if (currentIndex < q->suggestionCount() - 1)
-        setCurrentIndex(currentIndex + 1);
+    if (isPopupVisible()) {
+        if (highlightedIndex < q->suggestionCount() - 1)
+            setHighlightedIndex(highlightedIndex + 1, Highlight);
+    } else {
+        if (currentIndex < q->suggestionCount() - 1)
+            setCurrentItemAtIndex(currentIndex + 1, Activate);
+    }
 }
 
 void QQuickSearchFieldPrivate::decreaseCurrentIndex()
 {
-    if (currentIndex > 0)
-        setCurrentIndex(currentIndex - 1);
+    if (isPopupVisible()) {
+        if (highlightedIndex > 0)
+            setHighlightedIndex(highlightedIndex - 1, Highlight);
+    } else {
+        if (currentIndex > 0)
+            setCurrentItemAtIndex(currentIndex - 1, Activate);
+    }
 }
 
 void QQuickSearchFieldPrivate::setCurrentIndex(int index)
@@ -342,6 +387,39 @@ void QQuickSearchFieldPrivate::setCurrentIndex(int index)
 
     currentIndex = index;
     emit q->currentIndexChanged();
+}
+
+void QQuickSearchFieldPrivate::setCurrentItemAtIndex(int index, Activation activate)
+{
+    Q_Q(QQuickSearchField);
+    if (currentIndex == index)
+        return;
+
+    currentIndex = index;
+    emit q->currentIndexChanged();
+
+    updateDisplayText();
+
+    if (activate)
+        emit q->activated(index);
+}
+
+void QQuickSearchFieldPrivate::updateHighlightedIndex()
+{
+    setHighlightedIndex(popup->isVisible() ? currentIndex : -1, NoHighlight);
+}
+
+void QQuickSearchFieldPrivate::setHighlightedIndex(int index, Highlighting highlight)
+{
+    Q_Q(QQuickSearchField);
+    if (highlightedIndex == index)
+        return;
+
+    highlightedIndex = index;
+    emit q->highlightedIndexChanged();
+
+    if (highlight)
+        emit q->highlighted(index);
 }
 
 void QQuickSearchFieldPrivate::createDelegateModel()
@@ -416,14 +494,14 @@ void QQuickSearchFieldPrivate::updateText()
 
     if (text.isEmpty()) {
         if (isPopupVisible())
-            hidePopup();
+            hidePopup(false);
     } else {
         if (delegateModel && delegateModel->count() > 0) {
             if (!isPopupVisible())
                 showPopup();
         } else {
             if (isPopupVisible())
-                hidePopup();
+                hidePopup(false);
         }
     }
 }
@@ -518,13 +596,14 @@ void QQuickSearchFieldPrivate::startClear()
     if (text.isEmpty())
         return;
 
-    // if text is not null then clear, also update suggestionModel
+    // if text is not null then clear text, also reset highlightedIndex and currentIndex
     if (!text.isEmpty()) {
-        suggestionModel.clear();
+        setCurrentIndex(-1);
+        updateHighlightedIndex();
         q->setText(QString());
 
         if (isPopupVisible())
-            hidePopup();
+            hidePopup(false);
 
         emit q->clearButtonPressed();
     }
@@ -667,6 +746,8 @@ int QQuickSearchField::suggestionCount() const
     This property holds the index of the currently selected suggestion in the popup list.
 
     The default value is \c -1 when count is \c 0, and \c 0 otherwise.
+
+    \sa activated(), text, highlightedIndex
  */
 int QQuickSearchField::currentIndex() const
 {
@@ -679,6 +760,25 @@ void QQuickSearchField::setCurrentIndex(int index)
     Q_D(QQuickSearchField);
     d->hasCurrentIndex = true;
     d->setCurrentIndex(index);
+}
+
+/*!
+    \readonly
+    \qmlproperty int QtQuick.Controls::SearchField::highlightedIndex
+
+    This property holds the index of the currently highlighted item in
+    the popup list.
+
+    When the highlighted item is activated, the popup closes, \l currentIndex
+    is updated to match \c highlightedIndex, and this property is reset to
+    \c -1, indicating that no item is currently highlighted.
+
+    \sa highlighted(), currentIndex
+*/
+int QQuickSearchField::highlightedIndex() const
+{
+    Q_D(const QQuickSearchField);
+    return d->highlightedIndex;
 }
 
 /*!
@@ -900,9 +1000,8 @@ bool QQuickSearchField::eventFilter(QObject *object, QEvent *event)
         const bool hasActiveFocus = d->popup && d->popup->hasActiveFocus();
         const bool usingPopupWindows =
                 d->popup ? QQuickPopupPrivate::get(d->popup)->usePopupWindow() : false;
-        if (qGuiApp->focusObject() != this && !(hasActiveFocus && !usingPopupWindows)) {
-            d->hidePopup();
-        }
+        if (qGuiApp->focusObject() != this && !(hasActiveFocus && !usingPopupWindows))
+            d->hidePopup(false);
         break;
     }
     default:
@@ -931,7 +1030,7 @@ void QQuickSearchField::focusOutEvent(QFocusEvent *event)
     const bool usingPopupWindows = d->popup && QQuickPopupPrivate::get(d->popup)->usePopupWindow();
 
     if (qGuiApp->focusObject() != d->contentItem && !(hasActiveFocus && !usingPopupWindows))
-        d->hidePopup();
+        d->hidePopup(false);
 }
 
 void QQuickSearchField::hoverEnterEvent(QHoverEvent *event)
@@ -976,7 +1075,7 @@ void QQuickSearchField::keyPressEvent(QKeyEvent *event)
         case Qt::Key_Escape:
         case Qt::Key_Back:
             if (d->isPopupVisible()) {
-                d->hidePopup();
+                d->hidePopup(false);
                 event->accept();
             } else {
                 setText(QString());
@@ -984,7 +1083,8 @@ void QQuickSearchField::keyPressEvent(QKeyEvent *event)
             break;
         case Qt::Key_Return:
         case Qt::Key_Enter:
-            d->updateDisplayText();
+            if (d->isPopupVisible())
+                d->hidePopup(true);
             emit accepted();
             emit searchTriggered();
             event->accept();
@@ -998,11 +1098,17 @@ void QQuickSearchField::keyPressEvent(QKeyEvent *event)
             event->accept();
             break;
         case Qt::Key_Home:
-            d->setCurrentIndex(0);
+            if (d->isPopupVisible())
+                d->setHighlightedIndex(0, Highlight);
+            else
+                d->setCurrentItemAtIndex(0, Activate);
             event->accept();
             break;
         case Qt::Key_End:
-            d->setCurrentIndex(suggestionCount() - 1);
+            if (d->isPopupVisible())
+                d->setHighlightedIndex(suggestionCount() - 1, Highlight);
+            else
+                d->setCurrentItemAtIndex(suggestionCount() - 1, Activate);
             event->accept();
             break;
         default:
@@ -1071,9 +1177,8 @@ void QQuickSearchField::itemChange(ItemChange change, const ItemChangeData &data
     Q_D(QQuickSearchField);
     QQuickControl::itemChange(change, data);
     if (change == ItemVisibleHasChanged && !data.boolValue) {
-        d->hidePopup();
-        // TO-DO: CHECK When the popup isn't visible, there shouldn't be any current item
-        d->setCurrentIndex(-1);
+        d->hidePopup(false);
+        d->setCurrentItemAtIndex(-1, NoActivate);
     }
 }
 

@@ -34,6 +34,7 @@ class Q_QUICKTEMPLATES2_EXPORT QQuickSearchField : public QQuickControl
     Q_PROPERTY(int suggestionCount READ suggestionCount NOTIFY suggestionCountChanged FINAL)
     Q_PROPERTY(int currentIndex READ currentIndex WRITE setCurrentIndex NOTIFY currentIndexChanged
                        FINAL)
+    Q_PROPERTY(int highlightedIndex READ highlightedIndex NOTIFY highlightedIndexChanged FINAL)
     Q_PROPERTY(QString text READ text WRITE setText NOTIFY textChanged FINAL)
     Q_PROPERTY(QString textRole READ textRole WRITE setTextRole NOTIFY textRoleChanged FINAL)
     Q_PROPERTY(bool live READ isLive WRITE setLive NOTIFY liveChanged)
@@ -59,6 +60,8 @@ public:
     int currentIndex() const;
     void setCurrentIndex(int index);
 
+    int highlightedIndex() const;
+
     QString text() const;
     void setText(const QString &text);
 
@@ -79,6 +82,7 @@ public:
 
 Q_SIGNALS:
     void activated(int index);
+    void highlighted(int index);
     void accepted();
     void searchTriggered();
     void textEdited();
@@ -86,6 +90,7 @@ Q_SIGNALS:
     void delegateModelChanged();
     void suggestionCountChanged();
     void currentIndexChanged();
+    void highlightedIndexChanged();
     void textChanged();
     void textRoleChanged();
     void liveChanged();
