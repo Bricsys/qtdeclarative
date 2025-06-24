@@ -677,6 +677,9 @@ protected:
     static void pathElements_append(QQmlListProperty<QQuickPathElement> *, QQuickPathElement *);
     static qsizetype pathElements_count(QQmlListProperty<QQuickPathElement> *);
     static void pathElements_clear(QQmlListProperty<QQuickPathElement> *);
+    static void pathElements_replace(
+            QQmlListProperty<QQuickPathElement> *, qsizetype, QQuickPathElement *);
+    static void pathElements_removeLast(QQmlListProperty<QQuickPathElement> *);
 
 private Q_SLOTS:
     void processPath();

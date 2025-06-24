@@ -16,27 +16,53 @@ QT_BEGIN_NAMESPACE
 
 Q_STATIC_LOGGING_CATEGORY(lcPath, "qt.quick.shapes.path")
 
-void QQuickPathPrivate::appendPathElement(QQuickPathElement *pathElement)
+void QQuickPathPrivate::enablePathElement(QQuickPathElement *pathElement)
 {
     Q_Q(QQuickPath);
-    _pathElements.append(pathElement);
 
-    if (componentComplete) {
-        QQuickCurve *curve = qobject_cast<QQuickCurve *>(pathElement);
-        if (curve)
-            _pathCurves.append(curve);
-        else if (QQuickPathText *text = qobject_cast<QQuickPathText *>(pathElement))
-            _pathTexts.append(text);
-        else {
-            QQuickPathAttribute *attribute = qobject_cast<QQuickPathAttribute *>(pathElement);
-            if (attribute && !_attributes.contains(attribute->name()))
-                _attributes.append(attribute->name());
+    if (QQuickCurve *curve = qobject_cast<QQuickCurve *>(pathElement)) {
+        _pathCurves.append(curve);
+    } else if (QQuickPathText *text = qobject_cast<QQuickPathText *>(pathElement)) {
+        _pathTexts.append(text);
+    } else {
+        QQuickPathAttribute *attribute = qobject_cast<QQuickPathAttribute *>(pathElement);
+        if (attribute && !_attributes.contains(attribute->name()))
+            _attributes.append(attribute->name());
+    }
+
+    // There may be multiple entries of the same value
+    if (!_pathElements.contains(pathElement))
+        q->connect(pathElement, SIGNAL(changed()), q, SLOT(processPath()));
+}
+
+void QQuickPathPrivate::disablePathElement(QQuickPathElement *pathElement)
+{
+    Q_Q(QQuickPath);
+
+    if (QQuickCurve *curve = qobject_cast<QQuickCurve *>(pathElement)) {
+        _pathCurves.removeOne(curve);
+    } else if (QQuickPathText *text = qobject_cast<QQuickPathText *>(pathElement)) {
+        _pathTexts.removeOne(text);
+    } else if (QQuickPathAttribute *attribute = qobject_cast<QQuickPathAttribute *>(pathElement)) {
+        const QString name = attribute->name();
+        bool found = false;
+
+        // TODO: This is rather expensive. Why do the attributes have to be unique?
+        for (QQuickPathElement *other : std::as_const(_pathElements)) {
+            QQuickPathAttribute *otherAttribute = qobject_cast<QQuickPathAttribute *>(other);
+            if (otherAttribute && otherAttribute->name() == name) {
+                found = true;
+                break;
+            }
         }
 
-        q->processPath();
-
-        q->connect(pathElement, SIGNAL(changed()), q, SLOT(processPath()));
+        if (!found)
+            _attributes.removeOne(name);
     }
+
+    // There may be multiple entries of the same value
+    if (!_pathElements.contains(pathElement))
+        q->disconnect(pathElement, SIGNAL(changed()), q, SLOT(processPath()));
 }
 
 /*!
@@ -256,7 +282,9 @@ QQmlListProperty<QQuickPathElement> QQuickPath::pathElements()
                                                pathElements_append,
                                                pathElements_count,
                                                pathElements_at,
-                                               pathElements_clear);
+                                               pathElements_clear,
+                                               pathElements_replace,
+                                               pathElements_removeLast);
 }
 
 static QQuickPathPrivate *privatePath(QObject *object)
@@ -298,6 +326,18 @@ void QQuickPath::pathElements_clear(QQmlListProperty<QQuickPathElement> *propert
     d->_pathTexts.clear();
     d->_path.clear();
     emit path->changed();
+}
+
+void QQuickPath::pathElements_replace(
+        QQmlListProperty<QQuickPathElement> *property, qsizetype position,
+        QQuickPathElement *pathElement)
+{
+    privatePath(property->object)->replacePathElement(position, pathElement);
+}
+
+void QQuickPath::pathElements_removeLast(QQmlListProperty<QQuickPathElement> *property)
+{
+    privatePath(property->object)->removeLastPathElement();
 }
 
 void QQuickPath::interpolate(int idx, const QString &name, qreal value)
@@ -577,16 +617,20 @@ void QQuickPath::disconnectPathElements()
 {
     Q_D(const QQuickPath);
 
-    for (QQuickPathElement *pathElement : d->_pathElements)
-        disconnect(pathElement, SIGNAL(changed()), this, SLOT(processPath()));
+    for (QQuickPathElement *pathElement : d->_pathElements) {
+        if (pathElement)
+            disconnect(pathElement, SIGNAL(changed()), this, SLOT(processPath()));
+    }
 }
 
 void QQuickPath::connectPathElements()
 {
     Q_D(const QQuickPath);
 
-    for (QQuickPathElement *pathElement : d->_pathElements)
-        connect(pathElement, SIGNAL(changed()), this, SLOT(processPath()));
+    for (QQuickPathElement *pathElement : d->_pathElements) {
+        if (pathElement)
+            connect(pathElement, SIGNAL(changed()), this, SLOT(processPath()));
+    }
 }
 
 void QQuickPath::gatherAttributes()
@@ -594,6 +638,8 @@ void QQuickPath::gatherAttributes()
     Q_D(QQuickPath);
 
     QSet<QString> attributes;
+
+    Q_ASSERT(d->_pathCurves.isEmpty());
 
     // First gather up all the attributes
     for (QQuickPathElement *pathElement : std::as_const(d->_pathElements)) {

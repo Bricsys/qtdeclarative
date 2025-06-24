@@ -29,6 +29,7 @@ private slots:
     void appendRemove();
     void asynchronous();
     void cornerProperties();
+    void splicePathList();
 
 private:
     void arc(QSizeF scale);
@@ -548,6 +549,19 @@ void tst_QuickPath::cornerProperties()
     QCOMPARE(pathRectangle.topLeftRadius(), 0.0);
     QCOMPARE(pathRectangle.bottomLeftRadius(), 0.0);
     QCOMPARE(pathRectangle.bottomRightRadius(), 0.0);
+}
+
+void tst_QuickPath::splicePathList()
+{
+    // We don't want to see warnings about connecting to nullptr, and we don't want to crash.
+    // And we don't want to hit the test timeout.
+    QTest::failOnWarning();
+
+    QQmlEngine engine;
+    QQmlComponent c(&engine, testFileUrl("splicePathList.qml"));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(!o.isNull());
 }
 
 QTEST_MAIN(tst_QuickPath)
