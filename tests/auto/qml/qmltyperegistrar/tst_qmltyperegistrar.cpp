@@ -732,6 +732,7 @@ void tst_qmltyperegistrar::unconstructibleValueType()
     QVERIFY(qmltypesData.contains(
             R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 551
         name: "Unconstructible"
         accessSemantics: "value"
         exports: ["QmlTypeRegistrarTest/unconstructible 1.0"]
@@ -745,6 +746,7 @@ void tst_qmltyperegistrar::constructibleValueType()
     QVERIFY(qmltypesData.contains(
     R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 558
         name: "Constructible"
         accessSemantics: "value"
         exports: ["QmlTypeRegistrarTest/constructible 1.0"]
@@ -763,6 +765,7 @@ void tst_qmltyperegistrar::structuredValueType()
     QVERIFY(qmltypesData.contains(
     R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 570
         name: "Structured"
         accessSemantics: "value"
         exports: ["QmlTypeRegistrarTest/structured 1.0"]
@@ -777,6 +780,7 @@ void tst_qmltyperegistrar::anonymousAndUncreatable()
     QVERIFY(qmltypesData.contains(
     R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 581
         name: "AnonymousAndUncreatable"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -787,7 +791,12 @@ void tst_qmltyperegistrar::omitInvisible()
 {
     // If it cannot resolve the type a QML_FOREIGN refers to, it should not generate anything.
     QVERIFY(qmltypesData.contains(
-                R"(Component { file: "tst_qmltyperegistrar.h"; name: "Invisible"; accessSemantics: "none" })"));
+    R"(Component {
+        file: "tst_qmltyperegistrar.h"
+        lineNumber: 592
+        name: "Invisible"
+        accessSemantics: "none"
+    })"));
 }
 
 void tst_qmltyperegistrar::typedEnum()
@@ -795,6 +804,7 @@ void tst_qmltyperegistrar::typedEnum()
     QVERIFY(qmltypesData.contains(
     R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 599
         name: "TypedEnum"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -863,6 +873,7 @@ void tst_qmltyperegistrar::listSignal()
     QVERIFY(qmltypesData.contains(
     R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 643
         name: "ListSignal"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -877,6 +888,7 @@ void tst_qmltyperegistrar::withNamespace()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 652
         name: "Bar"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -892,6 +904,7 @@ void tst_qmltyperegistrar::withNamespace()
 
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 672
         name: "Testing::Bar"
         accessSemantics: "reference"
         prototype: "Testing::Foo"
@@ -909,6 +922,7 @@ void tst_qmltyperegistrar::withNamespace()
 
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 663
         name: "Testing::Foo"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -924,6 +938,7 @@ void tst_qmltyperegistrar::withNamespace()
 
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 684
         name: "Testing::Inner::Baz"
         accessSemantics: "reference"
         prototype: "Testing::Bar"
@@ -938,6 +953,7 @@ void tst_qmltyperegistrar::sequenceRegistration()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 699
         name: "std::vector<QByteArray>"
         accessSemantics: "sequence"
         valueType: "QByteArray"
@@ -948,12 +964,14 @@ void tst_qmltyperegistrar::valueTypeSelfReference()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 708
         name: "QPersistentModelIndex"
         accessSemantics: "value"
         extension: "QPersistentModelIndexValueType"
     })"));
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 708
         name: "QPersistentModelIndexValueType"
         accessSemantics: "value"
         Property { name: "row"; type: "int"; read: "row"; index: 0; isReadonly: true; isFinal: true }
@@ -1004,6 +1022,7 @@ void tst_qmltyperegistrar::nameExplosion()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 751
         name: "NameExplosion"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -1030,6 +1049,7 @@ void tst_qmltyperegistrar::javaScriptExtension()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 760
         name: "JavaScriptExtension"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -1044,6 +1064,7 @@ void tst_qmltyperegistrar::relatedAddedInVersion()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 511
         name: "AddedIn1_0"
         accessSemantics: "reference"
         prototype: "AddedIn1_5"
@@ -1059,6 +1080,7 @@ void tst_qmltyperegistrar::longNumberTypes()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 768
         name: "LongNumberTypes"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -1074,6 +1096,7 @@ void tst_qmltyperegistrar::longNumberTypes()
 void tst_qmltyperegistrar::enumList() {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 783
         name: "QList<NetworkManager::NM>"
         accessSemantics: "sequence"
         valueType: "NetworkManager::NM"
@@ -1084,6 +1107,7 @@ void tst_qmltyperegistrar::constReturnType()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 791
         name: "ConstInvokable"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -1097,6 +1121,7 @@ void tst_qmltyperegistrar::usingDeclaration()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 808
         name: "WithMyInt"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -1147,6 +1172,7 @@ void tst_qmltyperegistrar::slotsBeforeInvokables()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 826
         name: "SlotsBeforeInvokables"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -1160,6 +1186,7 @@ void tst_qmltyperegistrar::omitQQmlV4FunctionPtrArg()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 838
         name: "JavaScriptFunction"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -1173,6 +1200,7 @@ void tst_qmltyperegistrar::preserveVoidStarPropTypes()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 855
         name: "VoidProperties"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -1210,6 +1238,7 @@ void tst_qmltyperegistrar::inaccessibleBase()
     // This shows up in qmltypes but we're not actually including base.h
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "base.h"
+        lineNumber: 9
         name: "InaccessibleBase"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -1220,6 +1249,7 @@ void tst_qmltyperegistrar::inaccessibleBase()
 
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 868
         name: "AccessibleDerived"
         accessSemantics: "reference"
         prototype: "InaccessibleBase"
@@ -1239,6 +1269,7 @@ void tst_qmltyperegistrar::enumsExplicitlyScoped()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 879
         name: "EnumsExplicitlyScoped"
         accessSemantics: "reference"
         prototype: "QObject"
@@ -1267,6 +1298,7 @@ void tst_qmltyperegistrar::derivedFromInvisible()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 886
         name: "DerivedFromInvisible"
         accessSemantics: "reference"
         prototype: "InvisibleBase"
@@ -1280,6 +1312,7 @@ void tst_qmltyperegistrar::foreignNamespacedWithEnum()
 {
     QVERIFY(qmltypesData.contains(R"(Component {
         file: "tst_qmltyperegistrar.h"
+        lineNumber: 910
         name: "F::ForeignQObject"
         accessSemantics: "reference"
         prototype: "QObject"
