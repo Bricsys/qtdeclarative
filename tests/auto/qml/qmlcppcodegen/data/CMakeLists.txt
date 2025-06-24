@@ -91,6 +91,7 @@ set(qml_files
     Variable.qml
     WindowDerived.qml
     aliasLookup.qml
+    aliasToAliasResolutionSkipCorruption.qml
     ambiguous1/Ambiguous.qml
     ambiguous2/Ambiguous.qml
     ambiguousAs.qml

@@ -848,9 +848,8 @@ QQmlComponentAndAliasResolver<QQmlTypeCompiler>::resolveAliasesInObject(
     int aliasIndex = 0;
     int numSkippedAliases = 0;
 
-    for (QmlIR::Alias *alias = obj->firstAlias(); alias; alias = alias->next) {
+    for (QmlIR::Alias *alias = obj->firstAlias(); alias; alias = alias->next, ++aliasIndex) {
         if (resolvedAliases.contains(alias)) {
-            ++aliasIndex;
             ++numSkippedAliases;
             continue;
         }
@@ -915,7 +914,7 @@ QQmlComponentAndAliasResolver<QQmlTypeCompiler>::resolveAliasesInObject(
                         alias->localAliasIndex = localAliasIndex;
                         alias->setIsAliasToLocalAlias(true);
                         if (!appendAliasToPropertyCache(
-                                    &component, alias, objectIndex, aliasIndex++, -1,
+                                    &component, alias, objectIndex, aliasIndex, -1,
                                     aliasCacheCreator, error)) {
                             break;
                         }
@@ -925,9 +924,7 @@ QQmlComponentAndAliasResolver<QQmlTypeCompiler>::resolveAliasesInObject(
                     // restore
                     alias->setIdIndex(idIndex);
                     // Try again later and resolve the target alias first.
-                    ++numSkippedAliases;
-                    ++aliasIndex;
-                    break;
+                    return aliasIndex == numSkippedAliases ? NoAliasResolved : SomeAliasesResolved;
                 }
             }
 
@@ -986,7 +983,7 @@ QQmlComponentAndAliasResolver<QQmlTypeCompiler>::resolveAliasesInObject(
         }
 
         if (!appendAliasToPropertyCache(
-                    &component, alias, objectIndex, aliasIndex++, propIdx.toEncoded(),
+                    &component, alias, objectIndex, aliasIndex, propIdx.toEncoded(),
                     aliasCacheCreator, error)) {
             break;
         }

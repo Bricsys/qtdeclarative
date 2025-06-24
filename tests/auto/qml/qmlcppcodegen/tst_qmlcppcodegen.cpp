@@ -44,6 +44,7 @@ private slots:
 
     void accessModelMethodFromOutSide();
     void aliasLookup();
+    void aliasToAliasResolutionSkipCorruption();
     void ambiguousAs();
     void ambiguousSignals();
     void anchorsFill();
@@ -582,6 +583,16 @@ void tst_QmlCppCodegen::aliasLookup()
     const QVariant t = object->property("t");
     QCOMPARE(t.metaType(), QMetaType::fromType<QString>());
     QCOMPARE(t.toString(), u"12"_s);
+}
+
+void tst_QmlCppCodegen::aliasToAliasResolutionSkipCorruption()
+{
+    QQmlEngine engine;
+    QUrl url(u"qrc:/qt/qml/TestTypes/aliasToAliasResolutionSkipCorruption.qml"_s);
+    QQmlComponent component(&engine, url);
+    QVERIFY2(!component.isError(), component.errorString().toUtf8());
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(!object.isNull());
 }
 
 void tst_QmlCppCodegen::ambiguousAs()
