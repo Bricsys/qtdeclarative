@@ -39,12 +39,6 @@ MainWindow::MainWindow(QWidget *parent)
     m_svgImageWidget->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
     ui->saSvgImage->setWidget(m_svgImageWidget);
 
-    m_qmlGeneratorWidget = new QQuickWidget;
-    m_qmlGeneratorWidget->setSource(QUrl(QStringLiteral("qrc:/qt/qml/SvgImageTest/QmlGenerator.qml")));
-    m_qmlGeneratorWidget->setResizeMode(QQuickWidget::SizeViewToRootObject);
-    m_qmlGeneratorWidget->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
-    ui->saQmlGenerator->setWidget(m_qmlGeneratorWidget);
-
     connect(m_manager, &SvgManager::currentSourceChanged, this, &MainWindow::updateSources);
 
     m_settings = new QSettings(QStringLiteral("org.qtproject"), QStringLiteral("svg-test"), this);

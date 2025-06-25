@@ -42,6 +42,5 @@ private:
     QLabel *m_imageLabel = nullptr;
     SvgPainter *m_svgPainter = nullptr;
     QQuickWidget *m_svgImageWidget = nullptr;
-    QQuickWidget *m_qmlGeneratorWidget = nullptr;
 };
 #endif // MAINWINDOW_H

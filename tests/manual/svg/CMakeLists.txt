@@ -67,7 +67,6 @@ qt_add_qml_module(svg
     URI SvgImageTest
     QML_FILES
         SvgImage.qml
-        QmlGenerator.qml
 )
 
 
