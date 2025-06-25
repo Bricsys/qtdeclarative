@@ -1,29 +1,29 @@
 // Copyright (C) 2024 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#include "svgmanager.h"
+#include "vectorimagemanager.h"
 
 #include <QDir>
 #include <QtQuickVectorImageGenerator/private/qquickqmlgenerator_p.h>
 #include <QTemporaryFile>
 
-SvgManager *SvgManager::g_manager = nullptr;
+VectorImageManager *VectorImageManager::g_manager = nullptr;
 
-SvgManager::SvgManager(QObject *parent)
+VectorImageManager::VectorImageManager(QObject *parent)
     : QObject(parent)
 {
     Q_ASSERT(g_manager == nullptr);
     g_manager = this;
-    connect(this, &SvgManager::currentIndexChanged, this, &SvgManager::currentSourceChanged, Qt::QueuedConnection);
+    connect(this, &VectorImageManager::currentIndexChanged, this, &VectorImageManager::currentSourceChanged, Qt::QueuedConnection);
 }
 
-SvgManager::~SvgManager()
+VectorImageManager::~VectorImageManager()
 {
     Q_ASSERT(g_manager == this);
     g_manager = nullptr;
 }
 
-void SvgManager::setCurrentIndex(int newCurrentIndex)
+void VectorImageManager::setCurrentIndex(int newCurrentIndex)
 {
     if (m_currentIndex == newCurrentIndex)
         return;
@@ -31,17 +31,17 @@ void SvgManager::setCurrentIndex(int newCurrentIndex)
     emit currentIndexChanged();
 }
 
-QList<QUrl> SvgManager::sources() const
+QList<QUrl> VectorImageManager::sources() const
 {
     return m_sources;
 }
 
-QString SvgManager::currentDirectory() const
+QString VectorImageManager::currentDirectory() const
 {
     return m_currentDirectory;
 }
 
-void SvgManager::setCurrentDirectory(const QString &newCurrentDirectory)
+void VectorImageManager::setCurrentDirectory(const QString &newCurrentDirectory)
 {
     if (m_currentDirectory == newCurrentDirectory)
         return;
@@ -51,17 +51,20 @@ void SvgManager::setCurrentDirectory(const QString &newCurrentDirectory)
     m_sources.clear();
     if (!m_currentDirectory.isEmpty()) {
         QDir dir(m_currentDirectory);
-        QList<QFileInfo> infos = dir.entryInfoList(QStringList() << QStringLiteral("*.svg"));
+        QList<QFileInfo> infos = dir.entryInfoList(QStringList() << QStringLiteral("*.svg") << QStringLiteral("*.svgz") << QStringLiteral("*.json"));
 
-        for (const QFileInfo &info : infos)
-            m_sources.append(QUrl::fromLocalFile(info.absoluteFilePath()));
+        for (const QFileInfo &info : infos) {
+            if (info.isFile())
+                m_sources.append(QUrl::fromLocalFile(info.absoluteFilePath()));
+        }
     }
+
     m_currentIndex = m_sources.isEmpty() ? -1 : 0;
     emit sourcesChanged();
     emit currentIndexChanged();
 }
 
-QString SvgManager::qmlSource() const
+QString VectorImageManager::qmlSource() const
 {
     QTemporaryFile tempFile;
     if (tempFile.open()) {
@@ -83,12 +86,12 @@ QString SvgManager::qmlSource() const
     return QStringLiteral("import QtQuick\nRectangle { width: 100; height: 100; color: \"red\" }");;
 }
 
-qreal SvgManager::scale() const
+qreal VectorImageManager::scale() const
 {
     return m_scale;
 }
 
-void SvgManager::setScale(int newScale)
+void VectorImageManager::setScale(int newScale)
 {
     if (qFuzzyCompare(m_scale, newScale))
         return;

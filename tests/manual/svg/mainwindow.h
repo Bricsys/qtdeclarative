@@ -11,7 +11,7 @@ namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
 class SvgPainter;
-class SvgManager;
+class VectorImageManager;
 class QSettings;
 class QLabel;
 class QQuickWidget;
@@ -37,10 +37,11 @@ private:
     void setScale(const int scale);
 
     Ui::MainWindow *ui;
-    SvgManager *m_manager = nullptr;
+    VectorImageManager *m_manager = nullptr;
     QSettings *m_settings = nullptr;
     QLabel *m_imageLabel = nullptr;
     SvgPainter *m_svgPainter = nullptr;
-    QQuickWidget *m_svgImageWidget = nullptr;
+    QQuickWidget *m_vectorImageWidget = nullptr;
+    QQuickWidget *m_lottieAnimationWidget = nullptr;
 };
 #endif // MAINWINDOW_H

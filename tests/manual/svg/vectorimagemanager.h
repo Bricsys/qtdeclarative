@@ -1,14 +1,14 @@
 // Copyright (C) 2024 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
-#ifndef SVGMANAGER_H
-#define SVGMANAGER_H
+#ifndef VECTORIMAGEMANAGER_H
+#define VECTORIMAGEMANAGER_H
 
 #include <QObject>
 #include <QUrl>
 #include <QQmlEngine>
 
-class SvgManager : public QObject
+class VectorImageManager : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
@@ -21,10 +21,10 @@ class SvgManager : public QObject
     Q_PROPERTY(QList<QUrl> sources READ sources NOTIFY sourcesChanged)
     Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)
 public:
-    SvgManager(QObject *parent);
-    ~SvgManager() override;
+    VectorImageManager(QObject *parent);
+    ~VectorImageManager() override;
 
-    static SvgManager *create(QQmlEngine *, QJSEngine *)
+    static VectorImageManager *create(QQmlEngine *, QJSEngine *)
     {
         return g_manager;
     }
@@ -71,7 +71,7 @@ signals:
     void scaleChanged();
 
 private:
-    static SvgManager *g_manager;
+    static VectorImageManager *g_manager;
     int m_currentIndex = -1;
     QList<QUrl> m_sources;
     QString m_currentDirectory;
@@ -79,4 +79,4 @@ private:
     qreal m_scale = 10.0;
 };
 
-#endif // SVGMANAGER_H
+#endif // VECTORIMAGEMANAGER_H

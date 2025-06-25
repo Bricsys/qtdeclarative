@@ -4,7 +4,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 
-#include "svgmanager.h"
+#include "vectorimagemanager.h"
 #include "svgpainter.h"
 
 #include <QFileDialog>
@@ -22,7 +22,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->tbSelectDir, &QToolButton::clicked, this, &MainWindow::selectDirectory);
     connect(ui->tbNext, &QToolButton::clicked, this, &MainWindow::next);
     connect(ui->tbPrev, &QToolButton::clicked, this, &MainWindow::previous);
-    m_manager = new SvgManager(this);
+    m_manager = new VectorImageManager(this);
 
     m_imageLabel = new QLabel;
     m_imageLabel->setAlignment(Qt::AlignLeft | Qt::AlignTop);
@@ -33,13 +33,19 @@ MainWindow::MainWindow(QWidget *parent)
     ui->saSvgPainter->setWidget(m_svgPainter);
     ui->saSvgPainter->setBackgroundRole(QPalette::Base);
 
-    m_svgImageWidget = new QQuickWidget;
-    m_svgImageWidget->setSource(QUrl(QStringLiteral("qrc:/qt/qml/SvgImageTest/SvgImage.qml")));
-    m_svgImageWidget->setResizeMode(QQuickWidget::SizeViewToRootObject);
-    m_svgImageWidget->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
-    ui->saSvgImage->setWidget(m_svgImageWidget);
+    m_lottieAnimationWidget = new QQuickWidget;
+    m_lottieAnimationWidget->setSource(QUrl(QStringLiteral("qrc:/qt/qml/VectorImageTest/LottieAnimation.qml")));
+    m_lottieAnimationWidget->setResizeMode(QQuickWidget::SizeViewToRootObject);
+    m_lottieAnimationWidget->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+    ui->saLottieAnimation->setWidget(m_lottieAnimationWidget);
 
-    connect(m_manager, &SvgManager::currentSourceChanged, this, &MainWindow::updateSources);
+    m_vectorImageWidget = new QQuickWidget;
+    m_vectorImageWidget->setSource(QUrl(QStringLiteral("qrc:/qt/qml/VectorImageTest/VectorImage.qml")));
+    m_vectorImageWidget->setResizeMode(QQuickWidget::SizeViewToRootObject);
+    m_vectorImageWidget->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+    ui->saVectorImage->setWidget(m_vectorImageWidget);
+
+    connect(m_manager, &VectorImageManager::currentSourceChanged, this, &MainWindow::updateSources);
 
     m_settings = new QSettings(QStringLiteral("org.qtproject"), QStringLiteral("svg-test"), this);
 
@@ -47,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent)
     QStringList list = m_settings->value(QStringLiteral("directories")).toString().split(QLatin1Char(','));
     setDirList(list);
 
-    connect(ui->hsScale, &QAbstractSlider::valueChanged, m_manager, &SvgManager::setScale);
+    connect(ui->hsScale, &QAbstractSlider::valueChanged, m_manager, &VectorImageManager::setScale);
     connect(ui->hsScale, &QAbstractSlider::valueChanged, m_svgPainter, &SvgPainter::setScale);
     connect(ui->hsScale, &QAbstractSlider::valueChanged, this, &MainWindow::setScale);
     int scale = m_settings->value(QStringLiteral("scale"), 10).toInt();
@@ -112,6 +118,12 @@ void MainWindow::updateSources()
         ui->saImage->setVisible(false);
         m_imageLabel->clear();
     }
+
+    bool isLottie = info.suffix().toLower() == QStringLiteral("json");
+    ui->saSvgPainter->setVisible(!isLottie);
+    ui->lSvgRenderer->setVisible(!isLottie);
+    ui->saLottieAnimation->setVisible(isLottie);
+    ui->lLottieAnimation->setVisible(isLottie);
 }
 
 void MainWindow::selectDirectory()

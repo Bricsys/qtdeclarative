@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
 #include "svgpainter.h"
-#include "svgmanager.h"
 
 SvgPainter::SvgPainter(QWidget *parent)
 #ifdef SVGWIDGET
@@ -29,11 +28,16 @@ void SvgPainter::setSource(const QUrl &newSource)
     if (m_source == newSource)
         return;
     m_source = newSource;
+
+    QString localFile = m_source.toLocalFile();
+    if (localFile.toLower().endsWith(QStringLiteral("svg"))
+        || localFile.toLower().endsWith(QStringLiteral("svgz"))) {
 #ifdef SVGWIDGET
-    load(m_source.toLocalFile());
+        load(m_source.toLocalFile());
 #else
-    m_renderer.load(m_source.toLocalFile());
+        m_renderer.load(m_source.toLocalFile());
 #endif
+    }
     emit sourceChanged();
 }
 
