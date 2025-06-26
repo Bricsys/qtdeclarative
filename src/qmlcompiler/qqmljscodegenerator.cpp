@@ -2185,8 +2185,8 @@ bool QQmlJSCodeGenerator::inlineConsoleMethod(const QString &name, int argc, int
             return convertStored(actual, read, consumedRegisterVariable(argv + i));
         } else if (actual->accessSemantics() == QQmlJSScope::AccessSemantics::Sequence) {
             addInclude(u"QtQml/qjslist.h"_s);
-            return u"u'[' + QJSList(&"_s + registerVariable(argv + i)
-                    + u", aotContext->engine).toString() + u']'"_s;
+            return u"(u'[' + QJSList(&"_s + registerVariable(argv + i)
+                    + u", aotContext->engine).toString() + u']')"_s;
         } else {
             REJECT<QString>(u"converting arguments for console method to string"_s);
         }
