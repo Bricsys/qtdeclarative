@@ -37,10 +37,12 @@ Q_GLOBAL_STATIC_WITH_ARGS(QFactoryLoader, vectorImagePluginLoader,
     Qt Quick Vector Image provides support for displaying vector image files in a Qt Quick
     scene.
 
-    It currently supports the \c SVG file format.
+    It currently supports the \c SVG file format. In addition, Lottie support can be enabled by
+    setting the \l{assumeTrustedSource} property to true and including the plugin from the
+    \l{Qt Lottie Animation} module. This plugin is currently considered tech preview.
 
-    Qt supports multiple options for displaying SVG files. For an overview and comparison of the
-    different ones, see the documentation of the \l{svgtoqml} tool.
+    Qt supports multiple options for displaying SVG files. For an overview and comparison of
+    the different ones, see the documentation of the \l{svgtoqml} tool.
 
     \section1 QML Types
 */
@@ -115,7 +117,11 @@ void QQuickVectorImagePrivate::loadFile()
     \since 6.8
 
     The VectorImage can be used to load a vector image file and display this as an item in a Qt
-    Quick scene. It currently supports the \c SVG file format.
+    Quick scene.
+
+    It currently supports the \c SVG file format. In addition, Lottie support can be enabled by
+    setting the \l{assumeTrustedSource} property to true and including the plugin from the
+    \l{Qt Lottie Animation} module. This plugin is currently considered tech preview.
 
     \note This complements the approach of loading the vector image file through an \l Image
     element: \l Image creates a raster version of the image at the requested size. VectorImage
@@ -138,7 +144,9 @@ QQuickVectorImage::QQuickVectorImage(QQuickItem *parent)
 
     This property holds the URL of the vector image file to load.
 
-    VectorImage currently only supports the \c SVG file format.
+    VectorImage currently supports the \c SVG file format. In addition, Lottie support can be
+    enabled by setting the \l{assumeTrustedSource} property to true and including the plugin from
+    the \l{Qt Lottie Animation} module. This plugin is currently considered tech preview.
 */
 QUrl QQuickVectorImage::source() const
 {
@@ -296,9 +304,13 @@ void QQuickVectorImage::setPreferredRendererType(RendererType newPreferredRender
     may be unsafe in an uncontrolled setting. For SVG in particular, this maps to the
     \l{QtSvg::Option}{AssumeTrustedSource option}.
 
+    When this is set to true, VectorImage will also try to load the image using the Lottie format
+    plugin if this is available. This plugin is currently considered tech preview. See
+    \l{Qt Lottie Animation} for additional information.
+
     By default this property is \c false.
 
-    \sa svgtoqml
+    \sa svgtoqml, lottietoqml
  */
 
 bool QQuickVectorImage::assumeTrustedSource() const

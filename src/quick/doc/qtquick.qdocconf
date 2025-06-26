@@ -52,6 +52,7 @@ depends += \
     qtqmlcore \
     qtgui \
     qtlinguist \
+    qtlottie \
     qtquickcontrols \
     qtquick3d \
     qtdoc \
