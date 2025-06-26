@@ -35,6 +35,11 @@ public:
                         QQmlContext *ctx);
     ~QQuickItemGenerator();
 
+    QQuickItem *parentItem() const
+    {
+        return m_parentItem;
+    }
+
 protected:
     bool generateRootNode(const StructureNodeInfo &info) override;
 
