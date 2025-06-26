@@ -59,6 +59,7 @@ private slots:
     void backgroundSize();
     void explicitBackgroundSizeBinding();
     void safeArea();
+    void paintOrderChildItems();
 #if QT_CONFIG(quicktemplates2_hover)
     void hoverInBackground();
 #endif
@@ -123,7 +124,7 @@ void tst_QQuickApplicationWindow::activeFocusOnTab1()
 
     // Tab: contentItem->sub1
     {
-        QKeyEvent key(QEvent::KeyPress, Qt::Key_Tab, Qt::NoModifier, "", false, 1);
+        QKeyEvent key(QEvent::KeyPress, Qt::Key_Tab, Qt::NoModifier);
         QGuiApplication::sendEvent(window, &key);
         QVERIFY(key.isAccepted());
 
@@ -134,7 +135,7 @@ void tst_QQuickApplicationWindow::activeFocusOnTab1()
 
     // Tab: sub1->sub2
     {
-        QKeyEvent key = QKeyEvent(QEvent::KeyPress, Qt::Key_Tab, Qt::NoModifier, "", false, 1);
+        QKeyEvent key(QEvent::KeyPress, Qt::Key_Tab, Qt::NoModifier);
         QGuiApplication::sendEvent(window, &key);
         QVERIFY(key.isAccepted());
 
@@ -143,9 +144,42 @@ void tst_QQuickApplicationWindow::activeFocusOnTab1()
         QVERIFY_ACTIVE_FOCUS(item);
     }
 
-    // Tab: sub2->sub1
+    // Tab: sub2->menuBar
     {
-        QKeyEvent key = QKeyEvent(QEvent::KeyPress, Qt::Key_Tab, Qt::NoModifier, "", false, 1);
+        QKeyEvent key(QEvent::KeyPress, Qt::Key_Tab, Qt::NoModifier);
+        QGuiApplication::sendEvent(window, &key);
+        QVERIFY(key.isAccepted());
+
+        item = qobject_cast<QQuickApplicationWindow *>(window)->menuBar();
+        QVERIFY(item);
+        QVERIFY_ACTIVE_FOCUS(item);
+    }
+
+    // Tab: menuBar->header
+    {
+        QKeyEvent key(QEvent::KeyPress, Qt::Key_Tab, Qt::NoModifier);
+        QGuiApplication::sendEvent(window, &key);
+        QVERIFY(key.isAccepted());
+
+        item = qobject_cast<QQuickApplicationWindow *>(window)->header();
+        QVERIFY(item);
+        QVERIFY_ACTIVE_FOCUS(item);
+    }
+
+    // Tab: header->footer
+    {
+        QKeyEvent key(QEvent::KeyPress, Qt::Key_Tab, Qt::NoModifier);
+        QGuiApplication::sendEvent(window, &key);
+        QVERIFY(key.isAccepted());
+
+        item = qobject_cast<QQuickApplicationWindow *>(window)->footer();
+        QVERIFY(item);
+        QVERIFY_ACTIVE_FOCUS(item);
+    }
+
+    // Tab: footer->sub1
+    {
+        QKeyEvent key(QEvent::KeyPress, Qt::Key_Tab, Qt::NoModifier);
         QGuiApplication::sendEvent(window, &key);
         QVERIFY(key.isAccepted());
 
@@ -179,9 +213,42 @@ void tst_QQuickApplicationWindow::activeFocusOnTab2()
     QVERIFY(item);
     QVERIFY(!item->hasActiveFocus());
 
-    // BackTab: contentItem->sub2
+    // BackTab: contentItem->footer
     {
-        QKeyEvent key(QEvent::KeyPress, Qt::Key_Tab, Qt::ShiftModifier, "", false, 1);
+        QKeyEvent key(QEvent::KeyPress, Qt::Key_Tab, Qt::ShiftModifier);
+        QGuiApplication::sendEvent(window, &key);
+        QVERIFY(key.isAccepted());
+
+        item = qobject_cast<QQuickApplicationWindow *>(window)->footer();
+        QVERIFY(item);
+        QVERIFY_ACTIVE_FOCUS(item);
+    }
+
+    // BackTab: footer->header
+    {
+        QKeyEvent key(QEvent::KeyPress, Qt::Key_Tab, Qt::ShiftModifier);
+        QGuiApplication::sendEvent(window, &key);
+        QVERIFY(key.isAccepted());
+
+        item = qobject_cast<QQuickApplicationWindow *>(window)->header();
+        QVERIFY(item);
+        QVERIFY_ACTIVE_FOCUS(item);
+    }
+
+    // BackTab: header->menuBar
+    {
+        QKeyEvent key(QEvent::KeyPress, Qt::Key_Tab, Qt::ShiftModifier);
+        QGuiApplication::sendEvent(window, &key);
+        QVERIFY(key.isAccepted());
+
+        item = qobject_cast<QQuickApplicationWindow *>(window)->menuBar();
+        QVERIFY(item);
+        QVERIFY_ACTIVE_FOCUS(item);
+    }
+
+    // BackTab: menuBar->sub2
+    {
+        QKeyEvent key(QEvent::KeyPress, Qt::Key_Tab, Qt::ShiftModifier);
         QGuiApplication::sendEvent(window, &key);
         QVERIFY(key.isAccepted());
 
@@ -192,7 +259,7 @@ void tst_QQuickApplicationWindow::activeFocusOnTab2()
 
     // BackTab: sub2->sub1
     {
-        QKeyEvent key = QKeyEvent(QEvent::KeyPress, Qt::Key_Tab, Qt::ShiftModifier, "", false, 1);
+        QKeyEvent key(QEvent::KeyPress, Qt::Key_Tab, Qt::ShiftModifier);
         QGuiApplication::sendEvent(window, &key);
         QVERIFY(key.isAccepted());
 
@@ -201,13 +268,13 @@ void tst_QQuickApplicationWindow::activeFocusOnTab2()
         QVERIFY_ACTIVE_FOCUS(item);
     }
 
-    // BackTab: sub1->sub2
+    // BackTab: sub1->footer
     {
-        QKeyEvent key = QKeyEvent(QEvent::KeyPress, Qt::Key_Tab, Qt::ShiftModifier, "", false, 1);
+        QKeyEvent key(QEvent::KeyPress, Qt::Key_Tab, Qt::ShiftModifier);
         QGuiApplication::sendEvent(window, &key);
         QVERIFY(key.isAccepted());
 
-        item = findItem<QQuickItem>(window->contentItem(), "sub2");
+        item = qobject_cast<QQuickApplicationWindow *>(window)->footer();
         QVERIFY(item);
         QVERIFY_ACTIVE_FOCUS(item);
     }
@@ -1078,6 +1145,36 @@ void tst_QQuickApplicationWindow::safeArea()
     QCOMPARE(window->contentItem()->position(), QPoint());
     QCOMPARE(window->contentItem()->size(), window->size());
 
+}
+
+void tst_QQuickApplicationWindow::paintOrderChildItems()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine);
+    component.loadUrl(testFileUrl("activefocusontab.qml"));
+    QObject *created = component.create();
+    QScopedPointer<QObject> cleanup(created);
+    QVERIFY(created);
+
+    QQuickWindow *window = qobject_cast<QQuickWindow *>(created);
+    QVERIFY(window);
+    window->show();
+    window->requestActivate();
+    QVERIFY(QTest::qWaitForWindowActive(window));
+
+    const auto &paintOrder = QQuickItemPrivate::get(window->contentItem())->paintOrderChildItems();
+    for (const auto &child : paintOrder) {
+        if (child == window->contentItem())
+            QVERIFY(child->z() == 0);
+        else if (child == qobject_cast<QQuickApplicationWindow *>(window)->menuBar())
+            QVERIFY(child->z() == 2);
+        else if (child == qobject_cast<QQuickApplicationWindow *>(window)->header())
+            QVERIFY(child->z() == 1);
+        else if (child == qobject_cast<QQuickApplicationWindow *>(window)->footer())
+            QVERIFY(child->z() == 1);
+        else if (child == qobject_cast<QQuickApplicationWindow *>(window)->background())
+            QVERIFY(child->z() == -1);
+    }
 }
 
 #if QT_CONFIG(quicktemplates2_hover)
