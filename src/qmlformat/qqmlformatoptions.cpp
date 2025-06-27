@@ -150,7 +150,7 @@ QQmlFormatOptions QQmlFormatOptions::buildCommandLineOptions(const QStringList &
 
     QCommandLineOption columnWidthOption(
             { "W"_L1, "column-width"_L1 },
-            QStringLiteral("Breaks the line into multiple lines if exceedes the specified width."
+            QStringLiteral("Breaks the line into multiple lines if exceedes the specified width. "
                            "Use -1 to disable line wrapping. (default)"),
             "width"_L1, "-1"_L1);
     parser.addOption(columnWidthOption);
