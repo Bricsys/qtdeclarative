@@ -741,9 +741,9 @@ int quick_test_main_with_setup(int argc, char **argv, const char *name, const ch
     \include macro-usage-limitation.qdocinc
 */
 
-QString QQuickTest::qActiveFocusFailureMessage(const QQuickItem *item)
+QByteArray QQuickTest::qActiveFocusFailureMessage(const QQuickItem *item)
 {
-    QString message;
+    QByteArray message;
     QDebug debug(&message);
     const QQuickWindow *window = item->window();
     const QString activeFocusItemStr = window
