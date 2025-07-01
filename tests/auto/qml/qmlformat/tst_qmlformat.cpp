@@ -353,9 +353,9 @@ void TestQmlformat::qml_data()
     QTest::newRow("noSuperfluousSpaceInsertions_signal")
             << "noSuperfluousSpaceInsertions_signal.qml"
             << "noSuperfluousSpaceInsertions_signal.formatted.qml";
-    QTest::newRow("noSuperfluousSpaceInsertions.fail_enum")
-            << "noSuperfluousSpaceInsertions.fail_enum.qml"
-            << "noSuperfluousSpaceInsertions.fail_enum.formatted.qml";
+    QTest::newRow("noSuperfluousSpaceInsertions_enum")
+            << "noSuperfluousSpaceInsertions_enum.qml"
+            << "noSuperfluousSpaceInsertions_enum.formatted.qml";
     QTest::newRow("noSuperfluousSpaceInsertions.fail_parameters")
             << "noSuperfluousSpaceInsertions.fail_parameters.qml"
             << "noSuperfluousSpaceInsertions.fail_parameters.formatted.qml";
