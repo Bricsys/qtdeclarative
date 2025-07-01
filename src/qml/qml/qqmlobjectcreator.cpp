@@ -1903,8 +1903,7 @@ QQmlObjectCreatorRecursionWatcher::QQmlObjectCreatorRecursionWatcher(QQmlObjectC
 
 void ObjectInCreationGCAnchorList::trackObject(QV4::ExecutionEngine *engine, QObject *instance)
 {
-    QV4::Value *wrapper = allocationScope->alloc<QV4::Scope::Uninitialized>();
-    *wrapper = QV4::QObjectWrapper::wrap(engine, instance);
+    QV4::Value *wrapper = allocationScope->construct(1, QV4::QObjectWrapper::wrap(engine, instance));
     // we have to handle the case where the gc is already running, but the scope is discarded
     // before the collector runs again. In that case, rescanning won't help us. Thus, mark the
     // object.
