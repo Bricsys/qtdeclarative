@@ -17,6 +17,48 @@ using namespace Qt::StringLiterals;
 
 static const QString ROWS_PROPERTY_NAME = u"rows"_s;
 
+/*!
+    \qmltype TreeModel
+//!    \nativetype QQmlTreeModel
+    \inqmlmodule Qt.labs.qmlmodels
+    \brief Encapsulates a simple tree model.
+    \since 6.10
+
+    The TreeModel type stores JavaScript/JSON objects as data for a tree
+    model that can be used with \l TreeView. It is intended to support
+    very simple models without requiring the creation of a custom
+    \l QAbstractItemModel subclass in C++.
+
+    \snippet qml/treemodel/treemodel-filesystem-basic.qml file
+
+    The model's initial data is set with either the \l rows property or by
+    calling \l appendRow(). Each column in the model is specified by declaring
+    a \l TableModelColumn instance, where the order of each instance determines
+    its column index. Once the model's \l Component::completed() signal has been
+    emitted, the columns and roles will have been established and are then
+    fixed for the lifetime of the model.
+
+    \section1 Supported Row Data Structures
+
+    Each row represents a node in the tree. Each node has the same type of
+    columns. The TreeModel is designed to work with JavaScript/JSON data so
+    each row is a list of simple key-value pairs:
+
+    \snippet qml/treemodel/treemodel-filesystem-basic.qml rows
+
+    A node can have child nodes and these will be stored in an array
+    associated with the "rows" key. "rows" is reserved for this purpose: only
+    the list of child nodes should be associated with this key.
+
+    The model is manipulated via \l {QModelIndex} {QModelIndices}. To access
+    a specific row/node, the \l getRow() function can be used. It's also
+    possible to access the model's JavaScript data directly via the \l rows
+    property, but it is not possible to modify the model data this way.
+
+    To add new rows, use \l appendRow(). To modify existing rows, use
+    \l setRow(), \l removeRow() and \l clear().
+*/
+
 QQmlTreeModel::QQmlTreeModel(QObject *parent)
     : QAbstractItemModel(parent)
 {
@@ -52,7 +94,7 @@ int QQmlTreeModel::columnCount(const QModelIndex &parent) const
 }
 
 /*!
-    \qmlmethod QModelIndex QQmlTreeModel::index(int row, int column, object parent)
+    \qmlmethod QModelIndex TreeModel::index(int row, int column, object parent)
 
     Returns a \l QModelIndex object referencing the given \a row and \a column of
     a given \a parent which can be passed to the data() function to get the data
@@ -77,14 +119,46 @@ QModelIndex QQmlTreeModel::index(int row, int column, const QModelIndex &parent)
 }
 
 /*!
-    \qmlmethod QModelIndex QQmlTreeModel::index(list<int> treeIndex, int column)
+    \qmlmethod QModelIndex TreeModel::index(list<int> treeIndex, int column)
 
     Returns a \l QModelIndex object referencing the given \a treeIndex and \a column,
     which can be passed to the data() function to get the data from that cell,
     or to setData() to edit the contents of that cell.
 
-    If the index is not found, an invalid model index is returned. Please note, that
-    an invalid model index is referencing the root of the node.
+    The first parameter \a treeIndex represents a path of row numbers tracing from
+    the root to the desired row and is used for navigation inside the tree.
+    This is best explained through an example.
+
+    \table
+
+    \row \li \inlineimage treemodel.svg
+    \li \list
+
+    \li The root of the tree is special, as it can be referenced by an invalid
+    \l QModelIndex.
+
+    \li Node A is the first child of the root and the corresponding \a treeIndex is \c [0].
+
+    \li Node B is the first child of node A. Since the \a treeIndex of A is \c [0]
+    the \a treeIndex of B will be \c [0,0].
+
+    \li Node C is the second child of A and its \a treeIndex is \c [0,1].
+
+    \li Node D is the third child of A and its \a treeIndex is \c [0,2].
+
+    \li Node E is the second child of the root and its \a treeIndex is \c [1].
+
+    \li Node F is the third child of the root and its \a treeIndex is \c [2].
+
+    \endlist
+
+    \endtable
+
+    With this overload it is possible to obtain a \l QModelIndex to a node without
+    having a \l QModelIndex to its parent node.
+
+    If no node is found by the list specified, an invalid model index is returned.
+    Please note that an invalid model index is referencing the root of the node.
 
     \sa {QModelIndex and related Classes in QML}, data()
 */
@@ -129,7 +203,7 @@ QModelIndex QQmlTreeModel::parent(const QModelIndex &index) const
 }
 
 /*!
-    \qmlmethod variant QQmlTreeModel::data(QModelIndex index, string role)
+    \qmlmethod variant TreeModel::data(QModelIndex index, string role)
 
     Returns the data from the QQmlTreeModel at the given \a index belonging to the
     given \a role.
@@ -190,6 +264,13 @@ QVariant QQmlTreeModel::data(const QModelIndex &index, int role) const
     return getter.call(args).toVariant();
 }
 
+/*!
+    \qmlproperty object TreeModel::rows
+
+    This property holds the model data in the form of an array of rows.
+
+    \sa getRow(), setRow(), appendRow(), clear(), columnCount
+*/
 QVariant QQmlTreeModel::rows() const
 {
     QVariantList rowsAsVariant;
@@ -219,35 +300,32 @@ void QQmlTreeModel::setRows(const QVariant &rows)
 
 // TODO: Turn this into a snippet that compiles in CI
 /*!
-    \qmlmethod QQmlTreeModel::appendRow(QModelIndex treeRowIndex, object treeRow)
+    \qmlmethod TreeModel::appendRow(QModelIndex treeRowIndex, object treeRow)
 
     Appends a new treeRow to the treeRow specified by \a treeRowIndex, with the
     values (cells) in \a treeRow.
 
     \code
-        treeModel.appendRow(targetIndex, {
+        treeModel.appendRow(treeRowIndex, {
                             checked: false,
-                            amount: 4,
-                            fruitType: "Peach",
-                            fruitName: "Princess Peach",
-                            fruitPrice: 1.45,
-                            color: "yellow",
+                            size: "-"
+                            type: folder,
+                            name: "Orders",
+                            lastModified: "2025-07-02",
                             rows: [
                                 {
                                     checked: true,
-                                    amount: 5,
-                                    fruitType: "Strawberry",
-                                    fruitName: "Perry the Berry",
-                                    fruitPrice: 3.80,
-                                    color: "red",
+                                    size: "38 KB",
+                                    type: "file",
+                                    name: "monitors.xlsx",
+                                    lastModified: "2025-07-02",
                                 },
                                 {
-                                    checked: false,
-                                    amount: 6,
-                                    fruitType: "Pear",
-                                    fruitName: "Bear Pear",
-                                    fruitPrice: 1.50,
-                                    color: "green",
+                                    checked: true,
+                                    size: "54 KB",
+                                    type: "file",
+                                    name: "notebooks.xlsx",
+                                    lastModified: "2025-07-02",
                                 }
                             ]
                         })
@@ -297,6 +375,14 @@ void QQmlTreeModel::appendRow(QModelIndex index, const QVariant &row)
     emit rowsChanged();
 }
 
+/*!
+    \qmlmethod TreeModel::appendRow(object treeRow)
+
+    Appends \a treeRow to the root node.
+
+    \sa setRow(), removeRow()
+*/
+
 void QQmlTreeModel::appendRow(const QVariant &row)
 {
     appendRow({}, row);
@@ -315,7 +401,7 @@ QQmlTreeRow *QQmlTreeModel::getPointerToTreeRow(QModelIndex &modIndex,
 }
 
 /*!
-    \qmlmethod object QQmlTreeModel::getRow(const QModelIndex &rowIndex)
+    \qmlmethod object TreeModel::getRow(const QModelIndex &rowIndex)
 
     Returns the treeRow at \a rowIndex in the model.
 
@@ -336,7 +422,7 @@ QVariant QQmlTreeModel::getRow(const QModelIndex &rowIndex) const
 
 // TODO: Turn this into a snippet that compiles in CI
 /*!
-    \qmlmethod QQmlTreeModel::setRow(QModelIndex rowIndex, object treeRow)
+    \qmlmethod TreeModel::setRow(QModelIndex rowIndex, object treeRow)
 
     Replaces the TreeRow at \a rowIndex in the model with \a treeRow.
     A row with child rows will be rejected.
@@ -345,13 +431,13 @@ QVariant QQmlTreeModel::getRow(const QModelIndex &rowIndex) const
     The child rows of the row remain unaffected.
 
     \code
-        treeModel.setRow(targetIndex, {
+        treeModel.setRow(rowIndex, {
                         checked: true,
-                        amount: 5,
-                        fruitType: "Strawberry",
-                        fruitName: "Perry the Berry",
-                        fruitPrice: 3.80,
-                        color: "red",
+                        size: -,
+                        type: "folder",
+                        name: "Subtitles",
+                        lastModified: "2025-07-07",
+                        iconCcolor: "blue",
                     })
     \endcode
 
@@ -385,7 +471,7 @@ void QQmlTreeModel::setRow(QModelIndex rowIndex, const QVariant &rowData)
 }
 
 /*!
-    \qmlmethod QQmlTreeModel::clear()
+    \qmlmethod TreeModel::clear()
 
     Removes all TreeRows from the model.
 
@@ -400,12 +486,12 @@ void QQmlTreeModel::clear()
 }
 
 /*!
-    \qmlmethod QQmlTreeModel::removeRow(QModelIndex rowIndex)
+    \qmlmethod TreeModel::removeRow(QModelIndex rowIndex)
 
     Removes the TreeRow referenced by \a rowIndex from the model.
 
     \code
-        treeModel.removeTreeRow(targetIndex)
+        treeModel.removeTreeRow(rowIndex)
     \endcode
 
     \sa clear()
@@ -435,7 +521,7 @@ void QQmlTreeModel::removeRow(QModelIndex rowIndex)
 }
 
 /*!
-    \qmlmethod bool QQmlTreeModel::setData(QModelIndex index, string role, variant value)
+    \qmlmethod bool TreeModel::setData(QModelIndex index, string role, variant value)
 
     Inserts or updates the data field named by \a role in the TreeRow at the
     given \a index with \a value. Returns true if sucessful, false if not.
