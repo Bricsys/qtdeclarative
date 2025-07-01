@@ -112,9 +112,11 @@ namespace QQuickControlsTestUtils
 
 namespace QQuickTest
 {
+namespace Private {
 // Overload of the one in quicktest.h.
 [[nodiscard]] QByteArray qActiveFocusFailureMessage(QQuickPopup *popup);
-}
+} // namespace Private
+} // namespace QQuickTest
 
 #define VERIFY_VISUAL_FOCUS(control) \
 do { \

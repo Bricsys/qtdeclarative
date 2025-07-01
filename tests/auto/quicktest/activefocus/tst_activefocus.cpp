@@ -43,12 +43,12 @@ void tst_ActiveFocus::failureMessage()
     auto *item = window->property("item").value<QQuickItem*>();
     QVERIFY(item);
 
-    const QByteArray failureMessageWithWindow = QQuickTest::qActiveFocusFailureMessage(item);
+    const QByteArray failureMessageWithWindow = QQuickTest::Private::qActiveFocusFailureMessage(item);
     QVERIFY2(QRegularExpression("item: .* focusPolicy: .* window's activeFocusItem: .*")
         .match(failureMessageWithWindow).hasMatch(), ("Failure message: " + failureMessageWithWindow).constData());
 
     item->setParentItem(nullptr);
-    const QByteArray failureMessageWithoutWindow = QQuickTest::qActiveFocusFailureMessage(item);
+    const QByteArray failureMessageWithoutWindow = QQuickTest::Private::qActiveFocusFailureMessage(item);
     QVERIFY2(QRegularExpression("item: .* focusPolicy: .* window's activeFocusItem: \\(unknown; item has no window\\)")
         .match(failureMessageWithoutWindow).hasMatch(), ("Failure message: " + failureMessageWithoutWindow).constData());
 }

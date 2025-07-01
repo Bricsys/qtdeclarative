@@ -741,7 +741,7 @@ int quick_test_main_with_setup(int argc, char **argv, const char *name, const ch
     \include macro-usage-limitation.qdocinc
 */
 
-QByteArray QQuickTest::qActiveFocusFailureMessage(const QQuickItem *item)
+QByteArray QQuickTest::Private::qActiveFocusFailureMessage(const QQuickItem *item)
 {
     QByteArray message;
     QDebug debug(&message);

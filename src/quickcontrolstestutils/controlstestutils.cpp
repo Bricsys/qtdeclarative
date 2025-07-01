@@ -224,7 +224,7 @@ bool QQuickControlsTestUtils::arePopupWindowsSupported()
 #endif
 }
 
-QByteArray QQuickTest::qActiveFocusFailureMessage(QQuickPopup *popup)
+QByteArray QQuickTest::Private::qActiveFocusFailureMessage(QQuickPopup *popup)
 {
     QByteArray message;
     QDebug debug(&message);
