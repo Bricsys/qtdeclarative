@@ -45,7 +45,9 @@ MainWindow::MainWindow(QWidget *parent)
     m_vectorImageWidget->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
     ui->saVectorImage->setWidget(m_vectorImageWidget);
 
-    connect(m_manager, &VectorImageManager::currentSourceChanged, this, &MainWindow::updateSources);
+    connect(m_manager, &VectorImageManager::currentSourceChanged, this, &MainWindow::updateSource);
+    connect(m_manager, &VectorImageManager::sourcesChanged, this, &MainWindow::updateSources);
+    connect(ui->cbFilename, &QComboBox::currentIndexChanged, this, &MainWindow::updateIndex);
 
     m_settings = new QSettings(QStringLiteral("org.qtproject"), QStringLiteral("svg-test"), this);
 
@@ -100,12 +102,36 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::updateIndex(int newIndex)
+{
+    if (m_manager->currentIndex() == newIndex)
+        return;
+
+
+    m_manager->setCurrentIndex(newIndex);
+}
+
 void MainWindow::updateSources()
+{
+    ui->cbFilename->clear();
+
+    QList<QUrl> sources = m_manager->sources();
+    for (qsizetype i = 0; i < sources.size(); ++i) {
+        QFileInfo info(sources.at(i).toLocalFile());
+        ui->cbFilename->addItem(info.baseName());
+    }
+}
+
+void MainWindow::updateSource()
 {
     m_svgPainter->setSource(m_manager->currentSource());
 
     QFileInfo info(m_manager->currentSource().toLocalFile());
-    ui->lCurrentFileName->setText(info.baseName());
+
+    int index = ui->cbFilename->findText(info.baseName());
+    if (index < 0)
+        return;
+    ui->cbFilename->setCurrentIndex(index);
 
     QFileInfo pngInfo(info.absolutePath() + QLatin1Char('/') + info.baseName() + QStringLiteral(".png"));
     if (pngInfo.exists()) {

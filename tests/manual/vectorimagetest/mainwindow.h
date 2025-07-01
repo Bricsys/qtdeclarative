@@ -25,11 +25,13 @@ public:
     ~MainWindow();
 
 private slots:
+    void updateSource();
     void updateSources();
     void selectDirectory();
     void next();
     void previous();
     void loadDirectory(const QString &newDir);
+    void updateIndex(int newIndex);
 
 private:
     void updateCurrentDir(const QString &newDir);
