@@ -12,6 +12,7 @@
 #include <QQuickWidget>
 #include <QQmlEngine>
 #include <QSlider>
+#include <QCheckBox>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -58,8 +59,15 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->hsScale, &QAbstractSlider::valueChanged, m_manager, &VectorImageManager::setScale);
     connect(ui->hsScale, &QAbstractSlider::valueChanged, m_svgPainter, &SvgPainter::setScale);
     connect(ui->hsScale, &QAbstractSlider::valueChanged, this, &MainWindow::setScale);
+
+    connect(ui->cbLooping, &QCheckBox::toggled, m_manager, &VectorImageManager::setLooping);
+    connect(ui->cbLooping, &QCheckBox::toggled, this, &MainWindow::setLooping);
+    connect(ui->cbLooping, &QCheckBox::toggled, m_svgPainter, &SvgPainter::setLooping);
+
     int scale = m_settings->value(QStringLiteral("scale"), 10).toInt();
     ui->hsScale->setValue(scale);
+
+    ui->cbLooping->setChecked(m_settings->value(QStringLiteral("looping")).toBool());
 
     ui->tbNext->setShortcut(QKeySequence(QKeySequence::MoveToNextChar));
     ui->tbPrev->setShortcut(QKeySequence(QKeySequence::MoveToPreviousChar));
@@ -174,4 +182,9 @@ void MainWindow::previous()
     if (m_manager->currentIndex() > 0)
         m_manager->setCurrentIndex(m_manager->currentIndex() - 1);
 
+}
+
+void MainWindow::setLooping(bool looping)
+{
+    m_settings->setValue(QStringLiteral("looping"), looping);
 }

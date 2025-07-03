@@ -34,6 +34,7 @@ private slots:
     void previous();
     void loadDirectory(const QString &newDir);
     void updateIndex(int newIndex);
+    void setLooping(bool looping);
 
 private:
     void updateCurrentDir(const QString &newDir);

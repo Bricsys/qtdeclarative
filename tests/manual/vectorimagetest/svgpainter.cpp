@@ -73,6 +73,9 @@ void SvgPainter::paintEvent(QPaintEvent *event)
         m_renderer.render(&p);
         m_size = m_renderer.defaultSize();
         setFixedSize(m_size * m_scale / 10.0);
+
+        if (m_looping && m_renderer.currentFrame() >= (m_renderer.animationDuration() / 1000 * m_renderer.framesPerSecond()))
+            m_renderer.setCurrentFrame(0);
     }
 #else
     m_size = renderer()->defaultSize();

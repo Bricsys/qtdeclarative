@@ -20,6 +20,7 @@ class VectorImageManager : public QObject
     Q_PROPERTY(QString currentDirectory READ currentDirectory WRITE setCurrentDirectory NOTIFY currentDirectoryChanged)
     Q_PROPERTY(QList<QUrl> sources READ sources NOTIFY sourcesChanged)
     Q_PROPERTY(qreal scale READ scale WRITE setScale NOTIFY scaleChanged)
+    Q_PROPERTY(bool looping READ looping WRITE setLooping NOTIFY loopingChanged)
 public:
     VectorImageManager(QObject *parent);
     ~VectorImageManager() override;
@@ -57,8 +58,21 @@ public:
 
     qreal scale() const;
 
+    bool looping() const
+    {
+        return m_looping;
+    }
+
 public slots:
     void setScale(int newScale);
+    void setLooping(bool looping)
+    {
+        if (m_looping == looping)
+            return;
+
+        m_looping = looping;
+        emit loopingChanged();
+    }
 
 signals:
     void currentSourceChanged();
@@ -69,6 +83,7 @@ signals:
     void currentDirectoryChanged();
 
     void scaleChanged();
+    void loopingChanged();
 
 private:
     static VectorImageManager *g_manager;
@@ -77,6 +92,7 @@ private:
     QString m_currentDirectory;
     QString m_qmlSource;
     qreal m_scale = 10.0;
+    bool m_looping = false;
 };
 
 #endif // VECTORIMAGEMANAGER_H

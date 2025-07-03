@@ -14,5 +14,6 @@ Item {
         source: VectorImageManager.currentSource
         preferredRendererType: VectorImage.CurveRenderer
         assumeTrustedSource: true
+        animations.loops: VectorImageManager.looping ? Animation.Infinite : 1
     }
 }

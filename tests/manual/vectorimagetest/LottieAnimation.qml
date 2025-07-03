@@ -12,5 +12,6 @@ Item {
         id: lottieAnimation
         textureSize: Qt.size(width * parent.scale, height * parent.scale)
         source: VectorImageManager.currentSource.toString().endsWith("json") ? VectorImageManager.currentSource : ""
+        loops: VectorImageManager.looping ? LottieAnimation.Infinite : 1
     }
 }
