@@ -928,6 +928,37 @@ void QQuickSearchField::focusOutEvent(QFocusEvent *event)
         d->hidePopup();
 }
 
+void QQuickSearchField::hoverEnterEvent(QHoverEvent *event)
+{
+    Q_D(QQuickSearchField);
+    QQuickControl::hoverEnterEvent(event);
+    QQuickItem *si = d->searchIndicator->indicator();
+    QQuickItem *ci = d->clearIndicator->indicator();
+    d->searchIndicator->setHovered(si && si->isEnabled() && si->contains(mapToItem(si, event->position())));
+    d->clearIndicator->setHovered(ci && ci->isEnabled() && ci->contains(mapToItem(ci, event->position())));
+    event->ignore();
+}
+
+void QQuickSearchField::hoverMoveEvent(QHoverEvent *event)
+{
+    Q_D(QQuickSearchField);
+    QQuickControl::hoverMoveEvent(event);
+    QQuickItem *si = d->searchIndicator->indicator();
+    QQuickItem *ci = d->clearIndicator->indicator();
+    d->searchIndicator->setHovered(si && si->isEnabled() && si->contains(mapToItem(si, event->position())));
+    d->clearIndicator->setHovered(ci && ci->isEnabled() && ci->contains(mapToItem(ci, event->position())));
+    event->ignore();
+}
+
+void QQuickSearchField::hoverLeaveEvent(QHoverEvent *event)
+{
+    Q_D(QQuickSearchField);
+    QQuickControl::hoverLeaveEvent(event);
+    d->searchIndicator->setHovered(false);
+    d->clearIndicator->setHovered(false);
+    event->ignore();
+}
+
 void QQuickSearchField::keyPressEvent(QKeyEvent *event)
 {
     Q_D(QQuickSearchField);

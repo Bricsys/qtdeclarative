@@ -99,6 +99,9 @@ protected:
     bool eventFilter(QObject *object, QEvent *event) override;
     void focusInEvent(QFocusEvent *event) override;
     void focusOutEvent(QFocusEvent *event) override;
+    void hoverEnterEvent(QHoverEvent *event) override;
+    void hoverMoveEvent(QHoverEvent *event) override;
+    void hoverLeaveEvent(QHoverEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     void classBegin() override;
     void componentComplete() override;
