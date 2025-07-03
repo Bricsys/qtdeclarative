@@ -2012,6 +2012,7 @@ void TestQmllint::cleanQmlCode_data()
     QTest::newRow("initReadonly") << QStringLiteral("initReadonly.qml");
     QTest::newRow("interceptor") << QStringLiteral("interceptor.qml");
     QTest::newRow("interceptor+valueSource") << QStringLiteral("interceptor_valueSource.qml");
+    QTest::newRow("nonConflictingDuplicateBinding.qml") << QStringLiteral("nonConflictingDuplicateBinding.qml");
     QTest::newRow("itemviewattached") << QStringLiteral("itemViewAttached.qml");
     QTest::newRow("javascriptMethodsInModule")
             << QStringLiteral("javascriptMethodsInModuleGood.qml");

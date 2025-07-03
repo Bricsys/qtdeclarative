@@ -644,8 +644,8 @@ void QQmlJSImportVisitor::setAllBindings()
             continue;
         type->addOwnPropertyBinding(binding, it->specifier);
 
-        // we already warn about duplicate interceptors in processPropertyBindingObjects()
-        if (binding.hasInterceptor())
+        // we handle interceptors and value sources in processPropertyBindingObjects()
+        if (binding.hasInterceptor() || binding.hasValueSource())
             continue;
         const QString propertyName = binding.propertyName();
 
@@ -942,26 +942,43 @@ void QQmlJSImportVisitor::processPropertyBindingObjects()
         const auto uniqueBindingId = std::make_pair(objectBinding.scope, objectBinding.name);
         const QString typeName = getScopeName(childScope, QQmlSA::ScopeType::QMLScope);
 
+        auto isConditionalBinding = [&]() -> bool {
+            /* this is a heuristic; we don't want to warn about multiple
+               mutually exclusive bindings, even if they target the same
+               property. We don't have a proper way to detect this, so
+               we check for the presence of some bindings as a hint
+            */
+            return childScope->hasOwnPropertyBindings(u"enabled"_s)
+                    || childScope->hasOwnPropertyBindings(u"when"_s)
+                    || childScope->hasOwnPropertyBindings(u"running"_s);
+        };
+
         if (objectBinding.onToken) {
             if (childScope->hasInterface(QStringLiteral("QQmlPropertyValueInterceptor"))) {
                 if (foundInterceptors.contains(uniqueBindingId)) {
-                    m_logger->log(QStringLiteral("Duplicate interceptor on property \"%1\"")
+                    if (!isConditionalBinding()) {
+                        m_logger->log(QStringLiteral("Duplicate interceptor on property \"%1\"")
                                           .arg(propertyName),
                                   qmlDuplicatePropertyBinding, objectBinding.location);
+                    }
                 } else {
                     foundInterceptors.insert(uniqueBindingId);
                 }
             } else if (childScope->hasInterface(QStringLiteral("QQmlPropertyValueSource"))) {
                 if (foundValueSources.contains(uniqueBindingId)) {
-                    m_logger->log(QStringLiteral("Duplicate value source on property \"%1\"")
+                    if (!isConditionalBinding()) {
+                        m_logger->log(QStringLiteral("Duplicate value source on property \"%1\"")
                                           .arg(propertyName),
                                   qmlDuplicatePropertyBinding, objectBinding.location);
+                    }
                 } else if (foundObjects.contains(uniqueBindingId)
                            || foundLiterals.contains(uniqueBindingId)) {
-                    m_logger->log(QStringLiteral("Cannot combine value source and binding on "
+                    if (!isConditionalBinding())  {
+                        m_logger->log(QStringLiteral("Cannot combine value source and binding on "
                                                  "property \"%1\"")
                                           .arg(propertyName),
                                   qmlDuplicatePropertyBinding, objectBinding.location);
+                    }
                 } else {
                     foundValueSources.insert(uniqueBindingId);
                 }
@@ -973,10 +990,12 @@ void QQmlJSImportVisitor::processPropertyBindingObjects()
             }
         } else {
             if (foundValueSources.contains(uniqueBindingId)) {
-                m_logger->log(
+                if (!isConditionalBinding())  {
+                    m_logger->log(
                         QStringLiteral("Cannot combine value source and binding on property \"%1\"")
                                 .arg(propertyName),
                         qmlDuplicatePropertyBinding, objectBinding.location);
+                }
             } else {
                 foundObjects.insert(uniqueBindingId);
             }
