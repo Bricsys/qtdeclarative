@@ -302,6 +302,22 @@ void QQuickQmlGenerator::generateAnimationBindings()
     stream() << "onLoopsChanged: { if (running) { restart() } }";
 }
 
+void QQuickQmlGenerator::generateEasing(const QQuickAnimatedProperty::PropertyAnimation &animation, int time)
+{
+    if (animation.easingPerFrame.contains(time)) {
+        QBezier bezier = animation.easingPerFrame.value(time);
+        QPointF c1 = bezier.pt2();
+        QPointF c2 = bezier.pt3();
+
+        bool isLinear = (c1 == c1.transposed() && c2 == c2.transposed());
+        if (!isLinear) {
+            stream() << "easing.type: Easing.BezierSpline";
+            stream() << "easing.bezierCurve: [ " << c1.x() << ", " << c1.y()
+                     << ", " << c2.x() << ", " << c2.y() << ", 1, 1 ]";
+        }
+    }
+}
+
 void QQuickQmlGenerator::generatePropertyAnimation(const QQuickAnimatedProperty &property,
                                                    const QString &targetName,
                                                    const QString &propertyName,
@@ -390,6 +406,8 @@ void QQuickQmlGenerator::generatePropertyAnimation(const QQuickAnimatedProperty 
                 else
                     stream() << "to: " << value.toReal();
                 stream() << "duration: " << frameTime;
+
+                generateEasing(animation, time);
 
                 m_indentLevel--;
                 stream() << "}";
@@ -810,6 +828,7 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
                         stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
                         stream() << "property: \"x\"";
                         stream() << "to: " << translation.x();
+                        generateEasing(animation, time);
                         m_indentLevel--;
                         stream() << "}";
 
@@ -819,6 +838,7 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
                         stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
                         stream() << "property: \"y\"";
                         stream() << "to: " << translation.y();
+                        generateEasing(animation, time);
                         m_indentLevel--;
                         stream() << "}";
                         break;
@@ -832,6 +852,7 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
                         stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
                         stream() << "property: \"xScale\"";
                         stream() << "to: " << scale.x();
+                        generateEasing(animation, time);
                         m_indentLevel--;
                         stream() << "}";
 
@@ -841,6 +862,7 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
                         stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
                         stream() << "property: \"yScale\"";
                         stream() << "to: " << scale.y();
+                        generateEasing(animation, time);
                         m_indentLevel--;
                         stream() << "}";
                         break;
@@ -856,6 +878,7 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
                         stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
                         stream() << "property: \"origin\"";
                         stream() << "to: Qt.vector3d(" << center.x() << ", " << center.y() << ", 0.0)";
+                        generateEasing(animation, time);
                         m_indentLevel--;
                         stream() << "}";
 
@@ -865,6 +888,7 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
                         stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
                         stream() << "property: \"angle\"";
                         stream() << "to: " << angle;
+                        generateEasing(animation, time);
                         m_indentLevel--;
                         stream() << "}";
                         break;
@@ -878,6 +902,7 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
                         stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
                         stream() << "property: \"xAngle\"";
                         stream() << "to: " << skew.x();
+                        generateEasing(animation, time);
                         m_indentLevel--;
                         stream() << "}";
 
@@ -887,6 +912,7 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
                         stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
                         stream() << "property: \"yAngle\"";
                         stream() << "to: " << skew.y();
+                        generateEasing(animation, time);
                         m_indentLevel--;
                         stream() << "}";
                         break;

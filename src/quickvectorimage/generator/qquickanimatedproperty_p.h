@@ -17,6 +17,7 @@
 
 #include <QMap>
 #include <QVariant>
+#include <QtGui/private/qbezier_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -35,8 +36,9 @@ public:
         int repeatCount = 1;
         int startOffset = 0;
         quint8 flags = NoFlags;
-    };
 
+        QMap<int, QBezier> easingPerFrame;
+    };
 
     QQuickAnimatedProperty(const QVariant &defaultValue)
         : m_defaultValue(defaultValue)

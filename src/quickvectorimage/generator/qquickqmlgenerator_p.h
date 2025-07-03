@@ -17,13 +17,12 @@
 
 #include "qquickgenerator_p.h"
 #include "qquicknodeinfo_p.h"
+#include "qquickanimatedproperty_p.h"
 
 #include <QtCore/qtextstream.h>
 #include <QtCore/qbuffer.h>
 
 QT_BEGIN_NAMESPACE
-
-class QQuickAnimatedProperty;
 
 class Q_QUICKVECTORIMAGEGENERATOR_EXPORT QQuickQmlGenerator : public QQuickGenerator
 {
@@ -112,6 +111,7 @@ private:
     void generatePathContainer(const StructureNodeInfo &info);
     void generateAnimateTransform(const QString &targetName, const NodeInfo &info);
     void generateAnimationBindings();
+    void generateEasing(const QQuickAnimatedProperty::PropertyAnimation &animation, int time);
 
     enum class AnimationType {
         Auto = 0,
