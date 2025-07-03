@@ -106,18 +106,24 @@ protected:
     void outputShapePath(const PathNodeInfo &info, const QPainterPath *path, const QQuadPath *quadPath, QQuickVectorImageGenerator::PathSelector pathSelector, const QRectF &boundingRect) override;
 
 private:
+    enum class AnimationType {
+        Auto = 0,
+        ColorOpacity = 1
+    };
+
     void generateGradient(const QGradient *grad);
     void generateTransform(const QTransform &xf);
     void generatePathContainer(const StructureNodeInfo &info);
     void generateAnimateTransform(const QString &targetName, const NodeInfo &info);
     void generateAnimationBindings();
     void generateEasing(const QQuickAnimatedProperty::PropertyAnimation &animation, int time);
-
-    enum class AnimationType {
-        Auto = 0,
-        ColorOpacity = 1
-    };
-
+    void generateAnimatedPropertySetter(const QString &targetName,
+                                        const QString &propertyName,
+                                        const QVariant &value,
+                                        const QQuickAnimatedProperty::PropertyAnimation &animation,
+                                        int time,
+                                        int frameTime,
+                                        AnimationType animationType = AnimationType::Auto);
     void generatePropertyAnimation(const QQuickAnimatedProperty &property,
                                    const QString &targetName,
                                    const QString &propertyName,

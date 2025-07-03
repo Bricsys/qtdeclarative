@@ -386,31 +386,13 @@ void QQuickQmlGenerator::generatePropertyAnimation(const QQuickAnimatedProperty 
                 m_indentLevel--;
                 stream() << "}";
             } else {
-                switch (animationType) {
-                case AnimationType::Auto:
-                    if (value.typeId() == QMetaType::QColor)
-                        stream() << "ColorAnimation {";
-                    else
-                        stream() << "PropertyAnimation {";
-                    break;
-                case AnimationType::ColorOpacity:
-                    stream() << "ColorOpacityAnimation {";
-                    break;
-                };
-                m_indentLevel++;
-
-                stream() << "target: " << targetName;
-                stream() << "property: \"" << propertyName << "\"";
-                if (value.typeId() == QMetaType::QColor)
-                    stream() << "to: \"" << value.toString() << '"';
-                else
-                    stream() << "to: " << value.toReal();
-                stream() << "duration: " << frameTime;
-
-                generateEasing(animation, time);
-
-                m_indentLevel--;
-                stream() << "}";
+                generateAnimatedPropertySetter(targetName,
+                                               propertyName,
+                                               value,
+                                               animation,
+                                               frameTime,
+                                               time,
+                                               animationType);
             }
 
             previousTime = time;
@@ -739,6 +721,64 @@ void QQuickQmlGenerator::generatePathContainer(const StructureNodeInfo &info)
     m_inShapeItemLevel++;
 }
 
+void QQuickQmlGenerator::generateAnimatedPropertySetter(const QString &targetName,
+                                                        const QString &propertyName,
+                                                        const QVariant &value,
+                                                        const QQuickAnimatedProperty::PropertyAnimation &animation,
+                                                        int frameTime,
+                                                        int time,
+                                                        AnimationType animationType)
+{
+    if (frameTime > 0) {
+        switch (animationType) {
+        case AnimationType::Auto:
+            if (value.typeId() == QMetaType::QColor)
+                stream() << "ColorAnimation {";
+            else
+                stream() << "PropertyAnimation {";
+            break;
+        case AnimationType::ColorOpacity:
+            stream() << "ColorOpacityAnimation {";
+            break;
+        };
+        m_indentLevel++;
+
+        stream() << "duration: " << frameTime;
+        stream() << "target: " << targetName;
+        stream() << "property: \"" << propertyName << "\"";
+        stream() << "to: ";
+        if (value.typeId() == QMetaType::QVector3D) {
+            const QVector3D &v = value.value<QVector3D>();
+            stream(SameLine) << "Qt.vector3d(" << v.x() << ", " << v.y() << ", " << v.z() << ")";
+        } else if (value.typeId() == QMetaType::QColor) {
+            stream(SameLine) << "\"" << value.toString() << "\"";
+        } else {
+            stream(SameLine) << value.toReal();
+        }
+        generateEasing(animation, time);
+        m_indentLevel--;
+        stream() << "}";
+    } else {
+        stream() << "ScriptAction {";
+        m_indentLevel++;
+        stream() << "script:" << targetName << "." << propertyName;
+        if (animationType == AnimationType::ColorOpacity)
+            stream(SameLine) << ".a";
+
+        stream(SameLine) << " = ";
+        if (value.typeId() == QMetaType::QVector3D) {
+            const QVector3D &v = value.value<QVector3D>();
+            stream(SameLine) << "Qt.vector3d(" << v.x() << ", " << v.y() << ", " << v.z() << ")";
+        } else if (value.typeId() == QMetaType::QColor) {
+            stream(SameLine) << "\"" << value.toString() << "\"";
+        } else {
+            stream(SameLine) << value.toReal();
+        }
+        m_indentLevel--;
+        stream() << "}";
+    }
+}
+
 void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, const NodeInfo &info)
 {
     if (!info.transform.isAnimated())
@@ -818,53 +858,46 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
                     stream() << "ParallelAnimation {";
                     m_indentLevel++;
 
+                    const QString propertyTargetName = targetName
+                                                       + QStringLiteral("_transform_")
+                                                       + QString::number(groupIndex)
+                                                       + QStringLiteral("_")
+                                                       + QString::number(i);
+
                     switch (animation.subtype) {
                     case QTransform::TxTranslate:
                     {
                         const QPointF translation = parameters.first().value<QPointF>();
-                        stream() << "PropertyAnimation {";
-                        m_indentLevel++;
-                        stream() << "duration: " << frameTime;
-                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                        stream() << "property: \"x\"";
-                        stream() << "to: " << translation.x();
-                        generateEasing(animation, time);
-                        m_indentLevel--;
-                        stream() << "}";
 
-                        stream() << "PropertyAnimation {";
-                        m_indentLevel++;
-                        stream() << "duration: " << frameTime;
-                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                        stream() << "property: \"y\"";
-                        stream() << "to: " << translation.y();
-                        generateEasing(animation, time);
-                        m_indentLevel--;
-                        stream() << "}";
+                        generateAnimatedPropertySetter(propertyTargetName,
+                                                       QStringLiteral("x"),
+                                                       translation.x(),
+                                                       animation,
+                                                       frameTime,
+                                                       time);
+                        generateAnimatedPropertySetter(propertyTargetName,
+                                                       QStringLiteral("y"),
+                                                       translation.y(),
+                                                       animation,
+                                                       frameTime,
+                                                       time);
                         break;
                     }
                     case QTransform::TxScale:
                     {
                         const QPointF scale = parameters.first().value<QPointF>();
-                        stream() << "PropertyAnimation {";
-                        m_indentLevel++;
-                        stream() << "duration: " << frameTime;
-                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                        stream() << "property: \"xScale\"";
-                        stream() << "to: " << scale.x();
-                        generateEasing(animation, time);
-                        m_indentLevel--;
-                        stream() << "}";
-
-                        stream() << "PropertyAnimation {";
-                        m_indentLevel++;
-                        stream() << "duration: " << frameTime;
-                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                        stream() << "property: \"yScale\"";
-                        stream() << "to: " << scale.y();
-                        generateEasing(animation, time);
-                        m_indentLevel--;
-                        stream() << "}";
+                        generateAnimatedPropertySetter(propertyTargetName,
+                                                       QStringLiteral("xScale"),
+                                                       scale.x(),
+                                                       animation,
+                                                       frameTime,
+                                                       time);
+                        generateAnimatedPropertySetter(propertyTargetName,
+                                                       QStringLiteral("yScale"),
+                                                       scale.y(),
+                                                       animation,
+                                                       frameTime,
+                                                       time);
                         break;
                     }
                     case QTransform::TxRotate:
@@ -872,49 +905,38 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
                         Q_ASSERT(parameters.size() == 2);
                         const QPointF center = parameters.value(0).value<QPointF>();
                         const qreal angle = parameters.value(1).toReal();
-                        stream() << "PropertyAnimation {";
-                        m_indentLevel++;
-                        stream() << "duration: " << frameTime;
-                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                        stream() << "property: \"origin\"";
-                        stream() << "to: Qt.vector3d(" << center.x() << ", " << center.y() << ", 0.0)";
-                        generateEasing(animation, time);
-                        m_indentLevel--;
-                        stream() << "}";
 
-                        stream() << "PropertyAnimation {";
-                        m_indentLevel++;
-                        stream() << "duration: " << frameTime;
-                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                        stream() << "property: \"angle\"";
-                        stream() << "to: " << angle;
-                        generateEasing(animation, time);
-                        m_indentLevel--;
-                        stream() << "}";
+                        generateAnimatedPropertySetter(propertyTargetName,
+                                                       QStringLiteral("origin"),
+                                                       QVector3D(center.x(), center.y(), 0.0),
+                                                       animation,
+                                                       frameTime,
+                                                       time);
+                        generateAnimatedPropertySetter(propertyTargetName,
+                                                       QStringLiteral("angle"),
+                                                       angle,
+                                                       animation,
+                                                       frameTime,
+                                                       time);
                         break;
                     }
                     case QTransform::TxShear:
                     {
                         const QPointF skew = parameters.first().value<QPointF>();
-                        stream() << "PropertyAnimation {";
-                        m_indentLevel++;
-                        stream() << "duration: " << frameTime;
-                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                        stream() << "property: \"xAngle\"";
-                        stream() << "to: " << skew.x();
-                        generateEasing(animation, time);
-                        m_indentLevel--;
-                        stream() << "}";
 
-                        stream() << "PropertyAnimation {";
-                        m_indentLevel++;
-                        stream() << "duration: " << frameTime;
-                        stream() << "target: " << targetName << "_transform_" << groupIndex << "_" << i;
-                        stream() << "property: \"yAngle\"";
-                        stream() << "to: " << skew.y();
-                        generateEasing(animation, time);
-                        m_indentLevel--;
-                        stream() << "}";
+                        generateAnimatedPropertySetter(propertyTargetName,
+                                                       QStringLiteral("xAngle"),
+                                                       skew.x(),
+                                                       animation,
+                                                       frameTime,
+                                                       time);
+
+                        generateAnimatedPropertySetter(propertyTargetName,
+                                                       QStringLiteral("yAngle"),
+                                                       skew.y(),
+                                                       animation,
+                                                       frameTime,
+                                                       time);
                         break;
                     }
                     default:
