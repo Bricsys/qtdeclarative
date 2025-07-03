@@ -60,6 +60,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->hsScale, &QAbstractSlider::valueChanged, this, &MainWindow::setScale);
     int scale = m_settings->value(QStringLiteral("scale"), 10).toInt();
     ui->hsScale->setValue(scale);
+
+    ui->tbNext->setShortcut(QKeySequence(QKeySequence::MoveToNextChar));
+    ui->tbPrev->setShortcut(QKeySequence(QKeySequence::MoveToPreviousChar));
 }
 
 void MainWindow::loadDirectory(const QString &newDir)
