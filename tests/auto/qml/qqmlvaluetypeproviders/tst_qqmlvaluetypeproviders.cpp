@@ -15,6 +15,8 @@
 #include <QtQml/qqmlcomponent.h>
 #include <QtQml/qqmlcontext.h>
 
+#include <QtGui/qquaternion.h>
+
 #include <QtCore/qdebug.h>
 #include <QtCore/qscopedpointer.h>
 
