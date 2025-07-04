@@ -1130,6 +1130,37 @@ void QQuickWindowPrivate::cleanup(QSGNode *n)
 */
 
 /*!
+    \qmlmethod void Window::startSystemMove()
+    \since 6.8
+
+    \brief Starts a system-specific move operation.
+
+    Starts an interactive move operation on the window using platform support.
+    The window follows the mouse cursor until the mouse button is released.
+
+    Use this method instead of \c setPosition, because it allows the window manager
+    to handle snapping, tiling, and related animations. On Wayland, \c setPosition
+    is not supported, so this is the only way the application can influence the
+    window’s position.
+*/
+
+/*!
+    \qmlmethod void Window::startSystemResize(Qt::Edges edges)
+    \since 6.8
+
+    \brief Starts a system-specific resize operation.
+
+    Starts an interactive resize operation on the window using platform support.
+    The specified edge follows the mouse cursor while dragging.
+
+    Use this method instead of \c setGeometry, because it allows the window manager
+    to handle snapping and resize animations when resizing to screen edges.
+
+    \a edges must be a single edge or a combination of two adjacent edges (a corner).
+    Other values are not allowed.
+*/
+
+/*!
     Constructs a window for displaying a QML scene with parent window \a parent.
 */
 QQuickWindow::QQuickWindow(QWindow *parent)
