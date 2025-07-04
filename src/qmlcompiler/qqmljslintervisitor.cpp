@@ -30,6 +30,9 @@ void LinterVisitor::leaveEnvironment()
 {
     const auto leaveEnv = qScopeGuard([this] { QQmlJSImportVisitor::leaveEnvironment(); });
 
+    if (m_currentScope->scopeType() != QQmlSA::ScopeType::QMLScope)
+        return;
+
     if (auto base = m_currentScope->baseType()) {
         if (base->internalName() == u"QQmlComponent"_s) {
             const auto nChildren = std::count_if(
