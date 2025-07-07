@@ -30,6 +30,7 @@ private slots:
     void asynchronous();
     void cornerProperties();
     void splicePathList();
+    void pathChanges();
 
 private:
     void arc(QSizeF scale);
@@ -562,6 +563,39 @@ void tst_QuickPath::splicePathList()
     QVERIFY2(c.isReady(), qPrintable(c.errorString()));
     QScopedPointer<QObject> o(c.create());
     QVERIFY(!o.isNull());
+}
+
+void tst_QuickPath::pathChanges()
+{
+    QQmlEngine engine;
+    QQmlComponent c1(&engine);
+    c1.setData("import QtQuick\nPath { }", QUrl());
+    QScopedPointer<QObject> o1(c1.create());
+    QQuickPath *path = qobject_cast<QQuickPath *>(o1.data());
+    QVERIFY(path);
+
+    QQmlListReference pathElements(path, "pathElements");
+    QSignalSpy changedSpy(path, SIGNAL(changed()));
+
+    QCOMPARE(pathElements.count(), 0);
+    QCOMPARE(changedSpy.count(), 0);
+
+    QQuickPathLine *line = new QQuickPathLine(path);
+    line->setX(10.0);
+    pathElements.append(line);
+    QQuickPathLine *line2 = new QQuickPathLine(path);
+    line2->setX(20.0);
+    pathElements.append(line2);
+
+    QCOMPARE(pathElements.count(), 2);
+    QTRY_VERIFY(!path->path().isEmpty());
+    QCOMPARE(changedSpy.count(), 2);
+
+    line->setX(40.0);
+    QCOMPARE(changedSpy.count(), 3);
+
+    line2->setY(19.4);
+    QCOMPARE(changedSpy.count(), 4);
 }
 
 QTEST_MAIN(tst_QuickPath)

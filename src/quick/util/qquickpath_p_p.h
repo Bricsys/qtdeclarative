@@ -43,10 +43,12 @@ public:
 
     void appendPathElement(QQuickPathElement *pathElement)
     {
-        _pathElements.append(pathElement);
         if (pathElement && componentComplete) {
             enablePathElement(pathElement);
+            _pathElements.append(pathElement);
             q_func()->processPath();
+        } else {
+            _pathElements.append(pathElement);
         }
     }
 
@@ -80,11 +82,12 @@ public:
             changed = true;
         }
 
-        _pathElements[position] = pathElement;
         if (pathElement) {
             enablePathElement(pathElement);
             changed = true;
         }
+
+        _pathElements[position] = pathElement;
 
         if (changed)
             q_func()->processPath();
