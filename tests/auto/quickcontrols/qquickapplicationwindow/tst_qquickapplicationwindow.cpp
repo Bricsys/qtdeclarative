@@ -59,6 +59,7 @@ private slots:
     void backgroundSize();
     void explicitBackgroundSizeBinding();
     void safeArea();
+    void safeAreaLayout();
     void paintOrderChildItems();
 #if QT_CONFIG(quicktemplates2_hover)
     void hoverInBackground();
@@ -1145,6 +1146,30 @@ void tst_QQuickApplicationWindow::safeArea()
     QCOMPARE(window->contentItem()->position(), QPoint());
     QCOMPARE(window->contentItem()->size(), window->size());
 
+}
+
+void tst_QQuickApplicationWindow::safeAreaLayout()
+{
+    QQuickControlsApplicationHelper helper(this, QLatin1String("safeAreaLayout.qml"));
+    QVERIFY2(helper.ready, helper.failureMessage());
+    QQuickApplicationWindow *window = helper.appWindow;
+    window->show();
+    window->requestActivate();
+    QVERIFY(QTest::qWaitForWindowExposed(window));
+
+    auto *windowSafeArea = qobject_cast<QQuickSafeArea*>(
+        qmlAttachedPropertiesObject<QQuickSafeArea>(window));
+    QVERIFY(windowSafeArea);
+
+    // Initially the footer is hidden, so the safe areas margins
+    // are not applied by ToolBar in computing the final height.
+    QCOMPARE(window->footer()->height(), 50);
+
+    // However once it's made visible, the safe area margins of
+    // the window should result in a taller footer, to account
+    // for both the implicit height and the margins.
+    window->footer()->setVisible(true);
+    QCOMPARE(window->footer()->height(), 50 + windowSafeArea->margins().bottom());
 }
 
 void tst_QQuickApplicationWindow::paintOrderChildItems()
