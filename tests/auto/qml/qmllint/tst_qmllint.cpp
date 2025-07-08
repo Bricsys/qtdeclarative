@@ -2072,6 +2072,7 @@ void TestQmllint::cleanQmlCode_data()
     QTest::newRow("uiQml")                     << QStringLiteral("FormUser.qml");
     QTest::newRow("unexportedCppBase") << QStringLiteral("unexportedCppBase.qml");
     QTest::newRow("unknownBuiltinFont")        << QStringLiteral("ButtonLoader.qml");
+    QTest::newRow("unnotifiableReadOutsideBinding")        << QStringLiteral("unnotifiableReadOutsideBinding.qml");
     QTest::newRow("v4SequenceMethods") << QStringLiteral("v4SequenceMethods.qml");
     QTest::newRow("valueSource") << QStringLiteral("valueSource.qml");
     QTest::newRow("var") << QStringLiteral("var.qml");

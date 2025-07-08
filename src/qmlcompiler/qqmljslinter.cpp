@@ -506,6 +506,10 @@ void QQmlJSLinter::processMessages(QJsonArray &warnings)
     });
 }
 
+static bool scopeIsBinding(const QQmlJSScope::ConstPtr& scope) {
+    return scope->scopeType() == QQmlJSScope::ScopeType::JSFunctionScope && scope->baseTypeName() == u"binding";
+}
+
 QQmlJSLinter::LintResult QQmlJSLinter::lintFile(const QString &filename,
                                                 const QString *fileContents, const bool silent,
                                                 QJsonArray *json, const QStringList &qmlImportPaths,
@@ -674,15 +678,27 @@ QQmlJSLinter::LintResult QQmlJSLinter::lintFile(const QString &filename,
 
     QQmlSA::PropertyPassBuilder(passMan.get())
             .withOnRead([](QQmlSA::PropertyPass *self, const QQmlSA::Element &element,
-                           const QString &propName, const QQmlSA::Element &readScope,
+                           const QString &propName, const QQmlSA::Element &readScope_,
                            QQmlSA::SourceLocation location) {
-                Q_UNUSED(readScope);
+
                 const auto &elementScope = QQmlJSScope::scope(element);
                 const auto &owner = QQmlJSScope::ownerOfProperty(elementScope, propName).scope;
                 if (!owner || owner->isComposite() || owner->isValueType())
                     return;
                 const auto &prop = QQmlSA::PropertyPrivate::property(element.property(propName));
                 if (prop.index() != -1 && !prop.isPropertyConstant() && prop.notify().isEmpty()) {
+                    const QQmlJSScope::ConstPtr &readScope = QQmlJSScope::scope(readScope_);
+                    // FIXME: we currently get the closest QML Scope as readScope, instead of
+                    // the innermost scope. We try locate it here via source location
+                    Q_ASSERT(readScope->scopeType() == QQmlJSScope::ScopeType::QMLScope);
+                    for (auto it = readScope->childScopesBegin(); it != readScope->childScopesEnd(); ++it) {
+                        QQmlJS::SourceLocation childLocation = (*it)->sourceLocation();
+                        if ( childLocation.offset <= location.offset() &&
+                            (childLocation.offset + childLocation.length <= location.offset() + location.length())  ) {
+                            if (!scopeIsBinding(*it))
+                                return;
+                        }
+                    }
                     const QString msg =
                             "Reading non-constant and non-notifiable property %1. "_L1
                             "Binding might not update when the property changes."_L1.arg(propName);

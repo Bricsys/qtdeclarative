@@ -2485,7 +2485,8 @@ bool QQmlJSImportVisitor::visit(UiScriptBinding *scriptBinding)
         leaveEnvironment();
     }
 
-    enterEnvironment(QQmlSA::ScopeType::JSFunctionScope, QStringLiteral("binding"),
+    enterEnvironment(QQmlSA::ScopeType::JSFunctionScope,
+                     signal ? u"changeHandler"_s : u"binding"_s,
                      scriptBinding->statement->firstSourceLocation());
 
     return true;
