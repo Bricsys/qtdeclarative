@@ -39,7 +39,7 @@ class Q_QMLMODELS_EXPORT QQmlInstantiator : public QObject, public QQmlParserSta
     Q_PROPERTY(QObject *object READ object NOTIFY objectChanged)
 #if QT_CONFIG(qml_delegate_model)
     Q_PROPERTY(QQmlDelegateModel::DelegateModelAccess delegateModelAccess READ delegateModelAccess
-            WRITE setDelegateModelAccess NOTIFY delegateModelAccessChanged REVISION(6, 11) FINAL)
+            WRITE setDelegateModelAccess NOTIFY delegateModelAccessChanged REVISION(6, 10) FINAL)
 #endif
     Q_CLASSINFO("DefaultProperty", "delegate")
     QML_NAMED_ELEMENT(Instantiator)
@@ -87,7 +87,7 @@ Q_SIGNALS:
     void objectRemoved(int index, QObject* object);
 
 #if QT_CONFIG(qml_delegate_model)
-    Q_REVISION(6, 11) void delegateModelAccessChanged();
+    Q_REVISION(6, 10) void delegateModelAccessChanged();
 #endif
 
 private:
