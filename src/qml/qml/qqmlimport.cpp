@@ -1106,6 +1106,19 @@ QQmlImportNamespace *QQmlImports::importNamespace(const QString &prefix)
     return nameSpace;
 }
 
+static void insertImport(QQmlImportNamespace *nameSpace, QQmlImportInstance *import)
+{
+    for (auto it = nameSpace->imports.cbegin(), end = nameSpace->imports.cend();
+         it != end; ++it) {
+        if ((*it)->precedence < import->precedence)
+            continue;
+
+        nameSpace->imports.insert(it, import);
+        return;
+    }
+    nameSpace->imports.append(import);
+}
+
 static QQmlImportInstance *addImportToNamespace(
         QQmlImportNamespace *nameSpace, const QString &uri, const QString &url, QTypeRevision version,
         QV4::CompiledData::Import::ImportType type, QList<QQmlError> *errors, quint16 precedence)
@@ -1123,15 +1136,7 @@ static QQmlImportInstance *addImportToNamespace(
     import->precedence = precedence;
     import->implicitlyImported = precedence >= QQmlImportInstance::Implicit;
 
-    for (auto it = nameSpace->imports.cbegin(), end = nameSpace->imports.cend();
-         it != end; ++it) {
-        if ((*it)->precedence < precedence)
-            continue;
-
-        nameSpace->imports.insert(it, import);
-        return import;
-    }
-    nameSpace->imports.append(import);
+    insertImport(nameSpace, import);
     return import;
 }
 
@@ -1234,13 +1239,21 @@ QTypeRevision QQmlImports::addLibraryImport(
     if (qmldir.hasRedirection()) {
         resolvedUrl = redirectQmldirContent(typeLoader, &qmldir);
         resolvedUri = qmldir.typeNamespace();
-        if (QQmlImportInstance *existing
-                = nameSpace->findImportByLocation(resolvedUrl, requestedVersion)) {
-            return finalizeLibraryImport(uri, importedVersion, qmldir, existing, errors);
-        }
     } else {
         resolvedUrl = qmldirUrl;
         resolvedUri = uri;
+    }
+
+    if (QQmlImportInstance *existing
+            = nameSpace->findImportByLocation(resolvedUrl, requestedVersion);
+                existing && existing->isLibrary && existing->uri == resolvedUri) {
+        // Even if the precedence stays the same we have to re-insert. The ordering wrt other
+        // imports of the same precendence may change.
+        nameSpace->imports.removeOne(existing);
+        existing->precedence = std::min(quint8(precedence), existing->precedence);
+        existing->implicitlyImported = existing->precedence >= QQmlImportInstance::Implicit;
+        insertImport(nameSpace, existing);
+        return finalizeLibraryImport(uri, importedVersion, qmldir, existing, errors);
     }
 
     QQmlImportInstance *inserted = addImportToNamespace(
