@@ -1858,6 +1858,7 @@ DomEnvironment::SemanticAnalysis::SemanticAnalysis(const QStringList &loadPaths)
               QQmlJSUtils::resourceFilesFromBuildFolders(loadPaths))),
       m_importer(std::make_shared<QQmlJSImporter>(loadPaths, m_mapper.get(),
                                                   QQmlJSImporterFlags{} | UseOptionalImports
+                                                          | TolerateFileSelectors
                                                           | PreferQmlFilesFromSourceFolder))
 {
 }

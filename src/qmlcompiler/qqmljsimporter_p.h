@@ -62,7 +62,8 @@ private:
 
 enum QQmlJSImporterFlag {
     UseOptionalImports = 0x1,
-    PreferQmlFilesFromSourceFolder = 0x2
+    PreferQmlFilesFromSourceFolder = 0x2,
+    TolerateFileSelectors = 0x4, // if we find a type "twice", check if one looks like it's from a file selector and use the other
 };
 Q_DECLARE_FLAGS(QQmlJSImporterFlags, QQmlJSImporterFlag)
 

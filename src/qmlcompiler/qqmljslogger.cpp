@@ -78,6 +78,8 @@ using namespace Qt::StringLiterals;
       QtWarningMsg, true, false)                                                                   \
     X(qmlImport, "import", "ImportFailure", "Warn about failing imports and deprecated qmltypes",  \
       QtWarningMsg, false, false)                                                                  \
+    X(qmlImportFileSelector, "import-file-selector", "ImportFileSelector",                         \
+        "Warn about encountered file selectors during import", QtInfoMsg, true, false)             \
     X(qmlIncompatibleType, "incompatible-type", "IncompatibleType",                                \
       "Warn about incompatible types", QtWarningMsg, false, false)                                 \
     X(qmlInheritanceCycle, "inheritance-cycle", "InheritanceCycle",                                \

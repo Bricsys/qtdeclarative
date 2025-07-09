@@ -609,6 +609,13 @@ void TestQmllint::dirtyQmlCode_data()
     QTest::newRow("DoubleAssignToDefaultProperty")
             << QStringLiteral("defaultPropertyWithDoubleAssignment.qml")
             << Result{ { { "Cannot assign multiple objects to a default non-list property"_L1 } } };
+    QTest::newRow(("ImportFileSelector")) << QStringLiteral("FileSelector/main.qml")
+                                          << Result{
+                                                     {
+                                                    { "Type ToolBar is ambiguous due to file selector usage, ignoring %1"_L1.
+                                                     arg(testFile("FileSelector/+Material/ToolBar.qml")), 1, 1, QtMsgType::QtInfoMsg}
+                                                 }
+                                             }.withFlags(Result::Flags(Result::UseSettings) | Result::ExitsNormally) ;
     QTest::newRow("InvalidImport")
             << QStringLiteral("invalidImport.qml")
             << Result{ { { "Failed to import FooBar. Are your import paths set up properly?"_L1,
@@ -1997,6 +2004,7 @@ void TestQmllint::cleanQmlCode_data()
     QTest::newRow("enumsOfScrollBar") << QStringLiteral("enumsOfScrollBar.qml");
     QTest::newRow("esmodule")                  << QStringLiteral("esmodule.mjs");
     QTest::newRow("externalEnumProperty") << QStringLiteral("externalEnumProperty.qml");
+    QTest::newRow("fileSelectorDuplciateImport") << QStringLiteral("FileSelector/main.qml");
     QTest::newRow("forLoop")                   << QStringLiteral("forLoop.qml");
     QTest::newRow("goodAlias")                 << QStringLiteral("goodAlias.qml");
     QTest::newRow("goodAliasObject") << QStringLiteral("goodAliasObject.qml");

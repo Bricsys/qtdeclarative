@@ -140,7 +140,7 @@ QQmlJSLinter::QQmlJSLinter(const QStringList &importPaths, const QStringList &ex
                            bool useAbsolutePath)
     : m_useAbsolutePath(useAbsolutePath),
       m_enablePlugins(true),
-      m_importer(importPaths, nullptr, UseOptionalImports)
+      m_importer(importPaths, nullptr, QQmlJSImporterFlags(UseOptionalImports | TolerateFileSelectors))
 {
     m_plugins = loadPlugins(extraPluginPaths);
 }

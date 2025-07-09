@@ -64,6 +64,7 @@ extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlEqualityTypeCoercio
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlEval;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlFunctionUsedBeforeDeclaration;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlImport;
+extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlImportFileSelector;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlIncompatibleType;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlInheritanceCycle;
 extern const Q_QMLCOMPILER_EXPORT QQmlSA::LoggerWarningId qmlInvalidLintDirective;
