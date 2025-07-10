@@ -1381,9 +1381,9 @@ void QQmlJSImportVisitor::checkSignal(
         auto type = p.type();
         if (!type) {
             m_logger->log(
-                    "Type %1 of parameter %2 in signal %3 %4, but is required to compile "
-                    "%5. %6"_L1.arg(
-                            p.typeName(), p.name(), signalName(), wasNotFound,
+                    "Type %1 of parameter %2 in signal%3 was not found, but is required to compile "
+                    "%4. %5"_L1.arg(
+                            p.typeName(), p.name(), signalName(),
                             handlerName, didYouAddAllImports),
                     qmlSignalParameters, location);
             continue;
