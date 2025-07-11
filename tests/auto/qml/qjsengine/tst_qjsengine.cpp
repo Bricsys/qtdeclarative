@@ -354,6 +354,8 @@ private slots:
     void toLocaleUpperStringWithQLocale();
 #endif
 
+    void evalInGlobalContext();
+
 public:
     Q_INVOKABLE QJSValue throwingCppMethod1();
     Q_INVOKABLE void throwingCppMethod2();
@@ -6904,6 +6906,14 @@ void tst_QJSEngine::toLocaleUpperStringWithQLocale()
     QCOMPARE(root->property("upperedCaseArray").toString(), QLatin1String("ABCSS"));
 }
 #endif
+
+void tst_QJSEngine::evalInGlobalContext()
+{
+    QJSEngine myEngine;
+    const QJSValue fun = myEngine.globalObject().property(QLatin1String("eval"));
+    const QJSValue ret = fun.call({ QLatin1String("99") });
+    QCOMPARE(ret.toString(), QLatin1String("99"));
+}
 
 QTEST_MAIN(tst_QJSEngine)
 
