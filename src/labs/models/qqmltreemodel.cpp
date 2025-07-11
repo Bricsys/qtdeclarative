@@ -815,7 +815,8 @@ bool QQmlTreeModel::validateRow(QLatin1StringView functionName, const QVariant &
 
     if (rowAsMap.contains(ROWS_PROPERTY_NAME) && rowAsMap[ROWS_PROPERTY_NAME].userType() == QMetaType::Type::QVariantList)
     {
-        for (const QVariant &rowAsVariant : rowAsMap[ROWS_PROPERTY_NAME].toList())
+        const QList<QVariant> variantList = rowAsMap[ROWS_PROPERTY_NAME].toList();
+        for (const QVariant &rowAsVariant : variantList)
             if (!validateRow(functionName, rowAsVariant))
                 return false;
     }

@@ -43,7 +43,8 @@ void QQmlTreeRow::unpackVariantMap(const QVariantMap &variantMap)
         const QVariant& value = it.value();
 
         if ((value.typeId() == QMetaType::Type::QVariantList) && (key == TREE_ROWS_PROPERTY_NAME)) {
-            for (const QVariant &rowAsVariant : value.toList())
+            const QList<QVariant> variantList = value.toList();
+            for (const QVariant &rowAsVariant : variantList)
                 m_children.push_back(std::make_unique<QQmlTreeRow>(rowAsVariant, this));
         } else {
             dataMap.insert(key, value);
