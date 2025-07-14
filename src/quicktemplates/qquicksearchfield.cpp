@@ -326,8 +326,6 @@ void QQuickSearchFieldPrivate::increaseCurrentIndex()
     Q_Q(QQuickSearchField);
     if (currentIndex < q->suggestionCount() - 1)
         setCurrentIndex(currentIndex + 1);
-    else if (currentIndex == q->suggestionCount() - 1)
-        setCurrentIndex(0);
 }
 
 void QQuickSearchFieldPrivate::decreaseCurrentIndex()
