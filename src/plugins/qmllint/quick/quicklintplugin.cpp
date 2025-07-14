@@ -122,6 +122,10 @@ void AttachedPropertyTypeValidatorPass::checkWarnings(const QQmlSA::Element &ele
         if (scopeUsedIn.inherits(type))
             return;
     }
+    // You can use e.g. Layout.leftMargin: 4 in PropertyChanges;
+    // custom parser can do arbitrary things with their contained bindings
+    if ( QQmlJSScope::scope(scopeUsedIn)->isInCustomParserParent() )
+        return;
 
     if (warning->allowInDelegate) {
         if (scopeUsedIn.isPropertyRequired(u"index"_s)
