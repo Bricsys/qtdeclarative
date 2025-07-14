@@ -55,6 +55,8 @@ public:
         QList<Message> expectedReplacements = {};
 
         Flags flags = {};
+
+        Result &withFlags(Flags flags) { this->flags =flags; return *this;  }
     };
 
     struct Environment : public QList<std::pair<QString, QString>>
