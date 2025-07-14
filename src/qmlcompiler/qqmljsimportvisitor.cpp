@@ -648,9 +648,19 @@ void QQmlJSImportVisitor::setAllBindings()
         if (binding.hasInterceptor() || binding.hasValueSource())
             continue;
         const QString propertyName = binding.propertyName();
+        QQmlJSMetaProperty property = type->property(propertyName);
+
+        /* if we can't tell anything about the property, we don't emit warnings:
+           There might be a custom parser, or the type is unresolvable, but it
+           would be a list property – no reason to flood the user with warnings
+           There should be a warning about the property anyway (unless it's from
+           a custom parser).
+        */
+        if (!property.isValid())
+            continue;
 
         // list can be bound multiple times
-        if (type->property(propertyName).isList())
+        if (property.isList())
             continue;
 
         const Key key = std::make_pair(type, propertyName);
