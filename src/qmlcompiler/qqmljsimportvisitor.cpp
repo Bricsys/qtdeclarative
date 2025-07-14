@@ -631,7 +631,7 @@ QVector<QQmlJSAnnotation> QQmlJSImportVisitor::parseAnnotations(QQmlJS::AST::UiA
 void QQmlJSImportVisitor::setAllBindings()
 {
     using Key = std::pair<QQmlJSScope::ConstPtr, QString>;
-    QHash<Key, QQmlJS::SourceLocation> m_foundBindings;
+    QHash<Key, QQmlJS::SourceLocation> foundBindings;
 
     for (auto it = m_bindings.cbegin(); it != m_bindings.cend(); ++it) {
         // ensure the scope is resolved. If not, produce a warning.
@@ -654,9 +654,9 @@ void QQmlJSImportVisitor::setAllBindings()
             continue;
 
         const Key key = std::make_pair(type, propertyName);
-        auto sourceLocationIt = m_foundBindings.constFind(key);
-        if (sourceLocationIt == m_foundBindings.constEnd()) {
-            m_foundBindings.insert(key, binding.sourceLocation());
+        auto sourceLocationIt = foundBindings.constFind(key);
+        if (sourceLocationIt == foundBindings.constEnd()) {
+            foundBindings.insert(key, binding.sourceLocation());
             continue;
         }
 
