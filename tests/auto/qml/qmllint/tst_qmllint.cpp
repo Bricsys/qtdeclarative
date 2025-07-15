@@ -1927,6 +1927,7 @@ void TestQmllint::cleanQmlCode_data()
     QTest::newRow("EnumAccess2") << QStringLiteral("EnumAccess2.qml");
     QTest::newRow("EnumAccessCpp") << QStringLiteral("EnumAccessCpp.qml");
     QTest::newRow("GoodModulePrefix") << QStringLiteral("goodModulePrefix.qml");
+    QTest::newRow("groupedPropertyBinding") << QStringLiteral("groupedPropertyBinding.qml");
     QTest::newRow("ID overrides property") << QStringLiteral("accessibleId.qml");
     QTest::newRow("ImportDirectoryQmldir") << QStringLiteral("Things/LintDirectly.qml");
     QTest::newRow("ImportQMLModule") << QStringLiteral("importQMLModule.qml");

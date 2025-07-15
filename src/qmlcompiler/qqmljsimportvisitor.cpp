@@ -875,6 +875,28 @@ void QQmlJSImportVisitor::processMethodTypes()
     }
 }
 
+// TODO: We should investigate whether bindings shouldn't resolve this earlier by themselves
+/*!
+\internal
+Resolves \a possiblyGroupedProperty on a type represented by \a scope.
+possiblyGroupedProperty can be either a simple name, or a grouped property ("foo.bar.baz")
+In the latter case, we resolve the "head" to a property, and then continue with the tail on
+the properties' type.
+We don't handle ids here
+ */
+static QQmlJSMetaProperty resolveProperty(const QString &possiblyGroupedProperty, QQmlJSScope::ConstPtr scope)
+{
+    QQmlJSMetaProperty property;
+    for (QStringView propertyName: possiblyGroupedProperty.tokenize(u".")) {
+        property = scope->property(propertyName.toString());
+        if (property.isValid())
+            scope = property.type();
+        else
+            return property;
+    }
+    return property;
+}
+
 void QQmlJSImportVisitor::processPropertyBindingObjects()
 {
     QSet<std::pair<QQmlJSScope::Ptr, QString>> foundLiterals;
@@ -925,7 +947,7 @@ void QQmlJSImportVisitor::processPropertyBindingObjects()
             continue;
         }
 
-        QQmlJSMetaProperty property = objectBinding.scope->property(propertyName);
+        QQmlJSMetaProperty property = resolveProperty(propertyName, objectBinding.scope);
 
         if (!property.isValid()) {
             warnMissingPropertyForBinding(propertyName, objectBinding.location);
