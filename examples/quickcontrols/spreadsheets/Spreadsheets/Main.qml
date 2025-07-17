@@ -24,7 +24,7 @@ ApplicationWindow {
     background: Rectangle {
         // to make contrast with the cells of the TableView,
         // HorizontalHeaderView and VerticalHeaderView
-        color: Qt.styleHints.colorScheme === Qt.Light ? palette.dark : palette.light
+        color: Application.styleHints.colorScheme === Qt.Light ? palette.dark : palette.light
     }
 
     GridLayout {
@@ -210,7 +210,7 @@ ApplicationWindow {
                             return 0
                         else if (height > 0)
                             return Math.max(height, 30)
-                        return implicitRowWidth(row)
+                        return implicitRowHeight(row)
                     }
 
                     columnWidthProvider: function(column) {
@@ -223,6 +223,8 @@ ApplicationWindow {
                     }
 
                     delegate: TableViewDelegate {
+                        id: tvDelegate
+
                         implicitWidth: 90
                         implicitHeight: 36
                         leftPadding: 4
@@ -232,12 +234,12 @@ ApplicationWindow {
                         // updates only the background.color when the color scheme has changed
                         // for the target cells of drop event.
                         Binding {
-                            target: background
+                            target: tvDelegate.background
                             property: "color"
-                            value: Qt.styleHints.colorScheme === Qt.Dark
-                                   ? palette.highlight.darker(1.9)
-                                   : palette.highlight.lighter(1.9)
-                            when: model.highlight ?? false
+                            value: Application.styleHints.colorScheme === Qt.Dark
+                                   ? tvDelegate.palette.highlight.darker(1.9)
+                                   : tvDelegate.palette.highlight.lighter(1.9)
+                            when: tvDelegate.model.highlight ?? false
                         }
                     }
 

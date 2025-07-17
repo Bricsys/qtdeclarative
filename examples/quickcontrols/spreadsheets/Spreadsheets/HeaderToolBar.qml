@@ -23,7 +23,7 @@ ToolBar {
             icon.width: root.__icon_size
             icon.height: root.__icon_size
             icon.color: palette.text
-            onClicked: helpRequested()
+            onClicked: root.helpRequested()
             ToolTip {
                 text: qsTr("Help")
                 visible: helpButton.hovered
@@ -36,7 +36,7 @@ ToolBar {
             icon.color: palette.text
             icon.width: root.__icon_size
             icon.height: root.__icon_size
-            onClicked: cutRequested()
+            onClicked: root.cutRequested()
             ToolTip {
                 text: qsTr("Cut")
                 visible: cutButton.hovered
@@ -49,7 +49,7 @@ ToolBar {
             icon.color: palette.text
             icon.width: root.__icon_size
             icon.height: root.__icon_size
-            onClicked: copyRequested()
+            onClicked: root.copyRequested()
             ToolTip {
                 text: qsTr("Copy")
                 visible: copyButton.hovered
@@ -62,7 +62,7 @@ ToolBar {
             icon.color: palette.text
             icon.width: root.__icon_size
             icon.height: root.__icon_size
-            onClicked: pasteRequested()
+            onClicked: root.pasteRequested()
             ToolTip {
                 text: qsTr("Paste")
                 visible: pasteButton.hovered

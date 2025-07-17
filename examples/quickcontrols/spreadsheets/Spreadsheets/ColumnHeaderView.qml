@@ -1,6 +1,7 @@
 // Copyright (C) 2024 The Qt Company Ltd.
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 
@@ -22,7 +23,7 @@ HorizontalHeaderView {
 
     selectionModel: HeaderSelectionModel {
         id: headerSelectionModel
-        selectionModel: spreadSelectionModel
+        selectionModel: root.spreadSelectionModel
         orientation: Qt.Horizontal
     }
 
@@ -66,11 +67,11 @@ HorizontalHeaderView {
         HeaderViewTapHandler {
             anchors.fill: parent
             onToggleRequested: {
-                spreadSelectionModel.toggleColumn(index)
+                root.spreadSelectionModel.toggleColumn(headerDelegate.index)
                 headerSelectionModel.setCurrent()
             }
             onSelectRequested: {
-                spreadSelectionModel.selectColumn(index)
+                root.spreadSelectionModel.selectColumn(headerDelegate.index)
                 headerSelectionModel.setCurrent()
             }
             onContextMenuRequested: headerDelegate.rightClicked()
@@ -120,7 +121,7 @@ HorizontalHeaderView {
         }
 
         MenuItem {
-            text: selectionModel.hasSelection ? qsTr("Remove selected columns")
+            text: root.selectionModel.hasSelection ? qsTr("Remove selected columns")
                                               : qsTr("Remove column")
             icon {
                 source: "icons/remove_column.svg"
@@ -128,15 +129,15 @@ HorizontalHeaderView {
             }
 
             onClicked: {
-                if (selectionModel.hasSelection)
-                    SpreadModel.removeColumns(spreadSelectionModel.selectedColumns())
+                if (root.selectionModel.hasSelection)
+                    SpreadModel.removeColumns(root.spreadSelectionModel.selectedColumns())
                 else if (columnMenu.column >= 0)
                     SpreadModel.removeColumn(columnMenu.column)
             }
         }
 
         MenuItem {
-            text: selectionModel.hasSelection ? qsTr("Hide selected columns")
+            text: root.selectionModel.hasSelection ? qsTr("Hide selected columns")
                                               : qsTr("Hide column")
             icon {
                 source: "icons/hide.svg"
@@ -144,12 +145,12 @@ HorizontalHeaderView {
             }
 
             onClicked: {
-                if (selectionModel.hasSelection) {
-                    let columns = spreadSelectionModel.selectedColumns()
+                if (root.selectionModel.hasSelection) {
+                    let columns = root.spreadSelectionModel.selectedColumns()
                     columns.sort(function(lhs, rhs){ return rhs.column - lhs.column })
                     for (let i in columns)
                         root.hideRequested(columns[i].column)
-                    spreadSelectionModel.clearSelection()
+                    root.spreadSelectionModel.clearSelection()
                 } else {
                     root.hideRequested(columnMenu.column)
                 }
@@ -166,7 +167,7 @@ HorizontalHeaderView {
 
             onClicked: {
                 root.showRequested()
-                spreadSelectionModel.clearSelection()
+                root.spreadSelectionModel.clearSelection()
             }
         }
 
