@@ -462,14 +462,17 @@ void QQuickPointerHandler::classBegin()
 
 /*!
     Overridden from QQmlParserStatus to ensure that parentItem() sets its
-    cursor if this handler's \l cursorShape property has been set.
+    cursor if this handler's \l cursorShape property has been set, and that
+    this handler is added to the parent item. If it was declared as a named property
+    rather than declared directly inside an Item, data_append() will miss adding it.
 */
 void QQuickPointerHandler::componentComplete()
 {
     Q_D(const QQuickPointerHandler);
-    if (d->cursorSet) {
-        if (auto *parent = parentItem()) {
-            QQuickItemPrivate *itemPriv = QQuickItemPrivate::get(parent);
+    if (auto *parent = parentItem()) {
+        QQuickItemPrivate *itemPriv = QQuickItemPrivate::get(parent);
+        itemPriv->addPointerHandler(this);
+        if (d->cursorSet) {
             itemPriv->hasCursorHandler = true;
             itemPriv->setHasCursorInChild(true);
         }
