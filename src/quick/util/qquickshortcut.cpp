@@ -10,6 +10,8 @@
 #include <QtGui/private/qguiapplication_p.h>
 #include <QtQml/qqmlinfo.h>
 
+QT_BEGIN_NAMESPACE
+
 /*!
     \qmltype Shortcut
     \nativetype QQuickShortcut
@@ -87,8 +89,6 @@ Q_QUICK_EXPORT void qt_quick_set_shortcut_context_matcher(ContextMatcher matcher
     if (!ctxMatcher.isDestroyed())
         *ctxMatcher() = matcher;
 }
-
-QT_BEGIN_NAMESPACE
 
 static QKeySequence valueToKeySequence(const QVariant &value, const QQuickShortcut *const shortcut)
 {

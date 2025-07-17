@@ -416,8 +416,13 @@ void tst_QQuickShortcut::context()
 }
 
 typedef bool (*ShortcutContextMatcher)(QObject *, Qt::ShortcutContext);
+
+QT_BEGIN_NAMESPACE
+
 extern ShortcutContextMatcher qt_quick_shortcut_context_matcher();
 extern void qt_quick_set_shortcut_context_matcher(ShortcutContextMatcher matcher);
+
+QT_END_NAMESPACE
 
 static ShortcutContextMatcher lastMatcher = nullptr;
 

@@ -1135,13 +1135,14 @@ QV4::Heap::String * UrlSearchParamsObject::valueAtRaw(int index) const
     return stringAtRaw(index, 1);
 }
 
-
+namespace {
 struct UrlSearchParamsObjectOwnPropertyKeyIterator : ObjectOwnPropertyKeyIterator
 {
     ~UrlSearchParamsObjectOwnPropertyKeyIterator() override = default;
     PropertyKey next(const QV4::Object *o, Property *pd = nullptr,
                      PropertyAttributes *attrs = nullptr) override;
 };
+} // namespace
 
 PropertyKey UrlSearchParamsObjectOwnPropertyKeyIterator::next(const QV4::Object *o, Property *pd,
                                                               PropertyAttributes *attrs)
