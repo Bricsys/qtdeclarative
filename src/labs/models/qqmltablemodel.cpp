@@ -76,21 +76,17 @@ Q_STATIC_LOGGING_CATEGORY(lcTableModel, "qt.qml.tablemodel")
     As TableModel has no way of knowing how each row is structured,
     it cannot manipulate it. As a consequence of this, the copy of the
     model data that TableModel has stored in \l rows is not kept in sync
-    with the source data that was set in QML. For these reasons, TableModel
-    relies on the user to handle simple data manipulation.
+    with the source data that was set in QML. For these reasons, manipulation
+    of the data is not supported.
 
-    For example, suppose you wanted to have several roles per column. One way
-    of doing this is to use a data source where each row is an array and each
-    cell is an object. To use this data source with TableModel, define a
-    getter and setter:
+    For example, suppose you wanted to use a data source where each row is an
+    array and each cell is an object. To use this data source with TableModel,
+    define a getter:
 
     \code
     TableModel {
         TableModelColumn {
             display: function(modelIndex) { return rows[modelIndex.row][0].checked }
-            setDisplay: function(modelIndex, cellData) {
-                    rows[modelIndex.row][0].checked = cellData
-                }
         }
         // ...
 
@@ -856,50 +852,9 @@ bool QQmlTableModel::setData(const QModelIndex &index, const QVariant &value, in
 
         mRows[row] = modifiedRow;
     } else {
-        // We don't know the data structure, so the user has to modify their data themselves.
-        auto engine = qmlEngine(this);
-        auto args = QJSValueList()
-            // arg 0: modelIndex.
-            << engine->toScriptValue(index)
-            // arg 1: cellData.
-            << engine->toScriptValue(value);
-        // Do the actual setting.
-        QJSValue setter = mColumns.at(column)->setterAtRole(roleName);
-        setter.call(args);
-
-        /*
-            The chain of events so far:
-
-            - User did e.g.: model.edit = textInput.text
-              - setData() is called
-                - setData() calls the setter
-                  (remember that we need to emit the dataChanged() signal,
-                   which is why the user can't just set the data directly in the delegate)
-
-            Now the user's setter function has modified *their* copy of the
-            data, but *our* copy of the data is old. Imagine the getters and setters looked like this:
-
-            display: function(modelIndex) { return rows[modelIndex.row][1].amount }
-            setDisplay: function(modelIndex, cellData) { rows[modelIndex.row][1].amount = cellData }
-
-            We don't know the structure of the user's data, so we can't just do
-            what we do above for the isStringRole case:
-
-            modifiedRow[column][roleName] = value
-
-            This means that, besides getting the implicit row count when rows is initially set,
-            our copy of the data is unused when it comes to complex columns.
-
-            Another point to note is that we can't pass rowData in to the getter as a convenience,
-            because we would be passing in *our* copy of the row, which is not up-to-date.
-            Since the user already has access to the data, it's not a big deal for them to do:
-
-            display: function(modelIndex) { return rows[modelIndex.row][1].amount }
-
-            instead of:
-
-            display: function(modelIndex, rowData) { return rowData[1].amount }
-        */
+        qmlWarning(this).nospace() << "setData(): manipulation of complex row "
+                << "structures is not supported";
+            return false;
     }
 
     QVector<int> rolesChanged;
