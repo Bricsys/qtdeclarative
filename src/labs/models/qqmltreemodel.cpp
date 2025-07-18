@@ -585,50 +585,9 @@ bool QQmlTreeModel::setData(const QModelIndex &index, const QVariant &value, int
         auto *row = static_cast<QQmlTreeRow *>(index.internalPointer());
         row->setField(roleData.name, value);
     } else {
-        // We don't know the data structure, so the user has to modify their data themselves.
-        auto *engine = qmlEngine(this);
-        auto args = QJSValueList()
-                    // arg 0: modelIndex.
-                    << engine->toScriptValue(index)
-                    // arg 1: cellData.
-                    << engine->toScriptValue(value);
-        // Do the actual setting.
-        QJSValue setter = mColumns.at(column)->setterAtRole(roleName);
-        setter.call(args);
-
-        /*
-            The chain of events so far:
-
-            - User did e.g.: model.edit = textInput.text
-              - setData() is called
-                - setData() calls the setter
-                  (remember that we need to emit the dataChanged() signal,
-                   which is why the user can't just set the data directly in the delegate)
-
-            Now the user's setter function has modified *their* copy of the
-            data, but *our* copy of the data is old. Imagine the getters and setters looked like this:
-
-            display: function(modelIndex) { return rows[modelIndex.row][1].amount }
-            setDisplay: function(modelIndex, cellData) { rows[modelIndex.row][1].amount = cellData }
-
-            We don't know the structure of the user's data, so we can't just do
-            what we do above for the isStringRole case:
-
-            modifiedRow[column][roleName] = value
-
-            This means that, besides getting the implicit row count when rows is initially set,
-            our copy of the data is unused when it comes to complex columns.
-
-            Another point to note is that we can't pass rowData in to the getter as a convenience,
-            because we would be passing in *our* copy of the row, which is not up-to-date.
-            Since the user already has access to the data, it's not a big deal for them to do:
-
-            display: function(modelIndex) { return rows[modelIndex.row][1].amount }
-
-            instead of:
-
-            display: function(modelIndex, rowData) { return rowData[1].amount }
-        */
+        qmlWarning(this).nospace() << "setData(): manipulation of complex row "
+                << "structures is not supported";
+            return false;
     }
 
     QVector<int> rolesChanged;
