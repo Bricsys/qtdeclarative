@@ -717,6 +717,7 @@ public:
     void lockObject(const QV4::Value &value);
 
 #if QT_CONFIG(qml_xml_http_request)
+    void setupXmlHttpRequestExtension();
     void *xmlHttpRequestData() const { return m_xmlHttpRequestData; }
 #endif
 

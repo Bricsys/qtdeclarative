@@ -1297,6 +1297,9 @@ void tst_qmltyperegistrar::foreignNamespacedWithEnum()
 #ifdef QT_QMLJSROOTGEN_PRESENT
 void tst_qmltyperegistrar::verifyJsRoot()
 {
+#if !QT_CONFIG(qml_xml_http_request)
+    QSKIP("root types are inconsistent if feature has been disabled - QTBUG-138605");
+#endif
     QProcess process;
 
     QTemporaryDir dir;

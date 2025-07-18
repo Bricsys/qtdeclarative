@@ -2329,6 +2329,14 @@ static bool globalNamesAreStaticallyKnown(QV4::Object *globalObject)
     return clean;
 }
 
+#if QT_CONFIG(qml_xml_http_request)
+void ExecutionEngine::setupXmlHttpRequestExtension()
+{
+    qt_add_domexceptions(this);
+    m_xmlHttpRequestData = qt_add_qmlxmlhttprequest(this);
+}
+#endif
+
 void ExecutionEngine::initializeGlobal()
 {
     createQtObject();
@@ -2342,8 +2350,7 @@ void ExecutionEngine::initializeGlobal()
 #endif
 
 #if QT_CONFIG(qml_xml_http_request)
-    qt_add_domexceptions(this);
-    m_xmlHttpRequestData = qt_add_qmlxmlhttprequest(this);
+    setupXmlHttpRequestExtension();
 #endif
 
     qt_add_sqlexceptions(this);
