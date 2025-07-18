@@ -3946,6 +3946,36 @@ QRect QCommonStyle::subControlRect(ComplexControl cc, const QStyleOptionComplex 
             ret = visualRect(cb->direction, cb->rect, ret);
         }
         break;
+    case CC_SearchField:
+        if (const QStyleOptionSearchField *sf = qstyleoption_cast<const QStyleOptionSearchField *>(opt)) {
+            const qreal dpi = QStyleHelper::dpi(opt);
+            const int x = sf->rect.x(), y = sf->rect.y(), wi = sf->rect.width(), he = sf->rect.height();
+            const int margin = qRound(QStyleHelper::dpiScaled(3, dpi));
+            const int buttonSize = qRound(QStyleHelper::dpiScaled(16, dpi));
+            const int spacing = qRound(QStyleHelper::dpiScaled(2, dpi));
+
+            switch (sc) {
+            case SC_SearchFieldFrame:
+                ret = sf->rect;
+                break;
+            case SC_SearchFieldSearch:
+                ret.setRect(x + margin, y + (he - buttonSize) / 2, buttonSize, buttonSize);
+                break;
+            case SC_SearchFieldClear:
+                ret.setRect(x + wi - margin - buttonSize, y + (he - buttonSize) / 2, buttonSize, buttonSize);
+                break;
+            case SC_SearchFieldEditField:
+                ret.setRect(x + margin + buttonSize + spacing, y + margin, wi - (margin + buttonSize + spacing) * 2, he - 2 * margin);
+                break;
+            case SC_SearchFieldPopup:
+                ret = sf->rect;
+                break;
+            default:
+                break;
+            }
+            ret = visualRect(sf->direction, sf->rect, ret);
+        }
+        break;
     case CC_TitleBar:
         if (const QStyleOptionTitleBar *tb = qstyleoption_cast<const QStyleOptionTitleBar *>(opt)) {
             const int controlMargin = 2;
@@ -4224,6 +4254,7 @@ int QCommonStyle::pixelMetric(PixelMetric m, const QStyleOption *opt) const
         ret = 2;
         break;
 
+    case PM_SearchFieldFrameWidth:
     case PM_ComboBoxFrameWidth:
     case PM_SpinBoxFrameWidth:
     case PM_MenuPanelWidth:
@@ -4655,6 +4686,27 @@ QSize QCommonStyle::sizeFromContents(ContentsType ct, const QStyleOption *opt, c
                 const QSize buttonSize = proxy()->subControlRect(CC_SpinBox, vopt, SC_SpinBoxUp).size();
                 const int upAndDownTogetherHeight = buttonSize.height() * 2;
                 sz += QSize(buttonSize.width(), upAndDownTogetherHeight);
+            }
+        }
+        break;
+    case CT_SearchField:
+        if (const QStyleOptionSearchField *vopt = qstyleoption_cast<const QStyleOptionSearchField *>(opt)) {
+            const QSize clearButton = proxy()->subControlRect(CC_SearchField, vopt, SC_SearchFieldClear).size();
+            const QSize searchButton = proxy()->subControlRect(CC_SearchField, vopt, SC_SearchFieldSearch).size();
+
+            const qreal dpi = QStyleHelper::dpi(opt);
+            const int margin = qRound(QStyleHelper::dpiScaled(3, dpi));
+            const int spacing = qRound(QStyleHelper::dpiScaled(2, dpi));
+            // Add buttons + frame widths
+            if (vopt->subControls == SC_SearchFieldFrame) {
+                const int totalIconsSize = clearButton.width() + searchButton.width() + (margin + spacing) * 2;
+
+                const int fw = vopt->frame ? proxy()->pixelMetric(PM_SearchFieldFrameWidth, vopt) : 0;
+                sz += QSize(totalIconsSize + 2*fw, 1 + 2*fw);
+            } else if (vopt->subControls == SC_SearchFieldClear) {
+                sz = clearButton;
+            } else if (vopt->subControls == SC_SearchFieldSearch) {
+                sz = searchButton;
             }
         }
         break;

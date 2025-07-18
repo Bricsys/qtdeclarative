@@ -384,6 +384,7 @@ public:
         PM_DefaultFrameWidth,
         PM_SpinBoxFrameWidth,
         PM_ComboBoxFrameWidth,
+        PM_SearchFieldFrameWidth,
 
         PM_MaximumDragDistance,
 
