@@ -9,6 +9,8 @@
 #include <QtCore/qset.h>
 #include <QtCore/qspan.h>
 
+#include <QtQmlCompiler/private/qqmljsscope_p.h>
+
 QT_BEGIN_NAMESPACE
 
 using namespace Qt::StringLiterals;
@@ -35,10 +37,14 @@ constexpr LoggerWarningId ErrUnsupportedRootTypeInQmlUi{
 class FunctionCallValidator : public PropertyPass
 {
 public:
-    FunctionCallValidator(PassManager *manager) : PropertyPass(manager) { }
+    FunctionCallValidator(PassManager *manager)
+    : PropertyPass(manager)
+    , m_connectionsType(resolveType("QtQuick", "Connections")) {}
 
     void onCall(const Element &element, const QString &propertyName, const Element &readScope,
                 SourceLocation location) override;
+private:
+    Element m_connectionsType;
 };
 
 class QdsBindingValidator : public PropertyPass
@@ -151,7 +157,11 @@ void QmlLintQdsPlugin::registerPasses(PassManager *manager, const Element &rootE
 void FunctionCallValidator::onCall(const Element &element, const QString &propertyName,
                                    const Element &readScope, SourceLocation location)
 {
-    Q_UNUSED(readScope);
+    auto currentQmlScope = QQmlJSScope::findCurrentQMLScope(QQmlJSScope::scope(readScope));
+    // TODO: we would benefit from some public additional public QQmlSA API here.
+    //       This should be considered in the context of QTBUG-138360
+    if (currentQmlScope && currentQmlScope->inherits(QQmlJSScope::scope(m_connectionsType)))
+        return;
 
     // all math functions are allowed
     const Element globalJSObject = resolveBuiltinType(u"GlobalObject");

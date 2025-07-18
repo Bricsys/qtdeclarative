@@ -3227,6 +3227,8 @@ void TestQmllint::qdsPlugin_data()
             << u"qdsPlugin/WhiteListedFunctions.ui.qml"_s << Result::clean();
     QTest::addRow("WhiteListedFunctionsDate")
             << u"qdsPlugin/WhiteListedFunctionsDate.ui.qml"_s << Result::clean();
+    QTest::addRow("FunctionInsideConnections")
+            << u"qdsPlugin/FunctionInsideConnections.ui.qml"_s << Result::clean();
     {
         const QString warning =
                 u"Arbitrary functions and function calls outside of a Connections object are not "
