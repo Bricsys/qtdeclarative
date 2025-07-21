@@ -295,20 +295,86 @@ bool LinterVisitor::visit(QQmlJS::AST::UiEnumDeclaration *uied)
     return true;
 }
 
+static bool allCodePathsReturnInsideCase(Node *statement)
+{
+    using namespace AST;
+    if (!statement)
+        return false;
+
+    switch (statement->kind) {
+    case Node::Kind_Block: {
+        return allCodePathsReturnInsideCase(cast<Block *>(statement)->statements);
+    }
+    case Node::Kind_BreakStatement:
+        return true;
+    case Node::Kind_CaseBlock: {
+        const CaseBlock *caseBlock = cast<CaseBlock *>(statement);
+        if (caseBlock->defaultClause)
+            return allCodePathsReturnInsideCase(caseBlock->defaultClause);
+        return allCodePathsReturnInsideCase(caseBlock->clauses);
+    }
+    case Node::Kind_CaseClause:
+        return allCodePathsReturnInsideCase(cast<CaseClause *>(statement)->statements);
+    case Node::Kind_CaseClauses: {
+        for (CaseClauses *caseClauses = cast<CaseClauses *>(statement); caseClauses;
+             caseClauses = caseClauses->next) {
+            if (!allCodePathsReturnInsideCase(caseClauses->clause))
+                return false;
+        }
+        return true;
+    }
+    case Node::Kind_ContinueStatement:
+        // allCodePathsReturn() doesn't recurse into loops, so any encountered `continue` should
+        // belong to a loop outside the switch statement.
+        return true;
+    case Node::Kind_DefaultClause:
+        return allCodePathsReturnInsideCase(cast<DefaultClause *>(statement)->statements);
+    case Node::Kind_IfStatement: {
+        const auto *ifStatement = cast<IfStatement *>(statement);
+        return allCodePathsReturnInsideCase(ifStatement->ok)
+                && allCodePathsReturnInsideCase(ifStatement->ko);
+    }
+    case Node::Kind_LabelledStatement:
+        return allCodePathsReturnInsideCase(cast<LabelledStatement *>(statement)->statement);
+    case Node::Kind_ReturnStatement:
+        return true;
+    case Node::Kind_StatementList: {
+        for (StatementList *list = cast<StatementList *>(statement); list; list = list->next) {
+            if (allCodePathsReturnInsideCase(list->statement))
+                return true;
+        }
+        return false;
+    }
+    case Node::Kind_SwitchStatement:
+        return allCodePathsReturnInsideCase(cast<SwitchStatement *>(statement)->block);
+    case Node::Kind_ThrowStatement:
+        return true;
+    case Node::Kind_TryStatement: {
+        auto *tryStatement = cast<TryStatement *>(statement);
+        if (allCodePathsReturnInsideCase(tryStatement->statement))
+            return true;
+        return allCodePathsReturnInsideCase(tryStatement->finallyExpression->statement);
+    }
+    case Node::Kind_WithStatement:
+        return allCodePathsReturnInsideCase(cast<WithStatement *>(statement)->statement);
+    default:
+        break;
+    }
+    return false;
+}
+
 void LinterVisitor::checkCaseFallthrough(StatementList *statements, SourceLocation errorLoc,
                                          SourceLocation nextLoc)
 {
     if (!statements || !nextLoc.isValid())
         return;
 
+    if (allCodePathsReturnInsideCase(statements))
+        return;
+
     quint32 afterLastStatement = 0;
     for (StatementList *it = statements; it; it = it->next) {
         if (!it->next) {
-            Node::Kind kind = (Node::Kind) it->statement->kind;
-            if (kind == Node::Kind_BreakStatement || kind == Node::Kind_ReturnStatement
-                || kind == Node::Kind_ThrowStatement) {
-                return;
-            }
             afterLastStatement = it->statement->lastSourceLocation().end();
         }
     }

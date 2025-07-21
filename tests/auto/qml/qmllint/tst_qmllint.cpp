@@ -1771,6 +1771,45 @@ void TestQmllint::dirtyJsSnippet_data()
                          { "Unterminated non-empty case block"_L1, 10, 17 },
                          { "Unterminated non-empty case block"_L1, 13, 17 } } }
             << defaultOptions;
+    QTest::newRow("unterminatedCaseBlockNested")
+            << uR"(switch (0) {
+                case 0: // all cases should be KO, including this one
+                    switch (2) {
+                        case 1: { let i = 34; let j = 45; }
+                        case 2: switch (2) { default: f(); }
+                        case 3: someLabel: f();
+                        case 5: try { f(); } finally {}
+                        case 5.5: try { } finally { f(); }
+                        case 6.1: for (;;) { break; }
+                        case 6.2: do { return; } while (false)
+                        case 6.3: while (true) { return; }
+                        case 6.4: if (false) { return; }
+                        case -1: return; // dummy
+                    }
+                case -1: return // dummy
+                })"_s
+            << Result{ {
+                       { "Unterminated non-empty case block"_L1, 2, 17 },
+                       { "Unterminated non-empty case block"_L1, 4, 25 },
+                       { "Unterminated non-empty case block"_L1, 5, 25 },
+                       { "Unterminated non-empty case block"_L1, 6, 25 },
+                       { "Unterminated non-empty case block"_L1, 7, 25 },
+                       { "Unterminated non-empty case block"_L1, 8, 25 },
+                       { "Unterminated non-empty case block"_L1, 9, 25 },
+                       { "Unterminated non-empty case block"_L1, 10, 25 },
+                       { "Unterminated non-empty case block"_L1, 11, 25 },
+                       { "Unterminated non-empty case block"_L1, 12, 25 },
+               } }
+            << defaultOptions;
+    QTest::newRow("unterminatedCaseBlockNested2") << uR"(switch (0) {
+                case 0: // one case is KO, so this one too
+                    switch (2) {
+                        case 1: return;
+                        default: f(); // not ok
+                    }
+                case -1: return // dummy
+                })"_s << Result{ { { "Unterminated non-empty case block"_L1, 2, 17 } } }
+                                                  << defaultOptions;
     {
         CallQmllintOptions options;
         options.enableCategories.append(qmlVoid.name().toString());
@@ -1843,6 +1882,19 @@ void TestQmllint::cleanJsSnippet_data()
             << u"function f(a) { if (1){ const a = 33; } }"_s << defaultOptions;
     QTest::newRow("shadowFunction") << u"function f() { function f() {} }"_s << defaultOptions;
     QTest::newRow("testSnippet") << u"let x = 5"_s << defaultOptions;
+    QTest::newRow("terminatedCaseBlocks") << uR"(switch (0) {
+                case 0: // all cases should be OK, so this one should be OK too!
+                    switch (2) {
+                        case 1: { let i = 34; return; }
+                        case 2: switch (2) { default:  return; }
+                        case 3: someLabel: return;
+                        case 5: try { return; } finally {}
+                        case 5.5: try { } finally { return; }
+                        case 6: if (false) { return; } else { return; }
+                        case -1: return; // dummy
+                    }
+                case -1: return; // dummy
+                })"_s << defaultOptions;
     QTest::newRow("usefulExpressionStatement") << u"x += 3;"_s << defaultOptions;
     QTest::newRow("usefulExpressionStatement2")
             << u"for (;;) { x /= 3; return x; }"_s << defaultOptions;
