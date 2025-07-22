@@ -59,18 +59,22 @@ T.SearchField {
         required property int index
     }
 
-    readonly property bool __lightScheme: Application.styleHints.colorScheme === Qt.Light
-    searchIndicator.indicator: Rectangle {
+    searchIndicator.indicator: Impl.StyleImage {
+        // use SpinBox indicator assets as they share the same style
+        property string state: [
+            (control.searchIndicator.hovered || control.searchIndicator.pressed) && "up",
+            (control.searchIndicator.indicator.enabled && control.searchIndicator.hovered && !control.searchIndicator.pressed) && "hovered",
+            (control.searchIndicator.indicator.enabled && control.searchIndicator.pressed) && "pressed",
+            (!control.searchIndicator.indicator.enabled) && "disabled"
+        ].filter(Boolean).join("_") || "normal"
+        readonly property var indicatorConfig: Config.controls.spinbox[state] || {}
+        imageConfig: indicatorConfig.indicator_up_background
+
         x: !control.mirrored ? control.width - width - control.spacing : control.spacing
         y: control.topPadding + (control.availableHeight - height) / 2
 
-        implicitWidth: 30
-        implicitHeight: 22
-        radius: 4
-        color: control.searchIndicator.pressed ? control.__lightScheme
-                                                 ? Qt.rgba(control.palette.base.r, control.palette.base.g, control.palette.base.b, 0.02) : Qt.darker(control.palette.midlight, 1.7)
-        : control.searchIndicator.hovered ? control.__lightScheme
-                                            ? Qt.rgba(control.palette.base.r, control.palette.base.g, control.palette.base.b, 0.04) : control.palette.midlight : "transparent"
+        implicitWidth: 32
+        implicitHeight: 24
 
         ColorImage {
             x: (parent.width - width) / 2
@@ -79,27 +83,29 @@ T.SearchField {
             height: 13
 
             source: Qt.resolvedUrl("icons/search-magnifier")
-            color: control.__lightScheme
-                   ? Qt.rgba(control.palette.buttonText.r, control.palette.buttonText.g, control.palette.buttonText.b, 0.62)
-                   : Qt.rgba(control.palette.buttonText.r, control.palette.buttonText.g, control.palette.buttonText.b, 0.25)
-
+            color: control.palette.placeholderText
+            opacity: control.searchIndicator.pressed ? 0.7 : 1
         }
     }
 
-    clearIndicator.indicator: Rectangle {
+    clearIndicator.indicator: Impl.StyleImage {
+        // use SpinBox indicator assets as they share the same style
+        property string state: [
+            (control.clearIndicator.hovered || control.clearIndicator.pressed) && "down",
+            (control.clearIndicator.indicator.enabled && control.clearIndicator.hovered && !control.clearIndicator.pressed) && "hovered",
+            (control.clearIndicator.indicator.enabled && control.clearIndicator.pressed) && "pressed",
+            (!control.clearIndicator.indicator.enabled) && "disabled"
+        ].filter(Boolean).join("_") || "normal"
+        readonly property var indicatorConfig: Config.controls.spinbox[state] || {}
+        imageConfig: indicatorConfig.indicator_down_background
+
         x: (!searchIndicator.indicator || !searchIndicator.indicator.visible)
            ? (!control.mirrored ? control.width - width - control.spacing : control.spacing)
            : (!control.mirrored ? control.width - width - (control.spacing * 2) - searchIndicator.indicator.width : searchIndicator.indicator.width + (control.spacing * 2))
         y: control.topPadding + (control.availableHeight - height) / 2
-
-        implicitWidth: 30
-        implicitHeight: 22
-        radius: 4
+        implicitWidth: 32
+        implicitHeight: 24
         visible: control.text.length > 0
-        color: control.clearIndicator.pressed ? control.__lightScheme
-                                                ? Qt.rgba(control.palette.base.r, control.palette.base.g, control.palette.base.b, 0.02) : Qt.darker(control.palette.midlight, 1.7)
-        : control.clearIndicator.hovered ? control.__lightScheme
-                                           ? Qt.rgba(control.palette.base.r, control.palette.base.g, control.palette.base.b, 0.04) : control.palette.midlight : "transparent"
 
         ColorImage {
             x: (parent.width - width) / 2
@@ -108,9 +114,8 @@ T.SearchField {
             height: 13
 
             source: Qt.resolvedUrl("icons/close_big")
-            color: control.__lightScheme
-                   ? Qt.rgba(control.palette.buttonText.r, control.palette.buttonText.g, control.palette.buttonText.b, 0.62)
-                   : Qt.rgba(control.palette.buttonText.r, control.palette.buttonText.g, control.palette.buttonText.b, 0.25)
+            color: control.palette.placeholderText
+            opacity: control.clearIndicator.pressed ? 0.7 : 1
         }
     }
 
