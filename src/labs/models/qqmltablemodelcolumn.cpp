@@ -14,6 +14,34 @@ QT_BEGIN_NAMESPACE
     \brief Represents a column in a model.
     \since 5.14
 
+    The TableModelColumn class represents columns in TableModel.
+    TableModel supports JavaScript/JSON data where each row is an object,
+    a list of simple key-value pairs where the keys are unordered.
+
+    \code
+    {
+        // Each property is one cell/column.
+        checked: false,
+        amount: 1,
+        fruitType: "Apple",
+        fruitName: "Granny Smith",
+        fruitPrice: 1.50
+    },
+    // ...
+    \endcode
+
+    However, models in Qt are manipulated via row and column indices. Specifying
+    the columns with TableModelColumn allows a mapping between Qt's built-in
+    roles to any property in each row object.
+
+    \snippet qml/tablemodel/fruit-example-simpledelegate.qml file
+
+    TableModelColumn also has basic read-only support for complex rows. For more
+    information, see \l {Supported Row Data Structures}.
+
+    \note Most of the above concepts also apply to TreeModel, except in
+    TreeModel each row represents a node of the tree.
+
     \section1 Supported Roles
 
     TableModelColumn supports all of \l {Qt::ItemDataRole}{Qt's roles},
