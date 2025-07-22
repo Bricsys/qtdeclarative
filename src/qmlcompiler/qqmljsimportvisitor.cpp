@@ -189,7 +189,6 @@ QQmlJSImportVisitor::QQmlJSImportVisitor(
         const QString &implicitImportDirectory, const QStringList &qmldirFiles)
     : m_implicitImportDirectory(implicitImportDirectory),
       m_qmldirFiles(qmldirFiles),
-      m_currentScope(QQmlJSScope::create()),
       m_exportedRootScope(target),
       m_importer(importer),
       m_logger(logger),
@@ -199,16 +198,20 @@ QQmlJSImportVisitor::QQmlJSImportVisitor(
                       importer->builtinInternalNames().contextualTypes().arrayType()),
               {})
 {
+    Q_ASSERT(logger); // must be valid
+
     prepareTargetForVisit(target);
     registerTargetIntoImporter(target);
 
-    m_currentScope->setScopeType(QQmlSA::ScopeType::JSFunctionScope);
-    Q_ASSERT(logger); // must be valid
-
-    m_globalScope = m_currentScope;
-    m_currentScope->setIsComposite(true);
-
-    m_currentScope->setInternalName(u"global"_s);
+    /* FIXME:
+       we create a "local global object" – this prevents any modification of the actual global object;
+       That's necessary because scopes track child scopes, and we don't want to do any shared modifications.
+       However, if we were to allow that the global object doesn't track the child scopes, we could move
+       the global object scope into the type resolver instead.
+    */
+    auto globalScope = QQmlJSScope::create();
+    globalScope->setInternalName(u"global"_s);
+    globalScope->setScopeType(QQmlSA::ScopeType::JSFunctionScope);
 
     QQmlJSScope::JavaScriptIdentifier globalJavaScript = {
         QQmlJSScope::JavaScriptIdentifier::LexicalScoped, QQmlJS::SourceLocation(), std::nullopt,
@@ -216,8 +219,11 @@ QQmlJSImportVisitor::QQmlJSImportVisitor(
     };
 
     QV4::Compiler::Codegen::forEachGlobalName([&](QLatin1StringView globalName) {
-        m_currentScope->insertJSIdentifier(globalName, globalJavaScript);
+        globalScope->insertJSIdentifier(globalName, globalJavaScript);
     });
+
+    m_globalScope = globalScope;
+    m_currentScope = globalScope;
 }
 
 QQmlJSImportVisitor::~QQmlJSImportVisitor() = default;
@@ -235,9 +241,9 @@ void QQmlJSImportVisitor::populateCurrentScope(
 
 void QQmlJSImportVisitor::enterRootScope(QQmlJSScope::ScopeType type, const QString &name, const QQmlJS::SourceLocation &location)
 {
+    Q_ASSERT(m_currentScope == m_globalScope);
     QQmlJSScope::reparent(m_currentScope, m_exportedRootScope);
     m_currentScope = m_exportedRootScope;
-    m_currentScope->setIsRootFileComponentFlag(true);
     populateCurrentScope(type, name, location);
 }
 
@@ -1778,6 +1784,7 @@ bool QQmlJSImportVisitor::visit(UiObjectDefinition *definition)
         } else {
             enterRootScope(QQmlSA::ScopeType::QMLScope, superType,
                            definition->firstSourceLocation());
+            m_currentScope->setIsRootFileComponentFlag(true);
             m_currentScope->setIsSingleton(m_rootIsSingleton);
         }
 
@@ -3183,14 +3190,12 @@ void QQmlJSImportVisitor::endVisit(ESModule *)
             m_exportedRootScope, m_rootScopeImports.contextualTypes(), &m_usedTypes);
 }
 
-bool QQmlJSImportVisitor::visit(Program *)
+bool QQmlJSImportVisitor::visit(Program *program)
 {
     Q_ASSERT(m_globalScope == m_currentScope);
     Q_ASSERT(!rootScopeIsValid());
-    m_currentScope->setFilePath(m_logger->filePath());
-    *m_exportedRootScope = std::move(*QQmlJSScope::clone(m_currentScope));
+    enterRootScope(QQmlSA::ScopeType::JSFunctionScope, u"script"_s, program->firstSourceLocation());
     m_exportedRootScope->setIsScript(true);
-    m_currentScope = m_exportedRootScope;
     importBaseModules();
     return true;
 }
