@@ -2126,6 +2126,7 @@ void TestQmllint::cleanQmlCode_data()
     QTest::newRow("retrieveFunction") << QStringLiteral("retrieveFunction.qml");
     QTest::newRow("scopedAndUnscopedEnums") << QStringLiteral("enumValid.qml");
     QTest::newRow("segFault") << QStringLiteral("SegFault.qml");
+    QTest::newRow("selfReferential") << QStringLiteral("SelfReferential.qml");
     QTest::newRow("setRequiredTroughAlias") << QStringLiteral("setRequiredPropertyThroughAlias.qml");
     QTest::newRow("setRequiredTroughAliasOfAlias")
             << QStringLiteral("setRequiredPropertyThroughAliasOfAlias.qml");

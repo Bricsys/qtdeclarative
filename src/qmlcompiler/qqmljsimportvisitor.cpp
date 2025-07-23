@@ -544,6 +544,12 @@ void QQmlJSImportVisitor::importBaseModules()
 bool QQmlJSImportVisitor::visit(QQmlJS::AST::UiProgram *)
 {
     importBaseModules();
+    // if the current file  is a QML file, make it available, too
+    if (auto elementName = QFileInfo(m_logger->filePath()).baseName();
+        !elementName.isEmpty() && elementName[0].isUpper()) {
+        m_rootScopeImports.setType(elementName, { m_exportedRootScope, QTypeRevision {} });
+    }
+
     return true;
 }
 
