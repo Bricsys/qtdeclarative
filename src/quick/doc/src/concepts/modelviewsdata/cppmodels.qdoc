@@ -49,7 +49,7 @@ The API works just like with \l QStringList, as shown in the previous section.
 
 \note There is no way for the view to know that the contents of a QVariantList
 have changed. If the QVariantList changes, it will be necessary to reset
-the model.
+the model by setting the view's \c model property again.
 
 \section2 QObjectList-based Model
 
@@ -81,10 +81,9 @@ The complete source code for this example is available in
 \l {models/objectlistmodel}{examples/quick/models/objectlistmodel}
 within the Qt install directory.
 
-Note: There is no way for the view to know that the contents of a QList
-has changed.  If the QList changes, it is necessary to reset
-the model by setting the \c model property again.
-
+\note There is no way for the view to know that the contents of a QObjectList
+have changed. If the QObjectList changes, it will be necessary to reset
+the model by setting the view's \c model property again.
 
 \section2 QAbstractItemModel Subclass
 
