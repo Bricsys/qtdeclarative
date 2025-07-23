@@ -59,8 +59,8 @@ shader effects.
     \li \l {Important Concepts In Qt Quick - Positioning} {Positioning}
     \li \l {Important Concepts in Qt Quick - States, Transitions and Animations}
            {States, Transitions And Animations}
-    \li \l {Important Concepts In Qt Quick - Data - Models, Views and data Storage}
-           {Data - Models, Views and Data Storage}
+    \li \l {Important Concepts In Qt Quick - Data - Models, Views, and data Storage}
+           {Data - Models, Views, and Data Storage}
     \li \list \l {Important Concepts In Qt Quick - Graphical Effects}
            {Particles And Graphical Effects}
        \li \l MultiEffect
