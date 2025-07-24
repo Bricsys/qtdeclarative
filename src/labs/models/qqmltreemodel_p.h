@@ -25,10 +25,11 @@
 
 QT_REQUIRE_CONFIG(qml_tree_model);
 
+class tst_QQmlTreeModel;
+
 QT_BEGIN_NAMESPACE
 
 class QQmlTreeRow;
-class tst_QQmlTreeModel;
 
 
 
@@ -89,7 +90,7 @@ private:
     bool validateRow(QLatin1StringView functionName, const QVariant &row, bool setRowsOperation = false);
     void setRowsPrivate(const QVariantList &rowsAsVariantList);
     int treeSize() const;
-    friend class tst_QQmlTreeModel;
+    friend class ::tst_QQmlTreeModel;
 
     enum class ColumnRole : quint8
     {
