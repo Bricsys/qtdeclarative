@@ -923,3 +923,5 @@ int QQmlTreeModel::treeSize() const
 }
 
 QT_END_NAMESPACE
+
+#include "moc_qqmltreemodel_p.cpp"
