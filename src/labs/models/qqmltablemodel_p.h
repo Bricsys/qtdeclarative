@@ -43,6 +43,8 @@ class Q_LABSQMLMODELS_EXPORT QQmlTableModel : public QAbstractTableModel, public
     QML_ADDED_IN_VERSION(1, 0)
 
 public:
+    Q_DISABLE_COPY_MOVE(QQmlTableModel)
+
     explicit QQmlTableModel(QObject *parent = nullptr);
     ~QQmlTableModel() override;
 
@@ -66,6 +68,7 @@ public:
     static void columns_replace(QQmlListProperty<QQmlTableModelColumn> *property, qsizetype index, QQmlTableModelColumn *value);
     static void columns_removeLast(QQmlListProperty<QQmlTableModelColumn> *property);
 
+    //AbstractItemModel interface
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -86,16 +89,22 @@ protected:
     void componentComplete() override;
 
 private:
+
+    enum class ColumnRole : quint8
+    {
+        StringRole,
+        FunctionRole
+    };
+
     class ColumnRoleMetadata
     {
     public:
         ColumnRoleMetadata();
-        ColumnRoleMetadata(bool isStringRole, const QString &name, int type, const QString &typeName);
+        ColumnRoleMetadata(ColumnRole role, QString name, int type, QString typeName);
 
         bool isValid() const;
 
-        // If this is false, it's a function role.
-        bool isStringRole = false;
+        ColumnRole columnRole = ColumnRole::FunctionRole;
         QString name;
         int type = QMetaType::UnknownType;
         QString typeName;
@@ -114,19 +123,19 @@ private:
         AppendOperation
     };
 
-    void doSetRows(const QVariantList &rowsAsVariantList);
+    void setRowsPrivate(const QVariantList &rowsAsVariantList);
     ColumnRoleMetadata fetchColumnRoleData(const QString &roleNameKey,
         QQmlTableModelColumn *tableModelColumn, int columnIndex) const;
     void fetchColumnMetadata();
 
-    bool validateRowType(const char *functionName, const QVariant &row) const;
-    bool validateNewRow(const char *functionName, const QVariant &row,
+    bool validateRowType(QLatin1StringView functionName, const QVariant &row) const;
+    bool validateNewRow(QLatin1StringView functionName, const QVariant &row,
         int rowIndex, NewRowOperationFlag operation = OtherOperation) const;
-    bool validateRowIndex(const char *functionName, const char *argumentName, int rowIndex) const;
+    bool validateRowIndex(QLatin1StringView functionName, const char *argumentName, int rowIndex) const;
 
     void doInsert(int rowIndex, const QVariant &row);
 
-    bool componentCompleted = false;
+    bool mComponentCompleted = false;
     QVariantList mRows;
     QList<QQmlTableModelColumn *> mColumns;
     int mRowCount = 0;

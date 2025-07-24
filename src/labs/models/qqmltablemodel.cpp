@@ -4,10 +4,13 @@
 #include "qqmltablemodel_p.h"
 
 #include <QtCore/qloggingcategory.h>
+
 #include <QtQml/qqmlinfo.h>
 #include <QtQml/qqmlengine.h>
 
 QT_BEGIN_NAMESPACE
+
+using namespace Qt::StringLiterals;
 
 Q_STATIC_LOGGING_CATEGORY(lcTableModel, "qt.qml.tablemodel")
 
@@ -133,8 +136,7 @@ QQmlTableModel::QQmlTableModel(QObject *parent)
 }
 
 QQmlTableModel::~QQmlTableModel()
-{
-}
+    = default;
 
 /*!
     \qmlproperty object TableModel::rows
@@ -157,25 +159,25 @@ void QQmlTableModel::setRows(const QVariant &rows)
         return;
     }
 
-    const QJSValue rowsAsJSValue = rows.value<QJSValue>();
+    const auto rowsAsJSValue = rows.value<QJSValue>();
     const QVariantList rowsAsVariantList = rowsAsJSValue.toVariant().toList();
     if (rowsAsVariantList == mRows) {
         // No change.
         return;
     }
 
-    if (!componentCompleted) {
-        // Store the rows until we can call doSetRows() after component completion.
+    if (!mComponentCompleted) {
+        // Store the rows until we can call setRowsPrivate() after component completion.
         mRows = rowsAsVariantList;
         return;
     }
 
-    doSetRows(rowsAsVariantList);
+    setRowsPrivate(rowsAsVariantList);
 }
 
-void QQmlTableModel::doSetRows(const QVariantList &rowsAsVariantList)
+void QQmlTableModel::setRowsPrivate(const QVariantList &rowsAsVariantList)
 {
-    Q_ASSERT(componentCompleted);
+    Q_ASSERT(mComponentCompleted);
 
     // By now, all TableModelColumns should have been set.
     if (mColumns.isEmpty()) {
@@ -190,7 +192,7 @@ void QQmlTableModel::doSetRows(const QVariantList &rowsAsVariantList)
             // validateNewRow() expects a QVariant wrapping a QJSValue, so to
             // simplify the code, just create one here.
             const QVariant row = QVariant::fromValue(rowsAsVariantList.at(rowIndex));
-            if (!validateNewRow("setRows()", row, rowIndex, SetRowsOperation))
+            if (!validateNewRow("setRows()"_L1, row, rowIndex, SetRowsOperation))
                 return;
         }
     }
@@ -220,7 +222,7 @@ void QQmlTableModel::doSetRows(const QVariantList &rowsAsVariantList)
 }
 
 QQmlTableModel::ColumnRoleMetadata QQmlTableModel::fetchColumnRoleData(const QString &roleNameKey,
-    QQmlTableModelColumn *tableModelColumn, int columnIndex) const
+                      QQmlTableModelColumn *tableModelColumn, int columnIndex) const
 {
     const QVariant firstRow = mRows.first();
     ColumnRoleMetadata roleData;
@@ -240,11 +242,10 @@ QQmlTableModel::ColumnRoleMetadata QQmlTableModel::fetchColumnRoleData(const QSt
                 << firstRow.typeName() << " instead: " << firstRow;
             return roleData;
         }
-        const QVariantMap firstRowAsMap = firstRow.toMap();
         const QString rolePropertyName = columnRoleGetter.toString();
-        const QVariant roleProperty = firstRowAsMap.value(rolePropertyName);
+        const QVariant roleProperty = firstRow.toMap().value(rolePropertyName);
 
-        roleData.isStringRole = true;
+        roleData.columnRole = ColumnRole::StringRole;
         roleData.name = rolePropertyName;
         roleData.type = roleProperty.userType();
         roleData.typeName = QString::fromLatin1(roleProperty.typeName());
@@ -257,14 +258,14 @@ QQmlTableModel::ColumnRoleMetadata QQmlTableModel::fetchColumnRoleData(const QSt
 
         // We don't know the property name since it's provided through the function.
         // roleData.name = ???
-        roleData.isStringRole = false;
+        roleData.columnRole = ColumnRole::FunctionRole;
         roleData.type = cellData.userType();
         roleData.typeName = QString::fromLatin1(cellData.typeName());
     } else {
         // Invalid role.
         qmlWarning(this) << "TableModelColumn role for column at index "
-            << columnIndex << " must be either a string or a function; actual type is: "
-            << columnRoleGetter.toString();
+                         << columnIndex << " must be either a string or a function; actual type is: "
+                         << columnRoleGetter.toString();
     }
 
     return roleData;
@@ -307,6 +308,7 @@ void QQmlTableModel::fetchColumnMetadata()
     }
 }
 
+// TODO: Turn this into a snippet that compiles in CI
 /*!
     \qmlmethod TableModel::appendRow(object row)
 
@@ -327,7 +329,7 @@ void QQmlTableModel::fetchColumnMetadata()
 */
 void QQmlTableModel::appendRow(const QVariant &row)
 {
-    if (!validateNewRow("appendRow()", row, -1, AppendOperation))
+    if (!validateNewRow("appendRow()"_L1, row, -1, AppendOperation))
         return;
 
     doInsert(mRowCount, row);
@@ -370,7 +372,7 @@ void QQmlTableModel::clear()
 */
 QVariant QQmlTableModel::getRow(int rowIndex)
 {
-    if (!validateRowIndex("getRow()", "rowIndex", rowIndex))
+    if (!validateRowIndex("getRow()"_L1, "rowIndex", rowIndex))
         return QVariant();
 
     return mRows.at(rowIndex);
@@ -399,7 +401,7 @@ QVariant QQmlTableModel::getRow(int rowIndex)
 */
 void QQmlTableModel::insertRow(int rowIndex, const QVariant &row)
 {
-    if (!validateNewRow("insertRow()", row, rowIndex))
+    if (!validateNewRow("insertRow()"_L1, row, rowIndex))
         return;
 
     doInsert(rowIndex, row);
@@ -434,13 +436,13 @@ void QQmlTableModel::classBegin()
 
 void QQmlTableModel::componentComplete()
 {
-    componentCompleted = true;
+    mComponentCompleted = true;
 
     mColumnCount = mColumns.size();
     if (mColumnCount > 0)
         emit columnCountChanged();
 
-    doSetRows(mRows);
+    setRowsPrivate(mRows);
 }
 
 /*!
@@ -470,10 +472,10 @@ void QQmlTableModel::moveRow(int fromRowIndex, int toRowIndex, int rows)
         return;
     }
 
-    if (!validateRowIndex("moveRow()", "fromRowIndex", fromRowIndex))
+    if (!validateRowIndex("moveRow()"_L1, "fromRowIndex", fromRowIndex))
         return;
 
-    if (!validateRowIndex("moveRow()", "toRowIndex", toRowIndex))
+    if (!validateRowIndex("moveRow()"_L1, "toRowIndex", toRowIndex))
         return;
 
     if (fromRowIndex + rows > mRowCount) {
@@ -532,7 +534,7 @@ void QQmlTableModel::moveRow(int fromRowIndex, int toRowIndex, int rows)
 */
 void QQmlTableModel::removeRow(int rowIndex, int rows)
 {
-    if (!validateRowIndex("removeRow()", "rowIndex", rowIndex))
+    if (!validateRowIndex("removeRow()"_L1, "rowIndex", rowIndex))
         return;
 
     if (rows <= 0) {
@@ -587,7 +589,7 @@ void QQmlTableModel::removeRow(int rowIndex, int rows)
 */
 void QQmlTableModel::setRow(int rowIndex, const QVariant &row)
 {
-    if (!validateNewRow("setRow()", row, rowIndex))
+    if (!validateNewRow("setRow()"_L1, row, rowIndex))
         return;
 
     if (rowIndex != mRowCount) {
@@ -607,20 +609,22 @@ void QQmlTableModel::setRow(int rowIndex, const QVariant &row)
 
 QQmlListProperty<QQmlTableModelColumn> QQmlTableModel::columns()
 {
-    return QQmlListProperty<QQmlTableModelColumn>(this, nullptr,
+    return {this, nullptr,
         &QQmlTableModel::columns_append,
         &QQmlTableModel::columns_count,
         &QQmlTableModel::columns_at,
         &QQmlTableModel::columns_clear,
         &QQmlTableModel::columns_replace,
-        &QQmlTableModel::columns_removeLast);
+        &QQmlTableModel::columns_removeLast};
 }
 
 void QQmlTableModel::columns_append(QQmlListProperty<QQmlTableModelColumn> *property,
-    QQmlTableModelColumn *value)
+                                   QQmlTableModelColumn *value)
 {
-    QQmlTableModel *model = static_cast<QQmlTableModel*>(property->object);
-    QQmlTableModelColumn *column = qobject_cast<QQmlTableModelColumn*>(value);
+    auto *model = static_cast<QQmlTableModel*>(property->object);
+    Q_ASSERT(value);
+    Q_ASSERT(model);
+    auto *column = qobject_cast<QQmlTableModelColumn*>(value);
     if (column)
         model->mColumns.append(column);
 }
@@ -628,31 +632,36 @@ void QQmlTableModel::columns_append(QQmlListProperty<QQmlTableModelColumn> *prop
 qsizetype QQmlTableModel::columns_count(QQmlListProperty<QQmlTableModelColumn> *property)
 {
     const QQmlTableModel *model = static_cast<QQmlTableModel*>(property->object);
+    Q_ASSERT(model);
     return model->mColumns.size();
 }
 
 QQmlTableModelColumn *QQmlTableModel::columns_at(QQmlListProperty<QQmlTableModelColumn> *property, qsizetype index)
 {
     const QQmlTableModel *model = static_cast<QQmlTableModel*>(property->object);
+    Q_ASSERT(model);
     return model->mColumns.at(index);
 }
 
 void QQmlTableModel::columns_clear(QQmlListProperty<QQmlTableModelColumn> *property)
 {
-    QQmlTableModel *model = static_cast<QQmlTableModel*>(property->object);
+    auto *model = static_cast<QQmlTableModel*>(property->object);
+    Q_ASSERT(model);
     return model->mColumns.clear();
 }
 
 void QQmlTableModel::columns_replace(QQmlListProperty<QQmlTableModelColumn> *property, qsizetype index, QQmlTableModelColumn *value)
 {
-    QQmlTableModel *model = static_cast<QQmlTableModel*>(property->object);
-    if (QQmlTableModelColumn *column = qobject_cast<QQmlTableModelColumn*>(value))
+    auto *model = static_cast<QQmlTableModel*>(property->object);
+    Q_ASSERT(model);
+    if (auto *column = qobject_cast<QQmlTableModelColumn*>(value))
         return model->mColumns.replace(index, column);
 }
 
 void QQmlTableModel::columns_removeLast(QQmlListProperty<QQmlTableModelColumn> *property)
 {
-    QQmlTableModel *model = static_cast<QQmlTableModel*>(property->object);
+    auto *model = static_cast<QQmlTableModel*>(property->object);
+    Q_ASSERT(model);
     model->mColumns.removeLast();
 }
 
@@ -726,8 +735,7 @@ int QQmlTableModel::rowCount(const QModelIndex &parent) const
 */
 int QQmlTableModel::columnCount(const QModelIndex &parent) const
 {
-    if (parent.isValid())
-        return 0;
+    Q_UNUSED(parent);
 
     return mColumnCount;
 }
@@ -738,42 +746,50 @@ int QQmlTableModel::columnCount(const QModelIndex &parent) const
     Returns the data from the table cell at the given \a index belonging to the
     given \a role.
 
-    \sa index()
+    \sa index(), setData()
 */
 QVariant QQmlTableModel::data(const QModelIndex &index, const QString &role) const
 {
     const int iRole = mRoleNames.key(role.toUtf8(), -1);
     if (iRole >= 0)
         return data(index, iRole);
-    return QVariant();
+    return {};
 }
 
 QVariant QQmlTableModel::data(const QModelIndex &index, int role) const
 {
+    if (!index.isValid()) {
+        qmlWarning(this) << "data(): invalid QModelIndex";
+        return {};
+    }
+
     const int row = index.row();
-    if (row < 0 || row >= rowCount())
-        return QVariant();
+    if (row < 0 || row >= rowCount()) {
+        qmlWarning(this) << "data(): invalid row specified in QModelIndex";
+        return {};
+    }
 
     const int column = index.column();
-    if (column < 0 || column >= columnCount())
-        return QVariant();
+    if (column < 0 || column >= columnCount()) {
+        qmlWarning(this) << "data(): invalid column specified in QModelIndex";
+        return {};
+    }
 
     const ColumnMetadata columnMetadata = mColumnMetadata.at(column);
     const QString roleName = QString::fromUtf8(mRoleNames.value(role));
     if (!columnMetadata.roles.contains(roleName)) {
         qmlWarning(this) << "data(): no role named " << roleName
-            << " at column index " << column << ". The available roles for that column are: "
-            << columnMetadata.roles.keys();
-        return QVariant();
+                         << " at column index " << column << ". The available roles for that column are: "
+                         << columnMetadata.roles.keys();
+        return {};
     }
 
     const ColumnRoleMetadata roleData = columnMetadata.roles.value(roleName);
-    if (roleData.isStringRole) {
+    if (roleData.columnRole == ColumnRole::StringRole) {
         // We know the data structure, so we can get the data for the user.
-        const QVariantMap rowData = mRows.at(row).toMap();
         const QString propertyName = columnMetadata.roles.value(roleName).name;
-        const QVariant value = rowData.value(propertyName);
-        return value;
+        const QVariantMap rowData = mRows.at(row).toMap();
+        return rowData.value(propertyName);
     }
 
     // We don't know the data structure, so the user has to modify their data themselves.
@@ -791,7 +807,7 @@ QVariant QQmlTableModel::data(const QModelIndex &index, int role) const
     Inserts or updates the data field named by \a role in the table cell at the
     given \a index with \a value. Returns true if sucessful, false if not.
 
-    \sa index()
+    \sa data(), index()
 */
 bool QQmlTableModel::setData(const QModelIndex &index, const QString &role, const QVariant &value)
 {
@@ -803,6 +819,8 @@ bool QQmlTableModel::setData(const QModelIndex &index, const QString &role, cons
 
 bool QQmlTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
+    Q_ASSERT(index.isValid());
+
     const int row = index.row();
     if (row < 0 || row >= rowCount())
         return false;
@@ -820,8 +838,8 @@ bool QQmlTableModel::setData(const QModelIndex &index, const QVariant &value, in
     const ColumnMetadata columnMetadata = mColumnMetadata.at(index.column());
     if (!columnMetadata.roles.contains(roleName)) {
         qmlWarning(this) << "setData(): no role named \"" << roleName
-            << "\" at column index " << column << ". The available roles for that column are: "
-            << columnMetadata.roles.keys();
+                         << "\" at column index " << column << ". The available roles for that column are: "
+                         << columnMetadata.roles.keys();
         return false;
     }
 
@@ -832,20 +850,20 @@ bool QQmlTableModel::setData(const QModelIndex &index, const QVariant &value, in
     if (value.userType() != roleData.type) {
         if (!value.canConvert(QMetaType(roleData.type))) {
             qmlWarning(this).nospace() << "setData(): the value " << value
-                << " set at row " << row << " column " << column << " with role " << roleName
-                << " cannot be converted to " << roleData.typeName;
+                                       << " set at row " << row << " column " << column << " with role " << roleName
+                                       << " cannot be converted to " << roleData.typeName;
             return false;
         }
 
         if (!effectiveValue.convert(QMetaType(roleData.type))) {
             qmlWarning(this).nospace() << "setData(): failed converting value " << value
-                << " set at row " << row << " column " << column << " with role " << roleName
-                << " to " << roleData.typeName;
+                                       << " set at row " << row << " column " << column << " with role " << roleName
+                                       << " to " << roleData.typeName;
             return false;
         }
     }
 
-    if (roleData.isStringRole) {
+    if (roleData.columnRole == ColumnRole::StringRole) {
         // We know the data structure, so we can set it for the user.
         QVariantMap modifiedRow = mRows.at(row).toMap();
         modifiedRow[roleData.name] = value;
@@ -870,16 +888,14 @@ QHash<int, QByteArray> QQmlTableModel::roleNames() const
     return mRoleNames;
 }
 
-QQmlTableModel::ColumnRoleMetadata::ColumnRoleMetadata()
-{
-}
+QQmlTableModel::ColumnRoleMetadata::ColumnRoleMetadata() = default;
 
 QQmlTableModel::ColumnRoleMetadata::ColumnRoleMetadata(
-    bool isStringRole, const QString &name, int type, const QString &typeName) :
-    isStringRole(isStringRole),
-    name(name),
+    ColumnRole role, QString name, int type, QString typeName) :
+    columnRole(role),
+    name(std::move(name)),
     type(type),
-    typeName(typeName)
+    typeName(std::move(typeName))
 {
 }
 
@@ -888,26 +904,26 @@ bool QQmlTableModel::ColumnRoleMetadata::isValid() const
     return !name.isEmpty();
 }
 
-bool QQmlTableModel::validateRowType(const char *functionName, const QVariant &row) const
+bool QQmlTableModel::validateRowType(QLatin1StringView functionName, const QVariant &row) const
 {
     if (!row.canConvert<QJSValue>()) {
         qmlWarning(this) << functionName << ": expected \"row\" argument to be a QJSValue,"
-            << " but got " << row.typeName() << " instead:\n" << row;
+                         << " but got " << row.typeName() << " instead:\n" << row;
         return false;
     }
 
-    const QJSValue rowAsJSValue = row.value<QJSValue>();
+    const auto rowAsJSValue = row.value<QJSValue>();
     if (!rowAsJSValue.isObject() && !rowAsJSValue.isArray()) {
         qmlWarning(this) << functionName << ": expected \"row\" argument "
-            << "to be an object or array, but got:\n" << rowAsJSValue.toString();
+                         << "to be an object or array, but got:\n" << rowAsJSValue.toString();
         return false;
     }
 
     return true;
 }
 
-bool QQmlTableModel::validateNewRow(const char *functionName, const QVariant &row,
-    int rowIndex, NewRowOperationFlag operation) const
+bool QQmlTableModel::validateNewRow(QLatin1StringView functionName, const QVariant &row,
+                                    int rowIndex, NewRowOperationFlag operation) const
 {
     if (mColumnMetadata.isEmpty()) {
         // There is no column metadata, so we have nothing to validate the row against.
@@ -941,7 +957,8 @@ bool QQmlTableModel::validateNewRow(const char *functionName, const QVariant &ro
         ? row : row.value<QJSValue>().toVariant();
     if (rowAsVariant.userType() != QMetaType::QVariantMap) {
         qmlWarning(this) << functionName << ": row manipulation functions "
-            << "do not support complex rows (row index: " << rowIndex << ")";
+                         << "do not support complex rows"
+                         << " (row index: " << rowIndex << ")";
         return false;
     }
 
@@ -949,7 +966,7 @@ bool QQmlTableModel::validateNewRow(const char *functionName, const QVariant &ro
     const int columnCount = rowAsMap.size();
     if (columnCount < mColumnCount) {
         qmlWarning(this) << functionName << ": expected " << mColumnCount
-            << " columns, but only got " << columnCount;
+                         << " columns, but only got " << columnCount;
         return false;
     }
 
@@ -962,12 +979,13 @@ bool QQmlTableModel::validateNewRow(const char *functionName, const QVariant &ro
         const ColumnMetadata columnMetadata = mColumnMetadata.at(columnIndex);
         for (const QString &roleName : roleNames) {
             const ColumnRoleMetadata roleData = columnMetadata.roles.value(roleName);
-            if (!roleData.isStringRole)
+            if (roleData.columnRole == ColumnRole::FunctionRole)
                 continue;
 
             if (!rowAsMap.contains(roleData.name)) {
-                qmlWarning(this).quote() << functionName << ": expected a property named "
-                    << roleData.name << " in row at index " << rowIndex << ", but couldn't find one";
+                qmlWarning(this).noquote() << functionName << ": expected a property named \""
+                                           << roleData.name << "\" in row"
+                                           << " at index " << rowIndex << ", but couldn't find one";
                 return false;
             }
 
@@ -975,19 +993,19 @@ bool QQmlTableModel::validateNewRow(const char *functionName, const QVariant &ro
 
             if (rolePropertyValue.userType() != roleData.type) {
                 if (!rolePropertyValue.canConvert(QMetaType(roleData.type))) {
-                    qmlWarning(this).quote() << functionName << ": expected the property named "
-                        << roleData.name << " to be of type " << roleData.typeName
-                        << ", but got " << QString::fromLatin1(rolePropertyValue.typeName())
-                        << " instead";
+                    qmlWarning(this).noquote() << functionName << ": expected the property named \""
+                                               << roleData.name << "\" to be of type \"" << roleData.typeName
+                                               << "\", but got \"" << QString::fromLatin1(rolePropertyValue.typeName())
+                                               << "\" instead";
                     return false;
                 }
 
                 QVariant effectiveValue = rolePropertyValue;
                 if (!effectiveValue.convert(QMetaType(roleData.type))) {
-                    qmlWarning(this).nospace() << functionName << ": failed converting value "
-                        << rolePropertyValue << " set at column " << columnIndex << " with role "
-                        << QString::fromLatin1(rolePropertyValue.typeName()) << " to "
-                        << roleData.typeName;
+                    qmlWarning(this).noquote() << functionName << ": failed converting value \""
+                                               << rolePropertyValue << "\" set at column " << columnIndex << " with role \""
+                                               << QString::fromLatin1(rolePropertyValue.typeName()) << "\" to \""
+                                               << roleData.typeName << "\"";
                     return false;
                 }
             }
@@ -997,7 +1015,7 @@ bool QQmlTableModel::validateNewRow(const char *functionName, const QVariant &ro
     return true;
 }
 
-bool QQmlTableModel::validateRowIndex(const char *functionName, const char *argumentName, int rowIndex) const
+bool QQmlTableModel::validateRowIndex(QLatin1StringView functionName, const char *argumentName, int rowIndex) const
 {
     if (rowIndex < 0) {
         qmlWarning(this) << functionName << ": \"" << argumentName << "\" cannot be negative";

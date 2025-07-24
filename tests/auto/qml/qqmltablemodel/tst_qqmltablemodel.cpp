@@ -89,6 +89,7 @@ void tst_QQmlTableModel::appendRemoveRow()
 
     // Call remove() with a valid rowIndex but negative rows.
     QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".*removeRow\\(\\): \"rows\" is less than or equal to zero"));
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".*data\\(\\): invalid QModelIndex"));
     QVERIFY(QMetaObject::invokeMethod(model, "removeRow", Q_ARG(int, 0), Q_ARG(int, -1)));
     QCOMPARE(model->rowCount(), 2);
     QCOMPARE(model->columnCount(), 2);
@@ -99,6 +100,7 @@ void tst_QQmlTableModel::appendRemoveRow()
     // Call remove() with a valid rowIndex but excessive rows.
     QTest::ignoreMessage(QtWarningMsg, QRegularExpression(
         ".*removeRow\\(\\): \"rows\" 3 exceeds available rowCount\\(\\) of 2 when removing from \"rowIndex\" 0"));
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".*data\\(\\): invalid QModelIndex"));
     QVERIFY(QMetaObject::invokeMethod(model, "removeRow", Q_ARG(int, 0), Q_ARG(int, 3)));
     QCOMPARE(model->rowCount(), 2);
     QCOMPARE(model->columnCount(), 2);
@@ -277,7 +279,9 @@ void tst_QQmlTableModel::clear()
     QVERIFY(QMetaObject::invokeMethod(model, "clear"));
     QCOMPARE(model->rowCount(), 0);
     QCOMPARE(model->columnCount(), 2);
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".*data\\(\\): invalid QModelIndex"));
     QCOMPARE(model->data(model->index(0, 0, QModelIndex()), roleNames.key("display")), QVariant());
+    QTest::ignoreMessage(QtWarningMsg, QRegularExpression(".*data\\(\\): invalid QModelIndex"));
     QCOMPARE(model->data(model->index(0, 1, QModelIndex()), roleNames.key("display")), QVariant());
     QCOMPARE(columnCountSpy.size(), 0);
     QCOMPARE(rowCountSpy.size(), 1);
@@ -1128,7 +1132,7 @@ void tst_QQmlTableModel::appendRowWithDouble()
     rowsChangedSpy.clear();
     QTest::ignoreMessage(QtWarningMsg,
                          QRegularExpression(".*appendRow\\(\\): failed converting value "
-                                            "QVariant\\(QString, \"Invalid\"\\) set at column 1 with "
+                                            "\"QVariant\\(QString, Invalid\\)\" set at column 1 with "
                                             "role \"QString\" to \"int\""));
     QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendInvalid"));
     // Nothing should change
