@@ -121,7 +121,22 @@ void QQuickHeaderViewBasePrivate::setModelImpl(const QVariant &newModel)
 {
     m_modelExplicitlySet = newModel.isValid();
 
-    if (auto qabstracttablemodel = qobject_cast<QAbstractTableModel *>(qaim(newModel))) {
+    auto asTableModel = [](QAbstractItemModel *model) -> QAbstractItemModel* {
+        if (qobject_cast<QAbstractTableModel *>(model))
+            return model;
+
+        // Since QQmlTableModel is not derived from QAbstractTableModel (QATM),
+        // we have to check for this model separately. We want it to behave like
+        // QATM to keep existing code working. This model is in the Labs module,
+        // and we cannot link to it to make a qobject_cast. Therefore, we are checking
+        // the class name.
+        // TODO: When QQmlTableModel leaves Labs, change to qobject_cast?
+        if (model && QByteArrayView(model->metaObject()->className()) == "QQmlTableModel")
+            return model;
+        return nullptr;
+    };
+
+    if (auto qabstracttablemodel = asTableModel(qaim(newModel))) {
         if (qabstracttablemodel != m_headerDataProxyModel.sourceModel()) {
             m_headerDataProxyModel.setSourceModel(qabstracttablemodel);
             assignedModel = QVariant::fromValue(std::addressof(m_headerDataProxyModel));

@@ -131,7 +131,7 @@ Q_STATIC_LOGGING_CATEGORY(lcTableModel, "qt.qml.tablemodel")
 */
 
 QQmlTableModel::QQmlTableModel(QObject *parent)
-    : QAbstractTableModel(parent)
+    : QAbstractItemModel(parent)
 {
 }
 
@@ -701,6 +701,12 @@ QModelIndex QQmlTableModel::index(int row, int column, const QModelIndex &parent
     return row >= 0 && row < rowCount() && column >= 0 && column < columnCount() && !parent.isValid()
         ? createIndex(row, column)
         : QModelIndex();
+}
+
+QModelIndex QQmlTableModel::parent(const QModelIndex &index) const
+{
+    Q_UNUSED(index);
+    return {};
 }
 
 /*!

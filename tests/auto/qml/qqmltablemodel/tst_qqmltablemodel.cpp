@@ -44,7 +44,7 @@ void tst_QQmlTableModel::appendRemoveRow()
     QQuickView view;
     QVERIFY(QQuickTest::showView(view, testFileUrl("common.qml")));
 
-    auto *model = view.rootObject()->property("testModel") .value<QAbstractTableModel *>();
+    auto *model = view.rootObject()->property("testModel") .value<QAbstractItemModel *>();
     QVERIFY(model);
     QCOMPARE(model->rowCount(), 2);
     QCOMPARE(model->columnCount(), 2);
@@ -216,7 +216,7 @@ void tst_QQmlTableModel::appendRowToEmptyModel()
     QQuickView view;
     QVERIFY(QQuickTest::showView(view, testFileUrl("empty.qml")));
 
-    auto *model = view.rootObject()->property("testModel").value<QAbstractTableModel*>();
+    auto *model = view.rootObject()->property("testModel").value<QAbstractItemModel*>();
     QVERIFY(model);
     QCOMPARE(model->rowCount(), 0);
     QCOMPARE(model->columnCount(), 2);
@@ -253,7 +253,7 @@ void tst_QQmlTableModel::clear()
     QQuickView view;
     QVERIFY(QQuickTest::showView(view, testFileUrl("common.qml")));
 
-    auto *model = view.rootObject()->property("testModel").value<QAbstractTableModel*>();
+    auto *model = view.rootObject()->property("testModel").value<QAbstractItemModel*>();
     QVERIFY(model);
     QCOMPARE(model->rowCount(), 2);
     QCOMPARE(model->columnCount(), 2);
@@ -296,7 +296,7 @@ void tst_QQmlTableModel::getRow()
     QQuickView view;
     QVERIFY(QQuickTest::showView(view, testFileUrl("common.qml")));
 
-    auto *model = view.rootObject()->property("testModel").value<QAbstractTableModel*>();
+    auto *model = view.rootObject()->property("testModel").value<QAbstractItemModel*>();
     QVERIFY(model);
     QCOMPARE(model->rowCount(), 2);
     QCOMPARE(model->columnCount(), 2);
@@ -325,7 +325,7 @@ void tst_QQmlTableModel::insertRow()
     QQuickView view;
     QVERIFY(QQuickTest::showView(view, testFileUrl("common.qml")));
 
-    auto *model = view.rootObject()->property("testModel").value<QAbstractTableModel*>();
+    auto *model = view.rootObject()->property("testModel").value<QAbstractItemModel*>();
     QVERIFY(model);
     QCOMPARE(model->rowCount(), 2);
     QCOMPARE(model->columnCount(), 2);
@@ -517,7 +517,7 @@ void tst_QQmlTableModel::moveRow()
     QQuickView view;
     QVERIFY(QQuickTest::showView(view, testFileUrl("common.qml")));
 
-    auto *model = view.rootObject()->property("testModel").value<QAbstractTableModel*>();
+    auto *model = view.rootObject()->property("testModel").value<QAbstractItemModel*>();
     QVERIFY(model);
     QCOMPARE(model->columnCount(), 2);
     QCOMPARE(model->rowCount(), 2);
@@ -655,7 +655,7 @@ void tst_QQmlTableModel::setRow()
     QQuickView view;
     QVERIFY(QQuickTest::showView(view, testFileUrl("common.qml")));
 
-    auto *model = view.rootObject()->property("testModel").value<QAbstractTableModel*>();
+    auto *model = view.rootObject()->property("testModel").value<QAbstractItemModel*>();
     QVERIFY(model);
     QCOMPARE(model->columnCount(), 2);
     QCOMPARE(model->rowCount(), 2);
@@ -846,7 +846,7 @@ void tst_QQmlTableModel::setDataThroughDelegate()
     QVERIFY(QQuickTest::showView(view, testFileUrl("setDataThroughDelegate.qml")));
 
 
-    auto *model = view.rootObject()->property("testModel").value<QAbstractTableModel*>();
+    auto *model = view.rootObject()->property("testModel").value<QAbstractItemModel*>();
     QVERIFY(model);
     QCOMPARE(model->rowCount(), 2);
     QCOMPARE(model->columnCount(), 2);
@@ -916,7 +916,7 @@ void tst_QQmlTableModel::setRowsImperatively()
     QQuickView view;
     QVERIFY(QQuickTest::showView(view, testFileUrl("empty.qml")));
 
-    auto *model = view.rootObject()->property("testModel").value<QAbstractTableModel*>();
+    auto *model = view.rootObject()->property("testModel").value<QAbstractItemModel*>();
     QVERIFY(model);
     QCOMPARE(model->rowCount(), 0);
     QCOMPARE(model->columnCount(), 2);
@@ -955,7 +955,7 @@ void tst_QQmlTableModel::setRowsMultipleTimes()
     QQuickView view;
     QVERIFY(QQuickTest::showView(view, testFileUrl("setRowsMultipleTimes.qml")));
 
-    auto *model = view.rootObject()->property("testModel").value<QAbstractTableModel*>();
+    auto *model = view.rootObject()->property("testModel").value<QAbstractItemModel*>();
     QVERIFY(model);
     QCOMPARE(model->rowCount(), 2);
     QCOMPARE(model->columnCount(), 2);
@@ -1015,7 +1015,7 @@ void tst_QQmlTableModel::dataAndEditing()
     QQuickView view;
     QVERIFY(QQuickTest::showView(view, testFileUrl("dataAndSetData.qml")));
 
-    auto *model = view.rootObject()->property("model").value<QAbstractTableModel*>();
+    auto *model = view.rootObject()->property("model").value<QAbstractItemModel*>();
     QVERIFY(model);
 
     const QHash<int, QByteArray> roleNames = model->roleNames();
@@ -1035,7 +1035,7 @@ void tst_QQmlTableModel::omitTableModelColumnIndex()
     QQmlComponent component(&engine, testFileUrl("omitTableModelColumnIndex.qml"));
     QCOMPARE(component.status(), QQmlComponent::Ready);
 
-    QScopedPointer<QAbstractTableModel> model(qobject_cast<QAbstractTableModel*>(component.create()));
+    QScopedPointer<QAbstractItemModel> model(qobject_cast<QAbstractItemModel*>(component.create()));
     QVERIFY(model);
     QCOMPARE(model->rowCount(), 2);
     QCOMPARE(model->columnCount(), 2);
@@ -1057,7 +1057,7 @@ void tst_QQmlTableModel::complexRow()
     QCOMPARE(tableView->rows(), 2);
     QCOMPARE(tableView->columns(), 2);
 
-    auto *model = tableView->model().value<QAbstractTableModel*>();
+    auto *model = tableView->model().value<QAbstractItemModel*>();
     QVERIFY(model);
     QCOMPARE(model->rowCount(), 2);
     QCOMPARE(model->columnCount(), 2);
@@ -1074,7 +1074,7 @@ void tst_QQmlTableModel::appendRowWithDouble()
     QQuickView view;
     QVERIFY(QQuickTest::showView(view, testFileUrl("intAndDouble.qml")));
 
-    auto *model = view.rootObject()->property("testModel").value<QAbstractTableModel*>();
+    auto *model = view.rootObject()->property("testModel").value<QAbstractItemModel*>();
     QVERIFY(model);
     QCOMPARE(model->rowCount(), 2);
     QCOMPARE(model->columnCount(), 2);

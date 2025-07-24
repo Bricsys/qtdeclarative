@@ -15,7 +15,6 @@
 // We mean it.
 //
 
-#include "qqmlmodelsglobal_p.h"
 #include "qqmltablemodelcolumn_p.h"
 
 #include <QtCore/QObject>
@@ -30,7 +29,7 @@ QT_REQUIRE_CONFIG(qml_table_model);
 
 QT_BEGIN_NAMESPACE
 
-class Q_LABSQMLMODELS_EXPORT QQmlTableModel : public QAbstractTableModel, public QQmlParserStatus
+class Q_LABSQMLMODELS_EXPORT QQmlTableModel : public QAbstractItemModel, public QQmlParserStatus
 {
     Q_OBJECT
     Q_PROPERTY(int columnCount READ columnCount NOTIFY columnCountChanged FINAL)
@@ -78,6 +77,7 @@ public:
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::DisplayRole) override;
     QHash<int, QByteArray> roleNames() const override;
     Qt::ItemFlags flags(const QModelIndex &index) const override;
+    QModelIndex parent(const QModelIndex &index) const override;
 
 Q_SIGNALS:
     void columnCountChanged();
