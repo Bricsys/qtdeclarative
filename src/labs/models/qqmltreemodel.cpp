@@ -60,7 +60,7 @@ static const QString ROWS_PROPERTY_NAME = u"rows"_s;
 */
 
 QQmlTreeModel::QQmlTreeModel(QObject *parent)
-    : QAbstractItemModel(parent)
+    : QQmlAbstractColumnModel(parent)
 {
 }
 
@@ -139,86 +139,6 @@ void QQmlTreeModel::setRowsPrivate(const QVariantList &rowsAsVariantList)
 
     endResetModel();
     emit rowsChanged();
-}
-
-QQmlTreeModel::ColumnRoleMetadata QQmlTreeModel::fetchColumnRoleData(const QString &roleNameKey,
-                      QQmlTableModelColumn *tableModelColumn, int columnIndex) const
-{
-    const QQmlTreeRow *firstRow = mRows.front().get();
-    ColumnRoleMetadata roleData;
-
-    QJSValue columnRoleGetter = tableModelColumn->getterAtRole(roleNameKey);
-    if (columnRoleGetter.isUndefined()) {
-        // This role is not defined, which is fine; just skip it.
-        return roleData;
-    }
-
-    if (columnRoleGetter.isString()) {
-        // The role is set as a string, so we assume the row is a simple object.
-        const QString rolePropertyName = columnRoleGetter.toString();
-        const QVariant roleProperty = firstRow->data(rolePropertyName);
-
-        roleData.columnRole = ColumnRole::StringRole;
-        roleData.name = rolePropertyName;
-        roleData.type = roleProperty.userType();
-        roleData.typeName = QString::fromLatin1(roleProperty.typeName());
-    } else if (columnRoleGetter.isCallable()) {
-        // The role is provided via a function, which means the row is complex and
-        // the user needs to provide the data for it.
-        const auto modelIndex = index(0, columnIndex);
-        const auto args = QJSValueList() << qmlEngine(this)->toScriptValue(modelIndex);
-        const QVariant cellData = columnRoleGetter.call(args).toVariant();
-
-        // We don't know the property name since it's provided through the function.
-        // roleData.name = ???
-        roleData.columnRole = ColumnRole::FunctionRole;
-        roleData.type = cellData.userType();
-        roleData.typeName = QString::fromLatin1(cellData.typeName());
-    } else {
-        // Invalid role.
-        qmlWarning(this) << "TableModelColumn role for column at index "
-                         << columnIndex << " must be either a string or a function; actual type is: "
-                         << columnRoleGetter.toString();
-    }
-
-    return roleData;
-}
-
-void QQmlTreeModel::fetchColumnMetadata()
-{
-    qCDebug(lcTreeModel) << "gathering metadata for" << mColumnCount << "columns from first row:";
-
-    static const auto supportedRoleNames = QQmlTableModelColumn::supportedRoleNames();
-
-    // Since we support different data structures at the row level, we require that there
-    // is a TableModelColumn for each column.
-    // Collect and cache metadata for each column. This makes data lookup faster.
-    for (int columnIndex = 0; columnIndex < mColumns.size(); ++columnIndex) {
-        QQmlTableModelColumn *column = mColumns.at(columnIndex);
-        qCDebug(lcTreeModel).nospace() << "- column " << columnIndex << ":";
-
-        ColumnMetadata metaData;
-        const auto builtInRoleKeys = supportedRoleNames.keys();
-        for (const int builtInRoleKey : builtInRoleKeys) {
-            const QString builtInRoleName = supportedRoleNames.value(builtInRoleKey);
-            ColumnRoleMetadata roleData = fetchColumnRoleData(builtInRoleName, column, columnIndex);
-            if (roleData.type == QMetaType::UnknownType) {
-                // This built-in role was not specified in this column.
-                continue;
-            }
-
-            qCDebug(lcTreeModel).nospace() << "  - added metadata for built-in role "
-                << builtInRoleName << " at column index " << columnIndex
-                << ": name=" << roleData.name << " typeName=" << roleData.typeName
-                << " type=" << roleData.type;
-
-            // This column now supports this specific built-in role.
-            metaData.roles.insert(builtInRoleName, roleData);
-            // Add it if it doesn't already exist.
-            mRoleNames[builtInRoleKey] = builtInRoleName.toLatin1();
-        }
-        mColumnMetadata.insert(columnIndex, metaData);
-    }
 }
 
 // TODO: Turn this into a snippet that compiles in CI
@@ -341,18 +261,13 @@ QVariant QQmlTreeModel::getRow(const QModelIndex &rowIndex) const
     return {};
 }
 
-void QQmlTreeModel::classBegin()
+QVariant QQmlTreeModel::firstRow() const
 {
+    return mRows.front().get()->data();
 }
 
-void QQmlTreeModel::componentComplete()
+void QQmlTreeModel::setInitialRows()
 {
-    mComponentCompleted = true;
-
-    mColumnCount = mColumns.size();
-    if (mColumnCount > 0)
-        emit columnCountChanged();
-
     setRowsPrivate(mInitialRows);
 }
 
@@ -439,64 +354,6 @@ void QQmlTreeModel::setRow(QModelIndex rowIndex, const QVariant &rowData)
 
     emit dataChanged(topLeftModelIndex, bottomRightModelIndex);
     emit rowsChanged();
-}
-
-QQmlListProperty<QQmlTableModelColumn> QQmlTreeModel::columns()
-{
-    return {this, nullptr,
-        &QQmlTreeModel::columns_append,
-        &QQmlTreeModel::columns_count,
-        &QQmlTreeModel::columns_at,
-        &QQmlTreeModel::columns_clear,
-        &QQmlTreeModel::columns_replace,
-        &QQmlTreeModel::columns_removeLast};
-}
-
-void QQmlTreeModel::columns_append(QQmlListProperty<QQmlTableModelColumn> *property,
-                                   QQmlTableModelColumn *value)
-{
-    auto *model = static_cast<QQmlTreeModel *>(property->object);
-    Q_ASSERT(value);
-    Q_ASSERT(model);
-    auto *column = qobject_cast<QQmlTableModelColumn *>(value);
-    if (column)
-        model->mColumns.append(column);
-}
-
-qsizetype QQmlTreeModel::columns_count(QQmlListProperty<QQmlTableModelColumn> *property)
-{
-    const QQmlTreeModel *model = static_cast<QQmlTreeModel*>(property->object);
-    Q_ASSERT(model);
-    return model->mColumns.size();
-}
-
-QQmlTableModelColumn *QQmlTreeModel::columns_at(QQmlListProperty<QQmlTableModelColumn> *property, qsizetype index)
-{
-    const QQmlTreeModel *model = static_cast<QQmlTreeModel*>(property->object);
-    Q_ASSERT(model);
-    return model->mColumns.at(index);
-}
-
-void QQmlTreeModel::columns_clear(QQmlListProperty<QQmlTableModelColumn> *property)
-{
-    auto *model = static_cast<QQmlTreeModel *>(property->object);
-    Q_ASSERT(model);
-    return model->mColumns.clear();
-}
-
-void QQmlTreeModel::columns_replace(QQmlListProperty<QQmlTableModelColumn> *property, qsizetype index, QQmlTableModelColumn *value)
-{
-    auto *model = static_cast<QQmlTreeModel *>(property->object);
-    Q_ASSERT(model);
-    if (auto *column = qobject_cast<QQmlTableModelColumn *>(value))
-        return model->mColumns.replace(index, column);
-}
-
-void QQmlTreeModel::columns_removeLast(QQmlListProperty<QQmlTableModelColumn> *property)
-{
-    auto *model = static_cast<QQmlTreeModel *>(property->object);
-    Q_ASSERT(model);
-    model->mColumns.removeLast();
 }
 
 /*!
@@ -776,27 +633,6 @@ bool QQmlTreeModel::setData(const QModelIndex &index, const QVariant &value, int
     return true;
 }
 
-QHash<int, QByteArray> QQmlTreeModel::roleNames() const
-{
-    return mRoleNames;
-}
-
-QQmlTreeModel::ColumnRoleMetadata::ColumnRoleMetadata() = default;
-
-QQmlTreeModel::ColumnRoleMetadata::ColumnRoleMetadata(
-    ColumnRole role, QString name, int type, QString typeName) :
-    columnRole(role),
-    name(std::move(name)),
-    type(type),
-    typeName(std::move(typeName))
-{
-}
-
-bool QQmlTreeModel::ColumnRoleMetadata::isValid() const
-{
-    return !name.isEmpty();
-}
-
 bool QQmlTreeModel::validateRowType(QLatin1StringView functionName, const QVariant &row) const
 {
     if (!row.canConvert<QJSValue>()) {
@@ -898,12 +734,6 @@ bool QQmlTreeModel::validateNewRow(QLatin1StringView functionName, const QVarian
     }
 
     return true;
-}
-
-Qt::ItemFlags QQmlTreeModel::flags(const QModelIndex &index) const
-{
-    Q_UNUSED(index)
-    return Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable;
 }
 
 int QQmlTreeModel::treeSize() const

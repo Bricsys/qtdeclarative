@@ -42,6 +42,7 @@ public:
     size_t rowCount() const { return m_children.size(); }
     int subTreeSize() const;
 
+    QVariantMap data() const { return dataMap; }
     QVariant data(const QString &key) const { return dataMap[key]; }
     const std::vector<std::unique_ptr<QQmlTreeRow>>& children() const { return m_children; }
     void removeChild(std::vector<std::unique_ptr<QQmlTreeRow>>::const_iterator &child);

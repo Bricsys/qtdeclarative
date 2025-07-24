@@ -131,7 +131,7 @@ Q_STATIC_LOGGING_CATEGORY(lcTableModel, "qt.qml.tablemodel")
 */
 
 QQmlTableModel::QQmlTableModel(QObject *parent)
-    : QAbstractItemModel(parent)
+    : QQmlAbstractColumnModel(parent)
 {
 }
 
@@ -215,93 +215,6 @@ void QQmlTableModel::setRowsPrivate(const QVariantList &rowsAsVariantList)
 
     if (mRowCount != oldRowCount)
         emit rowCountChanged();
-}
-
-QQmlTableModel::ColumnRoleMetadata QQmlTableModel::fetchColumnRoleData(const QString &roleNameKey,
-                      QQmlTableModelColumn *tableModelColumn, int columnIndex) const
-{
-    const QVariant firstRow = mRows.first();
-    ColumnRoleMetadata roleData;
-
-    QJSValue columnRoleGetter = tableModelColumn->getterAtRole(roleNameKey);
-    if (columnRoleGetter.isUndefined()) {
-        // This role is not defined, which is fine; just skip it.
-        return roleData;
-    }
-
-    if (columnRoleGetter.isString()) {
-        // The role is set as a string, so we assume the row is a simple object.
-        if (firstRow.userType() != QMetaType::QVariantMap) {
-            qmlWarning(this).quote() << "expected row for role "
-                << roleNameKey << " of TableModelColumn at index "
-                << columnIndex << " to be a simple object, but it's "
-                << firstRow.typeName() << " instead: " << firstRow;
-            return roleData;
-        }
-        const QString rolePropertyName = columnRoleGetter.toString();
-        const QVariant roleProperty = firstRow.toMap().value(rolePropertyName);
-
-        roleData.columnRole = ColumnRole::StringRole;
-        roleData.name = rolePropertyName;
-        roleData.type = roleProperty.userType();
-        roleData.typeName = QString::fromLatin1(roleProperty.typeName());
-    } else if (columnRoleGetter.isCallable()) {
-        // The role is provided via a function, which means the row is complex and
-        // the user needs to provide the data for it.
-        const auto modelIndex = index(0, columnIndex);
-        const auto args = QJSValueList() << qmlEngine(this)->toScriptValue(modelIndex);
-        const QVariant cellData = columnRoleGetter.call(args).toVariant();
-
-        // We don't know the property name since it's provided through the function.
-        // roleData.name = ???
-        roleData.columnRole = ColumnRole::FunctionRole;
-        roleData.type = cellData.userType();
-        roleData.typeName = QString::fromLatin1(cellData.typeName());
-    } else {
-        // Invalid role.
-        qmlWarning(this) << "TableModelColumn role for column at index "
-                         << columnIndex << " must be either a string or a function; actual type is: "
-                         << columnRoleGetter.toString();
-    }
-
-    return roleData;
-}
-
-void QQmlTableModel::fetchColumnMetadata()
-{
-    qCDebug(lcTableModel) << "gathering metadata for" << mColumnCount << "columns from first row:";
-
-    static const auto supportedRoleNames = QQmlTableModelColumn::supportedRoleNames();
-
-    // Since we support different data structures at the row level, we require that there
-    // is a TableModelColumn for each column.
-    // Collect and cache metadata for each column. This makes data lookup faster.
-    for (int columnIndex = 0; columnIndex < mColumns.size(); ++columnIndex) {
-        QQmlTableModelColumn *column = mColumns.at(columnIndex);
-        qCDebug(lcTableModel).nospace() << "- column " << columnIndex << ":";
-
-        ColumnMetadata metaData;
-        const auto builtInRoleKeys = supportedRoleNames.keys();
-        for (const int builtInRoleKey : builtInRoleKeys) {
-            const QString builtInRoleName = supportedRoleNames.value(builtInRoleKey);
-            ColumnRoleMetadata roleData = fetchColumnRoleData(builtInRoleName, column, columnIndex);
-            if (roleData.type == QMetaType::UnknownType) {
-                // This built-in role was not specified in this column.
-                continue;
-            }
-
-            qCDebug(lcTableModel).nospace() << "  - added metadata for built-in role "
-                << builtInRoleName << " at column index " << columnIndex
-                << ": name=" << roleData.name << " typeName=" << roleData.typeName
-                << " type=" << roleData.type;
-
-            // This column now supports this specific built-in role.
-            metaData.roles.insert(builtInRoleName, roleData);
-            // Add it if it doesn't already exist.
-            mRoleNames[builtInRoleKey] = builtInRoleName.toLatin1();
-        }
-        mColumnMetadata.insert(columnIndex, metaData);
-    }
 }
 
 // TODO: Turn this into a snippet that compiles in CI
@@ -424,21 +337,6 @@ void QQmlTableModel::doInsert(int rowIndex, const QVariant &row)
     endInsertRows();
     emit rowCountChanged();
     emit rowsChanged();
-}
-
-void QQmlTableModel::classBegin()
-{
-}
-
-void QQmlTableModel::componentComplete()
-{
-    mComponentCompleted = true;
-
-    mColumnCount = mColumns.size();
-    if (mColumnCount > 0)
-        emit columnCountChanged();
-
-    setRowsPrivate(mRows);
 }
 
 /*!
@@ -603,62 +501,15 @@ void QQmlTableModel::setRow(int rowIndex, const QVariant &row)
     }
 }
 
-QQmlListProperty<QQmlTableModelColumn> QQmlTableModel::columns()
+
+QVariant QQmlTableModel::firstRow() const
 {
-    return {this, nullptr,
-        &QQmlTableModel::columns_append,
-        &QQmlTableModel::columns_count,
-        &QQmlTableModel::columns_at,
-        &QQmlTableModel::columns_clear,
-        &QQmlTableModel::columns_replace,
-        &QQmlTableModel::columns_removeLast};
+    return mRows.first();
 }
 
-void QQmlTableModel::columns_append(QQmlListProperty<QQmlTableModelColumn> *property,
-                                   QQmlTableModelColumn *value)
+void QQmlTableModel::setInitialRows()
 {
-    auto *model = static_cast<QQmlTableModel*>(property->object);
-    Q_ASSERT(value);
-    Q_ASSERT(model);
-    auto *column = qobject_cast<QQmlTableModelColumn*>(value);
-    if (column)
-        model->mColumns.append(column);
-}
-
-qsizetype QQmlTableModel::columns_count(QQmlListProperty<QQmlTableModelColumn> *property)
-{
-    const QQmlTableModel *model = static_cast<QQmlTableModel*>(property->object);
-    Q_ASSERT(model);
-    return model->mColumns.size();
-}
-
-QQmlTableModelColumn *QQmlTableModel::columns_at(QQmlListProperty<QQmlTableModelColumn> *property, qsizetype index)
-{
-    const QQmlTableModel *model = static_cast<QQmlTableModel*>(property->object);
-    Q_ASSERT(model);
-    return model->mColumns.at(index);
-}
-
-void QQmlTableModel::columns_clear(QQmlListProperty<QQmlTableModelColumn> *property)
-{
-    auto *model = static_cast<QQmlTableModel*>(property->object);
-    Q_ASSERT(model);
-    return model->mColumns.clear();
-}
-
-void QQmlTableModel::columns_replace(QQmlListProperty<QQmlTableModelColumn> *property, qsizetype index, QQmlTableModelColumn *value)
-{
-    auto *model = static_cast<QQmlTableModel*>(property->object);
-    Q_ASSERT(model);
-    if (auto *column = qobject_cast<QQmlTableModelColumn*>(value))
-        return model->mColumns.replace(index, column);
-}
-
-void QQmlTableModel::columns_removeLast(QQmlListProperty<QQmlTableModelColumn> *property)
-{
-    auto *model = static_cast<QQmlTableModel*>(property->object);
-    Q_ASSERT(model);
-    model->mColumns.removeLast();
+    setRowsPrivate(mRows);
 }
 
 /*!
@@ -885,27 +736,6 @@ bool QQmlTableModel::setData(const QModelIndex &index, const QVariant &value, in
     return true;
 }
 
-QHash<int, QByteArray> QQmlTableModel::roleNames() const
-{
-    return mRoleNames;
-}
-
-QQmlTableModel::ColumnRoleMetadata::ColumnRoleMetadata() = default;
-
-QQmlTableModel::ColumnRoleMetadata::ColumnRoleMetadata(
-    ColumnRole role, QString name, int type, QString typeName) :
-    columnRole(role),
-    name(std::move(name)),
-    type(type),
-    typeName(std::move(typeName))
-{
-}
-
-bool QQmlTableModel::ColumnRoleMetadata::isValid() const
-{
-    return !name.isEmpty();
-}
-
 bool QQmlTableModel::validateRowType(QLatin1StringView functionName, const QVariant &row) const
 {
     if (!row.canConvert<QJSValue>()) {
@@ -1031,12 +861,6 @@ bool QQmlTableModel::validateRowIndex(QLatin1StringView functionName, const char
     }
 
     return true;
-}
-
-Qt::ItemFlags QQmlTableModel::flags(const QModelIndex &index) const
-{
-    Q_UNUSED(index)
-    return Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable;
 }
 
 QT_END_NAMESPACE

@@ -15,7 +15,7 @@
 // We mean it.
 //
 
-#include "qqmltablemodelcolumn_p.h"
+#include "qqmlabstractcolumnmodel_p.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QHash>
@@ -29,15 +29,11 @@ QT_REQUIRE_CONFIG(qml_table_model);
 
 QT_BEGIN_NAMESPACE
 
-class Q_LABSQMLMODELS_EXPORT QQmlTableModel : public QAbstractItemModel, public QQmlParserStatus
+class Q_LABSQMLMODELS_EXPORT QQmlTableModel : public QQmlAbstractColumnModel
 {
     Q_OBJECT
-    Q_PROPERTY(int columnCount READ columnCount NOTIFY columnCountChanged FINAL)
     Q_PROPERTY(int rowCount READ rowCount NOTIFY rowCountChanged FINAL)
     Q_PROPERTY(QVariant rows READ rows WRITE setRows NOTIFY rowsChanged FINAL)
-    Q_PROPERTY(QQmlListProperty<QQmlTableModelColumn> columns READ columns CONSTANT FINAL)
-    Q_INTERFACES(QQmlParserStatus)
-    Q_CLASSINFO("DefaultProperty", "columns")
     QML_NAMED_ELEMENT(TableModel)
     QML_ADDED_IN_VERSION(1, 0)
 
@@ -58,15 +54,6 @@ public:
     Q_INVOKABLE void removeRow(int rowIndex, int rows = 1);
     Q_INVOKABLE void setRow(int rowIndex, const QVariant &row);
 
-    QQmlListProperty<QQmlTableModelColumn> columns();
-
-    static void columns_append(QQmlListProperty<QQmlTableModelColumn> *property, QQmlTableModelColumn *value);
-    static qsizetype columns_count(QQmlListProperty<QQmlTableModelColumn> *property);
-    static QQmlTableModelColumn *columns_at(QQmlListProperty<QQmlTableModelColumn> *property, qsizetype index);
-    static void columns_clear(QQmlListProperty<QQmlTableModelColumn> *property);
-    static void columns_replace(QQmlListProperty<QQmlTableModelColumn> *property, qsizetype index, QQmlTableModelColumn *value);
-    static void columns_removeLast(QQmlListProperty<QQmlTableModelColumn> *property);
-
     //AbstractItemModel interface
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -75,47 +62,17 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     Q_INVOKABLE bool setData(const QModelIndex &index, const QString &role, const QVariant &value);
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::DisplayRole) override;
-    QHash<int, QByteArray> roleNames() const override;
-    Qt::ItemFlags flags(const QModelIndex &index) const override;
     QModelIndex parent(const QModelIndex &index) const override;
 
 Q_SIGNALS:
-    void columnCountChanged();
     void rowCountChanged();
     void rowsChanged();
 
 protected:
-    void classBegin() override;
-    void componentComplete() override;
+    QVariant firstRow() const override;
+    void setInitialRows() override;
 
 private:
-
-    enum class ColumnRole : quint8
-    {
-        StringRole,
-        FunctionRole
-    };
-
-    class ColumnRoleMetadata
-    {
-    public:
-        ColumnRoleMetadata();
-        ColumnRoleMetadata(ColumnRole role, QString name, int type, QString typeName);
-
-        bool isValid() const;
-
-        ColumnRole columnRole = ColumnRole::FunctionRole;
-        QString name;
-        int type = QMetaType::UnknownType;
-        QString typeName;
-    };
-
-    struct ColumnMetadata
-    {
-        // Key = role name that will be made visible to the delegate
-        // Value = metadata about that role, including actual name in the model data, type, etc.
-        QHash<QString, ColumnRoleMetadata> roles;
-    };
 
     enum NewRowOperationFlag {
         OtherOperation, // insert(), set(), etc.
@@ -124,9 +81,6 @@ private:
     };
 
     void setRowsPrivate(const QVariantList &rowsAsVariantList);
-    ColumnRoleMetadata fetchColumnRoleData(const QString &roleNameKey,
-        QQmlTableModelColumn *tableModelColumn, int columnIndex) const;
-    void fetchColumnMetadata();
 
     bool validateRowType(QLatin1StringView functionName, const QVariant &row) const;
     bool validateNewRow(QLatin1StringView functionName, const QVariant &row,
@@ -135,16 +89,8 @@ private:
 
     void doInsert(int rowIndex, const QVariant &row);
 
-    bool mComponentCompleted = false;
     QVariantList mRows;
-    QList<QQmlTableModelColumn *> mColumns;
     int mRowCount = 0;
-    int mColumnCount = 0;
-    // Each entry contains information about the properties of the column at that index.
-    QVector<ColumnMetadata> mColumnMetadata;
-    // key = property index (0 to number of properties across all columns)
-    // value = role name
-    QHash<int, QByteArray> mRoleNames;
 };
 
 QT_END_NAMESPACE

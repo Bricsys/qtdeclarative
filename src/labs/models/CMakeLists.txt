@@ -19,6 +19,7 @@ qt_internal_add_qml_module(LabsQmlModels
 
 qt_internal_extend_target(LabsQmlModels CONDITION QT_FEATURE_qml_table_model
     SOURCES
+        qqmlabstractcolumnmodel.cpp qqmlabstractcolumnmodel_p.h
         qqmltablemodel.cpp qqmltablemodel_p.h
         qqmltablemodelcolumn.cpp qqmltablemodelcolumn_p.h
 )
