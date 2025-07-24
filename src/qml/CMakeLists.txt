@@ -139,7 +139,7 @@ qt_internal_add_qml_module(Qml
         inlinecomponentutils_p.h
         jsapi/qjsengine.cpp jsapi/qjsengine.h jsapi/qjsengine_p.h
         jsapi/qjslist.cpp jsapi/qjslist.h
-        jsapi/qjsmanagedvalue.cpp jsapi/qjsmanagedvalue.h
+        jsapi/qjsmanagedvalue.cpp jsapi/qjsmanagedvalue.h jsapi/qjsmanagedvalue_p.h
         jsapi/qjsprimitivevalue.cpp jsapi/qjsprimitivevalue.h
         jsapi/qjsvalue.cpp jsapi/qjsvalue.h jsapi/qjsvalue_p.h
         jsapi/qjsvalueiterator.cpp jsapi/qjsvalueiterator.h jsapi/qjsvalueiterator_p.h

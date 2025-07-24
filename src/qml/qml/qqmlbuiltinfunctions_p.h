@@ -16,8 +16,12 @@
 //
 
 #include <private/qjsengine_p.h>
+#include <private/qjsvalue_p.h>
+#include <private/qjsmanagedvalue_p.h>
+#include <private/qqmlengine_p.h>
 #include <private/qqmlglobal_p.h>
 #include <private/qqmlplatform_p.h>
+#include <private/qqmltypewrapper_p.h>
 #include <private/qv4functionobject_p.h>
 
 #include <QtCore/qnamespace.h>
@@ -30,6 +34,8 @@
 #include <QtQml/qqmlengine.h>
 
 QT_BEGIN_NAMESPACE
+
+using namespace Qt::StringLiterals;
 
 Q_DECLARE_LOGGING_CATEGORY(lcQml);
 Q_DECLARE_LOGGING_CATEGORY(lcJs);
@@ -158,9 +164,9 @@ public:
     Q_INVOKABLE QJSValue binding(const QJSValue &function) const;
     Q_INVOKABLE void callLater(QQmlV4FunctionPtr args);
 
-    Q_INVOKABLE QVariant enumStringToValue(QJSValue enumType, QJSValue value);
-    Q_INVOKABLE QVariant enumValueToString(QJSValue enumType, QJSValue value);
-    Q_INVOKABLE QVariant enumValueToStrings(QJSValue enumType, QJSValue value);
+    Q_INVOKABLE double enumStringToValue(const QJSManagedValue &enumType, const QString &string);
+    Q_INVOKABLE QString enumValueToString(const QJSManagedValue &enumType, double value);
+    Q_INVOKABLE QStringList enumValueToStrings(const QJSManagedValue &enumType, double value);
 
 #if QT_CONFIG(translation)
     QString uiLanguage() const;
@@ -190,6 +196,39 @@ private:
         QQmlRefPointer<QQmlContextData> effectiveContext;
     };
     Contexts getContexts() const;
+
+    template<typename Ret, typename HandleScoped, typename HandleUnscoped>
+    Ret retrieveFromEnum(const QJSManagedValue &enumType, HandleScoped &&handleScoped,
+                         HandleUnscoped &&handleUnscoped, QV4::ExecutionEngine *engine)
+    {
+        Q_ASSERT(engine);
+
+        // It's fine to hold a bare pointer to the internals of a QJSManagedValue
+        // The managed value keeps a QV4::PersistentValue after all.
+        QV4::Value *internal = QJSManagedValuePrivate::member(&enumType);
+        Q_ASSERT(internal);
+
+        QV4::Heap::QQmlEnumWrapper *enumWrapper = nullptr;
+        if (QV4::QQmlEnumWrapper *wrapper = internal->as<QV4::QQmlEnumWrapper>()) {
+            enumWrapper = wrapper->d();
+        } else {
+            engine->throwTypeError("Invalid first argument, expected enum"_L1);
+            return Ret();
+        }
+
+        bool ok;
+        const QQmlType type = enumWrapper->type();
+        const int enumIndex = enumWrapper->enumIndex;
+        auto *typeLoader = m_engine->typeLoader();
+        const auto value = enumWrapper->scoped
+                ? handleScoped(type, typeLoader, enumIndex, &ok)
+                : handleUnscoped(type, typeLoader, enumIndex, &ok);
+
+        if (!ok)
+            engine->throwReferenceError("Invalid second argument, entry"_L1);
+
+        return value;
+    }
 
     QQmlPlatform *m_platform = nullptr;
     QQmlApplication *m_application = nullptr;

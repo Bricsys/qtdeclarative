@@ -1726,99 +1726,72 @@ void QtObject::callLater(QQmlV4FunctionPtr args)
     \qmlmethod Qt::enumStringToValue(enumType, keyName)
 
     Returns the numeric value of key \a keyName in enum \a enumType. If the
-    enum could not be found or if the key is not an entry of the enum,
-    \c undefined is returned instead.
+    enum could not be found, a \c TypeError is thrown. If the key is not an
+    entry of the enum, a \c ReferenceError is thrown.
  */
-QVariant QtObject::enumStringToValue(QJSValue enumType, QJSValue string)
+double QtObject::enumStringToValue(const QJSManagedValue &enumType, const QString &string)
 {
-    if (!enumType.isObject() || !string.isString())
-        return QVariant();
-
-    const auto *enumWrapper = QJSValuePrivate::takeManagedValue(&enumType)->as<QQmlEnumWrapper>();
-    if (!enumWrapper)
-        return QVariant();
-
-    bool ok = false;
-    QQmlType type = enumWrapper->d()->type();
-    int enumIndex = enumWrapper->d()->enumIndex;
-    QString keyString = string.toString();
-    auto &typeLoader = QQmlEnginePrivate::get(m_engine->qmlEngine())->typeLoader;
-    int value = enumWrapper->d()->scoped
-            ? type.scopedEnumValue(&typeLoader, enumIndex, keyString, &ok)
-            : type.unscopedEnumValue(&typeLoader, enumIndex, keyString, &ok);
-
-    if (ok)
-        return value;
-
-    return QVariant();
+    return retrieveFromEnum<double>(
+            enumType,
+            [&](const QQmlType &type, QQmlTypeLoader *typeLoader, int enumIndex, bool *ok) {
+                return type.scopedEnumValue(typeLoader, enumIndex, string, ok);
+            }, [&](const QQmlType &type, QQmlTypeLoader *typeLoader, int enumIndex, bool *ok) {
+                return type.unscopedEnumValue(typeLoader, enumIndex, string, ok);
+            }, m_engine);
 }
 
 /*!
-    \qmlmethod Qt::enumValueToString(enumType, keyNumericValue)
+    \qmlmethod Qt::enumValueToString(enumType, keyValue)
 
     Returns the string representation of a key of enum \a enumType that has the
-    value \a keyNumericValue. If the enum could not be found or if the value
-    does not match any key of the enum, \c undefined is returned instead.
+    value \a keyValue. If the enum could not be found, a \c TypeError is
+    thrown. If the value does not match any key of the enum, a
+    \c ReferenceError is thrown.
 
-    \note If multiple keys match the value of \a keyNumericValue, which of the
+    \note If multiple keys match the value of \a keyValue, which of the
     matching keys will be returned is unspecified. Use enumValueToStrings in
     that case.
  */
-QVariant QtObject::enumValueToString(QJSValue enumType, QJSValue value)
+QString QtObject::enumValueToString(const QJSManagedValue &enumType, double value)
 {
-    if (!enumType.isObject() || !value.isNumber())
-        return QVariant();
+    // Undefined -> double = NaN
+    if (std::isnan(value)) {
+        m_engine->throwReferenceError("Invalid second argument, entry"_L1);
+        return {};
+    }
 
-    const auto *enumWrapper = QJSValuePrivate::takeManagedValue(&enumType)->as<QQmlEnumWrapper>();
-    if (!enumWrapper)
-        return QVariant();
-
-    bool ok = false;
-    QQmlType type = enumWrapper->d()->type();
-    int enumIndex = enumWrapper->d()->enumIndex;
-    int keyValue = value.toInt();
-    auto &typeLoader = QQmlEnginePrivate::get(m_engine->qmlEngine())->typeLoader;
-    QString key = enumWrapper->d()->scoped
-            ? type.scopedEnumKey(&typeLoader, enumIndex, keyValue, &ok)
-            : type.unscopedEnumKey(&typeLoader, enumIndex, keyValue, &ok);
-
-    if (ok)
-        return key;
-
-    return QVariant();
+    return retrieveFromEnum<QString>(
+            enumType,
+            [&](const QQmlType &type, QQmlTypeLoader *typeLoader, int enumIndex, bool *ok) {
+                return type.scopedEnumKey(typeLoader, enumIndex, QtPrivate::qSaturateRound(value), ok);
+            }, [&](const QQmlType &type, QQmlTypeLoader *typeLoader, int enumIndex, bool *ok) {
+                return type.unscopedEnumKey(typeLoader, enumIndex, QtPrivate::qSaturateRound(value), ok);
+            }, m_engine);
 }
 
 /*!
-    \qmlmethod Qt::enumValueToStrings(enumType, keyNumericValue)
+    \qmlmethod Qt::enumValueToStrings(enumType, keyValue)
 
     Returns a list of the string representation of all the keys of enum
-    \a enumType that have the value \a keyNumericValue. If the enum could not
-    be found, undefined is retured instead. If no key matches the provided
-    value, the returned list is empty.
+    \a enumType that have the value \a keyValue. If the enum could not be
+    found, a \c TypeError is thrown. If no key in the enum has value
+    \a keyValue, a \c ReferenceError is thrown.
  */
-QVariant QtObject::enumValueToStrings(QJSValue enumType, QJSValue value)
+QStringList QtObject::enumValueToStrings(const QJSManagedValue &enumType, double value)
 {
-    if (!enumType.isObject() || !value.isNumber())
-        return QVariant();
+    // Undefined -> double = NaN
+    if (std::isnan(value)) {
+        m_engine->throwReferenceError("Invalid second argument, entry"_L1);
+        return {};
+    }
 
-    const auto *enumWrapper = QJSValuePrivate::takeManagedValue(&enumType)->as<QQmlEnumWrapper>();
-    if (!enumWrapper)
-        return QVariant();
-
-    bool ok = false;
-    QQmlType type = enumWrapper->d()->type();
-    int enumIndex = enumWrapper->d()->enumIndex;
-    int keyValue = value.toInt();
-    auto &typeLoader = QQmlEnginePrivate::get(m_engine->qmlEngine())->typeLoader;
-    Scope scope(m_engine);
-    QStringList keys = enumWrapper->d()->scoped
-            ? type.scopedEnumKeys(&typeLoader, enumIndex, keyValue, &ok)
-            : type.unscopedEnumKeys(&typeLoader, enumIndex, keyValue, &ok);
-
-    if (ok)
-        return keys;
-
-    return QVariant();
+    return retrieveFromEnum<QStringList>(
+            enumType,
+            [&](const QQmlType &type, QQmlTypeLoader *typeLoader, int enumIndex, bool *ok) {
+                return type.scopedEnumKeys(typeLoader, enumIndex, QtPrivate::qSaturateRound(value), ok);
+            }, [&](const QQmlType &type, QQmlTypeLoader *typeLoader, int enumIndex, bool *ok) {
+                return type.unscopedEnumKeys(typeLoader, enumIndex, QtPrivate::qSaturateRound(value), ok);
+            }, m_engine);
 }
 
 QQmlPlatform *QtObject::platform()

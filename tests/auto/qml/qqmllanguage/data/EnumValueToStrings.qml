@@ -29,9 +29,20 @@ QtObject {
     property list<string> p10: Qt.enumValueToStrings(EnumNamespace.Unscoped, nsu3)
 
 
-    property var p11: Qt.enumValueToStrings(EnumValueToStrings.QmlEnum, "NOPE")
-    property var p12: Qt.enumValueToStrings(EnumValueToStrings.QmlEnum, 14)
+    property var p11: capture(() => Qt.enumValueToStrings("NOPE", 9))
+    property var p12: capture(() => Qt.enumValueToStrings(EnumValueToStrings.QmlEnum, 14))
+    property var p13: capture(() => Qt.enumValueToStrings(EnumValueToStrings.QmlEnum, EnumValueToStrings.NOPE))
 
-    property var p13: Qt.enumValueToStrings(ConflictingEnums.E1, ConflictingEnums.E1.A /* 1 */)
-    property var p14: Qt.enumValueToStrings(ConflictingEnums.E1, ConflictingEnums.A /* 2 */)
+    property var p14: Qt.enumValueToStrings(ConflictingEnums.E1, ConflictingEnums.E1.A /* 1 */)
+    property var p15: Qt.enumValueToStrings(ConflictingEnums.E1, ConflictingEnums.A /* 2 */)
+
+    function capture(f) {
+        let s = "<no exception>"
+        try {
+            f()
+        } catch(e) {
+            s = e.message
+        }
+        return s
+    }
 }

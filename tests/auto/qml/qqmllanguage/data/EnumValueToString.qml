@@ -18,10 +18,20 @@ QtObject {
     property string p10: Qt.enumValueToString(EnumNamespace.Unscoped, EnumNamespace.U2)
 
 
-    property var p11: Qt.enumValueToString(EnumValueToString.QmlEnum, -1)
-    property var p12: Qt.enumValueToString(EnumValueToString.QmlEnum, 2)
-    property var p13: Qt.enumValueToString(EnumValueToString.QmlEnum, EnumValueToString.NOPE)
+    property var p11: capture(() => Qt.enumValueToString(1, 2))
+    property var p12: capture(() => Qt.enumValueToString(EnumValueToString.QmlEnum, 2))
+    property var p13: capture(() => Qt.enumValueToString(EnumValueToString.QmlEnum, EnumValueToString.NOPE))
 
     property var p14: Qt.enumValueToString(ConflictingEnums.E1, ConflictingEnums.E1.A /* 1 */)
     property var p15: Qt.enumValueToString(ConflictingEnums.E1, ConflictingEnums.A /* 2 */)
+
+    function capture(f) {
+        let s = "<no exception>"
+        try {
+            f()
+        } catch(e) {
+            s = e.message
+        }
+        return s
+    }
 }

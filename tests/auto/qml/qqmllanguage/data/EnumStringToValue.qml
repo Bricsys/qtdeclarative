@@ -11,9 +11,19 @@ QtObject {
     property int p5: Qt.enumStringToValue(EnumNamespace.Unscoped, "U2")
 
 
-    property var p7: Qt.enumStringToValue(NOPE, "A")
-    property var p8: Qt.enumStringToValue(CppEnum.Scoped, NOPE)
+    property string p6: capture(() => Qt.enumStringToValue(undefined, "A"))
+    property string p7: capture(() => Qt.enumStringToValue(CppEnum.Scoped, undefined))
 
-    property int p9: Qt.enumStringToValue(ConflictingEnums.E1, "A")
-    property int p10: Qt.enumStringToValue(ConflictingEnums.E2, "A")
+    property int p8: Qt.enumStringToValue(ConflictingEnums.E1, "A")
+    property int p9: Qt.enumStringToValue(ConflictingEnums.E2, "A")
+
+    function capture(f) {
+        let s = "<no exception>"
+        try {
+            f()
+        } catch(e) {
+            s = e.message
+        }
+        return s
+    }
 }

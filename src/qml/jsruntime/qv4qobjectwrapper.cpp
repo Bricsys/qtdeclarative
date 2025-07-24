@@ -4,6 +4,7 @@
 #include "qv4qobjectwrapper_p.h"
 
 #include <private/qjsvalue_p.h>
+#include <private/qjsmanagedvalue_p.h>
 
 #include <private/qqmlbinding_p.h>
 #include <private/qqmlbuiltinfunctions_p.h>
@@ -1592,14 +1593,14 @@ DEFINE_OBJECT_VTABLE(QObjectWrapper);
 
 namespace {
 
-template<typename A, typename B, typename C, typename D, typename E, typename F, typename G>
-class MaxSizeOf7 {
+template<typename A, typename B, typename C, typename D, typename E, typename F, typename G, typename H>
+class MaxSizeOf8 {
     template<typename Z, typename X>
     struct SMax {
         char dummy[sizeof(Z) > sizeof(X) ? sizeof(Z) : sizeof(X)];
     };
 public:
-    static const size_t Size = sizeof(SMax<A, SMax<B, SMax<C, SMax<D, SMax<E, SMax<F, G> > > > > >);
+    static const size_t Size = sizeof(SMax<A, SMax<B, SMax<C, SMax<D, SMax<E, SMax<F, SMax<G, H> > > > > > >);
 };
 
 struct CallArgument {
@@ -1639,10 +1640,11 @@ private:
         std::vector<QModelIndex> *stdVectorQModelIndexPtr;
 #endif
 
-        char allocData[MaxSizeOf7<QVariant,
+        char allocData[MaxSizeOf8<QVariant,
                                   QString,
                                   QList<QObject *>,
                                   QJSValue,
+                                  QJSManagedValue,
                                   QJsonArray,
                                   QJsonObject,
                                   QJsonValue>::Size];
@@ -1656,6 +1658,7 @@ private:
         QVariant *qvariantPtr;
         QList<QObject *> *qlistPtr;
         QJSValue *qjsValuePtr;
+        QJSManagedValue *qjsManagedValuePtr;
         QJsonArray *jsonArrayPtr;
         QJsonObject *jsonObjectPtr;
         QJsonValue *jsonValuePtr;
@@ -2310,6 +2313,11 @@ void CallArgument::cleanup()
             break;
         }
 
+        if (type == qMetaTypeId<QJSManagedValue>()) {
+            qjsManagedValuePtr->~QJSManagedValue();
+            break;
+        }
+
         if (type == qMetaTypeId<QList<QObject *> >()) {
             qlistPtr->~QList<QObject *>();
             break;
@@ -2387,6 +2395,11 @@ void CallArgument::initAsType(QMetaType metaType)
     default: {
         if (metaType == QMetaType::fromType<QJSValue>()) {
             qjsValuePtr = new (&allocData) QJSValue();
+            break;
+        }
+
+        if (metaType == QMetaType::fromType<QJSManagedValue>()) {
+            qjsManagedValuePtr = new (&allocData) QJSManagedValue();
             break;
         }
 
@@ -2503,6 +2516,15 @@ bool CallArgument::fromValue(QMetaType metaType, ExecutionEngine *engine, const 
             Scope scope(engine);
             ScopedValue v(scope, value);
             QJSValuePrivate::setValue(qjsValuePtr, v);
+            return true;
+        }
+
+        if (type == qMetaTypeId<QJSManagedValue>()) {
+            Scope scope(engine);
+            ScopedValue v(scope, value);
+            qjsManagedValuePtr = new (&allocData) QJSManagedValue;
+            // This points to a JS heap object that cannot be immutable. const_cast-ing is fine here.
+            *QJSManagedValuePrivate::memberPtr(qjsManagedValuePtr) = const_cast<Value *>(&value);
             return true;
         }
 
@@ -2651,6 +2673,9 @@ ReturnedValue CallArgument::toValue(ExecutionEngine *engine)
         QJSValuePrivate::manageStringOnV4Heap(engine, qjsValuePtr);
         return QJSValuePrivate::asReturnedValue(qjsValuePtr);
     }
+
+    if (type == qMetaTypeId<QJSManagedValue>())
+        return QJSManagedValuePrivate::member(qjsManagedValuePtr)->asReturnedValue();
 
     if (type == qMetaTypeId<QList<QObject *> >()) {
         // XXX Can this be made more by using Array as a prototype and implementing

@@ -30,6 +30,7 @@
 #include <private/qqmlcomponent_p.h>
 #include <private/qqmltype_p_p.h>
 #include <private/qv4debugging_p.h>
+#include <private/qv4errorobject_p.h>
 #include <private/qqmlcomponentattached_p.h>
 #include <QtQml/private/qqmlexpression_p.h>
 
@@ -9888,12 +9889,12 @@ void tst_qqmllanguage::enumStringToValue()
 
 
     // Invalid arg
-    QCOMPARE(o->property("p7"), QVariant());
-    QCOMPARE(o->property("p8"), QVariant());
+    QCOMPARE(o->property("p6").toString(), "Invalid first argument, expected enum");
+    QCOMPARE(o->property("p7").toString(), "Invalid second argument, entry is not defined");
 
     // Conflicts
-    QCOMPARE(o->property("p9").toInt(), (int)ConflictingEnums::E1::A);
-    QCOMPARE(o->property("p10").toInt(), (int)ConflictingEnums::E2::A);
+    QCOMPARE(o->property("p8").toInt(), (int)ConflictingEnums::E1::A);
+    QCOMPARE(o->property("p9").toInt(), (int)ConflictingEnums::E2::A);
 }
 
 void tst_qqmllanguage::enumValueToString()
@@ -9926,9 +9927,9 @@ void tst_qqmllanguage::enumValueToString()
 
 
     // Invalid arg
-    QCOMPARE(o->property("p11"), QVariant());
-    QCOMPARE(o->property("p12"), QVariant());
-    QCOMPARE(o->property("p13"), QVariant());
+    QCOMPARE(o->property("p11").toString(), "Invalid first argument, expected enum");
+    QCOMPARE(o->property("p12").toString(), "Invalid second argument, entry is not defined");
+    QCOMPARE(o->property("p13").toString(), "Invalid second argument, entry is not defined");
 
     // Conflicts
     QCOMPARE(o->property("p14"), QVariant("A"));
@@ -9980,13 +9981,14 @@ void tst_qqmllanguage::enumValueToStrings()
 
 
     // Invalid arg
-    QCOMPARE(o->property("p11"), QVariant());
-    QCOMPARE(o->property("p12"), QVariant());
+    QCOMPARE(o->property("p11").toString(), "Invalid first argument, expected enum");
+    QCOMPARE(o->property("p12").toString(), "Invalid second argument, entry is not defined");
+    QCOMPARE(o->property("p13").toString(), "Invalid second argument, entry is not defined");
 
     // Conflicts
     l = QList({ QVariant("A") });
-    QCOMPARE(o->property("p13").toList(), l);
-    QCOMPARE(o->property("p14"), QVariant());
+    QCOMPARE(o->property("p14").toList(), l);
+    QCOMPARE(o->property("p15"), QVariant());
 }
 
 void tst_qqmllanguage::enumTypeAnnotations()
