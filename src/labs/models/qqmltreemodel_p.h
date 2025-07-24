@@ -31,17 +31,15 @@ QT_BEGIN_NAMESPACE
 
 class QQmlTreeRow;
 
-
-
 class Q_LABSQMLMODELS_EXPORT QQmlTreeModel : public QAbstractItemModel, public QQmlParserStatus
 {
     Q_OBJECT
-    QML_NAMED_ELEMENT(TreeModel)
     Q_PROPERTY(int columnCount READ columnCount NOTIFY columnCountChanged FINAL)
     Q_PROPERTY(QVariant rows READ rows WRITE setRows NOTIFY rowsChanged FINAL)
     Q_PROPERTY(QQmlListProperty<QQmlTableModelColumn> columns READ columns CONSTANT FINAL)
     Q_INTERFACES(QQmlParserStatus)
     Q_CLASSINFO("DefaultProperty", "columns")
+    QML_NAMED_ELEMENT(TreeModel)
     QML_ADDED_IN_VERSION(6, 10)
 
 public:
@@ -83,7 +81,7 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const override;
     QModelIndex parent(const QModelIndex &index) const override;
 
-signals:
+Q_SIGNALS:
     void columnCountChanged();
     void rowsChanged();
 
@@ -99,8 +97,8 @@ private:
 
     enum class ColumnRole : quint8
     {
-        stringRole,
-        functionRole
+        StringRole,
+        FunctionRole
     };
 
     class ColumnRoleMetadata
@@ -111,7 +109,7 @@ private:
 
         bool isValid() const;
 
-        ColumnRole columnRole = ColumnRole::functionRole;
+        ColumnRole columnRole = ColumnRole::FunctionRole;
         QString name;
         int type = QMetaType::UnknownType;
         QString typeName;
@@ -124,13 +122,19 @@ private:
         QHash<QString, ColumnRoleMetadata> roles;
     };
 
+    enum NewRowOperationFlag {
+        OtherOperation, // insert(), set(), etc.
+        SetRowsOperation,
+        AppendOperation
+    };
 
     void setRowsPrivate(const QVariantList &rowsAsVariantList);
     ColumnRoleMetadata fetchColumnRoleData(const QString &roleNameKey, QQmlTableModelColumn *tableModelColumn, int columnIndex) const;
-    void fetchColumnMetaData();
+    void fetchColumnMetadata();
 
-    bool validateRowType(QLatin1StringView functionName, const QVariant &row);
-    bool validateRow(QLatin1StringView functionName, const QVariant &row, bool setRowsOperation = false);
+    bool validateRowType(QLatin1StringView functionName, const QVariant &row) const;
+    bool validateNewRow(QLatin1StringView functionName, const QVariant &row,
+        NewRowOperationFlag = OtherOperation) const;
 
     QList<QQmlTableModelColumn *> mColumns;
     std::vector<std::unique_ptr<QQmlTreeRow>> mRows;

@@ -5,15 +5,15 @@
 #include "qqmltreerow_p.h"
 
 #include <QtCore/qloggingcategory.h>
-#include <QtCore/qjsonvalue.h>
-#include <QtCore/qjsonobject.h>
 
-#include <QtQml/qqmlengine.h>
 #include <QtQml/qqmlinfo.h>
+#include <QtQml/qqmlengine.h>
 
 QT_BEGIN_NAMESPACE
 
 using namespace Qt::StringLiterals;
+
+Q_STATIC_LOGGING_CATEGORY(lcTreeModel, "qt.qml.treemodel")
 
 static const QString ROWS_PROPERTY_NAME = u"rows"_s;
 
@@ -62,7 +62,6 @@ static const QString ROWS_PROPERTY_NAME = u"rows"_s;
 QQmlTreeModel::QQmlTreeModel(QObject *parent)
     : QAbstractItemModel(parent)
 {
-
 }
 
 QQmlTreeModel::~QQmlTreeModel() = default;
@@ -70,9 +69,9 @@ QQmlTreeModel::~QQmlTreeModel() = default;
 /*!
     \qmlproperty object TreeModel::rows
 
- This property holds the model data in the form of an array of rows.
+    This property holds the model data in the form of an array of rows.
 
- \sa getRow(), setRow(), appendRow(), clear(), columnCount
+    \sa getRow(), setRow(), appendRow(), clear(), columnCount
 */
 QVariant QQmlTreeModel::rows() const
 {
@@ -86,7 +85,7 @@ QVariant QQmlTreeModel::rows() const
 void QQmlTreeModel::setRows(const QVariant &rows)
 {
     if (rows.userType() != qMetaTypeId<QJSValue>()) {
-        qWarning() << "setRows(): \"rows\" must be an array; actual type is " << rows.typeName();
+        qmlWarning(this) << "setRows(): \"rows\" must be an array; actual type is " << rows.typeName();
         return;
     }
 
@@ -94,6 +93,7 @@ void QQmlTreeModel::setRows(const QVariant &rows)
     const QVariantList rowsAsVariantList = rowsAsJSValue.toVariant().toList();
 
     if (!mComponentCompleted) {
+        // Store the rows until we can call setRowsPrivate() after component completion.
         mInitialRows = rowsAsVariantList;
         return;
     }
@@ -105,7 +105,7 @@ void QQmlTreeModel::setRowsPrivate(const QVariantList &rowsAsVariantList)
 {
     Q_ASSERT(mComponentCompleted);
 
-           // By now, all TableModelColumns should have been set.
+    // By now, all TableModelColumns should have been set.
     if (mColumns.isEmpty()) {
         qmlWarning(this) << "No TableModelColumns were set; model will be empty";
         return;
@@ -113,39 +113,36 @@ void QQmlTreeModel::setRowsPrivate(const QVariantList &rowsAsVariantList)
 
     const bool firstTimeValidRowsHaveBeenSet = mColumnMetadata.isEmpty();
     if (!firstTimeValidRowsHaveBeenSet) {
-        // This is not the first time the rows have been set; validate each one.
-        for (const auto &row:rowsAsVariantList) {
+        // This is not the first time rows have been set; validate each one.
+        for (const auto &row : rowsAsVariantList) {
             // validateNewRow() expects a QVariant wrapping a QJSValue, so to
             // simplify the code, just create one here.
             const QVariant wrappedRow = QVariant::fromValue(row);
-            bool setRowsOperation = true;
-            if (!validateRow("TreeModel::setRows"_L1, wrappedRow, setRowsOperation))
+            if (!validateNewRow("TreeModel::setRows"_L1, wrappedRow, SetRowsOperation))
                 return;
         }
     }
 
     beginResetModel();
 
-           // We don't clear the column or role data, because a TreeModel should not be reused in that way.
-           // Once it has valid data, its columns and roles are fixed.
+    // We don't clear the column or role data, because a TreeModel should not be reused in that way.
+    // Once it has valid data, its columns and roles are fixed.
     mRows.clear();
 
     for (const auto &rowAsVariant : rowsAsVariantList)
         mRows.push_back(std::make_unique<QQmlTreeRow>(rowAsVariant));
 
-           // Gather metadata the first time the rows are set.
-    if (firstTimeValidRowsHaveBeenSet && !mInitialRows.isEmpty())
-        fetchColumnMetaData();
+    // Gather metadata the first time rows is set.
     // If we call setrows on an empty model, mInitialRows will be empty, but mRows is not
-    else if (firstTimeValidRowsHaveBeenSet && !mRows.empty())
-        fetchColumnMetaData();
+    if (firstTimeValidRowsHaveBeenSet && (!mRows.empty() || !mInitialRows.isEmpty()))
+        fetchColumnMetadata();
 
     endResetModel();
     emit rowsChanged();
 }
 
 QQmlTreeModel::ColumnRoleMetadata QQmlTreeModel::fetchColumnRoleData(const QString &roleNameKey,
-                                                                     QQmlTableModelColumn *tableModelColumn, int columnIndex) const
+                      QQmlTableModelColumn *tableModelColumn, int columnIndex) const
 {
     const QQmlTreeRow *firstRow = mRows.front().get();
     ColumnRoleMetadata roleData;
@@ -161,7 +158,7 @@ QQmlTreeModel::ColumnRoleMetadata QQmlTreeModel::fetchColumnRoleData(const QStri
         const QString rolePropertyName = columnRoleGetter.toString();
         const QVariant roleProperty = firstRow->data(rolePropertyName);
 
-        roleData.columnRole = ColumnRole::stringRole;
+        roleData.columnRole = ColumnRole::StringRole;
         roleData.name = rolePropertyName;
         roleData.type = roleProperty.userType();
         roleData.typeName = QString::fromLatin1(roleProperty.typeName());
@@ -172,9 +169,9 @@ QQmlTreeModel::ColumnRoleMetadata QQmlTreeModel::fetchColumnRoleData(const QStri
         const auto args = QJSValueList() << qmlEngine(this)->toScriptValue(modelIndex);
         const QVariant cellData = columnRoleGetter.call(args).toVariant();
 
-               // We don't know the property name since it's provided through the function.
-               // roleData.name = ???
-        roleData.columnRole = ColumnRole::functionRole;
+        // We don't know the property name since it's provided through the function.
+        // roleData.name = ???
+        roleData.columnRole = ColumnRole::FunctionRole;
         roleData.type = cellData.userType();
         roleData.typeName = QString::fromLatin1(cellData.typeName());
     } else {
@@ -187,12 +184,18 @@ QQmlTreeModel::ColumnRoleMetadata QQmlTreeModel::fetchColumnRoleData(const QStri
     return roleData;
 }
 
-void QQmlTreeModel::fetchColumnMetaData()
+void QQmlTreeModel::fetchColumnMetadata()
 {
+    qCDebug(lcTreeModel) << "gathering metadata for" << mColumnCount << "columns from first row:";
+
     static const auto supportedRoleNames = QQmlTableModelColumn::supportedRoleNames();
 
+    // Since we support different data structures at the row level, we require that there
+    // is a TableModelColumn for each column.
+    // Collect and cache metadata for each column. This makes data lookup faster.
     for (int columnIndex = 0; columnIndex < mColumns.size(); ++columnIndex) {
         QQmlTableModelColumn *column = mColumns.at(columnIndex);
+        qCDebug(lcTreeModel).nospace() << "- column " << columnIndex << ":";
 
         ColumnMetadata metaData;
         const auto builtInRoleKeys = supportedRoleNames.keys();
@@ -204,12 +207,16 @@ void QQmlTreeModel::fetchColumnMetaData()
                 continue;
             }
 
-                   // This column now supports this specific built-in role.
+            qCDebug(lcTreeModel).nospace() << "  - added metadata for built-in role "
+                << builtInRoleName << " at column index " << columnIndex
+                << ": name=" << roleData.name << " typeName=" << roleData.typeName
+                << " type=" << roleData.type;
+
+            // This column now supports this specific built-in role.
             metaData.roles.insert(builtInRoleName, roleData);
             // Add it if it doesn't already exist.
             mRoleNames[builtInRoleKey] = builtInRoleName.toLatin1();
         }
-
         mColumnMetadata.insert(columnIndex, metaData);
     }
 }
@@ -218,41 +225,41 @@ void QQmlTreeModel::fetchColumnMetaData()
 /*!
     \qmlmethod TreeModel::appendRow(QModelIndex parent, object treeRow)
 
- Appends a new treeRow to \a parent, with the values (cells) in \a treeRow.
+    Appends a new treeRow to \a parent, with the values (cells) in \a treeRow.
 
- \code
-     treeModel.appendRow(index, {
-                         checked: false,
-                         size: "-"
-                         type: folder,
-                         name: "Orders",
-                         lastModified: "2025-07-02",
-                         rows: [
-                             {
-                                 checked: true,
-                                 size: "38 KB",
-                                 type: "file",
-                                 name: "monitors.xlsx",
-                                 lastModified: "2025-07-02",
-                             },
-                             {
-                                 checked: true,
-                                 size: "54 KB",
-                                 type: "file",
-                                 name: "notebooks.xlsx",
-                                 lastModified: "2025-07-02",
-                             }
-                         ]
-                     })
- \endcode
+    \code
+        treeModel.appendRow(index, {
+            checked: false,
+            size: "-",
+            type: "folder",
+            name: "Orders",
+            lastModified: "2025-07-02",
+            rows: [
+                {
+                    checked: true,
+                    size: "38 KB",
+                    type: "file",
+                    name: "monitors.xlsx",
+                    lastModified: "2025-07-02"
+                },
+                {
+                    checked: true,
+                    size: "54 KB",
+                    type: "file",
+                    name: "notebooks.xlsx",
+                    lastModified: "2025-07-02"
+                }
+            ]
+        });
+    \endcode
 
- If \a parent is invalid, \a treeRow gets appended to the root node.
+    If \a parent is invalid, \a treeRow gets appended to the root node.
 
- \sa setRow(), removeRow()
+    \sa setRow(), removeRow()
 */
 void QQmlTreeModel::appendRow(QModelIndex parent, const QVariant &row)
 {
-    if (!validateRow("TreeModel::appendRow"_L1, row))
+    if (!validateNewRow("TreeModel::appendRow"_L1, row))
         return;
 
     const QVariant data = row.userType() == QMetaType::QVariantMap ? row : row.value<QJSValue>().toVariant();
@@ -266,7 +273,7 @@ void QQmlTreeModel::appendRow(QModelIndex parent, const QVariant &row)
 
                // Gather metadata the first time a row is added.
         if (mColumnMetadata.isEmpty())
-            fetchColumnMetaData();
+            fetchColumnMetadata();
 
         endInsertRows();
     } else {
@@ -279,9 +286,9 @@ void QQmlTreeModel::appendRow(QModelIndex parent, const QVariant &row)
 
         mRows.push_back(std::make_unique<QQmlTreeRow>(data));
 
-               // Gather metadata the first time a row is added.
+        // Gather metadata the first time a row is added.
         if (mColumnMetadata.isEmpty())
-            fetchColumnMetaData();
+            fetchColumnMetadata();
 
         endInsertRows();
     }
@@ -292,9 +299,9 @@ void QQmlTreeModel::appendRow(QModelIndex parent, const QVariant &row)
 /*!
     \qmlmethod TreeModel::appendRow(object treeRow)
 
- Appends \a treeRow to the root node.
+    Appends \a treeRow to the root node.
 
- \sa setRow(), removeRow()
+    \sa setRow(), removeRow()
 */
 void QQmlTreeModel::appendRow(const QVariant &row)
 {
@@ -304,9 +311,9 @@ void QQmlTreeModel::appendRow(const QVariant &row)
 /*!
     \qmlmethod TreeModel::clear()
 
-Removes all TreeRows from the model.
+    Removes all rows from the model.
 
-\sa removeRow()
+    \sa removeRow()
 */
 void QQmlTreeModel::clear()
 {
@@ -318,12 +325,12 @@ void QQmlTreeModel::clear()
 /*!
     \qmlmethod object TreeModel::getRow(const QModelIndex &rowIndex)
 
-Returns the treeRow at \a rowIndex in the model.
+    Returns the treeRow at \a rowIndex in the model.
 
-\note the returned object cannot be used to modify the contents of the
-model; use setTreeRow() instead.
+    \note the returned object cannot be used to modify the contents of the
+    model; use setTreeRow() instead.
 
-\sa setRow(), appendRow(), removeRow()
+    \sa setRow(), appendRow(), removeRow()
 */
 QVariant QQmlTreeModel::getRow(const QModelIndex &rowIndex) const
 {
@@ -336,14 +343,13 @@ QVariant QQmlTreeModel::getRow(const QModelIndex &rowIndex) const
 
 void QQmlTreeModel::classBegin()
 {
-
 }
 
 void QQmlTreeModel::componentComplete()
 {
     mComponentCompleted = true;
-    mColumnCount = mColumns.size();
 
+    mColumnCount = mColumns.size();
     if (mColumnCount > 0)
         emit columnCountChanged();
 
@@ -353,11 +359,11 @@ void QQmlTreeModel::componentComplete()
 /*!
     \qmlmethod TreeModel::removeRow(QModelIndex rowIndex)
 
-Removes the TreeRow referenced by \a rowIndex from the model.
+    Removes the TreeRow referenced by \a rowIndex from the model.
 
-\code
-  treeModel.removeTreeRow(rowIndex)
-\endcode
+    \code
+        treeModel.removeTreeRow(rowIndex)
+    \endcode
 
 \sa clear()
 */
@@ -389,24 +395,24 @@ void QQmlTreeModel::removeRow(QModelIndex rowIndex)
 /*!
     \qmlmethod TreeModel::setRow(QModelIndex rowIndex, object treeRow)
 
- Replaces the TreeRow at \a rowIndex in the model with \a treeRow.
- A row with child rows will be rejected.
+    Replaces the TreeRow at \a rowIndex in the model with \a treeRow.
+    A row with child rows will be rejected.
 
- All columns/cells must be present in \c treeRow, and in the correct order.
- The child rows of the row remain unaffected.
+    All columns/cells must be present in \c treeRow, and in the correct order.
+    The child rows of the row remain unaffected.
 
- \code
-     treeModel.setRow(rowIndex, {
-                     checked: true,
-                     size: -,
-                     type: "folder",
-                     name: "Subtitles",
-                     lastModified: "2025-07-07",
-                     iconCcolor: "blue",
-                 })
- \endcode
+    \code
+        treeModel.setRow(rowIndex, {
+            checked: true,
+            size: "-",
+            type: "folder",
+            name: "Subtitles",
+            lastModified: "2025-07-07",
+            iconColor: "blue"
+        });
+    \endcode
 
- \sa appendRow()
+    \sa appendRow()
 */
 void QQmlTreeModel::setRow(QModelIndex rowIndex, const QVariant &rowData)
 {
@@ -421,7 +427,7 @@ void QQmlTreeModel::setRow(QModelIndex rowIndex, const QVariant &rowData)
         return;
     }
 
-    if (!validateRow("TreeModel::setRow"_L1, rowData))
+    if (!validateNewRow("TreeModel::setRow"_L1, rowData))
         return;
 
     const QVariant rowAsVariant = rowData.userType() == QMetaType::QVariantMap ? rowData : rowData.value<QJSValue>().toVariant();
@@ -438,12 +444,12 @@ void QQmlTreeModel::setRow(QModelIndex rowIndex, const QVariant &rowData)
 QQmlListProperty<QQmlTableModelColumn> QQmlTreeModel::columns()
 {
     return {this, nullptr,
-             &QQmlTreeModel::columns_append,
-             &QQmlTreeModel::columns_count,
-             &QQmlTreeModel::columns_at,
-             &QQmlTreeModel::columns_clear,
-             &QQmlTreeModel::columns_replace,
-             &QQmlTreeModel::columns_removeLast};
+        &QQmlTreeModel::columns_append,
+        &QQmlTreeModel::columns_count,
+        &QQmlTreeModel::columns_at,
+        &QQmlTreeModel::columns_clear,
+        &QQmlTreeModel::columns_replace,
+        &QQmlTreeModel::columns_removeLast};
 }
 
 void QQmlTreeModel::columns_append(QQmlListProperty<QQmlTableModelColumn> *property,
@@ -616,22 +622,23 @@ int QQmlTreeModel::rowCount(const QModelIndex &parent) const
     \qmlproperty int TreeModel::columnCount
     \readonly
 
-This read-only property holds the number of columns in the model.
+    This read-only property holds the number of columns in the model.
 
-The number of columns is fixed for the lifetime of the model
-after the \l rows property is set or \l appendRow() is called for the first
-time.
+    The number of columns is fixed for the lifetime of the model
+    after the \l rows property is set or \l appendRow() is called for the first
+    time.
 */
 int QQmlTreeModel::columnCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
-    return mColumns.size();
+
+    return mColumnCount;
 }
 
 /*!
     \qmlmethod variant TreeModel::data(QModelIndex index, string role)
 
-    Returns the data from the QQmlTreeModel at the given \a index belonging to the
+    Returns the data from the TreeModel at the given \a index belonging to the
     given \a role.
 
     \sa index(), setData()
@@ -673,7 +680,7 @@ QVariant QQmlTreeModel::data(const QModelIndex &index, int role) const
     }
 
     const ColumnRoleMetadata roleData = columnMetadata.roles.value(roleName);
-    if (roleData.columnRole == ColumnRole::stringRole) {
+    if (roleData.columnRole == ColumnRole::StringRole) {
         // We know the data structure, so we can get the data for the user.
         const QString propertyName = columnMetadata.roles.value(roleName).name;
         const auto *thisRow = static_cast<const QQmlTreeRow *>(index.internalPointer());
@@ -719,6 +726,9 @@ bool QQmlTreeModel::setData(const QModelIndex &index, const QVariant &value, int
 
     const QString roleName = QString::fromUtf8(mRoleNames.value(role));
 
+    qCDebug(lcTreeModel).nospace() << "setData() called with index "
+        << index << ", value " << value << " and role " << roleName;
+
     // Verify that the role exists for this column.
     const ColumnMetadata columnMetadata = mColumnMetadata.at(index.column());
     if (!columnMetadata.roles.contains(roleName)) {
@@ -748,7 +758,7 @@ bool QQmlTreeModel::setData(const QModelIndex &index, const QVariant &value, int
         }
     }
 
-    if (roleData.columnRole == ColumnRole::stringRole) {
+    if (roleData.columnRole == ColumnRole::StringRole) {
         // We know the data structure, so we can set it for the user.
         auto *row = static_cast<QQmlTreeRow *>(index.internalPointer());
         row->setField(roleData.name, value);
@@ -787,7 +797,7 @@ bool QQmlTreeModel::ColumnRoleMetadata::isValid() const
     return !name.isEmpty();
 }
 
-bool QQmlTreeModel::validateRowType(QLatin1StringView functionName, const QVariant &row)
+bool QQmlTreeModel::validateRowType(QLatin1StringView functionName, const QVariant &row) const
 {
     if (!row.canConvert<QJSValue>()) {
         qmlWarning(this) << functionName << ": expected \"row\" argument to be a QJSValue,"
@@ -805,7 +815,8 @@ bool QQmlTreeModel::validateRowType(QLatin1StringView functionName, const QVaria
     return true;
 }
 
-bool QQmlTreeModel::validateRow(QLatin1StringView functionName, const QVariant &row, bool setRowsOperation)
+bool QQmlTreeModel::validateNewRow(QLatin1StringView functionName, const QVariant &row,
+                                   NewRowOperationFlag operation) const
 {
     if (mColumnMetadata.isEmpty()) {
         // There is no column metadata, so we have nothing to validate the row against.
@@ -818,12 +829,14 @@ bool QQmlTreeModel::validateRow(QLatin1StringView functionName, const QVariant &
 
     // Don't require each row to be a QJSValue when setting all rows,
     // as they won't be; they'll be QVariantMap.
-    if (!setRowsOperation && (!isVariantMap && !validateRowType(functionName, row)))
+    if (operation != SetRowsOperation && (!isVariantMap && !validateRowType(functionName, row)))
         return false;
 
-    const QVariant rowAsVariant = setRowsOperation || isVariantMap ? row : row.value<QJSValue>().toVariant();
+    const QVariant rowAsVariant = operation == SetRowsOperation || isVariantMap
+        ? row : row.value<QJSValue>().toVariant();
     if (rowAsVariant.userType() != QMetaType::QVariantMap) {
-        qmlWarning(this) << functionName << ": row manipulation functions do not support complex rows";
+        qmlWarning(this) << functionName << ": row manipulation functions "
+                         << "do not support complex rows";
         return false;
     }
 
@@ -844,12 +857,12 @@ bool QQmlTreeModel::validateRow(QLatin1StringView functionName, const QVariant &
         const ColumnMetadata columnMetadata = mColumnMetadata.at(columnIndex);
         for (const QString &roleName : roleNames) {
             const ColumnRoleMetadata roleData = columnMetadata.roles.value(roleName);
-            if (roleData.columnRole == ColumnRole::functionRole)
+            if (roleData.columnRole == ColumnRole::FunctionRole)
                 continue;
 
             if (!rowAsMap.contains(roleData.name)) {
-                qmlWarning(this).quote() << functionName << ": expected a property named "
-                                         << roleData.name << " in row at index ";
+                qmlWarning(this).noquote() << functionName << ": expected a property named \""
+                                           << roleData.name << "\" in row";
                 return false;
             }
 
@@ -857,19 +870,19 @@ bool QQmlTreeModel::validateRow(QLatin1StringView functionName, const QVariant &
 
             if (rolePropertyValue.userType() != roleData.type) {
                 if (!rolePropertyValue.canConvert(QMetaType(roleData.type))) {
-                    qmlWarning(this).quote() << functionName << ": expected the property named "
-                                           << roleData.name << " to be of type " << roleData.typeName
-                                             << ", but got " << QString::fromLatin1(rolePropertyValue.typeName())
-                                             << " instead";
+                    qmlWarning(this).noquote() << functionName << ": expected the property named \""
+                                               << roleData.name << "\" to be of type \"" << roleData.typeName
+                                               << "\", but got \"" << QString::fromLatin1(rolePropertyValue.typeName())
+                                               << "\" instead";
                     return false;
                 }
 
                 QVariant effectiveValue = rolePropertyValue;
                 if (!effectiveValue.convert(QMetaType(roleData.type))) {
-                    qmlWarning(this).nospace() << functionName << ": failed converting value "
-                                               << rolePropertyValue << " set at column " << columnIndex << " with role "
-                                               << QString::fromLatin1(rolePropertyValue.typeName()) << " to "
-                                               << roleData.typeName;
+                    qmlWarning(this).noquote() << functionName << ": failed converting value \""
+                                               << rolePropertyValue << "\" set at column " << columnIndex << " with role \""
+                                               << QString::fromLatin1(rolePropertyValue.typeName()) << "\" to \""
+                                               << roleData.typeName << "\"";
                     return false;
                 }
             }
@@ -880,7 +893,7 @@ bool QQmlTreeModel::validateRow(QLatin1StringView functionName, const QVariant &
     {
         const QList<QVariant> variantList = rowAsMap[ROWS_PROPERTY_NAME].toList();
         for (const QVariant &rowAsVariant : variantList)
-            if (!validateRow(functionName, rowAsVariant))
+            if (!validateNewRow(functionName, rowAsVariant))
                 return false;
     }
 
