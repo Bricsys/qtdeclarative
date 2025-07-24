@@ -38,8 +38,8 @@ class Q_LABSQMLMODELS_EXPORT QQmlTreeModel : public QAbstractItemModel, public Q
     Q_OBJECT
     QML_NAMED_ELEMENT(TreeModel)
     Q_PROPERTY(int columnCount READ columnCount NOTIFY columnCountChanged FINAL)
-    Q_PROPERTY(QQmlListProperty<QQmlTableModelColumn> columns READ columns CONSTANT FINAL)
     Q_PROPERTY(QVariant rows READ rows WRITE setRows NOTIFY rowsChanged FINAL)
+    Q_PROPERTY(QQmlListProperty<QQmlTableModelColumn> columns READ columns CONSTANT FINAL)
     Q_INTERFACES(QQmlParserStatus)
     Q_CLASSINFO("DefaultProperty", "columns")
     QML_ADDED_IN_VERSION(6, 10)
@@ -83,12 +83,17 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const override;
     QModelIndex parent(const QModelIndex &index) const override;
 
+signals:
+    void columnCountChanged();
+    void rowsChanged();
+
+protected:
+    void classBegin() override;
+    void componentComplete() override;
+
 private:
     QQmlTreeRow *getPointerToTreeRow(QModelIndex &index, const std::vector<int> &rowIndex) const;
 
-    bool validateRowType(QLatin1StringView functionName, const QVariant &row);
-    bool validateRow(QLatin1StringView functionName, const QVariant &row, bool setRowsOperation = false);
-    void setRowsPrivate(const QVariantList &rowsAsVariantList);
     int treeSize() const;
     friend class ::tst_QQmlTreeModel;
 
@@ -119,18 +124,14 @@ private:
         QHash<QString, ColumnRoleMetadata> roles;
     };
 
+
+    void setRowsPrivate(const QVariantList &rowsAsVariantList);
     ColumnRoleMetadata fetchColumnRoleData(const QString &roleNameKey, QQmlTableModelColumn *tableModelColumn, int columnIndex) const;
     void fetchColumnMetaData();
 
-signals:
-    void columnCountChanged();
-    void rowsChanged();
+    bool validateRowType(QLatin1StringView functionName, const QVariant &row);
+    bool validateRow(QLatin1StringView functionName, const QVariant &row, bool setRowsOperation = false);
 
-protected:
-    void classBegin() override;
-    void componentComplete() override;
-
-private:
     QList<QQmlTableModelColumn *> mColumns;
     std::vector<std::unique_ptr<QQmlTreeRow>> mRows;
 
