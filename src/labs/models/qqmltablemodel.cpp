@@ -198,7 +198,6 @@ void QQmlTableModel::setRowsPrivate(const QVariantList &rowsAsVariantList)
     }
 
     const int oldRowCount = mRowCount;
-    const int oldColumnCount = mColumnCount;
 
     beginResetModel();
 
@@ -212,13 +211,10 @@ void QQmlTableModel::setRowsPrivate(const QVariantList &rowsAsVariantList)
         fetchColumnMetadata();
 
     endResetModel();
-
     emit rowsChanged();
 
     if (mRowCount != oldRowCount)
         emit rowCountChanged();
-    if (mColumnCount != oldColumnCount)
-        emit columnCountChanged();
 }
 
 QQmlTableModel::ColumnRoleMetadata QQmlTableModel::fetchColumnRoleData(const QString &roleNameKey,
