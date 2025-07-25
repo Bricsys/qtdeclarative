@@ -98,6 +98,15 @@ protected:
     ColumnRoleMetadata fetchColumnRoleData(const QString &roleNameKey, QQmlTableModelColumn *tableModelColumn, int columnIndex) const;
     void fetchColumnMetadata();
 
+    enum NewRowOperationFlag {
+        OtherOperation, // insert(), set(), etc.
+        SetRowsOperation,
+        AppendOperation
+    };
+
+    bool validateRowType(QLatin1StringView functionName, const QVariant &row) const;
+    virtual bool validateNewRow(QLatin1StringView functionName, const QVariant &row,
+                                NewRowOperationFlag operation  = OtherOperation) const;
 
     QList<QQmlTableModelColumn *> mColumns;
 

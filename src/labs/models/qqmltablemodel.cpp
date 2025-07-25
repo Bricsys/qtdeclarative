@@ -192,7 +192,7 @@ void QQmlTableModel::setRowsPrivate(const QVariantList &rowsAsVariantList)
             // validateNewRow() expects a QVariant wrapping a QJSValue, so to
             // simplify the code, just create one here.
             const QVariant row = QVariant::fromValue(rowsAsVariantList.at(rowIndex));
-            if (!validateNewRow("setRows()"_L1, row, rowIndex, SetRowsOperation))
+            if (!validateNewRow("setRows()"_L1, row, SetRowsOperation))
                 return;
         }
     }
@@ -254,7 +254,7 @@ void QQmlTableModel::setDataPrivate(const QModelIndex &index, const QString &rol
 */
 void QQmlTableModel::appendRow(const QVariant &row)
 {
-    if (!validateNewRow("appendRow()"_L1, row, -1, AppendOperation))
+    if (!validateNewRow("appendRow()"_L1, row, AppendOperation))
         return;
 
     doInsert(mRowCount, row);
@@ -297,9 +297,8 @@ void QQmlTableModel::clear()
 */
 QVariant QQmlTableModel::getRow(int rowIndex)
 {
-    if (!validateRowIndex("getRow()"_L1, "rowIndex", rowIndex))
+    if (!validateRowIndex("getRow()"_L1, "rowIndex"_L1, rowIndex, NeedsExisting))
         return QVariant();
-
     return mRows.at(rowIndex);
 }
 
@@ -326,7 +325,8 @@ QVariant QQmlTableModel::getRow(int rowIndex)
 */
 void QQmlTableModel::insertRow(int rowIndex, const QVariant &row)
 {
-    if (!validateNewRow("insertRow()"_L1, row, rowIndex))
+    if (!validateNewRow("insertRow()"_L1, row) ||
+        !validateRowIndex("insertRow()"_L1, "rowIndex"_L1, rowIndex, CanAppend))
         return;
 
     doInsert(rowIndex, row);
@@ -382,10 +382,10 @@ void QQmlTableModel::moveRow(int fromRowIndex, int toRowIndex, int rows)
         return;
     }
 
-    if (!validateRowIndex("moveRow()"_L1, "fromRowIndex", fromRowIndex))
+    if (!validateRowIndex("moveRow()"_L1, "fromRowIndex"_L1, fromRowIndex, NeedsExisting))
         return;
 
-    if (!validateRowIndex("moveRow()"_L1, "toRowIndex", toRowIndex))
+    if (!validateRowIndex("moveRow()"_L1, "toRowIndex"_L1, toRowIndex, NeedsExisting))
         return;
 
     if (fromRowIndex + rows > mRowCount) {
@@ -444,7 +444,7 @@ void QQmlTableModel::moveRow(int fromRowIndex, int toRowIndex, int rows)
 */
 void QQmlTableModel::removeRow(int rowIndex, int rows)
 {
-    if (!validateRowIndex("removeRow()"_L1, "rowIndex", rowIndex))
+    if (!validateRowIndex("removeRow()"_L1, "rowIndex"_L1, rowIndex, NeedsExisting))
         return;
 
     if (rows <= 0) {
@@ -499,7 +499,8 @@ void QQmlTableModel::removeRow(int rowIndex, int rows)
 */
 void QQmlTableModel::setRow(int rowIndex, const QVariant &row)
 {
-    if (!validateNewRow("setRow()"_L1, row, rowIndex))
+    if (!validateNewRow("setRow()"_L1, row) ||
+        !validateRowIndex("setRow()"_L1, "rowIndex"_L1, rowIndex, CanAppend))
         return;
 
     if (rowIndex != mRowCount) {
@@ -627,128 +628,26 @@ int QQmlTableModel::columnCount(const QModelIndex &parent) const
     \sa data(), index()
 */
 
-bool QQmlTableModel::validateRowType(QLatin1StringView functionName, const QVariant &row) const
-{
-    if (!row.canConvert<QJSValue>()) {
-        qmlWarning(this) << functionName << ": expected \"row\" argument to be a QJSValue,"
-                         << " but got " << row.typeName() << " instead:\n" << row;
-        return false;
-    }
-
-    const auto rowAsJSValue = row.value<QJSValue>();
-    if (!rowAsJSValue.isObject() && !rowAsJSValue.isArray()) {
-        qmlWarning(this) << functionName << ": expected \"row\" argument "
-                         << "to be an object or array, but got:\n" << rowAsJSValue.toString();
-        return false;
-    }
-
-    return true;
-}
-
-bool QQmlTableModel::validateNewRow(QLatin1StringView functionName, const QVariant &row,
-                                    int rowIndex, NewRowOperationFlag operation) const
-{
-    if (mColumnMetadata.isEmpty()) {
-        // There is no column metadata, so we have nothing to validate the row against.
-        // Rows have to be added before we can gather metadata from them, so just this
-        // once we'll return true to allow the rows to be added.
-        return true;
-    }
-
-    const bool isVariantMap = (row.userType() == QMetaType::QVariantMap);
-
-    // Don't require each row to be a QJSValue when setting all rows,
-    // as they won't be; they'll be QVariantMap.
-    if (operation != SetRowsOperation && (!isVariantMap && !validateRowType(functionName, row)))
-        return false;
-
-    if (operation == OtherOperation) {
-        // Inserting/setting.
-        if (rowIndex < 0) {
-            qmlWarning(this) << functionName << ": \"rowIndex\" cannot be negative";
-            return false;
-        }
-
-        if (rowIndex > mRowCount) {
-            qmlWarning(this) << functionName << ": \"rowIndex\" " << rowIndex
-                << " is greater than rowCount() of " << mRowCount;
-            return false;
-        }
-    }
-
-    const QVariant rowAsVariant = operation == SetRowsOperation || isVariantMap
-        ? row : row.value<QJSValue>().toVariant();
-    if (rowAsVariant.userType() != QMetaType::QVariantMap) {
-        qmlWarning(this) << functionName << ": row manipulation functions "
-                         << "do not support complex rows"
-                         << " (row index: " << rowIndex << ")";
-        return false;
-    }
-
-    const QVariantMap rowAsMap = rowAsVariant.toMap();
-    const int columnCount = rowAsMap.size();
-    if (columnCount < mColumnCount) {
-        qmlWarning(this) << functionName << ": expected " << mColumnCount
-                         << " columns, but only got " << columnCount;
-        return false;
-    }
-
-    // We can't validate complex structures, but we can make sure that
-    // each simple string-based role in each column is correct.
-    for (int columnIndex = 0; columnIndex < mColumns.size(); ++columnIndex) {
-        QQmlTableModelColumn *column = mColumns.at(columnIndex);
-        const QHash<QString, QJSValue> getters = column->getters();
-        const auto roleNames = getters.keys();
-        const ColumnMetadata columnMetadata = mColumnMetadata.at(columnIndex);
-        for (const QString &roleName : roleNames) {
-            const ColumnRoleMetadata roleData = columnMetadata.roles.value(roleName);
-            if (roleData.columnRole == ColumnRole::FunctionRole)
-                continue;
-
-            if (!rowAsMap.contains(roleData.name)) {
-                qmlWarning(this).noquote() << functionName << ": expected a property named \""
-                                           << roleData.name << "\" in row"
-                                           << " at index " << rowIndex << ", but couldn't find one";
-                return false;
-            }
-
-            const QVariant rolePropertyValue = rowAsMap.value(roleData.name);
-
-            if (rolePropertyValue.userType() != roleData.type) {
-                if (!rolePropertyValue.canConvert(QMetaType(roleData.type))) {
-                    qmlWarning(this).noquote() << functionName << ": expected the property named \""
-                                               << roleData.name << "\" to be of type \"" << roleData.typeName
-                                               << "\", but got \"" << QString::fromLatin1(rolePropertyValue.typeName())
-                                               << "\" instead";
-                    return false;
-                }
-
-                QVariant effectiveValue = rolePropertyValue;
-                if (!effectiveValue.convert(QMetaType(roleData.type))) {
-                    qmlWarning(this).noquote() << functionName << ": failed converting value \""
-                                               << rolePropertyValue << "\" set at column " << columnIndex << " with role \""
-                                               << QString::fromLatin1(rolePropertyValue.typeName()) << "\" to \""
-                                               << roleData.typeName << "\"";
-                    return false;
-                }
-            }
-        }
-    }
-
-    return true;
-}
-
-bool QQmlTableModel::validateRowIndex(QLatin1StringView functionName, const char *argumentName, int rowIndex) const
+bool QQmlTableModel::validateRowIndex(QLatin1StringView functionName, QLatin1StringView argumentName,
+                                      int rowIndex, RowOption operation) const
 {
     if (rowIndex < 0) {
-        qmlWarning(this) << functionName << ": \"" << argumentName << "\" cannot be negative";
+        qmlWarning(this).noquote() << functionName << ": \"" << argumentName << "\" cannot be negative";
         return false;
     }
 
-    if (rowIndex >= mRowCount) {
-        qmlWarning(this) << functionName << ": \"" << argumentName
-            << "\" " << rowIndex << " is greater than or equal to rowCount() of " << mRowCount;
-        return false;
+    if (operation == NeedsExisting) {
+        if (rowIndex >= mRowCount) {
+            qmlWarning(this).noquote() << functionName << ": \"" << argumentName
+                << "\" " << rowIndex << " is greater than or equal to rowCount() of " << mRowCount;
+            return false;
+        }
+    } else {
+        if (rowIndex > mRowCount) {
+            qmlWarning(this).noquote() << functionName << ": \"" << argumentName
+                << "\" " << rowIndex << " is greater than rowCount() of " << mRowCount;
+            return false;
+        }
     }
 
     return true;

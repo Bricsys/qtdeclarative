@@ -69,20 +69,18 @@ protected:
 
 private:
 
-    enum NewRowOperationFlag {
-        OtherOperation, // insert(), set(), etc.
-        SetRowsOperation,
-        AppendOperation
-    };
-
     void setRowsPrivate(const QVariantList &rowsAsVariantList);
     QVariant dataPrivate(const QModelIndex &index, const QString &roleName) const override;
     void setDataPrivate(const QModelIndex &index, const QString &roleName, QVariant value) override;
 
-    bool validateRowType(QLatin1StringView functionName, const QVariant &row) const;
-    bool validateNewRow(QLatin1StringView functionName, const QVariant &row,
-        int rowIndex, NewRowOperationFlag operation = OtherOperation) const;
-    bool validateRowIndex(QLatin1StringView functionName, const char *argumentName, int rowIndex) const;
+    enum RowOption {
+        NeedsExisting,
+        CanAppend
+    };
+
+
+    bool validateRowIndex(QLatin1StringView functionName,  QLatin1StringView argumentName,
+                          int rowIndex, RowOption operation) const;
 
     void doInsert(int rowIndex, const QVariant &row);
 

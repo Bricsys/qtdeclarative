@@ -162,7 +162,7 @@ void tst_QQmlTableModel::appendRemoveRow()
 
     // Call append() with a row that is an array instead of a simple object.
     QTest::ignoreMessage(QtWarningMsg, QRegularExpression(
-        ".*appendRow\\(\\): row manipulation functions do not support complex rows \\(row index: -1\\)"));
+        ".*appendRow\\(\\): row manipulation functions do not support complex rows"));
     QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "appendRowInvalid3"));
     // Nothing should change.
     QCOMPARE(model->rowCount(), 2);
@@ -415,7 +415,7 @@ void tst_QQmlTableModel::insertRow()
 
     // Try to insert a row that is an array instead of a simple object.
     QTest::ignoreMessage(QtWarningMsg, QRegularExpression(
-        ".*insertRow\\(\\): row manipulation functions do not support complex rows \\(row index: 0\\)"));
+        ".*insertRow\\(\\): row manipulation functions do not support complex rows"));
     QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "insertRowInvalid3"));
     QCOMPARE(model->rowCount(), 2);
     QCOMPARE(model->columnCount(), 2);
@@ -759,7 +759,7 @@ void tst_QQmlTableModel::setRow()
 
     // Try to insert a row that is an array instead of a simple object.
     QTest::ignoreMessage(QtWarningMsg, QRegularExpression(
-        ".*setRow\\(\\): row manipulation functions do not support complex rows \\(row index: 0\\)"));
+        ".*setRow\\(\\): row manipulation functions do not support complex rows"));
     QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "setRowInvalid3"));
     QCOMPARE(model->rowCount(), 2);
     QCOMPARE(model->columnCount(), 2);
@@ -993,7 +993,7 @@ void tst_QQmlTableModel::setRowsMultipleTimes()
 
     // Set invalid rows; we should get a warning and nothing should change.
     QTest::ignoreMessage(QtWarningMsg, QRegularExpression(
-        ".*setRows\\(\\): expected a property named \"name\" in row at index 0, but couldn't find one"));
+        ".*setRows\\(\\): expected a property named \"name\" in row"));
     QVERIFY(QMetaObject::invokeMethod(view.rootObject(), "setRowsInvalid"));
     QCOMPARE(model->rowCount(), 3);
     QCOMPARE(model->columnCount(), 2);

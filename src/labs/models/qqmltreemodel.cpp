@@ -522,98 +522,13 @@ int QQmlTreeModel::columnCount(const QModelIndex &parent) const
     \sa data(), index()
 */
 
-bool QQmlTreeModel::validateRowType(QLatin1StringView functionName, const QVariant &row) const
-{
-    if (!row.canConvert<QJSValue>()) {
-        qmlWarning(this) << functionName << ": expected \"row\" argument to be a QJSValue,"
-                         << " but got " << row.typeName() << " instead:\n" << row;
-        return false;
-    }
-
-    const auto rowAsJSValue = row.value<QJSValue>();
-    if (!rowAsJSValue.isObject() && !rowAsJSValue.isArray()) {
-        qmlWarning(this) << functionName << ": expected \"row\" argument "
-                         << "to be an object or array, but got:\n" << rowAsJSValue.toString();
-        return false;
-    }
-
-    return true;
-}
-
 bool QQmlTreeModel::validateNewRow(QLatin1StringView functionName, const QVariant &row,
                                    NewRowOperationFlag operation) const
 {
-    if (mColumnMetadata.isEmpty()) {
-        // There is no column metadata, so we have nothing to validate the row against.
-        // Rows have to be added before we can gather metadata from them, so just this
-        // once we'll return true to allow the rows to be added.
-        return true;
-    }
-
     const bool isVariantMap = (row.userType() == QMetaType::QVariantMap);
-
-    // Don't require each row to be a QJSValue when setting all rows,
-    // as they won't be; they'll be QVariantMap.
-    if (operation != SetRowsOperation && (!isVariantMap && !validateRowType(functionName, row)))
-        return false;
-
     const QVariant rowAsVariant = operation == SetRowsOperation || isVariantMap
         ? row : row.value<QJSValue>().toVariant();
-    if (rowAsVariant.userType() != QMetaType::QVariantMap) {
-        qmlWarning(this) << functionName << ": row manipulation functions "
-                         << "do not support complex rows";
-        return false;
-    }
-
     const QVariantMap rowAsMap = rowAsVariant.toMap();
-    const int columnCount = rowAsMap.size();
-    if (columnCount < mColumnCount) {
-        qmlWarning(this) << functionName << ": expected " << mColumnCount
-                         << " columns, but only got " << columnCount;
-        return false;
-    }
-
-    // We can't validate complex structures, but we can make sure that
-    // each simple string-based role in each column is correct.
-    for (int columnIndex = 0; columnIndex < mColumns.size(); ++columnIndex) {
-        QQmlTableModelColumn *column = mColumns.at(columnIndex);
-        const QHash<QString, QJSValue> getters = column->getters();
-        const auto roleNames = getters.keys();
-        const ColumnMetadata columnMetadata = mColumnMetadata.at(columnIndex);
-        for (const QString &roleName : roleNames) {
-            const ColumnRoleMetadata roleData = columnMetadata.roles.value(roleName);
-            if (roleData.columnRole == ColumnRole::FunctionRole)
-                continue;
-
-            if (!rowAsMap.contains(roleData.name)) {
-                qmlWarning(this).noquote() << functionName << ": expected a property named \""
-                                           << roleData.name << "\" in row";
-                return false;
-            }
-
-            const QVariant rolePropertyValue = rowAsMap.value(roleData.name);
-
-            if (rolePropertyValue.userType() != roleData.type) {
-                if (!rolePropertyValue.canConvert(QMetaType(roleData.type))) {
-                    qmlWarning(this).noquote() << functionName << ": expected the property named \""
-                                               << roleData.name << "\" to be of type \"" << roleData.typeName
-                                               << "\", but got \"" << QString::fromLatin1(rolePropertyValue.typeName())
-                                               << "\" instead";
-                    return false;
-                }
-
-                QVariant effectiveValue = rolePropertyValue;
-                if (!effectiveValue.convert(QMetaType(roleData.type))) {
-                    qmlWarning(this).noquote() << functionName << ": failed converting value \""
-                                               << rolePropertyValue << "\" set at column " << columnIndex << " with role \""
-                                               << QString::fromLatin1(rolePropertyValue.typeName()) << "\" to \""
-                                               << roleData.typeName << "\"";
-                    return false;
-                }
-            }
-        }
-    }
-
     if (rowAsMap.contains(ROWS_PROPERTY_NAME) && rowAsMap[ROWS_PROPERTY_NAME].userType() == QMetaType::Type::QVariantList)
     {
         const QList<QVariant> variantList = rowAsMap[ROWS_PROPERTY_NAME].toList();
@@ -622,7 +537,7 @@ bool QQmlTreeModel::validateNewRow(QLatin1StringView functionName, const QVarian
                 return false;
     }
 
-    return true;
+    return QQmlAbstractColumnModel::validateNewRow(functionName, row, operation);
 }
 
 int QQmlTreeModel::treeSize() const

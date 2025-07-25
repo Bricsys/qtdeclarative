@@ -72,19 +72,12 @@ private:
     int treeSize() const;
     friend class ::tst_QQmlTreeModel;
 
-    enum NewRowOperationFlag {
-        OtherOperation, // insert(), set(), etc.
-        SetRowsOperation,
-        AppendOperation
-    };
-
     void setRowsPrivate(const QVariantList &rowsAsVariantList);
     QVariant dataPrivate(const QModelIndex &index, const QString &roleName) const override;
     void setDataPrivate(const QModelIndex &index, const QString &roleName, QVariant value) override;
 
-    bool validateRowType(QLatin1StringView functionName, const QVariant &row) const;
     bool validateNewRow(QLatin1StringView functionName, const QVariant &row,
-        NewRowOperationFlag = OtherOperation) const;
+        NewRowOperationFlag = OtherOperation) const override;
 
     std::vector<std::unique_ptr<QQmlTreeRow>> mRows;
 
