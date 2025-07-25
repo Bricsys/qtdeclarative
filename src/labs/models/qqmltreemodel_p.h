@@ -62,12 +62,7 @@ public:
     int columnCount(const QModelIndex &parent = {}) const override;
     Q_INVOKABLE QVariant data(const QModelIndex &index, const QString &role) const;
     QVariant data(const QModelIndex &index, int role) const override;
-    Q_INVOKABLE bool setData(const QModelIndex &index, const QString &role, const QVariant &value);
-    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::DisplayRole) override;
     QModelIndex parent(const QModelIndex &index) const override;
-
-Q_SIGNALS:
-    void rowsChanged();
 
 protected:
     QVariant firstRow() const override;
@@ -86,6 +81,7 @@ private:
     };
 
     void setRowsPrivate(const QVariantList &rowsAsVariantList);
+    void setDataPrivate(const QModelIndex &index, const QString &roleName, QVariant value) override;
 
     bool validateRowType(QLatin1StringView functionName, const QVariant &row) const;
     bool validateNewRow(QLatin1StringView functionName, const QVariant &row,

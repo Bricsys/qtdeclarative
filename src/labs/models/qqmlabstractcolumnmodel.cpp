@@ -77,6 +77,77 @@ void QQmlAbstractColumnModel::columns_removeLast(QQmlListProperty<QQmlTableModel
     model->mColumns.removeLast();
 }
 
+bool QQmlAbstractColumnModel::setData(const QModelIndex &index, const QString &role, const QVariant &value)
+{
+    const int intRole = mRoleNames.key(role.toUtf8(), -1);
+    if (intRole >= 0)
+        return setData(index, value, intRole);
+    return false;
+}
+
+bool QQmlAbstractColumnModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    Q_ASSERT(index.isValid());
+
+    const int row = index.row();
+    if (row < 0 || row >= rowCount(parent(index)))
+        return false;
+
+    const int column = index.column();
+    if (column < 0 || column >= columnCount(parent(index)))
+        return false;
+
+    const QString roleName = QString::fromUtf8(mRoleNames.value(role));
+
+    qCDebug(lcColumnModel).nospace() << "setData() called with index "
+        << index << ", value " << value << " and role " << roleName;
+
+    // Verify that the role exists for this column.
+    const ColumnMetadata columnMetadata = mColumnMetadata.at(index.column());
+    if (!columnMetadata.roles.contains(roleName)) {
+        qmlWarning(this) << "setData(): no role named \"" << roleName
+                         << "\" at column index " << column << ". The available roles for that column are: "
+                         << columnMetadata.roles.keys();
+        return false;
+    }
+
+    // Verify that the type of the value is what we expect.
+    // If the value set is not of the expected type, we can try to convert it automatically.
+    const ColumnRoleMetadata roleData = columnMetadata.roles.value(roleName);
+    QVariant effectiveValue = value;
+    if (value.userType() != roleData.type) {
+        if (!value.canConvert(QMetaType(roleData.type))) {
+            qmlWarning(this).nospace() << "setData(): the value " << value
+                                       << " set at row " << row << " column " << column << " with role " << roleName
+                                       << " cannot be converted to " << roleData.typeName;
+            return false;
+        }
+
+        if (!effectiveValue.convert(QMetaType(roleData.type))) {
+            qmlWarning(this).nospace() << "setData(): failed converting value " << value
+                                       << " set at row " << row << " column " << column << " with role " << roleName
+                                       << " to " << roleData.typeName;
+            return false;
+        }
+    }
+
+    if (roleData.columnRole == ColumnRole::StringRole) {
+        // We know the data structure, so we can set it for the user.
+        setDataPrivate(index, roleData.name, value);
+    } else {
+        qmlWarning(this).nospace() << "setData(): manipulation of complex row "
+                                   << "structures is not supported";
+        return false;
+    }
+
+    QVector<int> rolesChanged;
+    rolesChanged.append(role);
+    emit dataChanged(index, index, rolesChanged);
+    emit rowsChanged();
+
+    return true;
+}
+
 QHash<int, QByteArray> QQmlAbstractColumnModel::roleNames() const
 {
     return mRoleNames;
