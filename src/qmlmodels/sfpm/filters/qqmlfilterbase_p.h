@@ -31,7 +31,7 @@ class Q_QMLMODELS_EXPORT QQmlFilterBase: public QObject
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged FINAL)
     Q_PROPERTY(bool invert READ invert WRITE setInvert NOTIFY invertChanged FINAL)
     Q_PROPERTY(int column READ column WRITE setColumn NOTIFY columnChanged FINAL)
-    QML_ELEMENT
+    QML_NAMED_ELEMENT(FilterBase)
     QML_UNCREATABLE("")
 
 public:

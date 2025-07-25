@@ -26,6 +26,7 @@ class Q_QMLMODELS_EXPORT QQmlRoleFilter : public QQmlFilterBase
 {
     Q_OBJECT
     Q_PROPERTY(QString roleName READ roleName WRITE setRoleName NOTIFY roleNameChanged)
+    QML_NAMED_ELEMENT(RoleFilter)
     QML_UNCREATABLE("")
 
 public:
