@@ -77,6 +77,57 @@ void QQmlAbstractColumnModel::columns_removeLast(QQmlListProperty<QQmlTableModel
     model->mColumns.removeLast();
 }
 
+QVariant QQmlAbstractColumnModel::data(const QModelIndex &index, const QString &role) const
+{
+    const int iRole = mRoleNames.key(role.toUtf8(), -1);
+    if (iRole >= 0)
+        return data(index, iRole);
+    return {};
+}
+
+QVariant QQmlAbstractColumnModel::data(const QModelIndex &index, int role) const
+{
+    if (!index.isValid()) {
+        qmlWarning(this) << "data(): invalid QModelIndex";
+        return {};
+    }
+
+    const int row = index.row();
+    if (row < 0 || row >= rowCount(parent(index))) {
+        qmlWarning(this) << "data(): invalid row specified in QModelIndex";
+        return {};
+    }
+
+    const int column = index.column();
+    if (column < 0 || column >= columnCount(parent(index))) {
+        qmlWarning(this) << "data(): invalid column specified in QModelIndex";
+        return {};
+    }
+
+    const ColumnMetadata columnMetadata = mColumnMetadata.at(column);
+    const QString roleName = QString::fromUtf8(mRoleNames.value(role));
+    if (!columnMetadata.roles.contains(roleName)) {
+        qmlWarning(this) << "data(): no role named " << roleName
+                         << " at column index " << column << ". The available roles for that column are: "
+                         << columnMetadata.roles.keys();
+        return {};
+    }
+
+    const ColumnRoleMetadata roleData = columnMetadata.roles.value(roleName);
+    if (roleData.columnRole == ColumnRole::StringRole) {
+        // We know the data structure, so we can get the data for the user.
+        return dataPrivate(index, roleName);
+    }
+
+    // We don't know the data structure, so the user has to modify their data themselves.
+    // First, find the getter for this column and role.
+    QJSValue getter = mColumns.at(column)->getterAtRole(roleName);
+
+    // Then, call it and return what it returned.
+    const auto args = QJSValueList() << qmlEngine(this)->toScriptValue(index);
+    return getter.call(args).toVariant();
+}
+
 bool QQmlAbstractColumnModel::setData(const QModelIndex &index, const QString &role, const QVariant &value)
 {
     const int intRole = mRoleNames.key(role.toUtf8(), -1);

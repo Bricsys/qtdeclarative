@@ -60,8 +60,6 @@ public:
     QModelIndex index(int row, int column, const QModelIndex &parent = {}) const override;
     int rowCount(const QModelIndex &parent = {}) const override;
     int columnCount(const QModelIndex &parent = {}) const override;
-    Q_INVOKABLE QVariant data(const QModelIndex &index, const QString &role) const;
-    QVariant data(const QModelIndex &index, int role) const override;
     QModelIndex parent(const QModelIndex &index) const override;
 
 protected:
@@ -81,6 +79,7 @@ private:
     };
 
     void setRowsPrivate(const QVariantList &rowsAsVariantList);
+    QVariant dataPrivate(const QModelIndex &index, const QString &roleName) const override;
     void setDataPrivate(const QModelIndex &index, const QString &roleName, QVariant value) override;
 
     bool validateRowType(QLatin1StringView functionName, const QVariant &row) const;

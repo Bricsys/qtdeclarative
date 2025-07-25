@@ -46,6 +46,8 @@ public:
     static void columns_replace(QQmlListProperty<QQmlTableModelColumn> *property, qsizetype index, QQmlTableModelColumn *value);
     static void columns_removeLast(QQmlListProperty<QQmlTableModelColumn> *property);
 
+    Q_INVOKABLE QVariant data(const QModelIndex &index, const QString &role) const;
+    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     Q_INVOKABLE bool setData(const QModelIndex &index, const QString &role, const QVariant &value);
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::DisplayRole) override;
 
@@ -63,6 +65,7 @@ protected:
     virtual QVariant firstRow() const = 0;
     virtual void setInitialRows() = 0;
 
+    virtual QVariant dataPrivate(const QModelIndex &index, const QString &roleName) const = 0;
     virtual void setDataPrivate(const QModelIndex &index, const QString &roleName, QVariant value) = 0;
 
     enum class ColumnRole : quint8

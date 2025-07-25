@@ -139,6 +139,14 @@ void QQmlTreeModel::setRowsPrivate(const QVariantList &rowsAsVariantList)
     emit rowsChanged();
 }
 
+QVariant QQmlTreeModel::dataPrivate(const QModelIndex &index, const QString &roleName) const
+{
+    const ColumnMetadata columnMetadata = mColumnMetadata.at(index.column());
+    const QString propertyName = columnMetadata.roles.value(roleName).name;
+    const auto *thisRow = static_cast<const QQmlTreeRow *>(index.internalPointer());
+    return thisRow->data(propertyName);
+}
+
 void QQmlTreeModel::setDataPrivate(const QModelIndex &index, const QString &roleName, QVariant value)
 {
     auto *row = static_cast<QQmlTreeRow *>(index.internalPointer());
@@ -504,58 +512,6 @@ int QQmlTreeModel::columnCount(const QModelIndex &parent) const
 
     \sa index(), setData()
 */
-QVariant QQmlTreeModel::data(const QModelIndex &index, const QString &role) const
-{
-    const int iRole = mRoleNames.key(role.toUtf8(), -1);
-    if (iRole >= 0)
-        return data(index, iRole);
-    return {};
-}
-
-QVariant QQmlTreeModel::data(const QModelIndex &index, int role) const
-{
-    if (!index.isValid()) {
-        qmlWarning(this) << "data(): invalid QModelIndex";
-        return {};
-    }
-
-    const int row = index.row();
-    if (row < 0 || row >= rowCount(parent(index))) {
-        qmlWarning(this) << "data(): invalid row specified in QModelIndex";
-        return {};
-    }
-
-    const int column = index.column();
-    if (column < 0 || column >= columnCount(parent(index))) {
-        qmlWarning(this) << "data(): invalid column specified in QModelIndex";
-        return {};
-    }
-
-    const ColumnMetadata columnMetadata = mColumnMetadata.at(column);
-    const QString roleName = QString::fromUtf8(mRoleNames.value(role));
-    if (!columnMetadata.roles.contains(roleName)) {
-        qmlWarning(this) << "data(): no role named " << roleName
-                         << " at column index " << column << ". The available roles for that column are: "
-                         << columnMetadata.roles.keys();
-        return {};
-    }
-
-    const ColumnRoleMetadata roleData = columnMetadata.roles.value(roleName);
-    if (roleData.columnRole == ColumnRole::StringRole) {
-        // We know the data structure, so we can get the data for the user.
-        const QString propertyName = columnMetadata.roles.value(roleName).name;
-        const auto *thisRow = static_cast<const QQmlTreeRow *>(index.internalPointer());
-        return thisRow->data(propertyName);
-    }
-
-    // We don't know the data structure, so the user has to modify their data themselves.
-    // First, find the getter for this column and role.
-    QJSValue getter = mColumns.at(column)->getterAtRole(roleName);
-
-    // Then, call it and return what it returned.
-    const auto args = QJSValueList() << qmlEngine(this)->toScriptValue(index);
-    return getter.call(args).toVariant();
-}
 
 /*!
     \qmlmethod bool TreeModel::setData(QModelIndex index, string role, variant value)
