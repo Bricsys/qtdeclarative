@@ -312,9 +312,9 @@ Q_SIGNALS:
     void effectiveLayoutDirectionChanged();
     void rowSpacingChanged();
     void columnSpacingChanged();
-    Q_REVISION(2, 1) void horizontalAlignmentChanged(HAlignment alignment);
-    Q_REVISION(2, 1) void effectiveHorizontalAlignmentChanged(HAlignment alignment);
-    Q_REVISION(2, 1) void verticalAlignmentChanged(VAlignment alignment);
+    Q_REVISION(2, 1) void horizontalAlignmentChanged(QQuickGrid::HAlignment alignment);
+    Q_REVISION(2, 1) void effectiveHorizontalAlignmentChanged(QQuickGrid::HAlignment alignment);
+    Q_REVISION(2, 1) void verticalAlignmentChanged(QQuickGrid::VAlignment alignment);
 
 protected:
     void doPositioning(QSizeF *contentSize) override;
