@@ -216,13 +216,12 @@ void QQmlTreeModel::fetchColumnMetaData()
 
 // TODO: Turn this into a snippet that compiles in CI
 /*!
-    \qmlmethod TreeModel::appendRow(QModelIndex treeRowIndex, object treeRow)
+    \qmlmethod TreeModel::appendRow(QModelIndex parent, object treeRow)
 
- Appends a new treeRow to the treeRow specified by \a treeRowIndex, with the
- values (cells) in \a treeRow.
+ Appends a new treeRow to \a parent, with the values (cells) in \a treeRow.
 
  \code
-     treeModel.appendRow(treeRowIndex, {
+     treeModel.appendRow(index, {
                          checked: false,
                          size: "-"
                          type: folder,
@@ -247,23 +246,23 @@ void QQmlTreeModel::fetchColumnMetaData()
                      })
  \endcode
 
- If \a treeRowIndex is invalid, \a treeRow gets appended to the root node.
+ If \a parent is invalid, \a treeRow gets appended to the root node.
 
  \sa setRow(), removeRow()
 */
-void QQmlTreeModel::appendRow(QModelIndex index, const QVariant &row)
+void QQmlTreeModel::appendRow(QModelIndex parent, const QVariant &row)
 {
     if (!validateRow("TreeModel::appendRow"_L1, row))
         return;
 
     const QVariant data = row.userType() == QMetaType::QVariantMap ? row : row.value<QJSValue>().toVariant();
 
-    if (index.isValid()) {
-        auto *parent = static_cast<QQmlTreeRow *>(index.internalPointer());
+    if (parent.isValid()) {
+        auto *parentRow = static_cast<QQmlTreeRow *>(parent.internalPointer());
         auto *newChild = new QQmlTreeRow(data);
 
-        beginInsertRows(index, static_cast<int>(parent->rowCount()), static_cast<int>(parent->rowCount()));
-        parent->addChild(newChild);
+        beginInsertRows(parent, static_cast<int>(parentRow->rowCount()), static_cast<int>(parentRow->rowCount()));
+        parentRow->addChild(newChild);
 
                // Gather metadata the first time a row is added.
         if (mColumnMetadata.isEmpty())
