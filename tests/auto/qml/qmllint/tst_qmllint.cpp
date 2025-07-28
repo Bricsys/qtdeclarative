@@ -1972,6 +1972,8 @@ void TestQmllint::cleanQmlCode_data()
     QTest::newRow("BindingTypeMismatchFunction") << QStringLiteral("bindingTypeMismatchFunction.qml");
     QTest::newRow("BindingsOnGroupAndAttachedProperties")
             << QStringLiteral("goodBindingsOnGroupAndAttached.qml");
+    QTest::newRow("CustomParserSignalHandler")
+            << QStringLiteral("customParserSignalHandler.qml");
     QTest::newRow("CustomParserUnqualifiedAccess")
             << QStringLiteral("customParserUnqualifiedAccess.qml");
     QTest::newRow("duplicateImportsClean") << QStringLiteral("duplicateImportsClean.qml");

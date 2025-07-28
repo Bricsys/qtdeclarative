@@ -1348,6 +1348,7 @@ void QQmlJSImportVisitor::checkSignal(
     }
 
     if (!signalMethod.has_value()) { // haven't found anything
+        // TODO: This should move  into a new "Qml (module) Lint Plugin"
         // There is a small chance of suggesting this fix for things that are not actually
         // QtQml/Connections elements, but rather some other thing that is also called
         // "Connections". However, I guess we can live with this.
@@ -1359,6 +1360,10 @@ void QQmlJSImportVisitor::checkSignal(
                     qmlUnqualified, location, true, true);
             return;
         }
+
+        auto baseType = QQmlJSScope::nonCompositeBaseType(signalScope);
+        if (baseType && baseType->hasCustomParser())
+            return; // we can't know what custom parser actually supports
 
         m_logger->log(
                 QStringLiteral("no matching signal found for handler \"%1\"").arg(handlerName),
