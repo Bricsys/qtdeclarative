@@ -19,10 +19,11 @@ qt_internal_add_qml_module(QuickLayouts
         qquicklayoutglobal_p.h
     DEFINES
         QT_BUILD_QUICKLAYOUTS_LIB
-    PUBLIC_LIBRARIES
-        Qt::Core
+    LIBRARIES
         Qt::GuiPrivate
         Qt::QuickPrivate
+    PUBLIC_LIBRARIES
+        Qt::Core
         Qt::Qml
     )
 

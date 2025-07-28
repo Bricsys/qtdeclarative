@@ -10,7 +10,7 @@ qt_internal_add_qml_module(LabsQmlModels
         qqmlmodelsglobal_p.h
     DEFINES
         QT_BUILD_LABSQMLMODELS_LIB
-    PUBLIC_LIBRARIES
+    LIBRARIES
         Qt::QmlModelsPrivate
         Qt::QmlPrivate
     DEPENDENCIES
