@@ -675,7 +675,7 @@ bool IRBuilder::visit(QQmlJS::AST::UiImport *node)
     if (!node->importId.isNull()) {
         QString qualifier = node->importId.toString();
         if (!qualifier.at(0).isUpper()) {
-            recordError(node->importIdToken, QCoreApplication::translate("QQmlParser","Invalid import qualifier ID"));
+            recordError(node->importIdToken, QCoreApplication::translate("QQmlParser","Invalid import qualifier '%1': must start with an uppercase letter").arg(qualifier));
             return false;
         }
         if (qualifier == QLatin1String("Qt")) {
