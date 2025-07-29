@@ -680,7 +680,8 @@ QQmlJSLinter::LintResult QQmlJSLinter::lintFile(const QString &filename,
                 if (!owner || owner->isComposite() || owner->isValueType())
                     return;
                 const auto &prop = QQmlSA::PropertyPrivate::property(element.property(propName));
-                if (prop.index() != -1 && !prop.isPropertyConstant() && prop.notify().isEmpty()) {
+                if (prop.index() != -1 && !prop.isPropertyConstant()
+                        && prop.notify().isEmpty() && prop.bindable().isEmpty()) {
                     const QQmlJSScope::ConstPtr &readScope = QQmlJSScope::scope(readScope_);
                     // FIXME: we currently get the closest QML Scope as readScope, instead of
                     // the innermost scope. We try locate it here via source location
