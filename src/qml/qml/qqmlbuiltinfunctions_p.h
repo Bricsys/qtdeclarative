@@ -43,7 +43,7 @@ class Q_QML_EXPORT QtObject : public QObject
     Q_PROPERTY(QObject *styleHints READ styleHints CONSTANT)
 
 #if QT_CONFIG(translation)
-    Q_PROPERTY(QString uiLanguage READ uiLanguage WRITE setUiLanguage BINDABLE uiLanguageBindable)
+    Q_PROPERTY(QString uiLanguage READ uiLanguage WRITE setUiLanguage BINDABLE uiLanguageBindable NOTIFY uiLanguageChanged)
 #endif
 
     QML_NAMED_ELEMENT(Qt)
@@ -166,6 +166,7 @@ public:
     QString uiLanguage() const;
     void setUiLanguage(const QString &uiLanguage);
     QBindable<QString> uiLanguageBindable();
+    Q_SIGNAL void uiLanguageChanged();
 #endif
 
     // Not const because created on first use, and parented to this.

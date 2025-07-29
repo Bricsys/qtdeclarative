@@ -2093,6 +2093,7 @@ void TestQmllint::cleanQmlCode_data()
     QTest::newRow("multiDefaultProperty") << QStringLiteral("multiDefaultPropertyOk.qml");
     QTest::newRow("multiExtension") << QStringLiteral("multiExtension.qml");
     QTest::newRow("multilineStringEscaped") << QStringLiteral("multilineStringEscaped.qml");
+    QTest::newRow("noMissingNotify") << QStringLiteral("noMissingNotify.qml");
     QTest::newRow("nullBindingFunction") << QStringLiteral("nullBindingFunction.qml");
     QTest::newRow("objectArray") << QStringLiteral("objectArray.qml");
     QTest::newRow("objectBindingOnVarProperty") << QStringLiteral("objectBoundToVar.qml");

@@ -265,6 +265,10 @@ current context.
 QtObject::QtObject(ExecutionEngine *engine)
     : m_engine(engine)
 {
+#if QT_CONFIG(translation)
+    connect(m_engine->jsEngine(), &QJSEngine::uiLanguageChanged,
+            this, &QtObject::uiLanguageChanged);
+#endif
 }
 
 QtObject::Contexts QtObject::getContexts() const
