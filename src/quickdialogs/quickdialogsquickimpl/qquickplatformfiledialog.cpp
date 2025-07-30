@@ -121,7 +121,7 @@ void QQuickPlatformFileDialog::selectFile(const QUrl &file)
 // TODO: support for multiple selected files
 QList<QUrl> QQuickPlatformFileDialog::selectedFiles() const
 {
-    if (m_dialog->selectedFile().isEmpty())
+    if (!m_dialog || m_dialog->selectedFile().isEmpty())
         return {};
 
     return { m_dialog->selectedFile() };

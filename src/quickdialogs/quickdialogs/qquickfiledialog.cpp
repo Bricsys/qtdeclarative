@@ -556,7 +556,7 @@ void QQuickFileDialog::onShow(QPlatformDialogHelper *dialog)
         }
     }
 #if QT_CONFIG(quick_listview) && QT_CONFIG(quick_draganddrop)
-    if (QQuickPlatformFileDialog *fileDialog = qobject_cast<QQuickPlatformFileDialog *>(dialog))
+    if (QQuickPlatformFileDialog *fileDialog = qobject_cast<QQuickPlatformFileDialog *>(dialog); fileDialog && fileDialog->dialog())
         fileDialog->dialog()->setPopupType(m_popupType);
 #endif
 
