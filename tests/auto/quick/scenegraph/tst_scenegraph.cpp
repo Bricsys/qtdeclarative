@@ -101,6 +101,7 @@ private slots:
     void resizeTextureFromImage();
     void textureNativeInterface();
     void distanceFieldCacheInvalidation();
+    void unexposeDuringPolish();
 
 private:
     QQuickView *createView(const QString &file, QWindow *parent = nullptr, int x = -1, int y = -1, int w = -1, int h = -1);
@@ -889,6 +890,71 @@ void tst_SceneGraph::distanceFieldCacheInvalidation()
         cache->release(glyphIndexes);
         QVERIFY(!cache->isActive());
     }
+}
+
+class NotificationItem : public QQuickItem
+{
+    Q_OBJECT
+    Q_PROPERTY(
+            QRectF contentsRect READ contentsRect WRITE setContentsRect NOTIFY contentsRectChanged)
+
+public:
+    explicit NotificationItem(QQuickItem *parent = nullptr) : QQuickItem(parent) { }
+
+    QRectF contentsRect() const { return m_contentsRect; }
+
+    void setContentsRect(const QRectF &contentsRect)
+    {
+        if (m_contentsRect != contentsRect) {
+            m_contentsRect = contentsRect;
+            polish();
+            Q_EMIT contentsRectChanged();
+        }
+    }
+
+Q_SIGNALS:
+    void contentsRectChanged();
+
+protected:
+    void updatePolish() override
+    {
+        if (m_contentsRect.isEmpty()) {
+            window()->setVisible(false);
+        }
+    }
+
+private:
+    QRectF m_contentsRect = QRectF(0, 0, 100, 100);
+};
+
+static bool waitForWindowUnexposed(QWindow *window, int timeout = 5000)
+{
+    return QTest::qWaitFor([window]() { return !window->isExposed(); }, timeout);
+}
+
+void tst_SceneGraph::unexposeDuringPolish()
+{
+    qmlRegisterType<NotificationItem>("SceneGraphTest", 1, 0, "Notification");
+
+    // This test verifies that the window will not be painted if it's unexposed while polishing
+    // items. It's relevant with QPAs such as QtWayland.
+
+    QQuickView view;
+    view.setSource(testFileUrl(QLatin1String("unexposeDuringPolish.qml")));
+    view.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&view));
+
+    connect(&view, &QQuickWindow::afterAnimating, this,
+            [this, &view]() { QVERIFY(view.isExposed()); });
+    connect(&view, &QQuickWindow::beforeSynchronizing, this,
+            [this, &view]() { QVERIFY(view.isExposed()); });
+
+    QQuickItem *rootItem = view.rootObject();
+    rootItem->setProperty("contentsRect", QRectF());
+
+    QVERIFY(waitForWindowUnexposed(&view));
+    QVERIFY(!view.isExposed());
+    QVERIFY(!view.isVisible());
 }
 
 #include "tst_scenegraph.moc"
