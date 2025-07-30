@@ -369,11 +369,15 @@ void QQuickFileDialogImpl::setInitialCurrentFolderAndSelectedFile(const QUrl &fi
     d->updateFileNameTextEdit();
     d->setCurrentIndexToInitiallySelectedFile = true;
 
+    bool isListViewCurrentIndexNegative = false;
+    if (const auto *attached = d->attachedOrWarn())
+        isListViewCurrentIndexNegative = attached->fileDialogListView()->currentIndex() < 0;
+
     // If the currentFolder didn't change, the FolderListModel won't change and
     // neither will the ListView. This means that setFileDialogListViewCurrentIndex
     // will never get called and the currentIndex will not reflect selectedFile.
     // We need to account for that here.
-    if (!currentFolderChanged) {
+    if (!currentFolderChanged || isListViewCurrentIndexNegative) {
         const QFileInfo newSelectedFileInfo(d->selectedFile.toLocalFile());
         const int indexOfSelectedFileInFileDialogListView = d->cachedFileList.indexOf(newSelectedFileInfo);
         d->tryUpdateFileDialogListViewCurrentIndex(indexOfSelectedFileInFileDialogListView);
@@ -744,10 +748,15 @@ void QQuickFileDialogImplAttached::setFileDialogListView(QQuickListView *fileDia
     if (fileDialogListView == d->fileDialogListView)
         return;
 
+    if (d->fileDialogListView)
+        QObjectPrivate::disconnect(d->fileDialogListView, &QQuickListView::currentIndexChanged,
+            d, &QQuickFileDialogImplAttachedPrivate::fileDialogListViewCurrentIndexChanged);
+
     d->fileDialogListView = fileDialogListView;
 
-    QObjectPrivate::connect(d->fileDialogListView, &QQuickListView::currentIndexChanged,
-        d, &QQuickFileDialogImplAttachedPrivate::fileDialogListViewCurrentIndexChanged);
+    if (d->fileDialogListView)
+        QObjectPrivate::connect(d->fileDialogListView, &QQuickListView::currentIndexChanged,
+            d, &QQuickFileDialogImplAttachedPrivate::fileDialogListViewCurrentIndexChanged);
 
     emit fileDialogListViewChanged();
 }

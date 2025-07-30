@@ -102,23 +102,23 @@ FileDialogImpl {
         }
     }
 
-    contentItem: RowLayout {
+    contentItem: SplitView {
         id: contentLayout
 
+        contentHeight: sideBar.implicitHeight
         DialogsImpl.SideBar {
             id: sideBar
             dialog: control
-            Layout.fillHeight: true
-            implicitWidth: 150
+            SplitView.minimumWidth: 50
+            SplitView.maximumWidth: contentLayout.width / 2
         }
 
         ListView {
             id: fileDialogListView
             objectName: "fileDialogListView"
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+            SplitView.fillWidth: true
             clip: true
-
+            boundsBehavior: Flickable.StopAtBounds
             ScrollBar.vertical: ScrollBar {}
 
             model: FolderListModel {

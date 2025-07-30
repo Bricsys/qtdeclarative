@@ -320,7 +320,7 @@ bool FileDialogTestHelper::openDialog()
     if (!DialogTestHelper::openDialog())
         return false;
 
-    fileDialogListView = quickDialog->findChild<QQuickListView*>("fileDialogListView");
+    fileDialogListView = quickDialog->contentItem()->findChild<QQuickListView*>("fileDialogListView");
     return fileDialogListView != nullptr;
 }
 
@@ -663,12 +663,14 @@ void tst_QQuickFileDialogImpl::chooseFileAndThenFolderViaTextEdit()
     VERIFY_FILE_SELECTED_AND_FOCUSED(QUrl::fromLocalFile(tempDirCanonicalPath),
         QUrl::fromLocalFile(tempSubDirCanonicalPath), 0);
 
+    auto *breadcrumbBar = dialogHelper.quickDialog->findChild<QQuickFolderBreadcrumbBar*>();
+    QVERIFY(breadcrumbBar);
 #if QT_CONFIG(shortcut)
     // Get the text edit visible with Ctrl+L.
     QTest::keySequence(dialogHelper.popupWindow(), editPathKeySequence);
+    QVERIFY(QQuickTest::qWaitForPolish(breadcrumbBar->textField()));
+    QTRY_VERIFY(breadcrumbBar->textField()->hasActiveFocus());
 #endif
-    auto breadcrumbBar = dialogHelper.quickDialog->findChild<QQuickFolderBreadcrumbBar*>();
-    QVERIFY(breadcrumbBar);
     QVERIFY(breadcrumbBar->textField()->isVisible());
     QCOMPARE(breadcrumbBar->textField()->text(), dialogHelper.dialog->currentFolder().toLocalFile());
     QCOMPARE(breadcrumbBar->textField()->selectedText(), breadcrumbBar->textField()->text());
@@ -697,6 +699,8 @@ void tst_QQuickFileDialogImpl::chooseFileAndThenFolderViaTextEdit()
 #if QT_CONFIG(shortcut)
     // Get the text edit visible with Ctrl+L.
     QTest::keySequence(dialogHelper.popupWindow(), editPathKeySequence);
+    QVERIFY(QQuickTest::qWaitForPolish(breadcrumbBar->textField()));
+    QTRY_VERIFY(breadcrumbBar->textField()->hasActiveFocus());
 #endif
     QVERIFY(breadcrumbBar->textField()->isVisible());
     // The text edit should show the directory that contains the last file that was selected.
@@ -886,8 +890,8 @@ void tst_QQuickFileDialogImpl::goIntoLargeFolder()
 
     // If the screen is so tall that the contentItem is not vertically larger than the view,
     // then the test makes no sense.
-    if (QQuickTest::qIsPolishScheduled(dialogHelper.fileDialogListView))
-        QVERIFY(QQuickTest::qWaitForPolish(dialogHelper.fileDialogListView));
+    if (QQuickTest::qIsPolishScheduled(dialogHelper.popupWindow()))
+        QVERIFY(QQuickTest::qWaitForPolish(dialogHelper.popupWindow()));
     // Just to be safe, make sure it's at least twice as big.
     if (dialogHelper.fileDialogListView->contentItem()->height() < dialogHelper.fileDialogListView->height() * 2) {
         QSKIP(qPrintable(QString::fromLatin1("Expected height of dialogHelper.fileDialogListView's contentItem (%1)" \
@@ -1614,6 +1618,9 @@ void tst_QQuickFileDialogImpl::selectExistingFileShouldWarnUserWhenFileModeEqual
     QTRY_VERIFY(confirmationDialog->isOpened());
     QVERIFY(dialogHelper.dialog->isVisible());
 
+    QVERIFY(QQuickTest::qWaitForPolish(confirmationDialog->popupItem()));
+    QTRY_COMPARE(dialogHelper.popupWindow()->activeFocusItem(), confirmationButtonBox->standardButton(QPlatformDialogHelper::Yes));
+
     // Yes button should have focus by default
     QTest::keyClick(dialogHelper.popupWindow(), Qt::Key_Space, Qt::NoModifier);
 
@@ -1743,6 +1750,7 @@ void tst_QQuickFileDialogImpl::setSchemeForSelectedFile()
             fileNameTextField->mapToScene({ fileNameTextField->width() / 2, fileNameTextField->height() / 2 }).toPoint();
     QTest::mouseClick(dialogHelper.popupWindow(), Qt::LeftButton, Qt::NoModifier, textFieldCenterPos);
 
+    QTRY_COMPARE(dialogHelper.popupWindow()->activeFocusItem(), fileNameTextField);
     const QByteArray newFileName("helloworld.txt");
     for (const auto &c : newFileName)
         QTest::keyClick(dialogHelper.popupWindow(), c);
