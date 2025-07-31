@@ -254,12 +254,13 @@ void QQmlJSTypeDescriptionReader::readComponent(UiObjectDefinition *ast)
                 scope->setIsJavaScriptBuiltin(true);
             } else {
                 addWarning(script->firstSourceLocation(),
-                           tr("Expected only name, prototype, defaultProperty, attachedType, "
+                           tr("Expected only lineNumber, name, prototype, defaultProperty, "
+                              "attachedType, "
                               "valueType, exports, interfaces, isSingleton, isCreatable, "
                               "isStructured, isComposite, hasCustomParser, enforcesScopedEnums, "
                               "aliases, exportMetaObjectRevisions, deferredNames, and "
                               "immediateNames in script bindings, not \"%1\".")
-                           .arg(name));
+                                   .arg(name));
             }
         } else {
             addWarning(member->firstSourceLocation(),
@@ -303,6 +304,8 @@ void QQmlJSTypeDescriptionReader::readSignalOrMethod(
             QString name = toString(script->qualifiedId);
             if (name == QLatin1String("name")) {
                 metaMethod.setMethodName(readStringBinding(script));
+            } else if (name == QLatin1String("lineNumber")) {
+                // only used in 6.11
             } else if (name == QLatin1String("type")) {
                 metaMethod.setReturnTypeName(readStringBinding(script));
             } else if (name == QLatin1String("revision")) {
@@ -343,7 +346,8 @@ void QQmlJSTypeDescriptionReader::readSignalOrMethod(
                 metaMethod.setIsConst(readBoolBinding(script));
             } else {
                 addWarning(script->firstSourceLocation(),
-                           tr("Expected only name, type, revision, isPointer, isTypeConstant, "
+                           tr("Expected only name, lineNumber, type, revision, isPointer, "
+                              "isTypeConstant, "
                               "isList, isCloned, isConstructor, isMethodConstant, and "
                               "isJavaScriptFunction in script bindings."));
             }
@@ -388,6 +392,8 @@ void QQmlJSTypeDescriptionReader::readProperty(UiObjectDefinition *ast, const QQ
         QString id = toString(script->qualifiedId);
         if (id == QLatin1String("name")) {
             property.setPropertyName(readStringBinding(script));
+        } else if (id == QLatin1String("lineNumber")) {
+            // only used in 6.11
         } else if (id == QLatin1String("type")) {
             property.setTypeName(readStringBinding(script));
         } else if (id == QLatin1String("isPointer")) {
@@ -425,8 +431,10 @@ void QQmlJSTypeDescriptionReader::readProperty(UiObjectDefinition *ast, const QQ
             property.setPrivateClass(readStringBinding(script));
         } else {
             addWarning(script->firstSourceLocation(),
-                       tr("Expected only type, name, revision, isPointer, isTypeConstant, isReadonly, isRequired, "
-                          "isFinal, isList, bindable, read, write, isPropertyConstant, reset, notify, index, and "
+                       tr("Expected only type, name, lineNumber, revision, isPointer, "
+                          "isTypeConstant, isReadonly, isRequired, "
+                          "isFinal, isList, bindable, read, write, isPropertyConstant, reset, "
+                          "notify, index, and "
                           "privateClass and script bindings."));
         }
     }
@@ -467,9 +475,12 @@ void QQmlJSTypeDescriptionReader::readEnum(UiObjectDefinition *ast, const QQmlJS
             metaEnum.setIsScoped(readBoolBinding(script));
         } else if (name == QLatin1String("type")) {
             metaEnum.setTypeName(readStringBinding(script));
+        } else if (name == QLatin1String("lineNumber")) {
+            // only used in 6.11
         } else {
             addWarning(script->firstSourceLocation(),
-                       tr("Expected only name, alias, isFlag, values, isScoped, or type."));
+                       tr("Expected only name, alias, isFlag, values, isScoped, type, or "
+                          "lineNumber."));
         }
     }
 

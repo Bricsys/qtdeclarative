@@ -216,6 +216,10 @@ void QmlTypesCreator::writeProperties(const Property::Container &properties)
         if (index != -1) {
             m_qml.writeNumberBinding(S_INDEX, index);
         }
+        const auto lineNumber = obj.lineNumber;
+        if (lineNumber != 0)
+            m_qml.writeNumberBinding(S_LINE_NUMBER, obj.lineNumber);
+
         const auto privateClass = obj.privateClass;
         if (!privateClass.isEmpty()) {
             m_qml.writeStringBinding(
@@ -260,6 +264,9 @@ void QmlTypesCreator::writeMethods(const Method::Container &methods, QLatin1Stri
             m_qml.writeBooleanBinding(S_IS_JAVASCRIPT_FUNCTION, true);
         if (obj.isConst)
             m_qml.writeBooleanBinding(S_IS_METHOD_CONSTANT, true);
+        const auto lineNumber = obj.lineNumber;
+        if (lineNumber != 0)
+            m_qml.writeNumberBinding(S_LINE_NUMBER, obj.lineNumber);
 
         const Argument::Container &arguments = obj.arguments;
         for (qsizetype i = 0, end = arguments.size(); i != end; ++i) {
@@ -287,6 +294,9 @@ void QmlTypesCreator::writeEnums(const Enum::Container &enums)
         if (obj.isClass)
             m_qml.writeBooleanBinding(S_IS_SCOPED, true);
         writeType(obj.type);
+        const auto lineNumber = obj.lineNumber;
+        if (lineNumber != 0)
+            m_qml.writeNumberBinding(S_LINE_NUMBER, obj.lineNumber);
         m_qml.writeStringListBinding(S_VALUES, obj.values);
         m_qml.writeEndObject();
     }
