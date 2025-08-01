@@ -43,6 +43,10 @@ QQmlJSCompilePass::BlocksAndAnnotations QQmlJSTypePropagator::run(const Function
     m_function = function;
     m_returnType = m_function->returnType;
 
+    // We cannot assume anything about how a script string will be used
+    if (m_returnType.containedType() == m_typeResolver->qQmlScriptStringType())
+        return {};
+
     do {
         // Reset the error if we need to do another pass
         if (m_state.needsMorePasses)
