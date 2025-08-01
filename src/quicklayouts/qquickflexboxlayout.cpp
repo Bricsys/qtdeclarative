@@ -8,7 +8,7 @@
 /*!
     \qmltype FlexboxLayout
     //! \nativetype QQuickFlexboxLayout
-    \inherits Layout
+    \inherits Item
     \inqmlmodule QtQuick.Layouts
     \ingroup layouts
     \since 6.10
@@ -47,6 +47,11 @@
         \li \l{Layout::maximumHeight}{Layout.maximumHeight}
         \li \l{Layout::fillWidth}{Layout.fillWidth}
         \li \l{Layout::fillHeight}{Layout.fillHeight}
+        \li \l{Layout::margins}{Layout.margins}
+        \li \l{Layout::leftMargin}{Layout.leftMargin}
+        \li \l{Layout::rightMargin}{Layout.rightMargin}
+        \li \l{Layout::topMargin}{Layout.topMargin}
+        \li \l{Layout::bottomMargin}{Layout.bottomMargin}
     \endlist
 
     Read more about attached properties \l{QML Object Attributes}{here}.
