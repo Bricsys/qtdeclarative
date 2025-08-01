@@ -27,7 +27,7 @@ T.SearchField {
         width: ListView.view.width
         text: model[control.textRole]
         font.weight: control.currentIndex === index ? Font.DemiBold : Font.Normal
-        highlighted: control.currentIndex === index
+        highlighted: control.highlightedIndex === index
         hoverEnabled: control.hoverEnabled
 
         Material.foreground: control.currentIndex === index ? ListView.view.contentItem.Material.accent : ListView.view.contentItem.Material.foreground
@@ -106,7 +106,7 @@ T.SearchField {
             clip: true
             implicitHeight: contentHeight
             model: control.delegateModel
-            currentIndex: control.currentIndex
+            currentIndex: control.highlightedIndex
             highlightMoveDuration: 0
 
             T.ScrollIndicator.vertical: ScrollIndicator { }

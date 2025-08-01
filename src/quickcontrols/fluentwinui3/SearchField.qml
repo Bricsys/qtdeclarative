@@ -52,7 +52,7 @@ T.SearchField {
         palette.text: control.palette.text
         palette.highlightedText: control.palette.highlightedText
         font.weight: control.currentIndex === index ? Font.DemiBold : Font.Normal
-        highlighted: control.currentIndex === index
+        highlighted: control.highlightedIndex === index
         hoverEnabled: control.hoverEnabled
 
         required property var model
@@ -183,7 +183,7 @@ T.SearchField {
             clip: true
             implicitHeight: contentHeight
             model: control.delegateModel
-            currentIndex: control.currentIndex
+            currentIndex: control.highlightedIndex
             highlightMoveDuration: 0
         }
 
