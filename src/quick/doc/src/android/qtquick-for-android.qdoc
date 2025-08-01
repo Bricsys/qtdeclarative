@@ -64,7 +64,8 @@
     app to embed QML.
     //! TODO: Update links to Java API docs when published
     \list
-        \li \l{Qt Quick View Android Class}
+        \li \l{QtQuickView}
+        \li \l{QtQuickViewContent}
         \li \l{QtAbstractItemModel Android Class}
         \li \l{QtAbstractListModel Android Class}
         \li \l{interface QtQmlStatusChangeListener} (which uses the QtQmlStatus enum)
@@ -81,6 +82,8 @@
         \li \l{Exposing QtAbstractListModel to QML}
         \li \l{Using QtAbstractItemModel in Android Studio Projects}
     \endlist
+
+    \include qtquick-for-android-main().qdocinc
 
     \section2 Running Qt Quick for Android examples
 
