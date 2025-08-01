@@ -1523,6 +1523,12 @@ bool QQmlJSTypeResolver::canPrimitivelyConvertFromTo(
         return true;
     }
 
+    // it is possible to assing a singlar object to a list property if it could be stored in the list
+    if (to->accessSemantics() == QQmlJSScope::AccessSemantics::Sequence
+        && from->accessSemantics()  == QQmlJSScope::AccessSemantics::Reference
+        &&  from->inherits(to->valueType()))
+        return true;
+
     if (to == m_stringType && from->accessSemantics() == QQmlJSScope::AccessSemantics::Sequence)
         return canConvertFromTo(from->valueType(), m_stringType);
 

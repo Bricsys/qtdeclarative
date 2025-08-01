@@ -2122,6 +2122,7 @@ void TestQmllint::cleanQmlCode_data()
     QTest::newRow("setRequiredTroughAliasOfAlias")
             << QStringLiteral("setRequiredPropertyThroughAliasOfAlias.qml");
     QTest::newRow("shapes") << QStringLiteral("shapes.qml");
+    QTest::newRow("singleElementAssignedToList") << QStringLiteral("singleElementAssignedToList.qml");
     QTest::newRow("stringLength") << QStringLiteral("stringLength.qml");
     QTest::newRow("stringLength2") << QStringLiteral("stringLength2.qml");
     QTest::newRow("stringLength3") << QStringLiteral("stringLength3.qml");
