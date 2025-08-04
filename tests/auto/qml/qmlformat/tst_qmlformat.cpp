@@ -368,6 +368,11 @@ void TestQmlformat::qml_data()
                                      << "finalProperties.formatted.qml";
     QTest::newRow("commentsStressTest_enum") << "commentsStressTest_enum.qml"
                                              << "commentsStressTest_enum.formatted.qml";
+
+    QTest::newRow("commentInEnum") << "commentInEnum.qml"
+                                   << "commentInEnum.formatted.qml";
+    QTest::newRow("commentInQmlObject") << "commentInQmlObject.qml"
+                                        << "commentInQmlObject.formatted.qml";
 }
 void TestQmlformat::qml()
 {
