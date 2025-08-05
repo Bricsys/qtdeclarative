@@ -1651,10 +1651,21 @@ function(_qt_internal_target_enable_qmllint target)
 
     set(cmd_dummy ${CMAKE_COMMAND} -E echo "Nothing to do for target ${lint_target}.")
 
+    # Enable an easy way to always run qmllint on examples, without having to modify
+    # the examples themselves
+    set(lint_target_part_of_all "")
+    if(QT_LINT_EXAMPLES)
+        get_target_property(target_source_dir ${target} SOURCE_DIR)
+        string(FIND "${target_source_dir}" "examples" examples_position)
+        if (NOT (examples_position EQUAL -1))
+            set(lint_target_part_of_all ALL)
+        endif()
+    endif()
+
     # We need this target to depend on all qml type registrations. This is the
     # only way we can be sure that all *.qmltypes files for any QML modules we
     # depend on will have been generated.
-    add_custom_target(${lint_target}
+    add_custom_target(${lint_target} ${lint_target_part_of_all}
         COMMAND "$<IF:${have_qmllint_files},${cmd},${cmd_dummy}>"
         COMMAND_EXPAND_LISTS
         DEPENDS
