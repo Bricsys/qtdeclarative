@@ -38,10 +38,10 @@ FileDialogImpl {
         dim: true
         modal: true
         title: qsTr("Overwrite file?")
+        width: contentItem.implicitWidth + leftPadding + rightPadding
 
         contentItem: Label {
             text: qsTr("“%1” already exists.\nDo you want to replace it?").arg(control.fileName)
-            wrapMode: Text.WordWrap
         }
 
         footer: DialogButtonBox {

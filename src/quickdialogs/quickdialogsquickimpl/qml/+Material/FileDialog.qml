@@ -40,6 +40,7 @@ FileDialogImpl {
         modal: true
         title: qsTr("Overwrite file?")
         clip: true
+        width: contentItem.implicitWidth + leftPadding + rightPadding
 
         contentItem: Label {
             text: qsTr("“%1” already exists.\nDo you want to replace it?").arg(control.fileName)

@@ -152,11 +152,8 @@ QStringList tst_QQuickFileDialogImpl::tempSubDirExpectedVisibleFiles(DelegateOrd
         : QStringList { tempSubFile1->fileName(), tempSubFile2->fileName(), tempSubSubDir.path() };
 }
 
-// We don't want to fail on warnings until QTBUG-98964 is fixed,
-// as we deliberately prevent deferred execution in some of the tests here,
-// which causes warnings.
 tst_QQuickFileDialogImpl::tst_QQuickFileDialogImpl()
-    : QQmlDataTest(QT_QMLTEST_DATADIR, FailOnWarningsPolicy::DoNotFailOnWarnings)
+    : QQmlDataTest(QT_QMLTEST_DATADIR, FailOnWarningsPolicy::FailOnWarnings)
 {
 }
 
@@ -329,7 +326,6 @@ bool FileDialogTestHelper::openDialog()
 
 void tst_QQuickFileDialogImpl::defaults()
 {
-    QTest::failOnWarning(QRegularExpression(".*"));
     FileDialogTestHelper dialogHelper(this, "fileDialog.qml");
     QVERIFY2(dialogHelper.isWindowInitialized(), dialogHelper.failureMessage());
     QVERIFY(dialogHelper.waitForWindowActive());
