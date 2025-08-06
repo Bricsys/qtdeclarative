@@ -569,15 +569,6 @@ void TestQmllint::dirtyQmlCode_data()
     QTest::newRow("BadScriptBindingOnGroup")
             << QStringLiteral("badScriptBinding.group.qml")
             << Result{ { { "Could not find property \"bogusProperty\"."_L1, 3, 10 } } };
-    {
-        const QString warning = u"Do not mix translation functions"_s;
-        QTest::addRow("BadTranslationMix")
-                << testFile(u"translations/BadMix.qml"_s)
-                << Result{ { { warning, 5, 49 }, { warning, 6, 56 }, } };
-        QTest::addRow("BadTranslationMixWithMacros")
-                << testFile(u"translations/BadMixWithMacros.qml"_s)
-                << Result{ { { warning, 5, 29 } } };
-    }
     QTest::newRow("CoerceToVoid")
             << QStringLiteral("coercetovoid.qml")
             << Result{ { { "Function without return type annotation returns double"_L1 } } };
@@ -3368,6 +3359,12 @@ void TestQmllint::qdsPlugin_data()
                 << u"qdsPlugin/UnsupportedFunction.ui.qml"_s
                 << Result{ { Message{ functionError, 4, 5 }, Message{ functionError, 13, 9 } },
                            { Message{ functionError, 7, 9 }, Message{ functionError, 10, 9 } } };
+    }
+    {
+        const QString warning = u"Do not mix translation functions"_s;
+        QTest::addRow("BadTranslationMix")
+                << u"qdsPlugin/BadMix.ui.qml"_s
+                << Result{ { Message{ warning, 5, 49 }, { warning, 6, 56 } } };
     }
 }
 

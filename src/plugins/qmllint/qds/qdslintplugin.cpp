@@ -93,6 +93,19 @@ private:
     Element m_qtObject;
 };
 
+class QQmlJSTranslationFunctionMismatchCheck : public QQmlSA::PropertyPass
+{
+public:
+    using QQmlSA::PropertyPass::PropertyPass;
+
+    void onCall(const QQmlSA::Element &element, const QString &propertyName,
+                const QQmlSA::Element &readScope, QQmlSA::SourceLocation location) override;
+
+private:
+    enum TranslationType : quint8 { None, Normal, IdBased };
+    TranslationType m_lastTranslationFunction = None;
+};
+
 void QdsBindingValidator::onRead(const QQmlSA::Element &element, const QString &propertyName,
                                  const QQmlSA::Element &readScope, QQmlSA::SourceLocation location)
 {
@@ -142,6 +155,51 @@ void QdsBindingValidator::onWrite(const QQmlSA::Element &, const QString &proper
     }
 }
 
+void QQmlJSTranslationFunctionMismatchCheck::onCall(const QQmlSA::Element &element,
+                                                    const QString &propertyName,
+                                                    const QQmlSA::Element &readScope,
+                                                    QQmlSA::SourceLocation location)
+{
+    Q_UNUSED(readScope);
+
+    const QQmlSA::Element globalJSObject = resolveBuiltinType(u"GlobalObject");
+    if (element != globalJSObject)
+        return;
+
+    constexpr std::array translationFunctions = {
+        "qsTranslate"_L1,
+        "QT_TRANSLATE_NOOP"_L1,
+        "qsTr"_L1,
+        "QT_TR_NOOP"_L1,
+    };
+
+    constexpr std::array idTranslationFunctions = {
+        "qsTrId"_L1,
+        "QT_TRID_NOOP"_L1,
+    };
+
+    const bool isTranslation =
+            std::find(translationFunctions.cbegin(), translationFunctions.cend(), propertyName)
+            != translationFunctions.cend();
+    const bool isIdTranslation =
+            std::find(idTranslationFunctions.cbegin(), idTranslationFunctions.cend(), propertyName)
+            != idTranslationFunctions.cend();
+
+    if (!isTranslation && !isIdTranslation)
+        return;
+
+    const TranslationType current = isTranslation ? Normal : IdBased;
+
+    if (m_lastTranslationFunction == None) {
+        m_lastTranslationFunction = current;
+        return;
+    }
+
+    if (m_lastTranslationFunction != current) {
+        emitWarning("Do not mix translation functions", qmlTranslationFunctionMismatch, location);
+    }
+}
+
 void QmlLintQdsPlugin::registerPasses(PassManager *manager, const Element &rootElement)
 {
     if (!rootElement.filePath().endsWith(u".ui.qml"))
@@ -151,6 +209,8 @@ void QmlLintQdsPlugin::registerPasses(PassManager *manager, const Element &rootE
                                   QAnyStringView(), QAnyStringView());
     manager->registerPropertyPass(std::make_shared<QdsBindingValidator>(manager, rootElement),
                                   QAnyStringView(), QAnyStringView());
+    manager->registerPropertyPass(std::make_unique<QQmlJSTranslationFunctionMismatchCheck>(manager),
+                                  QString(), QString(), QString());
     manager->registerElementPass(std::make_unique<QdsElementValidator>(manager));
 }
 

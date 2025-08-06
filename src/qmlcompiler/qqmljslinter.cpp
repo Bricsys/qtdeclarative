@@ -8,7 +8,6 @@
 #include <QtQmlCompiler/private/qqmljsimporter_p.h>
 #include <QtQmlCompiler/private/qqmljsimportvisitor_p.h>
 #include <QtQmlCompiler/private/qqmljsliteralbindingcheck_p.h>
-#include <QtQmlCompiler/private/qqmljstranslationfunctionmismatchcheck_p.h>
 
 #include <QtCore/qjsonobject.h>
 #include <QtCore/qfileinfo.h>
@@ -659,9 +658,6 @@ QQmlJSLinter::LintResult QQmlJSLinter::lintFile(const QString &filename,
             &QQmlSA::PassManagerPrivate::deletePassManager);
     passMan->registerPropertyPass(std::make_unique<QQmlJSLiteralBindingCheck>(passMan.get()),
                                   QString(), QString(), QString());
-    passMan->registerPropertyPass(
-            std::make_unique<QQmlJSTranslationFunctionMismatchCheck>(passMan.get()), QString(),
-            QString(), QString());
 
     QQmlSA::PropertyPassBuilder(passMan.get())
             .withOnCall([](QQmlSA::PropertyPass *self, const QQmlSA::Element &, const QString &,
