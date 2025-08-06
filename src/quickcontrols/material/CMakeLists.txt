@@ -97,6 +97,10 @@ set_source_files_properties(VerticalHeaderView.qml PROPERTIES
     QT_QML_SOURCE_VERSIONS "2.15;6.0"
 )
 
+set_source_files_properties(SearchField.qml PROPERTIES
+    QT_QML_SOURCE_VERSIONS "6.10"
+)
+
 add_subdirectory(impl)
 
 qt_internal_add_qml_module(QuickControls2Material

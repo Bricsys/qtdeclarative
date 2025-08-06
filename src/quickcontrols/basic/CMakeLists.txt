@@ -159,6 +159,9 @@ if (QT_FEATURE_quicktemplates2_calendar)
         QT_QML_SOURCE_VERSIONS "6.3"
     )
 endif()
+set_source_files_properties(SearchField.qml PROPERTIES
+    QT_QML_SOURCE_VERSIONS "6.10"
+)
 
 add_subdirectory(impl)
 

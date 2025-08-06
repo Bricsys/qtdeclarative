@@ -53,6 +53,10 @@ set_source_files_properties(Config.qml PROPERTIES
     QT_QML_SINGLETON_TYPE TRUE
 )
 
+set_source_files_properties(SearchField.qml PROPERTIES
+    QT_QML_SOURCE_VERSIONS "6.10"
+)
+
 file(GLOB light_theme_resources RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "light/images/*.png")
 file(GLOB dark_theme_resources RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "dark/images/*.png")
 file(GLOB icons_theme_resources RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "icons/*.png")
