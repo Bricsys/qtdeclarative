@@ -1234,6 +1234,13 @@ void QQmlXMLHttpRequest::requestFromUrl(const QUrl &url)
         }
     }
 
+    if (!m_nam) {
+        qWarning() << "XMLHttpRequest:" << qPrintable(m_method)
+                   << "No network accessmanager available.";
+        m_state = Done;
+        return;
+    }
+
     if (m_method == QLatin1String("GET")) {
         m_network = networkAccessManager()->get(request);
     } else if (m_method == QLatin1String("HEAD")) {

@@ -2966,7 +2966,9 @@ int ExecutionEngine::registerExtension()
 #if QT_CONFIG(qml_network)
 QNetworkAccessManager *QV4::detail::getNetworkAccessManager(ExecutionEngine *engine)
 {
-    return engine->qmlEngine()->networkAccessManager();
+    if (QQmlEngine *qmlEngine = engine->qmlEngine())
+        return qmlEngine->networkAccessManager();
+    return nullptr;
 }
 #endif // qml_network
 
