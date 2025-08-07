@@ -75,6 +75,9 @@ set_source_files_properties(DialogButtonBox.qml PROPERTIES
 set_source_files_properties(HorizontalHeaderView.qml PROPERTIES
     QT_QML_SOURCE_VERSIONS "2.15;6.0"
 )
+set_source_files_properties(HorizontalHeaderViewDelegate.qml PROPERTIES
+    QT_QML_SOURCE_VERSIONS "6.10"
+)
 set_source_files_properties(MenuBar.qml PROPERTIES
     QT_QML_SOURCE_VERSIONS "2.3;6.0"
 )
