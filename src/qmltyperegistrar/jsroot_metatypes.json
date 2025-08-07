@@ -9188,7 +9188,23 @@
                         "type": "number"
                     },
                     {
+                        "name": "RangeModelDataRole",
+                        "type": "number"
+                    },
+                    {
                         "name": "UserRole",
+                        "type": "number"
+                    },
+                    {
+                        "name": "StandardItemFlagsRole",
+                        "type": "number"
+                    },
+                    {
+                        "name": "FileInfoRole",
+                        "type": "number"
+                    },
+                    {
+                        "name": "RemoteObjectsCacheRole",
                         "type": "number"
                     },
                     {
@@ -9878,6 +9894,13 @@
                         ],
                         "isJavaScriptFunction": true,
                         "name": "objectNameChanged"
+                    },
+                    {
+                        "access": "public",
+                        "arguments": [
+                        ],
+                        "isJavaScriptFunction": true,
+                        "name": "uiLanguageChanged"
                     },
                     {
                         "access": "public",
