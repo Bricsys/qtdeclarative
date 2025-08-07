@@ -17,14 +17,9 @@
 #include <QtQmlCompiler/private/qqmljsutils_p.h>
 
 #include <algorithm>
-#include <iterator>
 #include <memory>
 #include <optional>
-#include <set>
-#include <stack>
-#include <type_traits>
 #include <utility>
-#include <variant>
 
 QT_BEGIN_NAMESPACE
 
