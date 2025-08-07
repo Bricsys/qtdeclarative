@@ -89,6 +89,9 @@ set_source_files_properties(ToolSeparator.qml PROPERTIES
 set_source_files_properties(VerticalHeaderView.qml PROPERTIES
     QT_QML_SOURCE_VERSIONS "2.15;6.0"
 )
+set_source_files_properties(VerticalHeaderViewDelegate.qml PROPERTIES
+    QT_QML_SOURCE_VERSIONS "6.10"
+)
 
 add_subdirectory(impl)
 

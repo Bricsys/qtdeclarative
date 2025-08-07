@@ -157,6 +157,9 @@ set_source_files_properties(ToolSeparator.qml PROPERTIES
 set_source_files_properties(VerticalHeaderView.qml PROPERTIES
     QT_QML_SOURCE_VERSIONS "2.15;6.0"
 )
+set_source_files_properties(VerticalHeaderViewDelegate.qml PROPERTIES
+    QT_QML_SOURCE_VERSIONS "6.10"
+)
 if (QT_FEATURE_quicktemplates2_calendar)
     set_source_files_properties(WeekNumberColumn.qml PROPERTIES
         QT_QML_SOURCE_VERSIONS "6.3"
