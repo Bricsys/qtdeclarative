@@ -63,7 +63,7 @@ ApplicationWindow {
             Layout.alignment: Qt.AlignHCenter
             text: "Resize the window to observe how the flex layout adapts."
             Layout.fillWidth: true
-            wrap: Text.Wrap
+            wrapMode: Text.Wrap
         }
     }
 }
