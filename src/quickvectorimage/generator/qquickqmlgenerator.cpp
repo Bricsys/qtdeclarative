@@ -116,20 +116,48 @@ QString QQuickQmlGenerator::generateNodeBase(const NodeInfo &info)
                     : info.transform.animationCount();
 
                 for (int i = nextAnimationStart - 1; i >= animationStart; --i) {
-                    const auto &animation = info.transform.animation(i);
+                    const QQuickAnimatedProperty::PropertyAnimation &animation = info.transform.animation(i);
+                    if (animation.frames.isEmpty())
+                        continue;
 
+                    const QVariantList &parameters = animation.frames.first().value<QVariantList>();
                     switch (animation.subtype) {
                     case QTransform::TxTranslate:
-                        stream() << "Translate { id: " << idString << "_transform_" << groupIndex << "_" << i << " }";
+                        if (animation.isConstant()) {
+                            const QPointF translation = parameters.value(0).value<QPointF>();
+                            if (!translation.isNull())
+                                stream() << "Translate { x: " << translation.x() << "; y: " << translation.y() << " }";
+                        } else {
+                            stream() << "Translate { id: " << idString << "_transform_" << groupIndex << "_" << i << " }";
+                        }
                         break;
                     case QTransform::TxScale:
-                        stream() << "Scale { id: " << idString << "_transform_" << groupIndex << "_" << i << "}";
+                        if (animation.isConstant()) {
+                            const QPointF scale = parameters.value(0).value<QPointF>();
+                            if (scale != QPointF(1, 1))
+                                stream() << "Scale { xScale: " << scale.x() << "; yScale: " << scale.y() << " }";
+                        } else {
+                            stream() << "Scale { id: " << idString << "_transform_" << groupIndex << "_" << i << "}";
+                        }
                         break;
                     case QTransform::TxRotate:
-                        stream() << "Rotation { id: " << idString << "_transform_" << groupIndex << "_" << i << "; origin.x: " << idString << ".width / 2.0; origin.y: " << idString << ".height / 2.0 }";
+                        if (animation.isConstant()) {
+                            const QPointF center = parameters.value(0).value<QPointF>();
+                            const qreal angle = parameters.value(1).toReal();
+                            if (!qFuzzyIsNull(angle))
+                                stream() << "Rotation { angle: " << angle << "; origin.x: " << center.x() << "; origin.y: " << center.y() << " }"; //### center relative to what?
+                        } else {
+                            stream() << "Rotation { id: " << idString << "_transform_" << groupIndex << "_" << i << " }";
+                        }
                         break;
                     case QTransform::TxShear:
-                        stream() << "Shear { id: " << idString << "_transform_" << groupIndex << "_" << i << " }";
+                        if (animation.isConstant()) {
+                            const QPointF skew = parameters.value(0).value<QPointF>();
+                            if (!skew.isNull())
+                                stream() << "Shear { xAngle: " << skew.x() << "; yAngle: " << skew.y() << " }";
+                        } else {
+                            stream() << "Shear { id: " << idString << "_transform_" << groupIndex << "_" << i << " }";
+                        }
                         break;
                     default:
                         Q_UNREACHABLE();
@@ -838,6 +866,18 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
 
         for (int i = animationStart; i < nextAnimationStart; ++i) {
             const QQuickAnimatedProperty::PropertyAnimation &animation = info.transform.animation(i);
+            if (animation.isConstant())
+                continue;
+            bool hasRotationCenter = false;
+            if (animation.subtype == QTransform::TxRotate) {
+                for (auto it = animation.frames.constBegin(); it != animation.frames.constEnd(); ++it) {
+                    const QPointF center = it->value<QVariantList>().value(0).value<QPointF>();
+                    if (!center.isNull()) {
+                        hasRotationCenter = true;
+                        break;
+                    }
+                }
+            }
 
             stream() << "SequentialAnimation {";
             m_indentLevel++;
@@ -903,15 +943,16 @@ void QQuickQmlGenerator::generateAnimateTransform(const QString &targetName, con
                     case QTransform::TxRotate:
                     {
                         Q_ASSERT(parameters.size() == 2);
-                        const QPointF center = parameters.value(0).value<QPointF>();
                         const qreal angle = parameters.value(1).toReal();
-
-                        generateAnimatedPropertySetter(propertyTargetName,
-                                                       QStringLiteral("origin"),
-                                                       QVector3D(center.x(), center.y(), 0.0),
-                                                       animation,
-                                                       frameTime,
-                                                       time);
+                        if (hasRotationCenter) {
+                            const QPointF center = parameters.value(0).value<QPointF>();
+                            generateAnimatedPropertySetter(propertyTargetName,
+                                                           QStringLiteral("origin"),
+                                                           QVector3D(center.x(), center.y(), 0.0),
+                                                           animation,
+                                                           frameTime,
+                                                           time);
+                        }
                         generateAnimatedPropertySetter(propertyTargetName,
                                                        QStringLiteral("angle"),
                                                        angle,

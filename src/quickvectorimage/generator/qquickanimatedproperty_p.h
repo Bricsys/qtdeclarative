@@ -31,13 +31,16 @@ public:
             ReplacePreviousAnimations = 2,
         };
 
-        int subtype = 0;
         QMap<int, QVariant> frames;
+        QMap<int, QBezier> easingPerFrame;
+        int subtype = 0;
         int repeatCount = 1;
         int startOffset = 0;
         quint8 flags = NoFlags;
 
-        QMap<int, QBezier> easingPerFrame;
+        bool isConstant() const {
+            return frames.size() == 1 || (frames.size() == 2 && frames.first() == frames.last());
+        }
     };
 
     QQuickAnimatedProperty(const QVariant &defaultValue)
