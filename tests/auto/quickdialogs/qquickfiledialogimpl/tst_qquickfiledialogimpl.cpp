@@ -101,6 +101,7 @@ private slots:
     void reentrantFolder();
     void checkModality_data();
     void checkModality();
+    void folderBreadcrumbBarDoesntGrow();
 
 private:
     enum DelegateOrderPolicy
@@ -1951,6 +1952,33 @@ void tst_QQuickFileDialogImpl::checkModality()
     QSignalSpy cmaMouseSpy(childMouseArea, &QQuickMouseArea::clicked);
     QTest::mouseClick(childWindow, Qt::LeftButton, Qt::NoModifier, QPoint(5, 5));
     QCOMPARE(cmaMouseSpy.size(), expectedChildWindowClickCount);
+}
+
+void tst_QQuickFileDialogImpl::folderBreadcrumbBarDoesntGrow()
+{
+    qputenv("QT_QUICK_DIALOGS_SHOW_DIRS_FIRST", "1");
+    FileDialogTestHelper dialogHelper(this, "fileDialog.qml");
+    OPEN_QUICK_DIALOG();
+    QVERIFY(dialogHelper.waitForPopupWindowActiveAndPolished());
+
+    auto *folderBreadcrumbBar = dialogHelper.quickDialog->header()->findChild<QQuickFolderBreadcrumbBar *>();
+    QVERIFY(folderBreadcrumbBar);
+
+    const qreal initialFolderBreadcrumbBarWidth = folderBreadcrumbBar->width();
+
+    // Select the "sub-dir" delegate by double-clicking.
+    QQuickFileDialogDelegate *subDirDelegate = nullptr;
+    QTRY_VERIFY(findViewDelegateItem(dialogHelper.fileDialogListView, 0, subDirDelegate));
+    COMPARE_URL(subDirDelegate->file(), QUrl::fromLocalFile(tempSubDirCanonicalPath));
+    QVERIFY(doubleClickButton(subDirDelegate));
+
+    // Select the "sub-sub-dir" delegate by double-clicking.
+    QQuickFileDialogDelegate *subSubDirDelegate = nullptr;
+    QTRY_VERIFY(findViewDelegateItem(dialogHelper.fileDialogListView, 0, subSubDirDelegate));
+    COMPARE_URL(subSubDirDelegate->file(), QUrl::fromLocalFile(tempSubSubDir.canonicalPath()));
+    QVERIFY(doubleClickButton(subSubDirDelegate));
+
+    QCOMPARE(folderBreadcrumbBar->width(), initialFolderBreadcrumbBarWidth);
 }
 
 QTEST_MAIN(tst_QQuickFileDialogImpl)
