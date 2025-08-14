@@ -39,7 +39,11 @@ public:
         quint8 flags = NoFlags;
 
         bool isConstant() const {
-            return frames.size() == 1 || (frames.size() == 2 && frames.first() == frames.last());
+            for (const auto& frame : frames) {
+                if (frame != frames.first())
+                    return false;
+            }
+            return true;
         }
     };
 
