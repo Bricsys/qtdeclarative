@@ -25,8 +25,8 @@ class QQmlFilterCompositorPrivate;
 class QQmlFilterCompositor: public QQmlFilterBase
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("")
+    QML_ANONYMOUS
+    QML_ADDED_IN_VERSION(6, 10)
 
 public:
     explicit QQmlFilterCompositor(QObject *parent = nullptr);

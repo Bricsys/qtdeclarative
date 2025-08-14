@@ -33,6 +33,7 @@ class Q_QMLMODELS_EXPORT QQmlFilterBase: public QObject
     Q_PROPERTY(int column READ column WRITE setColumn NOTIFY columnChanged FINAL)
     QML_NAMED_ELEMENT(FilterBase)
     QML_UNCREATABLE("")
+    QML_ADDED_IN_VERSION(6, 10)
 
 public:
     explicit QQmlFilterBase(QQmlFilterBasePrivate *privObj, QObject *parent = nullptr);

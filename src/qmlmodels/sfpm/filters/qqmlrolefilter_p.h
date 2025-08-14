@@ -28,6 +28,7 @@ class Q_QMLMODELS_EXPORT QQmlRoleFilter : public QQmlFilterBase
     Q_PROPERTY(QString roleName READ roleName WRITE setRoleName NOTIFY roleNameChanged)
     QML_NAMED_ELEMENT(RoleFilter)
     QML_UNCREATABLE("")
+    QML_ADDED_IN_VERSION(6, 10)
 
 public:
     explicit QQmlRoleFilter(QObject *parent = nullptr);

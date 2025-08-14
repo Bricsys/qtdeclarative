@@ -31,6 +31,7 @@ class Q_QMLMODELS_EXPORT QQmlStringSorter : public QQmlRoleSorter
     Q_PROPERTY(QLocale locale READ locale WRITE setLocale NOTIFY localeChanged)
     Q_PROPERTY(bool numericMode READ numericMode WRITE setNumericMode NOTIFY numericModeChanged)
     QML_NAMED_ELEMENT(StringSorter)
+    QML_ADDED_IN_VERSION(6, 10)
 
 public:
     explicit QQmlStringSorter(QObject *parent = nullptr);

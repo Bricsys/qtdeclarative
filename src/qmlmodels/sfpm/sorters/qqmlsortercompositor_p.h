@@ -25,8 +25,8 @@ class QQmlSorterCompositorPrivate;
 class QQmlSorterCompositor: public QQmlSorterBase
 {
     Q_OBJECT
-    QML_ELEMENT
-    QML_UNCREATABLE("")
+    QML_ANONYMOUS
+    QML_ADDED_IN_VERSION(6, 10)
 
 public:
     explicit QQmlSorterCompositor(QObject *parent = nullptr);

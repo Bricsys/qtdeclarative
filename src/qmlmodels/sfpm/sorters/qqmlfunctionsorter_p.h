@@ -27,6 +27,7 @@ class Q_QMLMODELS_EXPORT QQmlFunctionSorter : public QQmlSorterBase, public QQml
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
     QML_NAMED_ELEMENT(FunctionSorter)
+    QML_ADDED_IN_VERSION(6, 10)
 
 public:
     explicit QQmlFunctionSorter(QObject *parent = nullptr);

@@ -29,6 +29,7 @@ class Q_QMLMODELS_EXPORT QQmlFunctionFilter : public QQmlFilterBase, public QQml
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
     QML_NAMED_ELEMENT(FunctionFilter)
+    QML_ADDED_IN_VERSION(6, 10)
 
 public:
     explicit QQmlFunctionFilter(QObject *parent = nullptr);

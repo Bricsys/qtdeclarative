@@ -27,6 +27,7 @@ class Q_QMLMODELS_EXPORT QQmlValueFilter : public QQmlRoleFilter
     Q_OBJECT
     Q_PROPERTY(QVariant value READ value WRITE setValue RESET resetValue NOTIFY valueChanged)
     QML_NAMED_ELEMENT(ValueFilter)
+    QML_ADDED_IN_VERSION(6, 10)
 
 public:
     explicit QQmlValueFilter(QObject *parent = nullptr);

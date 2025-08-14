@@ -27,6 +27,7 @@ class Q_QMLMODELS_EXPORT QQmlRoleSorter : public QQmlSorterBase
     Q_OBJECT
     Q_PROPERTY(QString roleName READ roleName WRITE setRoleName NOTIFY roleNameChanged)
     QML_NAMED_ELEMENT(RoleSorter)
+    QML_ADDED_IN_VERSION(6, 10)
 
 public:
     explicit QQmlRoleSorter(QObject *parent = nullptr);

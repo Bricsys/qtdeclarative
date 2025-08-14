@@ -33,8 +33,9 @@ class Q_QMLMODELS_EXPORT QQmlSorterBase : public QObject
     Q_PROPERTY(Qt::SortOrder sortOrder READ sortOrder WRITE setSortOrder NOTIFY sortOrderChanged FINAL)
     Q_PROPERTY(int priority READ priority WRITE setPriority NOTIFY priorityChanged FINAL)
     Q_PROPERTY(int column READ column WRITE setColumn NOTIFY columnChanged FINAL)
-    QML_ELEMENT
+    QML_NAMED_ELEMENT(SorterBase)
     QML_UNCREATABLE("")
+    QML_ADDED_IN_VERSION(6, 10)
 
 public:
     explicit QQmlSorterBase(QQmlSorterBasePrivate *privObj, QObject *parent = nullptr);
