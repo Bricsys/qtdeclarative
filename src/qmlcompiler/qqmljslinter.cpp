@@ -471,31 +471,18 @@ static void addJsonWarning(QJsonArray &warnings, const QQmlJS::DiagnosticMessage
         QJsonObject jsonFix {
             { "message"_L1, suggestion->fixDescription() },
             { "replacement"_L1, suggestion->replacement() },
-            { "isHint"_L1, !suggestion->isAutoApplicable() },
+            { "isAutoApplicable"_L1, suggestion->isAutoApplicable() },
+            { "hint"_L1, suggestion->hint() },
         };
         convertLocation(suggestion->location(), &jsonFix);
         const QString filename = suggestion->filename();
         if (!filename.isEmpty())
             jsonFix.insert("fileName"_L1, filename);
         suggestions << jsonFix;
-
-        const QString hint = suggestion->hint();
-        if (!hint.isEmpty()) {
-            // We need to keep compatibility with the JSON format.
-            // Therefore the overly verbose encoding of the hint.
-            QJsonObject jsonHint {
-                { "message"_L1,  hint },
-                { "replacement"_L1, QString() },
-                { "isHint"_L1, true }
-            };
-            convertLocation(QQmlJS::SourceLocation(), &jsonHint);
-            suggestions << jsonHint;
-        }
     }
     jsonMessage[u"suggestions"] = suggestions;
 
     warnings << jsonMessage;
-
 }
 
 void QQmlJSLinter::processMessages(QJsonArray &warnings)

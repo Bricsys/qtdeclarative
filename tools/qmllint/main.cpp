@@ -30,7 +30,7 @@
 
 using namespace Qt::StringLiterals;
 
-constexpr int JSON_LOGGING_FORMAT_REVISION = 3;
+constexpr int JSON_LOGGING_FORMAT_REVISION = 4;
 
 bool argumentsFromCommandLineAndFile(QStringList& allArguments, const QStringList &arguments)
 {
