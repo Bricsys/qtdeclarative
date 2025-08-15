@@ -274,10 +274,6 @@ void tst_QQuickPopup::overlay_data()
 
 void tst_QQuickPopup::overlay()
 {
-#ifdef Q_OS_ANDROID
-    QSKIP("Test crashes. See QTBUG-118532");
-#endif
-
     QFETCH(QString, source);
     QFETCH(bool, modal);
     QFETCH(bool, dim);
@@ -2573,10 +2569,6 @@ void tst_QQuickPopup::contentChildrenChange()
 
 void tst_QQuickPopup::doubleClickInMouseArea()
 {
-#ifdef Q_OS_ANDROID
-    QSKIP("Test crashes. See QTBUG-118532");
-#endif
-
     QQuickView window;
     QVERIFY(QQuickTest::showView(window, testFileUrl("doubleClickInMouseArea.qml")));
 
