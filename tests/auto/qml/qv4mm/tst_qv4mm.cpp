@@ -888,7 +888,8 @@ void tst_qv4mm::variantAssociationObjectMarksMember()
     );
     bool hasProperty = false;
     // ensure that the propertyIndexMapping gets initialized
-    varAssocObject->getElement(QLatin1String("test"), &hasProperty);
+    QV4::ScopedString test(scope, jsEngine.handle()->newString(QLatin1String("test")));
+    varAssocObject->virtualGet(varAssocObject, test->toPropertyKey(), nullptr, &hasProperty);
     QVERIFY(hasProperty);
     gc(engine);
     auto mapping = varAssocObject->d()->propertyIndexMapping;
