@@ -68,36 +68,33 @@ Q_LOGGING_CATEGORY (lcSortFilterProxyModel, "qt.qml.sortfilterproxymodel")
 
     The SortFilterProxyModel dynamically sorts and filters data whenever there
     is a change to the data in the source model and can be disabled through the
-    \l{SortFilterProxyModel::dynamicSortFilter}{dynamicSortFilter} property.
+    \l{SortFilterProxyModel::}{dynamicSortFilter} property.
 
     The sorters \l RoleSorter, \l StringSorter and \l FunctionSorter can be
     configured in SortFilterProxyModel. Each sorter can be configured with a
-    specific column index through \l{Sorter::column}{column} property. If a
+    specific column index through \l{Sorter::}{column} property. If a
     column index is not specified, the sorting will be applied to the column
     index 0 of the model by default. The execution order of the sorter can be
     modified through the \l{Sorter::priority}{priority} property. This is
     particularly useful when performing hierarchical sorting, such as sorting
     data in the first column and then applying sorting to subsequent columns.
 
-    To disable a specific sorter, \l{Sorter::enabled}{enabled} can be set to
-    \c false.
+    To disable a specific sorter, \l{Sorter::}{enabled} can be set to \c false.
 
     The sorter priority can also be overridden by setting the primary sorter
-    through the method call
-    \l{SortFilterProxyModel::setPrimarySorter(sorter)}{setPrimarySorter}. This
-    would be helpful in the case where the view wants to sort the data of any
-    specific column by clicking on the column header such as in \l TableView,
-    when there are other sorters also configured for the model.
+    through the method call \l{SortFilterProxyModel::}{setPrimarySorter()}.
+    This would be helpful in the case where the view wants to sort the data of
+    any specific column by clicking on the column header such as in
+    \l TableView, when there are other sorters also configured for the model.
 
     The filter \l ValueFilter and \l FunctionFilter can be configured
     in SortFilterProxyModel. Each filter can be set with the
-    \l{Filter::column}{column} property, similar to the
-    sorter, to filter data in a specific column. If no column is specified,
-    then the filter will be applied to all the column indexes in
-    the model. To reduce the overhead of unwanted checks during filtering,
-    it's recommended to specify the column index.
+    \l{Filter::}{column} property, similar to the sorter, to filter data in a
+    specific column. If no column is specified, then the filter will be applied
+    to all the column indexes in the model. To reduce the overhead of unwanted
+    checks during filtering, it's recommended to specify the column index.
 
-    To disable a specific filter, \l{Filter::enabled}{enabled} can be set to
+    To disable a specific filter, \l{Filter::}{enabled} can be set to
     \c false.
 
     \snippet qml/sortfilterproxymodel/qml-sortfilterproxymodel.qml sfpm-usage
@@ -120,6 +117,10 @@ Q_LOGGING_CATEGORY (lcSortFilterProxyModel, "qt.qml.sortfilterproxymodel")
     order as specified in the list.
 */
 
+/*!
+    \class QQmlSortFilterProxyModel
+    \internal
+*/
 QQmlSortFilterProxyModel::QQmlSortFilterProxyModel(QObject *parent)
     : QAbstractProxyModel (*new QQmlSortFilterProxyModelPrivate, parent)
 {
@@ -183,7 +184,8 @@ void QQmlSortFilterProxyModel::setDynamicSortFilter(const bool enabled)
 
     This property allows all the configured filters to be applied recursively
     on children. The behavior is similar to that of
-    \l recursiveFilteringEnabled in \l QSortFilterProxyModel.
+    \l {QSortFilterProxyModel::}{recursiveFilteringEnabled} in
+    \l QSortFilterProxyModel.
 
     The default value is \c false.
 */
