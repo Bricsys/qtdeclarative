@@ -38,7 +38,7 @@ class Q_QUICKLAYOUTS_EXPORT QQuickFlexboxLayout : public QQuickLayout
     Q_PROPERTY(qreal columnGap READ columnGap WRITE setColumnGap NOTIFY columnGapChanged RESET resetColumnGap FINAL)
 
     QML_NAMED_ELEMENT(FlexboxLayout)
-    QML_ADDED_IN_VERSION(2, 0)
+    QML_ADDED_IN_VERSION(6, 10)
     QML_ATTACHED(QQuickFlexboxLayoutAttached)
 
 public:
