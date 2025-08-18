@@ -109,6 +109,9 @@ QQmlJSTypeResolver::QQmlJSTypeResolver(QQmlJSImporter *importer)
     m_varType = builtinTypes.type(u"QVariant"_s).scope;
     Q_ASSERT(m_varType);
 
+    m_qmlPropertyMapType = builtinTypes.type(u"QQmlPropertyMap"_s).scope;
+    Q_ASSERT(m_qmlPropertyMapType);
+
     m_jsValueType = builtinTypes.type(u"QJSValue"_s).scope;
     Q_ASSERT(m_jsValueType);
 
@@ -1559,7 +1562,7 @@ QQmlJSRegisterContent QQmlJSTypeResolver::memberType(
     if (contained == metaObjectType())
         return {};
 
-    if (contained == variantMapType()) {
+    if (contained == variantMapType() || contained->inherits(qmlPropertyMapType())) {
         QQmlJSMetaProperty prop;
         prop.setPropertyName(name);
         prop.setTypeName(u"QVariant"_s);

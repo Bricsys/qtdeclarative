@@ -2101,6 +2101,7 @@ void TestQmllint::cleanQmlCode_data()
     QTest::newRow("prefixedAttachedProperty") << QStringLiteral("prefixedAttachedProperty.qml");
     QTest::newRow("propertyBindingValue") << QStringLiteral("propertyBindingValue.qml");
     QTest::newRow("propertyDelegate") << QStringLiteral("propertyDelegate.qml");
+    QTest::newRow("propertyMapUsage") << QStringLiteral("propertyMapUsage.qml");
     QTest::newRow("propertyOverride") << QStringLiteral("propertyOverride.qml");
     QTest::newRow("propertyWithOn") << QStringLiteral("switcher.qml");
     QTest::newRow("qjsroot") << QStringLiteral("qjsroot.qml");
