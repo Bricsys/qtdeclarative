@@ -503,8 +503,10 @@ void QQuickQmlGenerator::outputShapePath(const PathNodeInfo &info, const QPainte
                         && fillColor == QColorConstants::Transparent
                         && !info.fillColor.isAnimated()
                         && !info.fillOpacity.isAnimated();
-
     if (pathSelector == QQuickVectorImageGenerator::FillPath && noFill)
+        return;
+
+    if (noPen && noFill)
         return;
 
     auto fillRule = QQuickShapePath::FillRule(painterPath ? painterPath->fillRule() : quadPath->fillRule());
