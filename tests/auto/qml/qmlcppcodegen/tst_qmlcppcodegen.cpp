@@ -1762,9 +1762,15 @@ void tst_QmlCppCodegen::detachedReferences()
     QVERIFY(collectable2);
     QSignalSpy spy2(collectable2, &QObject::destroyed);
 
+    const QVariantList list = d->getList();
+    QObject *collectable3 = list[2].value<QObject *>();
+    QVERIFY(collectable3);
+    QSignalSpy spy3(collectable3, &QObject::destroyed);
+
     // The detached containers retain their types.
     QCOMPARE(d->property("markedMap").metaType(), QMetaType::fromType<QVariantMap>());
     QCOMPARE(d->property("markedHash").metaType(), QMetaType::fromType<QVariantHash>());
+    QCOMPARE(d->property("markedList").metaType(), QMetaType::fromType<QVariantList>());
 
     engine.collectGarbage();
     QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
@@ -1772,9 +1778,10 @@ void tst_QmlCppCodegen::detachedReferences()
 
     QCOMPARE(spy1.count(), 0);
     QCOMPARE(spy2.count(), 0);
+    QCOMPARE(spy3.count(), 0);
 
-    // Resetting the hash alone does not cause collectible1 to be collected
-    // because it's also in the map (recursively).
+    // Resetting the hash alone does not cause the collectibles to be collected
+    // because they're also in the map and the list (recursively).
     d->setProperty("markedHash", QVariant());
 
     engine.collectGarbage();
@@ -1783,8 +1790,22 @@ void tst_QmlCppCodegen::detachedReferences()
 
     QCOMPARE(spy1.count(), 0);
     QCOMPARE(spy2.count(), 0);
+    QCOMPARE(spy3.count(), 0);
 
+    // Resetting the map still does not cause the collectibles to be collected
+    // because they're also in the list (recursively).
     d->setProperty("markedMap", QVariant());
+
+    engine.collectGarbage();
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QCoreApplication::processEvents();
+
+    QCOMPARE(spy1.count(), 0);
+    QCOMPARE(spy2.count(), 0);
+    QCOMPARE(spy3.count(), 0);
+
+    // Resetting the list finally causes everything to be collected.
+    d->setProperty("markedList", QVariant());
 
     engine.collectGarbage();
     QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
@@ -1792,6 +1813,7 @@ void tst_QmlCppCodegen::detachedReferences()
 
     QCOMPARE(spy1.count(), 1);
     QCOMPARE(spy2.count(), 1);
+    QCOMPARE(spy3.count(), 1);
 }
 
 void tst_QmlCppCodegen::dialogButtonBox()
@@ -3421,11 +3443,13 @@ void tst_QmlCppCodegen::listConversion()
     QStringList strings = o->property("s").value<QStringList>();
     QCOMPARE(strings, QStringList({u"Horst 1"_s, u"Horst 2"_s, u"Horst 3"_s}));
 
+    // Since this is stored as list<var>, the exact types can't be retained.
+    // For JavaScript any number is double, and any nullptr is just null.
     QVariantList vars = o->property("v").toList();
     QCOMPARE(vars, QVariantList({
         QString(),
-        QVariant::fromValue<qsizetype>(3),
-        QVariant::fromValue<Person *>(nullptr)
+        QVariant::fromValue<double>(3),
+        QVariant::fromValue(nullptr)
     }));
 
     QCOMPARE(o->property("numbers").value<QList<int>>(), (QList<int>{1, 2}));
