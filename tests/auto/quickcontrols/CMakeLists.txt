@@ -4,9 +4,7 @@
 # Generated from auto.pro.
 
 add_subdirectory(accessibility)
-if(NOT ANDROID) # temporarily disabled until QTBUG-100991 is fixed
 add_subdirectory(controls)
-endif()
 add_subdirectory(cursor)
 if(BUILD_SHARED_LIBS) # serious performance issues when built statically QTBUG-133755
 add_subdirectory(customization)
@@ -15,9 +13,7 @@ add_subdirectory(deferred)
 if(QT_FEATURE_quick_designer)
     add_subdirectory(designer)
 endif()
-if(NOT ANDROID) # QTBUG-100258
 add_subdirectory(focus)
-endif()
 add_subdirectory(font)
 add_subdirectory(palette)
 add_subdirectory(platform)
@@ -65,4 +61,3 @@ endif()
 if (QT_FEATURE_quick_treeview)
     add_subdirectory(qquicktreeviewdelegate)
 endif()
-
