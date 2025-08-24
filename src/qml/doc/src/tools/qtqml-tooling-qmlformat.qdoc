@@ -186,6 +186,12 @@ The following settings are available in the \c{.qmlformat.ini} file:
     \li Sorts imports alphabetically.
         \note This might change semantics if a given name identifies types in multiple modules.
 
+\row
+    \li SemicolonRule
+    \li always
+    \li Customizes the addition of semicolons at the end of JS statements (\c {always}, \c {essential}).
+        \note See \l{Semicolon Rule} for more details.
+
 \endtable
 
 \section3 Formatting a List of Files
