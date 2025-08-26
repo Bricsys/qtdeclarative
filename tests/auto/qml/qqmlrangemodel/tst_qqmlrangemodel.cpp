@@ -264,7 +264,9 @@ void tst_QQmlRangeModel::objectList()
     // replacing modelData triggers refresh of required properties, but also
     // messes things up a bit
     auto newEntry = std::make_unique<Entry>(2, "two");
+#ifndef QT_NO_DEBUG
     QTest::ignoreMessage(QtWarningMsg, QRegularExpression("TypeError: Cannot read property '.*' of null"));
+#endif
     QMetaObject::invokeMethod(currentItem, "setModelData", QVariant::fromValue(newEntry.get()));
     QVERIFY(entry); // old object still alive
     QCOMPARE(currentItem->property("currentValue"), writeBack ? "42: fortytwo" : "42: one");
@@ -382,11 +384,13 @@ void tst_QQmlRangeModel::objectRange()
     std::vector<Entry *> objects{entry.get()};
     RangeModel model(&objects);
 
+#ifndef QT_NO_DEBUG
     // with ReadWrite, spurious call to setData(RangeModelDataRole) during loading
     if (writeBack) {
         QTest::ignoreMessage(QtCriticalMsg,
                              QRegularExpression("Not able to assign QVariant\\(.*\\) to Entry*"));
     }
+#endif
 
     auto view = makeView({
         {"delegateModelAccess", delegateModelAccess},
