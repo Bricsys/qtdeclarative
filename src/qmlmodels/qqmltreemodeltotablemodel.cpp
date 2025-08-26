@@ -982,14 +982,12 @@ void QQmlTreeModelToTableModel::modelRowsMoved(const QModelIndex & sourceParent,
 
 void QQmlTreeModelToTableModel::modelColumnsAboutToBeInserted(const QModelIndex & parent, int start, int end)
 {
-    Q_UNUSED(parent);
-    beginInsertColumns({}, start, end);
+    beginInsertColumns(parent, start, end);
 }
 
 void QQmlTreeModelToTableModel::modelColumnsAboutToBeRemoved(const QModelIndex & parent, int start, int end)
 {
-    Q_UNUSED(parent);
-    beginRemoveColumns({}, start, end);
+    beginRemoveColumns(parent, start, end);
 }
 
 void QQmlTreeModelToTableModel::modelColumnsInserted(const QModelIndex & parent, int start, int end)
