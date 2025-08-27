@@ -781,6 +781,68 @@ private slots:
         QTest::newRow("AroundArrowFunction2")
                 << u"const x = /*1*/(/*2*/a/*3*/, /*4*/b/*5*/)/*6*/ => /*7*/42/*8*/"_s
                 << u"const x = /*1*/(/*2*/a/*3*/, /*4*/b/*5*/)/*6*/ => /*7*/42/*8*/"_s;
+
+        QTest::newRow("while") << u"while (false) /* while */ { // while\n }"_s
+                               << u"while (false) /* while */ { // while\n }"_s;
+        QTest::newRow("while2") << u"while (false) /* while */ { let b = 0; }"_s
+                                << u"while (false) /* while */ {\nlet b = 0;\n}"_s;
+        QTest::newRow("while3") << u"while /* while */ (false) /* while */ { }"_s
+                                << u"while /* while */ (false) /* while */ {}"_s;
+        QTest::newRow("while4") << u"while (false /* false */) /* while */ { } // after while"_s
+                                << u"while (false /* false */) /* while */ {} // after while"_s;
+        QTest::newRow("for") << u"for (let i = 0; i < 0; i++) /* for */ { }"_s
+                             << u"for (let i = 0; i < 0; i++) /* for */ {}"_s;
+
+        QTest::newRow("do-while") << uR"(do /* do */ {
+                } while (false); // test
+
+                    // before if
+                if (true)   {
+                    // the true clause
+                } // after if block
+                else {
+                })"_s << uR"(do /* do */ {} while (false) // test
+
+                    // before if
+                if (true) {
+                    // the true clause
+                } // after if block
+                else {})"_s;
+
+        QTest::newRow("if-else-blocks-1") << uR"(if(true) {
+                } // after if block
+                else {
+                        // else comment
+                } // after else block)"_s << uR"(if (true) {} // after if block
+                else {
+                        // else comment
+                } // after else block)"_s;
+
+        QTest::newRow("if-else-blocks2") << uR"(if (true) {
+                        // the true clause
+                    let a = 10;
+                    // another comment
+                } else {
+                    // the else clause
+                    // another comment
+                })"_s << uR"(if (true) {
+                        // the true clause
+                    let a = 10;
+                    // another comment
+                } else {
+                    // the else clause
+                    // another comment
+                })"_s;
+        QTest::newRow("blocks") << uR"(if (false) /*1*/ { /*2*/ // 3
+                /*4*/
+
+
+                //4
+                }//5)"_s << uR"(if (false) /*1*/ { /*2*/ // 3
+                /*4*/
+
+                //4
+                }//5)"_s;
     }
 
     void comments()

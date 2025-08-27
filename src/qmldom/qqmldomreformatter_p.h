@@ -63,8 +63,8 @@ protected:
         if (c)
             c->writePost(lw);
     }
-    inline void newLine(quint32 count = 1) { lw.ensureNewline(count); }
 
+    inline void newLine(quint32 count = 1) { lw.ensureNewline(count); }
     inline void accept(AST::Node *node) { AST::Node::accept(node, this); }
     void lnAcceptIndented(AST::Node *node);
     bool acceptBlockOrIndented(AST::Node *ast, bool finishWithSpaceOrNewline = false);
