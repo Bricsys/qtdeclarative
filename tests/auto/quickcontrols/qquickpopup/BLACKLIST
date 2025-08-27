@@ -9,9 +9,6 @@ macos
 macos
 # QTBUG-114718 (end)
 
-[zOrder]
-macos # QTBUG-89938
-
 [popupWindowFocus]
 offscreen # QTBUG-128321
 
