@@ -275,6 +275,7 @@ public:
 /*!
     \qmltype Synchronizer
     \inqmlmodule Qt.labs.synchronizer
+    \since 6.10
     \brief Synchronizes values between two or more properties.
 
     A Synchronizer object binds two or more properties together so that a change
