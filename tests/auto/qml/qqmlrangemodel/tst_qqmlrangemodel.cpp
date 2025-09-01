@@ -380,7 +380,7 @@ void tst_QQmlRangeModel::objectRange()
     QFETCH(const QQmlDelegateModel::DelegateModelAccess, delegateModelAccess);
     QFETCH(const bool, writeBack);
 
-    QPointer<Entry> entry = new Entry(1, "one");
+    QScopedPointer<Entry> entry(new Entry(1, "one"));
     std::vector<Entry *> objects{entry.get()};
     RangeModel model(&objects);
 
