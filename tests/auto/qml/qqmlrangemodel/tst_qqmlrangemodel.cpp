@@ -344,7 +344,6 @@ void tst_QQmlRangeModel::intRange()
     QCOMPARE(currentItem->property("currentValue"), oldValue);
 
     // nothing happened so far, so there shouldn't have been any calls to setData
-    QEXPECT_FAIL("ReadWrite", "Unexpected call to setData", Continue);
     QCOMPARE(model.setDataCalls, QList<int>{});
     model.setDataCalls.clear();
     model.dataCalls.clear();
@@ -382,14 +381,6 @@ void tst_QQmlRangeModel::objectRange()
     std::vector<Entry *> objects{entry.get()};
     RangeModel model(&objects);
 
-#ifndef QT_NO_DEBUG
-    // with ReadWrite, spurious call to setData(RangeModelDataRole) during loading
-    if (writeBack) {
-        QTest::ignoreMessage(QtCriticalMsg,
-                             QRegularExpression("Not able to assign QVariant\\(.*\\) to Entry*"));
-    }
-#endif
-
     auto view = makeView({
         {"delegateModelAccess", delegateModelAccess},
         {"model", QVariant::fromValue(&model)}
@@ -404,7 +395,6 @@ void tst_QQmlRangeModel::objectRange()
     QVERIFY(model.dataCalls.contains(Qt::RangeModelDataRole));
     model.dataCalls.clear();
     // there shouldn't have been any attempts to write yet
-    QEXPECT_FAIL("ReadWrite", "Premature calls to setData()", Continue);
     QCOMPARE(model.setDataCalls, QList<int>{});
     model.setDataCalls.clear();
 

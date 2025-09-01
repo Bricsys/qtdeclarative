@@ -1024,7 +1024,18 @@ void QQDMIncubationTask::initializeRequiredProperties(
                         QQmlAnyBinding reverse = QQmlPropertyToPropertyBinding::create(
                                 engine, targetProp, sourceProp);
                         reverse.setSticky();
-                        reverse.installOn(sourceProp);
+                        if (itemOrProxy == modelItemToIncubate) {
+                            // Temporarily take away the metaobject so that the property can't
+                            // actually be written. It shouldn't be written since we've just
+                            // synchronized it the other way when installing the "forward" binding.
+                            QQmlDelegateModelReadOnlyMetaObject readonly(modelItemToIncubate, i);
+                            reverse.installOn(sourceProp);
+                        } else {
+                            // It's only not a QQmlDelegateModelItem if the model is actually an
+                            // ObjectModel. In that case, we hope that the generic equality check
+                            // when setting a property is enough to de-bounce it.
+                            reverse.installOn(sourceProp);
+                        }
                     }
                 }
             }
