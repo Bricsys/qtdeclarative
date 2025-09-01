@@ -143,6 +143,11 @@ public:
 
     void disableStructuredModelData() { useStructuredModelData = false; }
 
+    QDynamicMetaObjectData *exchangeMetaObject(QDynamicMetaObjectData *metaObject)
+    {
+        return std::exchange(d_ptr->metaObject, metaObject);
+    }
+
 Q_SIGNALS:
     void modelIndexChanged();
     Q_REVISION(2, 12) void rowChanged();
@@ -203,6 +208,54 @@ private:
     static constexpr size_t MaxSize = size_t(std::numeric_limits<int>::max());
 
     std::vector<PoolItem> m_reusableItemsPool;
+};
+
+template<typename Target>
+class QQmlDelegateModelReadOnlyMetaObject : QDynamicMetaObjectData
+{
+    Q_DISABLE_COPY_MOVE(QQmlDelegateModelReadOnlyMetaObject)
+
+public:
+    QQmlDelegateModelReadOnlyMetaObject(const Target &target, int readOnlyProperty)
+        : target(target)
+        , readOnlyProperty(readOnlyProperty)
+    {
+        if (QQmlDelegateModelItem *object = target)
+            original = object->exchangeMetaObject(this);
+    }
+
+    ~QQmlDelegateModelReadOnlyMetaObject()
+    {
+        if (QQmlDelegateModelItem *object = target)
+            object->exchangeMetaObject(original);
+    }
+
+    void objectDestroyed(QObject *o) final
+    {
+        if (target)
+            original->objectDestroyed(o);
+    }
+
+    QMetaObject *toDynamicMetaObject(QObject *o) final
+    {
+        return target ? original->toDynamicMetaObject(o) : nullptr;
+    }
+
+    int metaCall(QObject *o, QMetaObject::Call call, int id, void **argv) final
+    {
+        if (!target)
+            return 0;
+
+        if (id == readOnlyProperty && call == QMetaObject::WriteProperty)
+            return 0;
+
+        return original->metaCall(o, call, id, argv);
+    }
+
+private:
+    Target target = {};
+    QDynamicMetaObjectData *original = nullptr;
+    int readOnlyProperty = -1;
 };
 
 class QQmlDelegateModelPrivate;

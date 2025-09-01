@@ -354,7 +354,6 @@ void tst_QQmlRangeModel::intRange()
     const QVariant newValue = 7;
     QVERIFY(model.setData(index, newValue, Qt::RangeModelDataRole)); // default: Qt::EditRole
     // ... should give us one call to setData (our own)
-    QEXPECT_FAIL("ReadWrite", "Unexpected call to setData", Continue); // but we get two
     QCOMPARE(model.setDataCalls, QList<int>{Qt::RangeModelDataRole});
     model.setDataCalls.clear();
     // ... and results in a single call to data() to get the new value
@@ -420,7 +419,6 @@ void tst_QQmlRangeModel::objectRange()
     QCOMPARE(currentItem->property("number"), newNumber);
     QCOMPARE(currentItem->property("modelNumber"), newNumber);
     // ... and there should only be our call to setData
-    QEXPECT_FAIL("ReadWrite", "Extra call to setData()", Continue);
     QCOMPARE(model.setDataCalls, QList<int>{Entry::NumberRole});
     model.setDataCalls.clear();
     model.dataCalls.clear();

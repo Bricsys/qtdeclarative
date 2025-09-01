@@ -85,10 +85,19 @@ public:
     {
     }
 
-    void notifyItem(const QQmlGuard<QQmlDMAbstractItemModelData> &item, const QVector<int> &signalIndexes) const
+    void notifyItem(
+            const QQmlGuard<QQmlDMAbstractItemModelData> &item,
+            const QVector<int> &indexes,
+            QQmlDelegateModel::DelegateModelAccess access) const
     {
-        for (const int signalIndex : signalIndexes) {
-            QMetaObject::activate(item, signalIndex, nullptr);
+        for (const int index : indexes) {
+            if (access == QQmlDelegateModel::DelegateModelAccess::ReadWrite) {
+                QQmlDelegateModelReadOnlyMetaObject readOnly(item, index + propertyOffset);
+                QMetaObject::activate(item, index + signalOffset, nullptr);
+            } else {
+                QMetaObject::activate(item, index + signalOffset, nullptr);
+            }
+
             if (item.isNull())
                 return;
         }
@@ -96,7 +105,7 @@ public:
     }
 
     bool notify(
-            const QQmlAdaptorModel &,
+            const QQmlAdaptorModel &model,
             const QList<QQmlDelegateModelItem *> &items,
             int index,
             int count,
@@ -113,7 +122,7 @@ public:
             const_cast<VDMAbstractItemModelDataType *>(this)->watchedRoleIds = roleIds;
         }
 
-        QVector<int> signalIndexes;
+        QVector<int> indexes;
         for (int i = 0; i < roles.size(); ++i) {
             const int role = roles.at(i);
             if (!changed && watchedRoleIds.contains(role))
@@ -121,13 +130,13 @@ public:
 
             int propertyId = propertyRoles.indexOf(role);
             if (propertyId != -1)
-                signalIndexes.append(propertyId + signalOffset);
+                indexes.append(propertyId);
         }
         if (roles.isEmpty()) {
             const int propertyRolesCount = propertyRoles.size();
-            signalIndexes.reserve(propertyRolesCount);
+            indexes.reserve(propertyRolesCount);
             for (int propertyId = 0; propertyId < propertyRolesCount; ++propertyId)
-                signalIndexes.append(propertyId + signalOffset);
+                indexes.append(propertyId);
         }
 
         QVarLengthArray<QQmlGuard<QQmlDMAbstractItemModelData>> guardedItems;
@@ -142,7 +151,7 @@ public:
 
             const int idx = item->modelIndex();
             if (idx >= index && idx < index + count)
-                notifyItem(item, signalIndexes);
+                notifyItem(item, indexes, model.delegateModelAccess);
         }
         return changed;
     }
