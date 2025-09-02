@@ -170,9 +170,14 @@ QString QQuickQmlGenerator::generateNodeBase(const NodeInfo &info)
         }
 
         if (!info.isDefaultTransform) {
-            stream() << "Matrix4x4 { id: " << idString << "_transform_base; matrix: ";
-            generateTransform(info.transform.defaultValue().value<QTransform>());
-            stream(SameLine) << "}";
+            QTransform xf = info.transform.defaultValue().value<QTransform>();
+            if (xf.type() <= QTransform::TxTranslate) {
+                stream() << "Translate { x: " << xf.dx() << "; y: " << xf.dy() << "}";
+            } else {
+                stream() << "Matrix4x4 { matrix: ";
+                generateTransform(xf);
+                stream(SameLine) << "}";
+            }
         }
 
         if (hasTransformReference) {
