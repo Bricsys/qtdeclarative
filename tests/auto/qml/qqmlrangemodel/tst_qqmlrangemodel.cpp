@@ -366,7 +366,6 @@ void tst_QQmlRangeModel::intRange()
     // The delegate changing the property ...
     QMetaObject::invokeMethod(currentItem, "setValue", oldValue);
     // ... should result in a single call to QRM::data()
-    QEXPECT_FAIL("ReadWrite", "Extra call to data()", Continue); // but we see two
     QCOMPARE(model.dataCalls, writeBack ? QList<int>{Qt::RangeModelDataRole} : QList<int>{});
     // ... and one call to setData if access mode is ReadWrite
     QCOMPARE(model.setDataCalls, writeBack ? QList<int>{Qt::RangeModelDataRole} : QList<int>{});
@@ -434,7 +433,6 @@ void tst_QQmlRangeModel::objectRange()
     QCOMPARE(entry->number(), writeBack ? oldNumber : newNumber);
     QCOMPARE(currentItem->property("number"), oldNumber);
     // ... and call QRM::data, once, to get the new value
-    QEXPECT_FAIL("ReadWrite", "Excessive calls to data()", Continue);
     QCOMPARE(model.dataCalls, writeBack ? QList<int>{Entry::NumberRole} : QList<int>{});
     model.dataCalls.clear();
     model.setDataCalls.clear();
