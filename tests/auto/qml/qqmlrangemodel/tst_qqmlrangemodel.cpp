@@ -252,12 +252,12 @@ void tst_QQmlRangeModel::objectList()
     QCOMPARE(currentItem->property("currentData"), writeBack ? "42: one" : "1: one");
     QCOMPARE(entry->number(), writeBack ? 42 : 1);
 
-    // changing C++ doesn't update required property values in either case
+    // changing C++ does update required property values in either case
     entry->setText("fortytwo");
-    QCOMPARE(currentValueSpy.count(), 1);
-    QCOMPARE(currentItem->property("currentValue"), "42: one");
+    QCOMPARE(currentValueSpy.count(), 2);
+    QCOMPARE(currentItem->property("currentValue"), "42: fortytwo");
 
-    // but does update modelData
+    // and updates modelData
     QCOMPARE(currentDataSpy.count(), writeBack ? 2 : 1);
     QCOMPARE(currentItem->property("currentData"), entry->toString());
 
@@ -269,7 +269,7 @@ void tst_QQmlRangeModel::objectList()
 #endif
     QMetaObject::invokeMethod(currentItem, "setModelData", QVariant::fromValue(newEntry.get()));
     QVERIFY(entry); // old object still alive
-    QCOMPARE(currentItem->property("currentValue"), writeBack ? "42: fortytwo" : "42: one");
+    QCOMPARE(currentItem->property("currentValue"), "42: fortytwo");
     QCOMPARE(entry->toString(), writeBack ? "42: fortytwo" : "1: fortytwo");
     QCOMPARE(currentItem->property("currentData"), "2: two");
     QCOMPARE(newEntry->toString(), "2: two");

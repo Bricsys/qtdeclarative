@@ -115,9 +115,16 @@ public:
         return accessors->createItem(*this, metaType, index, rowAt(index), columnAt(index));
     }
     inline bool hasProxyObject() const {
-        return list.type() == QQmlListAccessor::Instance
-                || list.type() == QQmlListAccessor::ListProperty
-                || list.type() == QQmlListAccessor::ObjectList;
+        switch (list.type()) {
+        case QQmlListAccessor::Instance:
+        case QQmlListAccessor::ListProperty:
+        case QQmlListAccessor::ObjectList:
+        case QQmlListAccessor::ObjectSequence:
+            return true;
+        default:
+            break;
+        }
+        return false;
     }
 
     inline bool notify(
