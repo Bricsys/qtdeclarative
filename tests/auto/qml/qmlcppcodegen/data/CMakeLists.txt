@@ -285,6 +285,7 @@ set(qml_files
     script.js
     script.mjs
     sequenceToIterable.qml
+    sequenceToIterable2.qml
     setLookupConversion.qml
     setLookupOriginalScope.qml
     shadowedAsCasts.qml
