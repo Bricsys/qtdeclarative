@@ -16,7 +16,6 @@ QT_BEGIN_NAMESPACE
 QQuickRepeaterPrivate::QQuickRepeaterPrivate()
     : model(nullptr)
     , ownModel(false)
-    , dataSourceIsObject(false)
     , delegateValidated(false)
     , explicitDelegate(false)
     , explicitDelegateModelAccess(false)
@@ -152,12 +151,11 @@ QVariant QQuickRepeater::model() const
 {
     Q_D(const QQuickRepeater);
 
-    if (d->dataSourceIsObject) {
-        QObject *o = d->dataSourceAsObject;
-        return QVariant::fromValue(o);
-    }
-
-    return d->dataSource;
+    if (d->ownModel)
+        return static_cast<QQmlDelegateModel *>(d->model.data())->model();
+    if (d->model)
+        return QVariant::fromValue(d->model.data());
+    return QVariant();
 }
 
 void QQuickRepeater::setModel(const QVariant &m)
@@ -167,20 +165,20 @@ void QQuickRepeater::setModel(const QVariant &m)
     if (model.userType() == qMetaTypeId<QJSValue>())
         model = model.value<QJSValue>().toVariant();
 
-    if (d->dataSource == model)
+    QQmlDelegateModelPointer oldModel(d->model);
+    if (d->ownModel) {
+        if (oldModel.delegateModel()->model() == model)
+            return;
+    } else if (QVariant::fromValue(d->model) == model) {
         return;
+    }
 
     clear();
 
-    QQmlDelegateModelPointer oldModel(d->model);
     d->disconnectModel(this, &oldModel);
-
     d->model = nullptr;
-    d->dataSource = model;
 
     QObject *object = qvariant_cast<QObject *>(model);
-    d->dataSourceAsObject = object;
-    d->dataSourceIsObject = object != nullptr;
 
     QQmlDelegateModelPointer newModel(qobject_cast<QQmlInstanceModel *>(object));
     if (newModel) {
@@ -217,10 +215,11 @@ void QQuickRepeater::setModel(const QVariant &m)
         }
         d->model = newModel.instanceModel();
     } else if (d->ownModel) {
+        // d->ownModel can only be set if the old model is a QQmlDelegateModel.
+        Q_ASSERT(oldModel.delegateModel());
         newModel = oldModel;
         d->model = newModel.instanceModel();
-        if (QQmlDelegateModel *delegateModel = newModel.delegateModel())
-            delegateModel->setModel(model);
+        newModel.delegateModel()->setModel(model);
     } else {
         newModel = QQmlDelegateModel::createForView(this, d);
         if (d->explicitDelegate) {
@@ -534,7 +533,7 @@ void QQuickRepeater::initItem(int index, QObject *object)
         // If the item comes from an ObjectModel, it might be used as
         // ComboBox/Menu/TabBar's contentItem. These types unconditionally cull items
         // that are inserted, so account for that here.
-        if (d->dataSourceIsObject)
+        if (d->model && !d->ownModel)
             QQuickItemPrivate::get(item)->setCulled(false);
         if (index > 0 && d->deletables.at(index-1)) {
             item->stackAfter(d->deletables.at(index-1));

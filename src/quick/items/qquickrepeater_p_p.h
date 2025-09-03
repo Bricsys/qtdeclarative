@@ -53,10 +53,7 @@ private:
     void disconnectModel(QQuickRepeater *q, QQmlDelegateModelPointer *model);
 
     QPointer<QQmlInstanceModel> model;
-    QVariant dataSource;
-    QPointer<QObject> dataSourceAsObject;
     bool ownModel : 1;
-    bool dataSourceIsObject : 1;
     bool delegateValidated : 1;
     bool explicitDelegate : 1;
     bool explicitDelegateModelAccess : 1;
