@@ -22,7 +22,6 @@ QQmlInstantiatorPrivate::QQmlInstantiatorPrivate()
 #if QT_CONFIG(qml_delegate_model)
     , ownModel(false)
 #endif
-    , model(QVariant(1))
 {
 }
 
@@ -352,21 +351,39 @@ void QQmlInstantiator::setDelegate(QQmlComponent* c)
 QVariant QQmlInstantiator::model() const
 {
     Q_D(const QQmlInstantiator);
-    return d->model;
+#if QT_CONFIG(qml_delegate_model)
+    if (!d->ownModel)
+        return QVariant::fromValue(d->instanceModel);
+
+    return d->instanceModel
+            ? static_cast<QQmlDelegateModel *>(d->instanceModel)->model()
+            : QVariant(0);
+#else
+    return QVariant::fromValue(d->instanceModel);
+#endif
 }
 
 void QQmlInstantiator::setModel(const QVariant &v)
 {
     Q_D(QQmlInstantiator);
-    if (d->model == v)
-        return;
-
-    d->model = v;
-    //Don't actually set model until componentComplete in case it wants to create its delegates immediately
-    if (!d->componentComplete)
-        return;
-
     QQmlInstanceModel *prevModel = d->instanceModel;
+
+#if QT_CONFIG(qml_delegate_model)
+    if (d->ownModel) {
+        if (!prevModel) {
+            if (v == QVariant(0))
+                return;
+        } else if (static_cast<QQmlDelegateModel *>(prevModel)->model() == v) {
+            return;
+        }
+    } else if (QVariant::fromValue(prevModel) == v) {
+        return;
+    }
+#else
+    if (QVariant::fromValue(prevModel) == v)
+        return;
+#endif
+
     QObject *object = qvariant_cast<QObject*>(v);
     QQmlInstanceModel *vim = nullptr;
     if (object && (vim = qobject_cast<QQmlInstanceModel *>(object))) {
@@ -379,8 +396,11 @@ void QQmlInstantiator::setModel(const QVariant &v)
 #endif
         d->instanceModel = vim;
 #if QT_CONFIG(qml_delegate_model)
-    } else if (v != QVariant(0)){
-        if (!d->ownModel)
+    } else if (v == QVariant(0) && !d->instanceModel) {
+        // Optimization: If the model is initially 0, we don't even create an instance model.
+        d->ownModel = true;
+    } else {
+        if (!d->ownModel || !d->instanceModel)
             d->makeModel();
 
         if (QQmlDelegateModel *dataModel = qobject_cast<QQmlDelegateModel *>(d->instanceModel)) {
@@ -488,17 +508,25 @@ void QQmlInstantiator::componentComplete()
     Q_D(QQmlInstantiator);
     d->componentComplete = true;
 #if QT_CONFIG(qml_delegate_model)
-    if (d->ownModel) {
-        static_cast<QQmlDelegateModel*>(d->instanceModel)->componentComplete();
-        d->regenerate();
-    } else
-#endif
-    {
-        QVariant realModel = d->model;
-        d->model = QVariant(0);
-        setModel(realModel); //If realModel == d->model this won't do anything, but that's fine since the model's 0
-        //setModel calls regenerate
+    if (!d->ownModel) {
+        if (!d->instanceModel)
+            setModel(QVariant(1));
+        else
+            d->regenerate();
+        return;
     }
+
+    if (!d->instanceModel)
+        return; // It's 0: Nothing to do
+
+    // Disregard any modelUpdated() triggered by componentComplete() and rather regenerate manually.
+    // See also setModel().
+    d->effectiveReset = true;
+    static_cast<QQmlDelegateModel*>(d->instanceModel)->componentComplete();
+    d->effectiveReset = false;
+#endif
+
+    d->regenerate();
 }
 
 QT_END_NAMESPACE

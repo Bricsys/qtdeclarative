@@ -55,7 +55,6 @@ public:
     QQmlDelegateModel::DelegateModelAccess delegateModelAccess = QQmlDelegateModel::Qt5ReadWrite;
 #endif
     int requestedIndex = -1;
-    QVariant model;
     QQmlInstanceModel *instanceModel = nullptr;
     QQmlComponent *delegate = nullptr;
     QVector<QPointer<QObject> > objects;
