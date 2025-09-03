@@ -242,7 +242,6 @@ public:
     virtual QQuickItemViewAttached *getAttachedObject(const QObject *) const { return nullptr; }
 
     QPointer<QQmlInstanceModel> model;
-    QVariant modelVariant;
     int itemCount;
     int buffer;
     int bufferMode;

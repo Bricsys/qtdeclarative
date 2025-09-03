@@ -147,7 +147,11 @@ QQuickItem *QQuickItemView::currentItem() const
 QVariant QQuickItemView::model() const
 {
     Q_D(const QQuickItemView);
-    return d->modelVariant;
+    if (d->ownModel)
+        return static_cast<QQmlDelegateModel *>(d->model.data())->model();
+    if (d->model)
+        return QVariant::fromValue(d->model.data());
+    return QVariant();
 }
 
 void QQuickItemView::setModel(const QVariant &m)
@@ -157,16 +161,19 @@ void QQuickItemView::setModel(const QVariant &m)
     if (model.userType() == qMetaTypeId<QJSValue>())
         model = model.value<QJSValue>().toVariant();
 
-    if (d->modelVariant == model)
-        return;
-
     QQmlDelegateModelPointer oldModel(d->model);
+    if (d->ownModel) {
+        if (oldModel.delegateModel()->model() == model)
+            return;
+    } else if (QVariant::fromValue(d->model) == model) {
+        return;
+    }
+
     d->disconnectModel(this, &oldModel);
 
     d->clear();
     d->model = nullptr;
     d->setPosition(d->contentStartOffset());
-    d->modelVariant = model;
 
     QObject *object = qvariant_cast<QObject *>(model);
 
@@ -205,10 +212,11 @@ void QQuickItemView::setModel(const QVariant &m)
         }
         d->model = newModel.instanceModel();
     } else if (d->ownModel) {
+        // d->ownModel can only be set if the old model is a QQmlDelegateModel.
+        Q_ASSERT(oldModel.delegateModel());
         newModel = oldModel;
         d->model = newModel.instanceModel();
-        if (QQmlDelegateModel *delegateModel = newModel.delegateModel())
-            delegateModel->setModel(model);
+        newModel.delegateModel()->setModel(model);
     } else {
         newModel = QQmlDelegateModel::createForView(this, d);
         if (d->explicitDelegate) {
