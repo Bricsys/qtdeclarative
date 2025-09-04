@@ -3119,6 +3119,13 @@ void QQuickPathMultiline::addToPath(QPainterPath &path, const QQuickPathData &)
     baseline will be translated to the x and y coordinates, and the outlines from the font
     will be added to the path accordingly.
 
+    When used to render texts in a Shape item, note the following:
+    \list
+        \li For correct fill, the ShapePath's fillRule should be set to ShapePath.WindingFill.
+        \li Not all fonts provide a nice outline suitable for stroking. If you want a stroked
+            outline and are getting unsatisfactory results, try a different font.
+    \endlist
+
     \qml
     PathText {
         x: 0
