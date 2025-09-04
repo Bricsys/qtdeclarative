@@ -214,8 +214,14 @@ bool UrlObject::setSearch(QString search)
 {
     QUrl url = toQUrl();
 
-    if (search.startsWith(QLatin1Char('?')))
+    if (search.startsWith(QLatin1Char('?'))) {
         search = search.mid(1);
+    } else if (search.isEmpty()) {
+        // In JS, setting an empty query removes the '?' as well. QUrl only does that for a null QString.
+        // The way to get a lone '?' in JS is to set the search property to "?". That is why this is in
+        // the else branch.
+        search = QString(); // it's null now
+    }
 
     url.setQuery(search);
 
