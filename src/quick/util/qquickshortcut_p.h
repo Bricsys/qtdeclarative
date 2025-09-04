@@ -67,8 +67,8 @@ public:
 Q_SIGNALS:
     void sequenceChanged();
     Q_REVISION(2, 9) void sequencesChanged();
-    void nativeTextChanged();
-    void portableTextChanged();
+    Q_REVISION(6, 10) void nativeTextChanged();
+    Q_REVISION(6, 10) void portableTextChanged();
     void enabledChanged();
     void autoRepeatChanged();
     void contextChanged();
