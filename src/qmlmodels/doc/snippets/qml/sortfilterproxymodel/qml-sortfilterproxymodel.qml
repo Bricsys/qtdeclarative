@@ -40,7 +40,7 @@ ApplicationWindow {
     ListView {
         anchors.fill: parent
         clip: true
-        model: sfpm
+        model: ageFilterModel
         delegate: Rectangle {
             implicitWidth: 100
             implicitHeight: 50

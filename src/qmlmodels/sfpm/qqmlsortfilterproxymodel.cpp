@@ -69,7 +69,7 @@ Q_LOGGING_CATEGORY (lcSortFilterProxyModel, "qt.qml.sortfilterproxymodel")
     is a change to the data in the source model and can be disabled through the
     \l{SortFilterProxyModel::dynamicSortFilter}{dynamicSortFilter} property.
 
-    The sorters \l RoleSorter, \l ValueSorter and \l StringSorter can be
+    The sorters \l RoleSorter, \l StringSorter and \l FunctionSorter can be
     configured in SortFilterProxyModel. Each sorter can be configured with a
     specific column index through \l{Sorter::column}{column} property. If a
     column index is not specified, the sorting will be applied to the column
