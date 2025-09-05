@@ -985,6 +985,18 @@ void tst_QQmlDelegateModel::delegateModelAccess()
             ? access != QQmlDelegateModel::ReadOnly
             : access == QQmlDelegateModel::ReadWrite;
 
+    const bool writeShouldPropagate =
+
+            // If we've explicitly asked for the model to be written, it is
+            (access == QQmlDelegateModel::ReadWrite) ||
+
+            // If it's a QAIM or an object, it's implicitly written
+            (modelKind != Model::Kind::Array) ||
+
+            // When writing through the model object from a typed delegate,
+            // the value was propagated even before.
+            (access == QQmlDelegateModel::Qt5ReadWrite && delegateKind == Delegate::Typed);
+
     double expected = 11;
 
     QCOMPARE(delegate->property("immediateX").toDouble(), expected);
@@ -997,6 +1009,10 @@ void tst_QQmlDelegateModel::delegateModelAccess()
     QCOMPARE(delegate->property("immediateX").toDouble(), expected);
     QCOMPARE(delegate->property("modelX").toDouble(), expected);
 
+    double xAt0 = -1;
+    QMetaObject::invokeMethod(object.data(), "xAt0", Q_RETURN_ARG(double, xAt0));
+    QCOMPARE(xAt0, writeShouldPropagate ? expected : 11);
+
     if (immediateWritable)
         expected = 1;
 
@@ -1007,6 +1023,10 @@ void tst_QQmlDelegateModel::delegateModelAccess()
              delegateKind == Delegate::Untyped ? expected : 1);
 
     QCOMPARE(delegate->property("modelX").toDouble(), expected);
+
+    xAt0 = -1;
+    QMetaObject::invokeMethod(object.data(), "xAt0", Q_RETURN_ARG(double, xAt0));
+    QCOMPARE(xAt0, writeShouldPropagate ? expected : 11);
 }
 
 QTEST_MAIN(tst_QQmlDelegateModel)
