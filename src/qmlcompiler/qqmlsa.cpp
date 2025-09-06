@@ -155,7 +155,7 @@ static_assert(QQmlJSScope::sizeofQQmlSAElement() == sizeof(Element));
  */
 Binding::Bindings::Bindings() : d_ptr{ new BindingsPrivate{ this } } { }
 
-BindingsPrivate::BindingsPrivate(QQmlSA::Binding::Bindings *interface) : q_ptr{ interface } { }
+BindingsPrivate::BindingsPrivate(QQmlSA::Binding::Bindings *iface) : q_ptr{ iface } { }
 
 /*!
     Creates a copy of \a other.
@@ -170,13 +170,13 @@ Binding::Bindings::Bindings(const Bindings &other)
  */
 Binding::Bindings::~Bindings() = default;
 
-BindingsPrivate::BindingsPrivate(QQmlSA::Binding::Bindings *interface, const BindingsPrivate &other)
-    : m_bindings{ other.m_bindings.begin(), other.m_bindings.end() }, q_ptr{ interface }
+BindingsPrivate::BindingsPrivate(QQmlSA::Binding::Bindings *iface, const BindingsPrivate &other)
+    : m_bindings{ other.m_bindings.begin(), other.m_bindings.end() }, q_ptr{ iface }
 {
 }
 
-BindingsPrivate::BindingsPrivate(QQmlSA::Binding::Bindings *interface, BindingsPrivate &&other)
-    : m_bindings{ std::move(other.m_bindings) }, q_ptr{ interface }
+BindingsPrivate::BindingsPrivate(QQmlSA::Binding::Bindings *iface, BindingsPrivate &&other)
+    : m_bindings{ std::move(other.m_bindings) }, q_ptr{ iface }
 {
 }
 
@@ -230,7 +230,7 @@ QMultiHash<QString, Binding>::const_iterator BindingsPrivate::constEnd() const
  */
 Binding::Binding() : d_ptr{ new BindingPrivate{ this } } { }
 
-BindingPrivate::BindingPrivate(Binding *interface) : q_ptr{ interface } { }
+BindingPrivate::BindingPrivate(Binding *iface) : q_ptr{ iface } { }
 
 /*!
     Creates a copy of \a other.
@@ -288,8 +288,8 @@ bool Binding::operatorEqualsImpl(const Binding &lhs, const Binding &rhs)
             && lhs.d_func()->m_isAttached == rhs.d_func()->m_isAttached;
 }
 
-BindingPrivate::BindingPrivate(Binding *interface, const BindingPrivate &other)
-    : m_binding{ other.m_binding }, m_bindingScope{ other.m_bindingScope }, q_ptr{ interface },
+BindingPrivate::BindingPrivate(Binding *iface, const BindingPrivate &other)
+    : m_binding{ other.m_binding }, m_bindingScope{ other.m_bindingScope }, q_ptr{ iface },
       m_isAttached{ other.m_isAttached }
 {
 }
@@ -530,22 +530,22 @@ QMultiHash<QString, Method>::const_iterator MethodsPrivate::constEnd() const
     return m_methods.constEnd();
 }
 
-MethodsPrivate::MethodsPrivate(QQmlSA::Method::Methods *interface) : q_ptr{ interface } { }
+MethodsPrivate::MethodsPrivate(QQmlSA::Method::Methods *iface) : q_ptr{ iface } { }
 
-MethodsPrivate::MethodsPrivate(QQmlSA::Method::Methods *interface, const MethodsPrivate &other)
-    : m_methods{ other.m_methods }, q_ptr{ interface }
+MethodsPrivate::MethodsPrivate(QQmlSA::Method::Methods *iface, const MethodsPrivate &other)
+    : m_methods{ other.m_methods }, q_ptr{ iface }
 {
 }
 
-MethodsPrivate::MethodsPrivate(QQmlSA::Method::Methods *interface, MethodsPrivate &&other)
-    : m_methods{ std::move(other.m_methods) }, q_ptr{ interface }
+MethodsPrivate::MethodsPrivate(QQmlSA::Method::Methods *iface, MethodsPrivate &&other)
+    : m_methods{ std::move(other.m_methods) }, q_ptr{ iface }
 {
 }
 
-MethodPrivate::MethodPrivate(Method *interface) : q_ptr{ interface } { }
+MethodPrivate::MethodPrivate(Method *iface) : q_ptr{ iface } { }
 
-MethodPrivate::MethodPrivate(Method *interface, const MethodPrivate &other)
-    : m_method{ other.m_method }, q_ptr{ interface }
+MethodPrivate::MethodPrivate(Method *iface, const MethodPrivate &other)
+    : m_method{ other.m_method }, q_ptr{ iface }
 {
 }
 
@@ -687,15 +687,15 @@ QQmlJSMetaMethod MethodPrivate::method(const QQmlSA::Method &method)
     return method.d_func()->m_method;
 }
 
-PropertyPrivate::PropertyPrivate(Property *interface) : q_ptr{ interface } { }
+PropertyPrivate::PropertyPrivate(Property *iface) : q_ptr{ iface } { }
 
-PropertyPrivate::PropertyPrivate(Property *interface, const PropertyPrivate &other)
-    : m_property{ other.m_property }, q_ptr{ interface }
+PropertyPrivate::PropertyPrivate(Property *iface, const PropertyPrivate &other)
+    : m_property{ other.m_property }, q_ptr{ iface }
 {
 }
 
-PropertyPrivate::PropertyPrivate(Property *interface, PropertyPrivate &&other)
-    : m_property{ std::move(other.m_property) }, q_ptr{ interface }
+PropertyPrivate::PropertyPrivate(Property *iface, PropertyPrivate &&other)
+    : m_property{ std::move(other.m_property) }, q_ptr{ iface }
 {
 }
 
@@ -1219,8 +1219,8 @@ class GenericPassPrivate {
     Q_DECLARE_PUBLIC(GenericPass);
 
 public:
-    GenericPassPrivate(GenericPass *interface, PassManager *manager)
-        : m_manager{ manager }, q_ptr{ interface }
+    GenericPassPrivate(GenericPass *iface, PassManager *manager)
+        : m_manager{ manager }, q_ptr{ iface }
     {
         Q_ASSERT(manager);
     }
@@ -1990,25 +1990,25 @@ std::unordered_map<quint32, Binding> PassManager::bindingsByLocation() const
     return d->m_bindingsByLocation;
 }
 
-FixSuggestionPrivate::FixSuggestionPrivate(FixSuggestion *interface) : q_ptr{ interface } { }
+FixSuggestionPrivate::FixSuggestionPrivate(FixSuggestion *iface) : q_ptr{ iface } { }
 
-FixSuggestionPrivate::FixSuggestionPrivate(FixSuggestion *interface, const QString &fixDescription,
+FixSuggestionPrivate::FixSuggestionPrivate(FixSuggestion *iface, const QString &fixDescription,
                                            const QQmlSA::SourceLocation &location,
                                            const QString &replacement)
     : m_fixSuggestion{ fixDescription, QQmlSA::SourceLocationPrivate::sourceLocation(location),
                        replacement },
-      q_ptr{ interface }
+      q_ptr{ iface }
 {
 }
 
-FixSuggestionPrivate::FixSuggestionPrivate(FixSuggestion *interface,
+FixSuggestionPrivate::FixSuggestionPrivate(FixSuggestion *iface,
                                            const FixSuggestionPrivate &other)
-    : m_fixSuggestion{ other.m_fixSuggestion }, q_ptr{ interface }
+    : m_fixSuggestion{ other.m_fixSuggestion }, q_ptr{ iface }
 {
 }
 
-FixSuggestionPrivate::FixSuggestionPrivate(FixSuggestion *interface, FixSuggestionPrivate &&other)
-    : m_fixSuggestion{ std::move(other.m_fixSuggestion) }, q_ptr{ interface }
+FixSuggestionPrivate::FixSuggestionPrivate(FixSuggestion *iface, FixSuggestionPrivate &&other)
+    : m_fixSuggestion{ std::move(other.m_fixSuggestion) }, q_ptr{ iface }
 {
 }
 
