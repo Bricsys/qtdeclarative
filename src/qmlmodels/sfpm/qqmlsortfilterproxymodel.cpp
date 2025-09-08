@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
 #include <QtCore/qitemselectionmodel.h>
+#include <QtQmlModels/private/qqmlsortfilterproxymodel_p_p.h>
 #include <QtQmlModels/private/qqmlsortfilterproxymodel_p.h>
 #include <QtQmlModels/private/qqmlfiltercompositor_p.h>
 #include <QtQmlModels/private/qqmlsortercompositor_p.h>
@@ -118,164 +119,6 @@ Q_LOGGING_CATEGORY (lcSortFilterProxyModel, "qt.qml.sortfilterproxymodel")
     If no priority is set, the \l SortFilterProxyModel applies a sorter in the
     order as specified in the list.
 */
-
-class QQmlSortFilterProxyModelPrivate : public QAbstractProxyModelPrivate, public QSortFilterProxyModelHelper
-{
-    Q_DECLARE_PUBLIC(QQmlSortFilterProxyModel)
-
-public:
-    void init();
-
-    bool containRoleForRecursiveFilter(const QList<int> &roles) const;
-    bool recursiveParentAcceptsRow(const QModelIndex &source_parent) const;
-    bool recursiveChildAcceptsRow(int source_row, const QModelIndex &source_parent) const;
-
-    QList<std::pair<int, QList<int>>> proxy_intervals_for_source_items_to_add(
-            const QList<int> &proxy_to_source, const QList<int> &source_items,
-            const QModelIndex &source_parent, QSortFilterProxyModelHelper::Direction direction) const override;
-    bool needsReorder(const QList<int> &source_rows, const QModelIndex &source_parent) const;
-    bool updatePrimaryColumn();
-    int findPrimarySortColumn() const;
-
-    inline QModelIndex create_index(int row, int column,
-                                    QHash<QtPrivate::QModelIndexWrapper, QSortFilterProxyModelHelper::Mapping *>::const_iterator it) const {
-        return q_func()->createIndex(row, column, *it);
-    }
-    void changePersistentIndexList(const QModelIndexList &from, const QModelIndexList &to) override {
-        Q_Q(QQmlSortFilterProxyModel);
-        q->changePersistentIndexList(from, to);
-    }
-
-    void beginInsertRows(const QModelIndex &parent, int first, int last) override {
-        Q_Q(QQmlSortFilterProxyModel);
-        q->beginInsertRows(parent, first, last);
-    }
-
-    void beginInsertColumns(const QModelIndex &parent, int first, int last) override {
-        Q_Q(QQmlSortFilterProxyModel);
-        q->beginInsertColumns(parent, first, last);
-    }
-
-    void endInsertRows() override {
-        Q_Q(QQmlSortFilterProxyModel);
-        q->endInsertRows();
-    }
-
-    void endInsertColumns() override {
-        Q_Q(QQmlSortFilterProxyModel);
-        q->endInsertColumns();
-    }
-
-    void beginRemoveRows(const QModelIndex &parent, int first, int last) override {
-        Q_Q(QQmlSortFilterProxyModel);
-        q->beginRemoveRows(parent, first, last);
-    }
-
-    void beginRemoveColumns(const QModelIndex &parent, int first, int last) override {
-        Q_Q(QQmlSortFilterProxyModel);
-        q->beginRemoveColumns(parent, first, last);
-    }
-
-    void endRemoveRows() override {
-        Q_Q(QQmlSortFilterProxyModel);
-        q->endRemoveRows();
-    }
-
-    void endRemoveColumns() override {
-        Q_Q(QQmlSortFilterProxyModel);
-        q->endRemoveColumns();
-    }
-
-    void beginResetModel() override {
-        Q_Q(QQmlSortFilterProxyModel);
-        q->beginResetModel();
-    }
-
-    void endResetModel() override {
-        Q_Q(QQmlSortFilterProxyModel);
-        q->endResetModel();
-    }
-
-    // Update the proxy model when there is any change in the source model
-    void _q_sourceDataChanged(const QModelIndex &source_top_left,
-                              const QModelIndex &source_bottom_right,
-                              const QList<int> &roles);
-    void _q_sourceHeaderDataChanged(Qt::Orientation orientation,
-                                    int start, int end);
-    void _q_sourceAboutToBeReset();
-    void _q_sourceReset();
-    void _q_clearMapping();
-    void _q_sourceLayoutAboutToBeChanged(const QList<QPersistentModelIndex> &sourceParents,
-                                         QAbstractItemModel::LayoutChangeHint hint);
-    void _q_sourceLayoutChanged(const QList<QPersistentModelIndex> &sourceParents,
-                                QAbstractItemModel::LayoutChangeHint hint);
-    void _q_sourceRowsAboutToBeInserted(const QModelIndex &source_parent,
-                                        int start, int end);
-    void _q_sourceRowsInserted(const QModelIndex &source_parent,
-                               int start, int end);
-    void _q_sourceRowsAboutToBeRemoved(const QModelIndex &source_parent,
-                                       int start, int end);
-    void _q_sourceRowsRemoved(const QModelIndex &source_parent,
-                              int start, int end);
-    void _q_sourceRowsAboutToBeMoved(const QModelIndex &sourceParent,
-                                     int sourceStart, int sourceEnd,
-                                     const QModelIndex &destParent, int dest);
-    void _q_sourceRowsMoved(const QModelIndex &sourceParent,
-                            int sourceStart, int sourceEnd,
-                            const QModelIndex &destParent, int dest);
-    void _q_sourceColumnsAboutToBeInserted(const QModelIndex &source_parent,
-                                           int start, int end);
-    void _q_sourceColumnsInserted(const QModelIndex &source_parent,
-                                  int start, int end);
-    void _q_sourceColumnsAboutToBeRemoved(const QModelIndex &source_parent,
-                                          int start, int end);
-    void _q_sourceColumnsRemoved(const QModelIndex &source_parent,
-                                 int start, int end);
-    void _q_sourceColumnsAboutToBeMoved(const QModelIndex &sourceParent,
-                                        int sourceStart, int sourceEnd,
-                                        const QModelIndex &destParent, int dest);
-    void _q_sourceColumnsMoved(const QModelIndex &sourceParent,
-                               int sourceStart, int sourceEnd,
-                               const QModelIndex &destParent, int dest);
-
-    const QAbstractProxyModel *proxyModel() const override { return q_func(); }
-    QModelIndex createIndex(int row, int column,
-                            QHash<QtPrivate::QModelIndexWrapper, QSortFilterProxyModelHelper::Mapping *>::const_iterator it) const override {
-        return create_index(row, column, it);
-    }
-    bool filterAcceptsRowInternal(int sourceRow, const QModelIndex &sourceIndex) const override;
-    bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const override {
-        return q_func()->filterAcceptsRow(source_row, source_parent);
-    }
-    bool filterAcceptsColumnInternal(int sourceColumn, const QModelIndex &sourceIndex) const override;
-    bool filterAcceptsColumn(int source_column, const QModelIndex &source_parent) const override {
-        return q_func()->filterAcceptsColumn(source_column, source_parent);
-    }
-    void sort_source_rows(QList<int> &source_rows, const QModelIndex &source_parent) const override;
-    bool lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const override {
-        return q_func()->lessThan(source_left, source_right);
-    }
-
-    // Internal
-    QModelIndex m_lastTopSource;
-    QRowsRemoval m_itemsBeingRemoved;
-    bool m_completeInsert = false;
-    QModelIndexPairList m_savedPersistentIndexes;
-    QList<QPersistentModelIndex> m_savedLayoutChangeParents;
-    std::array<QMetaObject::Connection, 18> m_sourceConnections;
-    bool m_componentCompleted = false;
-
-    // Properties exposed to the user
-    QQmlFilterCompositor* m_filters;
-    QQmlSorterCompositor* m_sorters;
-    bool m_dynamicSortFilter = true;
-    bool m_recursiveFiltering = false;
-    bool m_autoAcceptChildRows = false;
-    int m_primarySortColumn = -1;
-    int m_proxySortColumn = -1;
-    Qt::SortOrder m_sortOrder = Qt::AscendingOrder;
-    QVariant m_sourceModel;
-};
 
 QQmlSortFilterProxyModel::QQmlSortFilterProxyModel(QObject *parent)
     : QAbstractProxyModel (*new QQmlSortFilterProxyModelPrivate, parent)
@@ -605,7 +448,7 @@ QModelIndex QQmlSortFilterProxyModel::index(int row, int column, const QModelInd
     if (it.value()->source_rows.size() <= row || it.value()->source_columns.size() <= column)
         return QModelIndex();
 
-    return d->create_index(row, column, it);
+    return d->createIndex(row, column, it);
 }
 
 /*!
@@ -636,7 +479,7 @@ QModelIndex QQmlSortFilterProxyModel::sibling(int row, int column, const QModelI
     if (it.value()->source_rows.size() <= row || it.value()->source_columns.size() <= column)
         return QModelIndex();
 
-    return d->create_index(row, column, it);
+    return d->createIndex(row, column, it);
 }
 
 /*!
@@ -1333,14 +1176,14 @@ void QQmlSortFilterProxyModelPrivate::_q_sourceDataChanged(const QModelIndex &so
                        && m->proxy_columns.at(source_left_column) == -1)
                     ++source_left_column;
                 if (m->proxy_columns.at(source_left_column) != -1) {
-                    const QModelIndex proxy_top_left = create_index(
+                    const QModelIndex proxy_top_left = createIndex(
                             proxy_start_row, m->proxy_columns.at(source_left_column), it);
                     int source_right_column = source_bottom_right.column();
                     while (source_right_column > source_top_left.column()
                            && m->proxy_columns.at(source_right_column) == -1)
                         --source_right_column;
                     if (m->proxy_columns.at(source_right_column) != -1) {
-                        const QModelIndex proxy_bottom_right = create_index(
+                        const QModelIndex proxy_bottom_right = createIndex(
                                 proxy_end_row, m->proxy_columns.at(source_right_column), it);
                         emit q->dataChanged(proxy_top_left, proxy_bottom_right, roles);
                     }
@@ -1713,6 +1556,123 @@ bool QQmlSortFilterProxyModelPrivate::filterAcceptsColumnInternal(int row, const
 {
     Q_Q(const QQmlSortFilterProxyModel);
     return q->filterAcceptsColumn(row, sourceIndex);
+}
+
+/*!
+    \internal
+ */
+QModelIndex QQmlSortFilterProxyModelPrivate::createIndex(int row, int column,
+    QHash<QtPrivate::QModelIndexWrapper, QSortFilterProxyModelHelper::Mapping *>::const_iterator it) const {
+    return q_func()->createIndex(row, column, *it);
+}
+
+/*!
+    \internal
+ */
+void QQmlSortFilterProxyModelPrivate::changePersistentIndexList(const QModelIndexList &from, const QModelIndexList &to) {
+    Q_Q(QQmlSortFilterProxyModel);
+    q->changePersistentIndexList(from, to);
+}
+
+/*!
+    \internal
+ */
+void QQmlSortFilterProxyModelPrivate::beginInsertRows(const QModelIndex &parent, int first, int last) {
+    Q_Q(QQmlSortFilterProxyModel);
+    q->beginInsertRows(parent, first, last);
+}
+
+/*!
+    \internal
+ */
+void QQmlSortFilterProxyModelPrivate::beginInsertColumns(const QModelIndex &parent, int first, int last) {
+    Q_Q(QQmlSortFilterProxyModel);
+    q->beginInsertColumns(parent, first, last);
+}
+
+/*!
+    \internal
+ */
+void QQmlSortFilterProxyModelPrivate::endInsertRows() {
+    Q_Q(QQmlSortFilterProxyModel);
+    q->endInsertRows();
+}
+
+/*!
+    \internal
+ */
+void QQmlSortFilterProxyModelPrivate::endInsertColumns() {
+    Q_Q(QQmlSortFilterProxyModel);
+    q->endInsertColumns();
+}
+
+/*!
+    \internal
+ */
+void QQmlSortFilterProxyModelPrivate::beginRemoveRows(const QModelIndex &parent, int first, int last) {
+    Q_Q(QQmlSortFilterProxyModel);
+    q->beginRemoveRows(parent, first, last);
+}
+
+/*!
+    \internal
+ */
+void QQmlSortFilterProxyModelPrivate::beginRemoveColumns(const QModelIndex &parent, int first, int last) {
+    Q_Q(QQmlSortFilterProxyModel);
+    q->beginRemoveColumns(parent, first, last);
+}
+
+/*!
+    \internal
+ */
+void QQmlSortFilterProxyModelPrivate::endRemoveRows() {
+    Q_Q(QQmlSortFilterProxyModel);
+    q->endRemoveRows();
+}
+
+/*!
+    \internal
+ */
+void QQmlSortFilterProxyModelPrivate::endRemoveColumns() {
+    Q_Q(QQmlSortFilterProxyModel);
+    q->endRemoveColumns();
+}
+
+/*!
+    \internal
+ */
+void QQmlSortFilterProxyModelPrivate::beginResetModel() {
+    Q_Q(QQmlSortFilterProxyModel);
+    q->beginResetModel();
+}
+
+/*!
+    \internal
+ */
+void QQmlSortFilterProxyModelPrivate::endResetModel() {
+    Q_Q(QQmlSortFilterProxyModel);
+    q->endResetModel();
+}
+
+/*!
+    \internal
+ */
+bool QQmlSortFilterProxyModelPrivate::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const {
+    return q_func()->filterAcceptsRow(source_row, source_parent);
+}
+
+/*!
+    \internal
+ */
+bool QQmlSortFilterProxyModelPrivate::filterAcceptsColumn(int source_column, const QModelIndex &source_parent) const {
+    return q_func()->filterAcceptsColumn(source_column, source_parent);
+}
+
+/*!
+    \internal
+ */
+bool QQmlSortFilterProxyModelPrivate::lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const {
+    return q_func()->lessThan(source_left, source_right);
 }
 
 QT_END_NAMESPACE
