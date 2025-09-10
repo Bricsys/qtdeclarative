@@ -465,12 +465,17 @@ public:
 
     bool visit(Type *type) override
     {
+        // list type annotations can have comments attached to their `<>` token. preVisit already
+        // handles comments before and after the type.
+        addSourceLocations(type, type->lAngleBracketToken);
+        addSourceLocations(type, type->rAngleBracketToken);
+
         // only process UiQualifiedIds when they appear inside of types, otherwise this attaches
         // comments to the qualified ids of bindings that are not printed out, for example.
         QScopedValueRollback rollback(m_processUiQualifiedIds, true);
 
         AST::Node::accept(type->typeId, this);
-        // TODO: typeargument
+        AST::Node::accept(type->typeArgument, this);
         return false;
     }
 
@@ -479,9 +484,9 @@ public:
         if (!m_processUiQualifiedIds)
             return true;
 
-        // special case: multiple bits a,b,c and d inside an UiQualified id "a.b.c.d" all have the
-        // same lastSourceLocation(), which breaks the comment attaching. Therefore add locations
-        // here manually instead of in preVisit().
+        // multiple bits a,b,c and d inside an UiQualified id "a.b.c.d" all have the same
+        // lastSourceLocation(), which breaks the comment attaching. Therefore add locations here
+        // manually instead of in preVisit().
         addSourceLocations(id, id->dotToken);
         addSourceLocations(id, id->identifierToken);
 

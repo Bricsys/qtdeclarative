@@ -545,7 +545,11 @@ bool ScriptFormatter::visit(TypeAnnotation *ast)
 bool ScriptFormatter::visit(Type *ast)
 {
     accept(ast->typeId);
-    // TODO: type argument
+    if (ast->typeArgument) {
+        outWithComments(ast->lAngleBracketToken, ast);
+        accept(ast->typeArgument);
+        outWithComments(ast->rAngleBracketToken, ast);
+    }
     return false;
 }
 

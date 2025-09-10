@@ -457,9 +457,12 @@ private slots:
                 << u"function* g(a:date,b:int){}"_s << u"function* g(a: date, b: int) {}"_s;
         QTest::newRow("Generator_rhs_star")
                 << u"function *g(a:int,b:date){}"_s << u"function* g(a: int, b: date) {}"_s;
+        QTest::newRow("list") << u"function a(a:list<date>,b:list<int>){}"_s
+                              << u"function a(a: list<date>, b: list<int>) {}"_s;
 
-        QTest::newRow("comments") << u"function a(/*7*/b/*8*/:/*9*/int/*10*/){}"_s
-                                  << u"function a(/*7*/b/*8*/: /*9*/int/*10*/) {}"_s;
+        QTest::newRow("comments")
+                << u"function a(a/*1*/:/*2*/list/*3*/</*4*/date/*5*/>/*6*/,/*7*/b/*8*/:/*9*/int/*10*/){}"_s
+                << u"function a(a/*1*/: /*2*/list/*3*/</*4*/date/*5*/>/*6*/, /*7*/b/*8*/: /*9*/int/*10*/) {}"_s;
 
         QTest::newRow("comments2")
                 << u"function a(a: Q/*10*/./*11*/W/*12*/./*13*/E/*14*/./*15*/R/*16*/){}"_s
