@@ -530,6 +530,31 @@ bool ScriptFormatter::visit(PatternElement *ast)
         }
         accept(ast->initializer);
     }
+    accept(ast->typeAnnotation);
+    return false;
+}
+
+bool ScriptFormatter::visit(TypeAnnotation *ast)
+{
+    out(ast->colonToken);
+    lw.lineWriter.ensureSpace();
+    accept(ast->type);
+    return false;
+}
+
+bool ScriptFormatter::visit(Type *ast)
+{
+    accept(ast->typeId);
+    // TODO: type argument
+    return false;
+}
+
+bool ScriptFormatter::visit(UiQualifiedId *ast)
+{
+    for (UiQualifiedId *it = ast; it; it = it->next) {
+        outWithComments(it->dotToken, it);
+        outWithComments(it->identifierToken, it);
+    }
     return false;
 }
 
