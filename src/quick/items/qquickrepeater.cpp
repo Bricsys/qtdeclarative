@@ -470,6 +470,10 @@ void QQuickRepeaterPrivate::connectModel(QQuickRepeater *q, QQmlDelegateModelPoi
         QObjectPrivate::connect(
                 dataModel, &QQmlDelegateModel::delegateModelAccessChanged,
                 this, &QQuickRepeaterPrivate::applyDelegateModelAccessChange);
+        if (ownModel) {
+            QObject::connect(dataModel, &QQmlDelegateModel::modelChanged,
+                             q, &QQuickRepeater::modelChanged);
+        }
     }
     q->regenerate();
 }
@@ -493,6 +497,10 @@ void QQuickRepeaterPrivate::disconnectModel(QQuickRepeater *q, QQmlDelegateModel
         QObjectPrivate::disconnect(
                 delegateModel, &QQmlDelegateModel::delegateModelAccessChanged,
                 this, &QQuickRepeaterPrivate::applyDelegateModelAccessChange);
+        if (ownModel) {
+            QObject::disconnect(delegateModel, &QQmlDelegateModel::modelChanged,
+                                q, &QQuickRepeater::modelChanged);
+        }
     }
 }
 

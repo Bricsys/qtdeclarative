@@ -456,6 +456,8 @@ void tst_qqmlinstantiator::delegateModelAccess()
     QQmlInstantiator *instantiator = qobject_cast<QQmlInstantiator *>(object.data());
     QVERIFY(instantiator);
 
+    QSignalSpy modelChangedSpy(instantiator, &QQmlInstantiator::modelChanged);
+
     if (delegateKind == Delegate::Untyped && modelKind == Model::Array)
         QSKIP("Properties of objects in arrays are not exposed as context properties");
 
@@ -479,20 +481,34 @@ void tst_qqmlinstantiator::delegateModelAccess()
             ? access != QQmlDelegateModel::ReadOnly
             : access == QQmlDelegateModel::ReadWrite;
 
+    // Only the array is actually updated itself. The other models are pointers
+    const bool writeShouldSignal = modelKind == Model::Kind::Array;
+
     double expected = 11;
+
+    // Initial setting of the model, signals one update
+    int expectedModelUpdates = 1;
+    QCOMPARE(modelChangedSpy.count(), expectedModelUpdates);
 
     QCOMPARE(delegate->property("immediateX").toDouble(), expected);
     QCOMPARE(delegate->property("modelX").toDouble(), expected);
 
-    if (modelWritable)
+    if (modelWritable) {
         expected = 3;
+        if (writeShouldSignal)
+            ++expectedModelUpdates;
+    }
 
     QMetaObject::invokeMethod(delegate, "writeThroughModel");
     QCOMPARE(delegate->property("immediateX").toDouble(), expected);
     QCOMPARE(delegate->property("modelX").toDouble(), expected);
+    QCOMPARE(modelChangedSpy.count(), expectedModelUpdates);
 
-    if (immediateWritable)
+    if (immediateWritable) {
         expected = 1;
+        if (writeShouldSignal)
+            ++expectedModelUpdates;
+    }
 
     QMetaObject::invokeMethod(delegate, "writeImmediate");
 
@@ -501,6 +517,7 @@ void tst_qqmlinstantiator::delegateModelAccess()
              delegateKind == Delegate::Untyped ? expected : 1);
 
     QCOMPARE(delegate->property("modelX").toDouble(), expected);
+    QCOMPARE(modelChangedSpy.count(), expectedModelUpdates);
 }
 
 QTEST_MAIN(tst_qqmlinstantiator)

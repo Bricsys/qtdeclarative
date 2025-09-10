@@ -417,6 +417,7 @@ void QQmlInstantiator::setModel(const QVariant &v)
                     this, SLOT(_q_modelUpdated(QQmlChangeSet,bool)));
             disconnect(prevModel, SIGNAL(createdItem(int,QObject*)), this, SLOT(_q_createdItem(int,QObject*)));
             //disconnect(prevModel, SIGNAL(initItem(int,QObject*)), this, SLOT(initItem(int,QObject*)));
+            // If it was our own model before, we've deleted it. No need to disconnect anything
         }
 
         if (d->instanceModel) {
@@ -424,6 +425,15 @@ void QQmlInstantiator::setModel(const QVariant &v)
                     this, SLOT(_q_modelUpdated(QQmlChangeSet,bool)));
             connect(d->instanceModel, SIGNAL(createdItem(int,QObject*)), this, SLOT(_q_createdItem(int,QObject*)));
             //connect(d->instanceModel, SIGNAL(initItem(int,QObject*)), this, SLOT(initItem(int,QObject*)));
+
+            if (d->ownModel) {
+                QObject::connect(
+                        static_cast<QQmlDelegateModel *>(d->instanceModel),
+                        &QQmlDelegateModel::modelChanged, this, [this, d]() {
+                    if (!d->effectiveReset)
+                        emit modelChanged();
+                });
+            }
         }
     }
 

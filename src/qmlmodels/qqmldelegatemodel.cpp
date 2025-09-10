@@ -390,6 +390,9 @@ void QQmlDelegateModel::setModel(const QVariant &model)
 {
     Q_D(QQmlDelegateModel);
 
+    if (d->m_adaptorModel.model() == model)
+        return;
+
     if (d->m_complete)
         _q_itemsRemoved(0, d->m_count);
 
@@ -422,6 +425,8 @@ void QQmlDelegateModel::setModel(const QVariant &model)
         if (aimPrivate->resetting)
             QObject::connect(aim, &QAbstractItemModel::modelReset, this, &QQmlDelegateModel::handleModelReset, Qt::SingleShotConnection);
     }
+
+    emit modelChanged();
 }
 
 /*!
@@ -1981,8 +1986,10 @@ void QQmlDelegateModel::_q_modelAboutToBeReset()
             // to throw away all the setup that we did
             handleModelReset();
         } else {
-            // If they did change, we give up and just start from scratch via setMode
-            setModel(QVariant::fromValue(model()));
+            // If they did change, we give up and just start from scratch via setModel
+            QVariant m = model();
+            setModel(QVariant());
+            setModel(m);
             // but we still have to call handleModelReset, otherwise views will
             // not refresh
             handleModelReset();

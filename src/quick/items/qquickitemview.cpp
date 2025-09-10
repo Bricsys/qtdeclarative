@@ -1160,6 +1160,10 @@ void QQuickItemViewPrivate::connectModel(QQuickItemView *q, QQmlDelegateModelPoi
         QObjectPrivate::connect(
                 dataModel, &QQmlDelegateModel::delegateModelAccessChanged,
                 this, &QQuickItemViewPrivate::applyDelegateModelAccessChange);
+        if (ownModel) {
+            QObject::connect(dataModel, &QQmlDelegateModel::modelChanged,
+                             q, &QQuickItemView::modelChanged);
+        }
     }
 
     emitCountChanged();
@@ -1191,6 +1195,10 @@ void QQuickItemViewPrivate::disconnectModel(QQuickItemView *q, QQmlDelegateModel
         QObjectPrivate::disconnect(
                 delegateModel, &QQmlDelegateModel::delegateModelAccessChanged,
                 this, &QQuickItemViewPrivate::applyDelegateModelAccessChange);
+        if (ownModel) {
+            QObject::disconnect(delegateModel, &QQmlDelegateModel::modelChanged,
+                                q, &QQuickItemView::modelChanged);
+        }
     }
 }
 
