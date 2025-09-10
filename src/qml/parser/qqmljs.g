@@ -4023,7 +4023,7 @@ FunctionExpression: T_FUNCTION BindingIdentifier T_LPAREN FormalParameters T_RPA
         if (!ensureNoFunctionTypeAnnotations(sym(6).TypeAnnotation, sym(4).FormalParameterList))
             return false;
         AST::FunctionExpression *node = new (pool) AST::FunctionExpression(stringRef(2), sym(4).FormalParameterList, sym(8).StatementList,
-                                                                           /*type annotation*/nullptr);
+                                                                           sym(6).TypeAnnotation);
         node->functionToken = loc(1);
         if (! stringRef(2).isNull())
           node->identifierToken = loc(2);
@@ -4041,7 +4041,7 @@ FunctionExpression: T_FUNCTION T_LPAREN FormalParameters T_RPAREN TypeAnnotation
         if (!ensureNoFunctionTypeAnnotations(sym(5).TypeAnnotation, sym(3).FormalParameterList))
             return false;
         AST::FunctionExpression *node = new (pool) AST::FunctionExpression(QStringView(), sym(3).FormalParameterList, sym(7).StatementList,
-                                                                           /*type annotation*/nullptr);
+                                                                           sym(5).TypeAnnotation);
         node->functionToken = loc(1);
         node->lparenToken = loc(2);
         node->rparenToken = loc(4);
