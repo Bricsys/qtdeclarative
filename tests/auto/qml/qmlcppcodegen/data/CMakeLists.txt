@@ -151,6 +151,7 @@ set(qml_files
     detachedreferences.qml
     dialog.qml
     dialogButtonBox.qml
+    disappearingArrowFunction.qml
     dynamicscene.qml
     enforceSignature.qml
     enumConversion.qml
