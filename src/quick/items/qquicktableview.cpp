@@ -4573,12 +4573,17 @@ void QQuickTableViewPrivate::syncDelegateModelAccess()
 
 QVariant QQuickTableViewPrivate::modelImpl() const
 {
-    return assignedModel;
+    if (needsModelSynchronization)
+        return assignedModel;
+    if (tableModel)
+        return tableModel->model();
+    return QVariant::fromValue(model);
 }
 
 void QQuickTableViewPrivate::setModelImpl(const QVariant &newModel)
 {
     assignedModel = newModel;
+    needsModelSynchronization = true;
     scheduleRebuildTable(QQuickTableViewPrivate::RebuildOption::All);
     emit q_func()->modelChanged();
 }
@@ -4612,6 +4617,7 @@ void QQuickTableViewPrivate::syncModel()
         tableModel->setModel(assignedModel);
     }
 
+    needsModelSynchronization = false;
     connectToModel();
 }
 
@@ -4748,6 +4754,11 @@ void QQuickTableViewPrivate::connectToModel()
     } else {
         QObjectPrivate::connect(model, &QQmlInstanceModel::modelUpdated, this, &QQuickTableViewPrivate::modelUpdated);
     }
+
+    if (tableModel) {
+        QObject::connect(tableModel, &QQmlTableInstanceModel::modelChanged,
+                         q, &QQuickTableView::modelChanged);
+    }
 }
 
 void QQuickTableViewPrivate::disconnectFromModel()
@@ -4773,6 +4784,11 @@ void QQuickTableViewPrivate::disconnectFromModel()
         disconnect(aim, &QAbstractItemModel::layoutChanged, this, &QQuickTableViewPrivate::layoutChangedCallback);
     } else {
         QObjectPrivate::disconnect(model, &QQmlInstanceModel::modelUpdated, this, &QQuickTableViewPrivate::modelUpdated);
+    }
+
+    if (tableModel) {
+        QObject::disconnect(tableModel, &QQmlTableInstanceModel::modelChanged,
+                            q, &QQuickTableView::modelChanged);
     }
 }
 

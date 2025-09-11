@@ -427,6 +427,7 @@ public:
     QItemSelectionModel::SelectionFlag selectionFlag = QItemSelectionModel::NoUpdate;
     std::function<void(CallBackFlag)> selectableCallbackFunction;
     bool inSelectionModelUpdate = false;
+    bool needsModelSynchronization = false;
 
     int assignedPositionViewAtRowAfterRebuild = 0;
     int assignedPositionViewAtColumnAfterRebuild = 0;

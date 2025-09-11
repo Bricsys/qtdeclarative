@@ -452,7 +452,7 @@ QVariant QQmlTableInstanceModel::model() const
     return m_adaptorModel.model();
 }
 
-void QQmlTableInstanceModel::setModel(const QVariant &model)
+void QQmlTableInstanceModel::forceSetModel(const QVariant &model)
 {
     // Pooled items are still accessible/alive for the application, and
     // needs to stay in sync with the model. So we need to drain the pool
@@ -467,6 +467,16 @@ void QQmlTableInstanceModel::setModel(const QVariant &model)
         connect(aim, &QAbstractItemModel::dataChanged, this, &QQmlTableInstanceModel::dataChangedCallback);
         connect(aim, &QAbstractItemModel::modelAboutToBeReset, this, &QQmlTableInstanceModel::modelAboutToBeResetCallback);
     }
+}
+
+void QQmlTableInstanceModel::setModel(const QVariant &model)
+{
+    if (m_adaptorModel.model() == model)
+        return;
+
+    forceSetModel(model);
+
+    emit modelChanged();
 }
 
 void QQmlTableInstanceModel::dataChangedCallback(const QModelIndex &begin, const QModelIndex &end, const QVector<int> &roles)
@@ -494,8 +504,11 @@ void QQmlTableInstanceModel::modelAboutToBeResetCallback()
     auto const aim = abstractItemModel();
     auto oldRoleNames = aim->roleNames();
     QObject::connect(aim, &QAbstractItemModel::modelReset, this, [this, aim, oldRoleNames](){
-        if (oldRoleNames != aim->roleNames())
-            setModel(model());
+        if (oldRoleNames != aim->roleNames()) {
+            // We refresh the model, but without sending any signals. The actual model object
+            // stays the same after all.
+            forceSetModel(model());
+        }
     }, Qt::SingleShotConnection);
 }
 

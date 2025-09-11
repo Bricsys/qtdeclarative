@@ -102,6 +102,9 @@ public:
 
     QQmlDelegateModelItem *getModelItem(int index);
 
+signals:
+    void modelChanged();
+
 private:
     enum DestructionMode {
         Deferred,
@@ -129,6 +132,7 @@ private:
 
     void dataChangedCallback(const QModelIndex &begin, const QModelIndex &end, const QVector<int> &roles);
     void modelAboutToBeResetCallback();
+    void forceSetModel(const QVariant &model);
 
     static bool isDoneIncubating(QQmlDelegateModelItem *modelItem);
     static void deleteModelItemLater(QQmlDelegateModelItem *modelItem);

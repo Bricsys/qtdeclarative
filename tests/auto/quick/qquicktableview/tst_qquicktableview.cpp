@@ -8382,6 +8382,18 @@ void tst_QQuickTableView::delegateModelAccess()
             ? access != QQmlDelegateModel::ReadOnly
             : access == QQmlDelegateModel::ReadWrite;
 
+    const bool writeShouldPropagate =
+
+            // If we've explicitly asked for the model to be written, it is
+            (access == QQmlDelegateModel::ReadWrite) ||
+
+            // If it's a QAIM or an object, it's implicitly written
+            (modelKind != Model::Kind::Array) ||
+
+            // When writing through the model object from a typed delegate,
+            // (like with DelegateModel).
+            (access == QQmlDelegateModel::Qt5ReadWrite && delegateKind == Delegate::Typed);
+
     double expected = 11;
 
     QCOMPARE(delegate->property("immediateX").toDouble(), expected);
@@ -8394,6 +8406,10 @@ void tst_QQuickTableView::delegateModelAccess()
     QCOMPARE(delegate->property("immediateX").toDouble(), expected);
     QCOMPARE(delegate->property("modelX").toDouble(), expected);
 
+    double aAt0 = -1;
+    QMetaObject::invokeMethod(tableView, "aAt0", Q_RETURN_ARG(double, aAt0));
+    QCOMPARE(aAt0, writeShouldPropagate ? expected : 11);
+
     if (immediateWritable)
         expected = 1;
 
@@ -8404,6 +8420,10 @@ void tst_QQuickTableView::delegateModelAccess()
              delegateKind == Delegate::Untyped ? expected : 1);
 
     QCOMPARE(delegate->property("modelX").toDouble(), expected);
+
+    aAt0 = -1;
+    QMetaObject::invokeMethod(tableView, "aAt0", Q_RETURN_ARG(double, aAt0));
+    QCOMPARE(aAt0, writeShouldPropagate ? expected : 11);
 }
 
 void tst_QQuickTableView::checkVisualRowColumnAfterReorder()
