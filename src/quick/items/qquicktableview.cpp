@@ -4585,20 +4585,20 @@ void QQuickTableViewPrivate::setModelImpl(const QVariant &newModel)
 
 void QQuickTableViewPrivate::syncModel()
 {
-    if (compareModel(modelVariant, assignedModel))
+    if (tableModel) {
+        if (tableModel->model() == assignedModel)
+            return;
+    } else if (QVariant::fromValue(model) == assignedModel) {
         return;
+    }
 
     if (model) {
         disconnectFromModel();
         releaseLoadedItems(QQmlTableInstanceModel::NotReusable);
     }
 
-    modelVariant = assignedModel;
-    QVariant effectiveModelVariant = modelVariant;
-    if (effectiveModelVariant.userType() == qMetaTypeId<QJSValue>())
-        effectiveModelVariant = effectiveModelVariant.value<QJSValue>().toVariant();
-
-    const auto instanceModel = qobject_cast<QQmlInstanceModel *>(qvariant_cast<QObject*>(effectiveModelVariant));
+    const auto instanceModel = qobject_cast<QQmlInstanceModel *>(
+                qvariant_cast<QObject *>(assignedModel));
 
     if (instanceModel) {
         if (tableModel) {
@@ -4609,7 +4609,7 @@ void QQuickTableViewPrivate::syncModel()
     } else {
         if (!tableModel)
             createWrapperModel();
-        tableModel->setModel(effectiveModelVariant);
+        tableModel->setModel(assignedModel);
     }
 
     connectToModel();
@@ -4873,13 +4873,6 @@ void QQuickTableViewPrivate::modelResetCallback()
     Q_Q(QQuickTableView);
     q->closeEditor();
     scheduleRebuildTable(RebuildOption::All);
-}
-
-bool QQuickTableViewPrivate::compareModel(const QVariant& model1, const QVariant& model2) const
-{
-    return (model1 == model2 ||
-            (model1.userType() == qMetaTypeId<QJSValue>() && model2.userType() == qMetaTypeId<QJSValue>() &&
-                                 model1.value<QJSValue>().strictlyEquals(model2.value<QJSValue>())));
 }
 
 void QQuickTableViewPrivate::positionViewAtRow(int row, Qt::Alignment alignment, qreal offset, const QRectF subRect)
@@ -5798,11 +5791,16 @@ QVariant QQuickTableView::model() const
 void QQuickTableView::setModel(const QVariant &newModel)
 {
     Q_D(QQuickTableView);
-    if (d->compareModel(newModel, d->assignedModel))
+
+    QVariant model = newModel;
+    if (model.userType() == qMetaTypeId<QJSValue>())
+        model = model.value<QJSValue>().toVariant();
+
+    if (model == d->assignedModel)
         return;
 
     closeEditor();
-    d->setModelImpl(newModel);
+    d->setModelImpl(model);
     if (d->selectionModel)
         d->selectionModel->setModel(d->selectionSourceModel());
 }
