@@ -37,12 +37,22 @@ typedef QQmlListCompositor Compositor;
 
 class QQmlDelegateModelAttachedMetaObject;
 class QQmlAbstractDelegateComponent;
+class QQmlTableInstanceModel;
 
 class Q_QMLMODELS_EXPORT QQmlDelegateModelItemMetaType final
     : public QQmlRefCounted<QQmlDelegateModelItemMetaType>
 {
 public:
-    QQmlDelegateModelItemMetaType(QV4::ExecutionEngine *engine, QQmlDelegateModel *model, const QStringList &groupNames);
+    enum class ModelKind : quint8 {
+        InstanceModel,
+        DelegateModel,
+        TableInstanceModel,
+    };
+
+    QQmlDelegateModelItemMetaType(
+            QV4::ExecutionEngine *engine, QQmlDelegateModel *model, const QStringList &groupNames);
+    QQmlDelegateModelItemMetaType(
+            QV4::ExecutionEngine *engine, QQmlTableInstanceModel *model);
     ~QQmlDelegateModelItemMetaType();
 
     void initializeAttachedMetaObject();
@@ -51,12 +61,22 @@ public:
     int parseGroups(const QStringList &groupNames) const;
     int parseGroups(const QV4::Value &groupNames) const;
 
-    QPointer<QQmlDelegateModel> model;
+    QQmlDelegateModel *delegateModel() const
+    {
+        return modelKind == ModelKind::DelegateModel
+                ? static_cast<QQmlDelegateModel *>(model.get())
+                : nullptr;
+    }
+
+    void emitModelChanged() const;
+
+    QPointer<QQmlInstanceModel> model;
     const int groupCount;
     QV4::ExecutionEngine * const v4Engine;
     QQmlRefPointer<QQmlDelegateModelAttachedMetaObject> attachedMetaObject;
     const QStringList groupNames;
     QV4::PersistentValue modelItemProto;
+    ModelKind modelKind = ModelKind::InstanceModel;
 };
 
 class QQmlAdaptorModel;

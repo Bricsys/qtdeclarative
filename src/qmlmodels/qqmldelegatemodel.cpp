@@ -3,25 +3,24 @@
 
 #include "qqmldelegatemodel_p_p.h"
 
-#include <QtCore/private/qabstractitemmodel_p.h>
-
-#include <QtQml/qqmlinfo.h>
-
-#include <private/qqmlabstractdelegatecomponent_p.h>
-#include <private/qquickpackage_p.h>
+#include <private/qabstractitemmodel_p.h>
+#include <private/qjsvalue_p.h>
 #include <private/qmetaobjectbuilder_p.h>
+#include <private/qqmlabstractdelegatecomponent_p.h>
 #include <private/qqmladaptormodel_p.h>
 #include <private/qqmlanybinding_p.h>
 #include <private/qqmlchangeset_p.h>
-#include <private/qqmlengine_p.h>
 #include <private/qqmlcomponent_p.h>
+#include <private/qqmlengine_p.h>
 #include <private/qqmlpropertytopropertybinding_p.h>
-#include <private/qjsvalue_p.h>
-#include <QtCore/private/qcoreapplication_p.h>
-
-#include <private/qv4value_p.h>
+#include <private/qqmltableinstancemodel_p.h>
+#include <private/qquickpackage_p.h>
 #include <private/qv4functionobject_p.h>
 #include <private/qv4objectiterator_p.h>
+#include <private/qv4value_p.h>
+
+#include <QtQml/qqmlinfo.h>
+#include <QtCore/private/qcoreapplication_p.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -2226,10 +2225,34 @@ QQmlDelegateModelItemMetaType::QQmlDelegateModelItemMetaType(
     , groupCount(groupNames.size() + 1)
     , v4Engine(engine)
     , groupNames(groupNames)
+    , modelKind(ModelKind::DelegateModel)
+{
+}
+
+QQmlDelegateModelItemMetaType::QQmlDelegateModelItemMetaType(
+        QV4::ExecutionEngine *engine, QQmlTableInstanceModel *model)
+    : model(model)
+    , groupCount(1)
+    , v4Engine(engine)
+    , modelKind(ModelKind::TableInstanceModel)
 {
 }
 
 QQmlDelegateModelItemMetaType::~QQmlDelegateModelItemMetaType() = default;
+
+void QQmlDelegateModelItemMetaType::emitModelChanged() const
+{
+    switch (modelKind) {
+    case ModelKind::InstanceModel:
+        break;
+    case ModelKind::DelegateModel:
+        emit static_cast<QQmlDelegateModel *>(model.data())->modelChanged();
+        break;
+    case ModelKind::TableInstanceModel:
+        emit static_cast<QQmlTableInstanceModel *>(model.data())->modelChanged();
+        break;
+    }
+}
 
 void QQmlDelegateModelItemMetaType::initializeAttachedMetaObject()
 {
@@ -2391,10 +2414,11 @@ QV4::ReturnedValue QQmlDelegateModelItem::set_groups(const QV4::FunctionObject *
     if (!argc)
         THROW_TYPE_ERROR();
 
-    if (!o->d()->item->metaType->model)
+    QQmlDelegateModel *delegateModel = o->d()->item->metaType->delegateModel();
+    if (!delegateModel)
         RETURN_UNDEFINED();
-    QQmlDelegateModelPrivate *model = QQmlDelegateModelPrivate::get(o->d()->item->metaType->model);
 
+    QQmlDelegateModelPrivate *model = QQmlDelegateModelPrivate::get(delegateModel);
     const int groupFlags = model->m_cacheMetaType->parseGroups(argv[0]);
     const int cacheIndex = model->m_cache.indexOf(o->d()->item);
     Compositor::iterator it = model->m_compositor.find(Compositor::Cache, cacheIndex);
@@ -2409,16 +2433,16 @@ QV4::ReturnedValue QQmlDelegateModelItem::get_member(QQmlDelegateModelItem *this
 
 QV4::ReturnedValue QQmlDelegateModelItem::set_member(QQmlDelegateModelItem *cacheItem, uint flag, const QV4::Value &arg)
 {
-    if (!cacheItem->metaType->model)
-        return QV4::Encode::undefined();
-
-    QQmlDelegateModelPrivate *model = QQmlDelegateModelPrivate::get(cacheItem->metaType->model);
-
     bool member = arg.toBoolean();
     uint groupFlag = (1 << flag);
     if (member == ((cacheItem->groups & groupFlag) != 0))
         return QV4::Encode::undefined();
 
+    QQmlDelegateModel *delegateModel = cacheItem->metaType->delegateModel();
+    if (!delegateModel)
+        return QV4::Encode::undefined();
+
+    QQmlDelegateModelPrivate *model = QQmlDelegateModelPrivate::get(delegateModel);
     const int cacheIndex = model->m_cache.indexOf(cacheItem);
     Compositor::iterator it = model->m_compositor.find(Compositor::Cache, cacheIndex);
     if (member)
@@ -2484,8 +2508,8 @@ QQmlDelegateModelItem::~QQmlDelegateModelItem()
     Q_ASSERT(!object);
 
     if (incubationTask) {
-        if (metaType->model)
-            QQmlDelegateModelPrivate::get(metaType->model)->releaseIncubator(incubationTask);
+        if (QQmlDelegateModel *delegateModel = metaType->delegateModel())
+            QQmlDelegateModelPrivate::get(delegateModel)->releaseIncubator(incubationTask);
         else
             delete incubationTask;
     }
@@ -2497,10 +2521,9 @@ void QQmlDelegateModelItem::dispose()
     if (isReferenced())
         return;
 
-    if (metaType->model) {
-        QQmlDelegateModelPrivate *model = QQmlDelegateModelPrivate::get(metaType->model);
-        model->removeCacheItem(this);
-    }
+    if (QQmlDelegateModel *delegateModel = metaType->delegateModel())
+        QQmlDelegateModelPrivate::get(delegateModel)->removeCacheItem(this);
+
     delete this;
 }
 
@@ -2581,9 +2604,8 @@ QQmlDelegateModelItem *QQmlDelegateModelItem::dataForObject(QObject *object)
 
 int QQmlDelegateModelItem::groupIndex(Compositor::Group group)
 {
-    if (QQmlDelegateModelPrivate * const model = metaType->model
-            ? QQmlDelegateModelPrivate::get(metaType->model)
-            : nullptr) {
+    if (QQmlDelegateModel *delegateModel = metaType->delegateModel()) {
+        QQmlDelegateModelPrivate *model = QQmlDelegateModelPrivate::get(delegateModel);
         return model->m_compositor.find(Compositor::Cache, model->m_cache.indexOf(this)).index[group];
     }
     return -1;
@@ -2629,9 +2651,10 @@ int QQmlDelegateModelAttachedMetaObject::metaCall(QObject *object, QMetaObject::
         }
     } else if (call == QMetaObject::WriteProperty) {
         if (_id >= memberPropertyOffset) {
-            if (!metaType->model)
+            QQmlDelegateModel *delegateModel = metaType->delegateModel();
+            if (!delegateModel)
                 return -1;
-            QQmlDelegateModelPrivate *model = QQmlDelegateModelPrivate::get(metaType->model);
+            QQmlDelegateModelPrivate *model = QQmlDelegateModelPrivate::get(delegateModel);
             Compositor::Group group = Compositor::Group(_id - memberPropertyOffset + 1);
             const int groupFlag = 1 << group;
             const bool member = attached->m_cacheItem->groups & groupFlag;
@@ -2686,8 +2709,8 @@ void QQmlDelegateModelAttached::resetCurrentIndex()
     if (QQDMIncubationTask *incubationTask = m_cacheItem->incubationTask) {
         for (int i = 1; i < qMin<int>(m_cacheItem->metaType->groupCount, Compositor::MaximumGroupCount); ++i)
             m_currentIndex[i] = incubationTask->index[i];
-    } else {
-        QQmlDelegateModelPrivate * const model = QQmlDelegateModelPrivate::get(m_cacheItem->metaType->model);
+    } else if (QQmlDelegateModel *delegateModel = m_cacheItem->metaType->delegateModel()) {
+        QQmlDelegateModelPrivate *model = QQmlDelegateModelPrivate::get(delegateModel);
         Compositor::iterator it = model->m_compositor.find(
                 Compositor::Cache, model->m_cache.indexOf(m_cacheItem));
         for (int i = 1; i < m_cacheItem->metaType->groupCount; ++i)
@@ -2717,9 +2740,14 @@ int QQmlDelegateModelAttached::persistedItemsIndex() const
 
 void QQmlDelegateModelAttached::setInGroup(QQmlListCompositor::Group group, bool inGroup)
 {
-    if (!(m_cacheItem && m_cacheItem->metaType && m_cacheItem->metaType->model))
+    if (!m_cacheItem)
         return;
-    QQmlDelegateModelPrivate *model = QQmlDelegateModelPrivate::get(m_cacheItem->metaType->model);
+
+    QQmlDelegateModel *delegateModel = m_cacheItem->metaType->delegateModel();
+    if (!delegateModel)
+        return;
+
+    QQmlDelegateModelPrivate *model = QQmlDelegateModelPrivate::get(delegateModel);
     const uint groupFlag = (1 << group);
     if (inGroup == bool(m_cacheItem->groups & groupFlag))
         return;
@@ -2763,7 +2791,7 @@ int QQmlDelegateModelAttached::itemsIndex() const
 
 QQmlDelegateModel *QQmlDelegateModelAttached::model() const
 {
-    return m_cacheItem ? m_cacheItem->metaType->model : nullptr;
+    return m_cacheItem ? m_cacheItem->metaType->delegateModel() : nullptr;
 }
 
 /*!
@@ -2792,8 +2820,11 @@ void QQmlDelegateModelAttached::setGroups(const QStringList &groups)
     if (!m_cacheItem)
         return;
 
-    QQmlDelegateModelPrivate *model = QQmlDelegateModelPrivate::get(m_cacheItem->metaType->model);
+    QQmlDelegateModel *delegateModel = m_cacheItem->metaType->delegateModel();
+    if (!delegateModel)
+        return;
 
+    QQmlDelegateModelPrivate *model = QQmlDelegateModelPrivate::get(delegateModel);
     const int groupFlags = model->m_cacheMetaType->parseGroups(groups);
     const int cacheIndex = model->m_cache.indexOf(m_cacheItem);
     Compositor::iterator it = model->m_compositor.find(Compositor::Cache, cacheIndex);
@@ -3148,10 +3179,8 @@ bool QQmlDelegateModelGroupPrivate::parseIndex(const QV4::Value &value, int *ind
 
     if (object) {
         QQmlDelegateModelItem * const cacheItem = object->d()->item;
-        if (QQmlDelegateModelPrivate *model = cacheItem->metaType->model
-                ? QQmlDelegateModelPrivate::get(cacheItem->metaType->model)
-                : nullptr) {
-            *index = model->m_cache.indexOf(cacheItem);
+        if (QQmlDelegateModel *delegateModel = cacheItem->metaType->delegateModel()) {
+            *index = QQmlDelegateModelPrivate::get(delegateModel)->m_cache.indexOf(cacheItem);
             *group = Compositor::Cache;
             return true;
         }

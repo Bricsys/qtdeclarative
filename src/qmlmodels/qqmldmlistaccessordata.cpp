@@ -99,8 +99,7 @@ int VDMListDelegateDataType::metaCall(
             accessor->cachedDataClean = false;
         } else {
             model->list.set(accessor->index, data);
-            if (QQmlDelegateModel *delegateModel = accessor->metaType->model)
-                emit delegateModel->modelChanged();
+            accessor->metaType->emitModelChanged();
         }
         QMetaObject::activate(accessor, this, id - propertyOffset, nullptr);
         emit accessor->modelDataChanged();

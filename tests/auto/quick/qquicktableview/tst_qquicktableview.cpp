@@ -8355,6 +8355,8 @@ void tst_QQuickTableView::delegateModelAccess()
     const QUrl url = testFileUrl("delegateModelAccess.qml");
     LOAD_TABLEVIEW("delegateModelAccess.qml");
 
+    QSignalSpy modelChangedSpy(tableView, &QQuickTableView::modelChanged);
+
     if (delegateKind == Delegate::Untyped && modelKind == Model::Array)
         QSKIP("Properties of objects in arrays are not exposed as context properties");
 
@@ -8394,24 +8396,38 @@ void tst_QQuickTableView::delegateModelAccess()
             // (like with DelegateModel).
             (access == QQmlDelegateModel::Qt5ReadWrite && delegateKind == Delegate::Typed);
 
+    // Only the array is actually updated itself. The other models are pointers
+    const bool writeShouldSignal = modelKind == Model::Kind::Array;
+
     double expected = 11;
+
+    // Initial setting of the model, signals one update
+    int expectedModelUpdates = 1;
+    QCOMPARE(modelChangedSpy.count(), expectedModelUpdates);
 
     QCOMPARE(delegate->property("immediateX").toDouble(), expected);
     QCOMPARE(delegate->property("modelX").toDouble(), expected);
 
-    if (modelWritable)
+    if (modelWritable) {
         expected = 3;
+        if (writeShouldSignal)
+            ++expectedModelUpdates;
+    }
 
     QMetaObject::invokeMethod(delegate, "writeThroughModel");
     QCOMPARE(delegate->property("immediateX").toDouble(), expected);
     QCOMPARE(delegate->property("modelX").toDouble(), expected);
+    QCOMPARE(modelChangedSpy.count(), expectedModelUpdates);
 
     double aAt0 = -1;
     QMetaObject::invokeMethod(tableView, "aAt0", Q_RETURN_ARG(double, aAt0));
     QCOMPARE(aAt0, writeShouldPropagate ? expected : 11);
 
-    if (immediateWritable)
+    if (immediateWritable) {
         expected = 1;
+        if (writeShouldSignal)
+            ++expectedModelUpdates;
+    }
 
     QMetaObject::invokeMethod(delegate, "writeImmediate");
 
@@ -8420,6 +8436,7 @@ void tst_QQuickTableView::delegateModelAccess()
              delegateKind == Delegate::Untyped ? expected : 1);
 
     QCOMPARE(delegate->property("modelX").toDouble(), expected);
+    QCOMPARE(modelChangedSpy.count(), expectedModelUpdates);
 
     aAt0 = -1;
     QMetaObject::invokeMethod(tableView, "aAt0", Q_RETURN_ARG(double, aAt0));
