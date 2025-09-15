@@ -271,20 +271,26 @@ QString QQmlJSScope::prettyName(QAnyStringView name)
 
 /*!
     \internal
-    Returns \c Yes if the scope is the outermost element of a separate Component
-    Either because it has been implicitly wrapped, e.g. due to an assignment to
-    a Component property, or because it is the first (and only) child of a
-    Component.
+
+    Returns \c Yes if the scope is the outermost element of a separate Component. Either:
+    a, It is the root element of a QML document
+    b, It is an inline component
+    c, It has been implicitly wrapped, e.g. due to an assignment to a Component property
+    d, It is the first (and only) child of a Component
+
     Returns \c No if we can clearly determine that this is not the case.
     Returns \c Maybe if the scope is assigned to an unknown property. This may
     or may not be a Component.
+
     For visitors: This method should only be called after implicit components
     are detected, that is, after QQmlJSImportVisitor::endVisit(UiProgram *)
     was called.
  */
 QQmlJSScope::IsComponentRoot QQmlJSScope::componentRootStatus() const {
-    if (m_flags.testFlag(WrappedInImplicitComponent))
+    if (m_flags.testAnyFlags(
+                Flags(WrappedInImplicitComponent | FileRootComponent | InlineComponent))) {
         return IsComponentRoot::Yes;
+    }
 
     // If the object is assigned to an unknown property, assume it's Component.
     if (m_flags.testFlag(AssignedToUnknownProperty))

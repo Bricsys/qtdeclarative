@@ -140,9 +140,7 @@ public:
             const QQmlJSScope::ConstPtr &scope, const QString &name,
             QQmlJSScopesByIdOptions options = Default) const
     {
-        return canFindComponentBoundaries(scope)
-                ? m_objectsById.scope(name, scope, options)
-                : QQmlJSScope::ConstPtr();
+        return m_objectsById.scope(name, scope, options);
     }
 
     const QQmlJSScopesById &objectsById() const { return m_objectsById; }
@@ -301,8 +299,6 @@ protected:
     QQmlJSScope::ConstPtr resolveParentProperty(
             const QString &name, const QQmlJSScope::ConstPtr &base,
             const QQmlJSScope::ConstPtr &propType) const;
-
-    bool canFindComponentBoundaries(const QQmlJSScope::ConstPtr &scope) const;
 
     std::unique_ptr<QQmlJSRegisterContentPool> m_pool;
 
