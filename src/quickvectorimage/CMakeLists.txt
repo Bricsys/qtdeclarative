@@ -31,6 +31,7 @@ qt_internal_add_qml_module(QuickVectorImage
     PLUGIN_TARGET qquickvectorimageplugin
     CLASS_NAME QtQuickVectorImagePlugin
     IMPORTS QtQuick.VectorImage.Helpers
+    DEFAULT_IMPORTS QtQuick.Shapes
     SOURCES
     qquickvectorimage_p.h qquickvectorimage.cpp
     qquickvectorimage_p_p.h
