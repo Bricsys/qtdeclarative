@@ -6,7 +6,6 @@
 #####################################################################
 
 qt_internal_add_module(QuickVectorImageGeneratorPrivate
-    PLUGIN_TYPES vectorimageformats
     INTERNAL_MODULE
     SOURCES
         generator/qsvgvisitorimpl_p.h generator/qsvgvisitorimpl.cpp
