@@ -13,6 +13,8 @@
 #include <QtQml/qqmlcomponent.h>
 #include <QtQml/qqmlengine.h>
 #include <QtQml/qqmlprivate.h>
+#include <QtQml/qtqmlglobal.h>
+#include <QtQml/private/qtqmlglobal_p.h>
 
 #include <QtCore/qcoreapplication.h>
 #include <QtCore/qfile.h>
