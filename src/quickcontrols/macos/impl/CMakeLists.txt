@@ -3,6 +3,7 @@
 
 set(qml_files
     "CheckIndicator.qml"
+    "SliderHandle.qml"
     "SwitchHandle.qml"
     "SwitchIndicator.qml"
 )
