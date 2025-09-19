@@ -322,7 +322,8 @@ QTypeRevision QQmlPluginImporter::importDynamicPlugin(
     const bool engineInitialized = typeLoader->isPluginInitialized(pluginId);
     {
         PluginMapPtr plugins(qmlPluginsById());
-        bool typesRegistered = plugins->find(pluginId) != plugins->end();
+        const auto plugin = plugins->find(pluginId);
+        bool typesRegistered = plugin != plugins->end();
 
         if (!engineInitialized || !typesRegistered) {
             const QFileInfo fileInfo(filePath);
@@ -395,9 +396,15 @@ QTypeRevision QQmlPluginImporter::importDynamicPlugin(
                 if (!importVersion.isValid())
                     return QTypeRevision();
             } else {
-                auto it = plugins->find(pluginId);
-                if (it != plugins->end() && it->second.loader)
-                    instance = it->second.loader->instance();
+                Q_ASSERT(plugin != plugins->end());
+                if (const auto &loader = plugin->second.loader) {
+                    instance = loader->instance();
+                } else if (!optional) {
+                    // If the plugin is not optional, we absolutely need to have a loader.
+                    // Not having a loader here can mean that the plugin was loaded statically
+                    // before. Return an invalid result to have the caller try that option.
+                    return QTypeRevision();
+                }
             }
 #else
             // Here plugin is not optional and NOT QT_CONFIG(library)
