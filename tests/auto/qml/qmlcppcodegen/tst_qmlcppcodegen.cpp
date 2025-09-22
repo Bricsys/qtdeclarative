@@ -198,6 +198,7 @@ private slots:
     void methodOnListLookup();
     void methods();
     void modulePrefix();
+    void multiAdjust();
     void multiDirectory_data();
     void multiDirectory();
     void multiForeign();
@@ -4039,6 +4040,54 @@ void tst_QmlCppCodegen::modulePrefix()
     QCOMPARE(rootObject->property("foo").toDateTime(), QDateTime(QDate(1911, 3, 4), QTime()));
     QCOMPARE(rootObject->property("bar").toDateTime(), QDateTime(QDate(1911, 3, 4), QTime()));
     QCOMPARE(rootObject->property("baz").toString(), QStringLiteral("ItIsTheSingleton"));
+}
+
+void tst_QmlCppCodegen::multiAdjust()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, QUrl(u"qrc:/qt/qml/TestTypes/multiAdjust.qml"_s));
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+
+    QScopedPointer<QObject> rootObject(component.create());
+    QVERIFY(rootObject);
+
+    QCOMPARE(rootObject->property("calledFoo"), 0);
+    QCOMPARE(rootObject->property("calledBar"), 0);
+
+    QMetaObject::invokeMethod(rootObject.data(), "event", Q_ARG(int, Qt::Key_Left));
+    QCOMPARE(rootObject->property("calledFoo"), 1);
+    QCOMPARE(rootObject->property("calledBar"), 0);
+
+    QMetaObject::invokeMethod(rootObject.data(), "event", Q_ARG(int, Qt::Key_Right));
+    QCOMPARE(rootObject->property("calledFoo"), 2);
+    QCOMPARE(rootObject->property("calledBar"), 1);
+
+    rootObject->setProperty("a", 3);
+    QMetaObject::invokeMethod(rootObject.data(), "event", Q_ARG(int, Qt::Key_Left));
+    QCOMPARE(rootObject->property("calledFoo"), 2);
+    QCOMPARE(rootObject->property("calledBar"), 1);
+
+    QMetaObject::invokeMethod(rootObject.data(), "event", Q_ARG(int, Qt::Key_Right));
+    QCOMPARE(rootObject->property("calledFoo"), 2);
+    QCOMPARE(rootObject->property("calledBar"), 2);
+
+    rootObject->setObjectName("a");
+    QMetaObject::invokeMethod(rootObject.data(), "event", Q_ARG(int, Qt::Key_Left));
+    QCOMPARE(rootObject->property("calledFoo"), 2);
+    QCOMPARE(rootObject->property("calledBar"), 2);
+
+    QMetaObject::invokeMethod(rootObject.data(), "event", Q_ARG(int, Qt::Key_Right));
+    QCOMPARE(rootObject->property("calledFoo"), 2);
+    QCOMPARE(rootObject->property("calledBar"), 2);
+
+    rootObject->setProperty("a", 1);
+    QMetaObject::invokeMethod(rootObject.data(), "event", Q_ARG(int, Qt::Key_Left));
+    QCOMPARE(rootObject->property("calledFoo"), 3);
+    QCOMPARE(rootObject->property("calledBar"), 2);
+
+    QMetaObject::invokeMethod(rootObject.data(), "event", Q_ARG(int, Qt::Key_Right));
+    QCOMPARE(rootObject->property("calledFoo"), 4);
+    QCOMPARE(rootObject->property("calledBar"), 2);
 }
 
 void tst_QmlCppCodegen::multiDirectory_data()

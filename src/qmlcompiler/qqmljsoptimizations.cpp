@@ -480,7 +480,7 @@ void QQmlJSOptimizations::adjustTypes()
 
             QQmlJSScope::ConstPtr newResult;
             const auto content = conversion->second.content;
-            if (content.isConversion()) {
+            if (content.isConversion() && !content.original().isValid()) {
                 const auto conversionOrigins = content.conversionOrigins();
                 for (const auto &origin : conversionOrigins)
                     newResult = m_typeResolver->merge(newResult, origin.containedType());

@@ -241,6 +241,7 @@ set(qml_files
     methods.qml
     modulePrefix.qml
     moveRegVoid.qml
+    multiAdjust.qml
     multiRedirect.qml
     multiforeign.qml
     multipleCtors.qml
