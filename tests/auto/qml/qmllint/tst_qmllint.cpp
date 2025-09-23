@@ -2113,6 +2113,7 @@ void TestQmllint::cleanQmlCode_data()
     QTest::newRow("qualifiedAttached")         << QStringLiteral("Drawer.qml");
     QTest::addRow("regExp") << u"regExp.qml"_s;
     QTest::newRow("requiredPropertyInGroupedPropertyScope") << QStringLiteral("requiredPropertyInGroupedPropertyScope.qml");
+    QTest::newRow("requiredPropertySetViaOnBinding") << QStringLiteral("requiredPropertySetViaOnBinding.qml");
     QTest::newRow("requiredWithRootLevelAlias") << QStringLiteral("RequiredWithRootLevelAlias.qml");
     QTest::newRow("required_property_in_Component") << QStringLiteral("requiredPropertyInComponent.qml");
     QTest::newRow("retrieveFunction") << QStringLiteral("retrieveFunction.qml");

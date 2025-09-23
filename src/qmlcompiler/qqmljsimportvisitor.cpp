@@ -1149,7 +1149,11 @@ void QQmlJSImportVisitor::checkRequiredProperties()
                 continue;
             const auto &[begin, end] = scope->ownPropertyBindings(propName);
             for (auto it = begin; it != end; ++it) {
-                if (!QQmlSA::isRegularBindingType(it->bindingType()))
+                // attached and grouped bindings should not be considered here
+                const bool isRelevantBinding = QQmlSA::isRegularBindingType(it->bindingType())
+                        || it->bindingType() == QQmlSA::BindingType::Interceptor
+                        || it->bindingType() == QQmlSA::BindingType::ValueSource;
+                if (!isRelevantBinding)
                     continue;
                 if (QQmlJSScope::ownerOfProperty(scope, propName).scope == owner)
                     return true;
