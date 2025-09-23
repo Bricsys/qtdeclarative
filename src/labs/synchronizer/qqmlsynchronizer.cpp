@@ -409,6 +409,10 @@ public:
 
     If the properties to be synchronized are of different types, the usual
     QML type coercions are applied.
+
+    \note It is not possible to create an alias to a property of a singleton.
+    When using Synchronizer together with singletons, use \l{sourceObject} and
+    \l{sourceProperty} and the respective target properties.
  */
 
 QQmlSynchronizer::QQmlSynchronizer(QObject *parent)
