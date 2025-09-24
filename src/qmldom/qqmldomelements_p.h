@@ -879,7 +879,8 @@ public:
     void updatePathFromOwner(const Path &newPath) override;
     QString localDefaultPropertyName() const;
     QString defaultPropertyName(const DomItem &self) const;
-    virtual bool iterateSubOwners(const DomItem &self, function_ref<bool(const DomItem &owner)> visitor) const;
+    bool iterateSubOwners(const DomItem &self,
+                          function_ref<bool(const DomItem &owner)> visitor) const;
 
     QString idStr() const { return m_idStr; }
     QString name() const { return m_name; }
