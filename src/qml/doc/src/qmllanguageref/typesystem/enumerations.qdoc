@@ -100,7 +100,7 @@ Item {
 }
 \endqml
 
-\sa QtQml::Qt::stringToValue
-\sa QtQml::Qt::valueToString
-\sa QtQml::Qt::valueToStrings
+\sa QtQml::Qt::enumStringToValue
+\sa QtQml::Qt::enumValueToString
+\sa QtQml::Qt::enumValueToStrings
 */
