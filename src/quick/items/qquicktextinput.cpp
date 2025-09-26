@@ -3632,9 +3632,11 @@ void QQuickTextInputPrivate::processInputMethodEvent(QInputMethodEvent *event)
         if (a.type == QInputMethodEvent::Selection) {
             // If we already called internalInsert(), the cursor position will
             // already be adjusted correctly. The attribute.start does
-            // not seem to take the mask into account, so it will reset cursor
-            // to an invalid position in such case.
-            if (!cursorPositionChanged)
+            // not seem to take the mask into account, so it will reset the cursor
+            // to an invalid position in such case. However, when the input mask
+            // is not active, we must apply the cursor position regardless of the
+            // commit string.
+            if (!cursorPositionChanged || !m_maskData)
                 m_cursor = qBound(0, a.start + a.length, m_text.size());
             if (a.length) {
                 m_selstart = qMax(0, qMin(a.start, m_text.size()));
