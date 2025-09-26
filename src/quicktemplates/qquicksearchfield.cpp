@@ -57,11 +57,24 @@ QT_BEGIN_NAMESPACE
         ListElement { name: "WaterMelon"; color: "pink" }
     }
 
-    QSortFilterProxyModel {
+    SortFilterProxyModel {
         id: fruitFilter
-        sourceModel: fruitModel
-        filterRegularExpression: RegExp(fruitSearch.text, "i")
-        filterRole: 0 // needs to be set explicitly
+        model: fruitModel
+        sorters: [
+            RoleSorter {
+                roleName: "name"
+            }
+        ]
+        filters: [
+            FunctionFilter {
+                component CustomData: QtObject { property string name }
+                property var regExp: new RegExp(fruitSearch.text, "i")
+                onRegExpChanged: invalidate()
+                function filter(data: CustomData): bool {
+                    return regExp.test(data.name);
+                }
+            }
+        ]
     }
 
     SearchField {
