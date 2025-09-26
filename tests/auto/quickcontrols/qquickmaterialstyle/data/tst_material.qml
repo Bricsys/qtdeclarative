@@ -288,6 +288,38 @@ TestCase {
         compare(popupObject.label2.color.toString(), popupObject.Material.textSelectionColor.toString())
     }
 
+    function test_setBackground_toGlobalDefault_propagates() {
+        let parent = createTemporaryObject(buttonComponent, testCase)
+        verify(parent)
+        let child = buttonComponent.createObject(parent)
+        verify(child)
+
+        parent.Material.theme = Material.Dark
+
+        // Explicitly set to the global default value
+        parent.Material.background = "#fafafa"
+
+        // Explicitly set background is inherited to children
+        compare(parent.Material.background, "#fafafa")
+        compare(child.Material.background, "#fafafa")
+    }
+
+    function test_setForeground_toGlobalDefault_propagates() {
+        let parent = createTemporaryObject(buttonComponent, testCase)
+        verify(parent)
+        let child = buttonComponent.createObject(parent)
+        verify(child)
+
+        parent.Material.theme = Material.Dark
+
+        // Explicitly set to the global default value
+        parent.Material.foreground = "#dd000000"
+
+        // Explicitly set foreground is inherited to children
+        compare(parent.Material.foreground, "#dd000000")
+        compare(child.Material.foreground, "#dd000000")
+    }
+
     component StyledChildWindow: Window {
         objectName: "styledChildWindow"
 
