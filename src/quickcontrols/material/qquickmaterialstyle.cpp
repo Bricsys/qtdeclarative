@@ -748,11 +748,11 @@ void QQuickMaterialStyle::resetForeground()
     if (!m_explicitForeground)
         return;
 
-    m_hasForeground = false;
-    m_customForeground = false;
     m_explicitForeground = false;
     QQuickMaterialStyle *material = qobject_cast<QQuickMaterialStyle *>(attachedParent());
-    inheritForeground(material ? material->m_foreground : globalForeground, true, material ? material->m_hasForeground : false);
+    inheritForeground(material ? material->m_foreground : globalForeground,
+                      material ? material->m_customForeground : globalForegroundCustom,
+                      material ? material->m_hasForeground : false);
 }
 
 void QQuickMaterialStyle::foregroundChange()
@@ -834,11 +834,11 @@ void QQuickMaterialStyle::resetBackground()
     if (!m_explicitBackground)
         return;
 
-    m_hasBackground = false;
-    m_customBackground = false;
     m_explicitBackground = false;
     QQuickMaterialStyle *material = qobject_cast<QQuickMaterialStyle *>(attachedParent());
-    inheritBackground(material ? material->m_background : globalBackground, true, material ? material->m_hasBackground : false);
+    inheritBackground(material ? material->m_background : globalBackground,
+                      material ? material->m_customBackground : globalBackgroundCustom,
+                      material ? material->m_hasBackground : false);
 }
 
 void QQuickMaterialStyle::backgroundChange()
