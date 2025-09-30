@@ -152,6 +152,7 @@ set(qml_files
     deadStoreLoop.qml
     destroyAndToString.qml
     detachOnAssignment.qml
+    detachedListAssignment.qml
     detachedreferences.qml
     dialog.qml
     dialogButtonBox.qml
