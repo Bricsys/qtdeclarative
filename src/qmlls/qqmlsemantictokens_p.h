@@ -122,34 +122,17 @@ Q_ENUM_NS(SemanticTokenProtocolTypes)
 struct HighlightToken
 {
     HighlightToken() = default;
-    HighlightToken(const QQmlJS::SourceLocation &loc, int tokenType, int tokenModifier = 0)
-        : offset(loc.offset),
-          length(loc.length),
-          startLine(loc.startLine - 1),
-          startColumn(loc.startColumn - 1),
-          tokenType(tokenType),
-          tokenModifier(tokenModifier)
-    {
-    }
-
-    inline friend bool operator<(const HighlightToken &lhs, const HighlightToken &rhs)
-    {
-        return lhs.offset < rhs.offset;
-    }
+    HighlightToken(const QQmlJS::SourceLocation &loc, QmlHighlightKind,
+                   QmlHighlightModifiers = QmlHighlightModifier::None);
 
     inline friend bool operator==(const HighlightToken &lhs, const HighlightToken &rhs)
     {
-        return lhs.offset == rhs.offset && lhs.length == rhs.length
-                && lhs.startLine == rhs.startLine && lhs.startColumn == rhs.startColumn
-                && lhs.tokenType == rhs.tokenType && lhs.tokenModifier == rhs.tokenModifier;
+        return lhs.loc == rhs.loc  && lhs.kind == rhs.kind && lhs.modifiers == rhs.modifiers;
     }
 
-    int offset;
-    int length;
-    int startLine;
-    int startColumn;
-    int tokenType;
-    int tokenModifier;
+    QQmlJS::SourceLocation loc;
+    QmlHighlightKind kind;
+    QmlHighlightModifiers modifiers;
 };
 
 using HighlightsContainer = QMap<int, HighlightToken>;
@@ -167,7 +150,7 @@ struct HighlightsRange
 
 namespace Utils
 {
-    QList<int> encodeSemanticTokens(const HighlightsContainer &highlights);
+    QList<int> encodeSemanticTokens(const HighlightsContainer &highlights, HighlightingMode mode = HighlightingMode::Default);
     QList<QQmlJS::SourceLocation>
     sourceLocationsFromMultiLineToken(QStringView code,
                                       const QQmlJS::SourceLocation &tokenLocation);
@@ -179,16 +162,16 @@ namespace Utils
                              const std::optional<HighlightsRange> &range,
                              HighlightingMode mode = HighlightingMode::Default);
     HighlightsContainer visitTokens(const QQmlJS::Dom::DomItem &item,
-                                 const std::optional<HighlightsRange> &range,
-                                 HighlightingMode mode = HighlightingMode::Default);
+                                 const std::optional<HighlightsRange> &range);
+    void addHighlight(HighlightsContainer &out, const QQmlJS::SourceLocation &loc, QmlHighlightKind,
+                      QmlHighlightModifiers = QmlHighlightModifier::None);
 } // namespace Utils
 
 class HighlightingVisitor
 {
 public:
     HighlightingVisitor(const QQmlJS::Dom::DomItem &item,
-                        const std::optional<HighlightsRange> &range,
-                        HighlightingMode mode = HighlightingMode::Default);
+                        const std::optional<HighlightsRange> &range);
     const HighlightsContainer &hightights() const { return m_highlights; }
     HighlightsContainer &highlights() { return m_highlights; }
 
@@ -215,7 +198,6 @@ private:
 private:
     HighlightsContainer m_highlights;
     std::optional<HighlightsRange> m_range;
-    QmlHighlightKindToLspKind m_mapToProtocol;
 };
 
 } // namespace QmlHighlighting

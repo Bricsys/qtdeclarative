@@ -225,12 +225,16 @@ static FieldFilter highlightingFilter()
     return FieldFilter{ fieldFilterAdd, fieldFilterRemove };
 }
 
+HighlightToken::HighlightToken(const QQmlJS::SourceLocation &loc,
+                               QmlHighlightKind kind,
+                               QmlHighlightModifiers modifiers)
+    : loc(loc), kind(kind), modifiers(modifiers)
+{
+}
+
 HighlightingVisitor::HighlightingVisitor(const QQmlJS::Dom::DomItem &item,
-                                         const std::optional<HighlightsRange> &range,
-                                         HighlightingMode mode)
-    : m_range(range), m_mapToProtocol(mode == HighlightingMode::Default
-                                                       ? mapToProtocolDefault
-                                                       : mapToProtocolForQtCreator)
+                                         const std::optional<HighlightsRange> &range)
+    : m_range(range)
 {
     item.visitTree(Path(),
                    [this](Path path, const DomItem &item, bool b) { return this->visitor(path, item, b); },
@@ -851,6 +855,12 @@ void HighlightingVisitor::highlightScriptExpressions(const DomItem &item)
     }
 }
 
+void HighlightingVisitor::addHighlight(const QQmlJS::SourceLocation &loc, QmlHighlightKind highlightKind,
+                              QmlHighlightModifiers modifierKind)
+{
+    return Utils::addHighlight(m_highlights, loc, highlightKind, modifierKind);
+}
+
 /*!
 \internal
 \brief Returns multiple source locations for a given raw comment
@@ -909,7 +919,7 @@ Utils::sourceLocationsFromMultiLineToken(QStringView stringLiteral,
     return result;
 }
 
-QList<int> Utils::encodeSemanticTokens(const HighlightsContainer &highlights)
+QList<int> Utils::encodeSemanticTokens(const HighlightsContainer &highlights, HighlightingMode mode)
 {
     QList<int> result;
     constexpr auto tokenEncodingLength = 5;
@@ -917,18 +927,23 @@ QList<int> Utils::encodeSemanticTokens(const HighlightsContainer &highlights)
 
     int prevLine = 0;
     int prevColumn = 0;
-
+    const auto m_mapToProtocol = mode == HighlightingMode::Default
+                                     ? mapToProtocolDefault
+                                     : mapToProtocolForQtCreator;
     std::for_each(highlights.constBegin(), highlights.constEnd(), [&](const auto &token) {
-        Q_ASSERT(token.startLine >= prevLine);
-        if (token.startLine != prevLine)
+        int length = token.loc.length;
+        int line = token.loc.startLine - 1; // protocol is 0-based
+        int col = token.loc.startColumn - 1; // protocol is 0-based
+        Q_ASSERT(line >= prevLine);
+        if (line != prevLine)
             prevColumn = 0;
-        result.emplace_back(token.startLine - prevLine);
-        result.emplace_back(token.startColumn - prevColumn);
-        result.emplace_back(token.length);
-        result.emplace_back(token.tokenType);
-        result.emplace_back(token.tokenModifier);
-        prevLine = token.startLine;
-        prevColumn = token.startColumn;
+        result.emplace_back(line - prevLine);
+        result.emplace_back(col - prevColumn);
+        result.emplace_back(length);
+        result.emplace_back(m_mapToProtocol(token.kind));
+        result.emplace_back(fromQmlModifierKindToLspTokenType(token.modifiers));
+        prevLine = line;
+        prevColumn = col;
     });
 
     return result;
@@ -1014,25 +1029,25 @@ QList<SemanticTokensEdit> Utils::computeDiff(const QList<int> &oldData, const QL
     return { std::move(edit) };
 }
 
-void HighlightingVisitor::addHighlight(const QQmlJS::SourceLocation &loc, QmlHighlightKind highlightKind,
-                              QmlHighlightModifiers modifierKind)
+void Utils::addHighlight(HighlightsContainer &out,
+                         const QQmlJS::SourceLocation &loc,
+                         QmlHighlightKind highlightKind,
+                         QmlHighlightModifiers modifierKind)
 {
     if (!loc.isValid() || loc.length == 0) {
-        qCDebug(semanticTokens) << "Invalid locations: Cannot add highlight to token";
+        qCDebug(semanticTokens)
+            << "Invalid locations: Cannot add highlight to token";
         return;
     }
-    int tokenType = m_mapToProtocol(highlightKind);
-    int modifierType = fromQmlModifierKindToLspTokenType(modifierKind);
-    if (!m_highlights.contains(loc.offset))
-        m_highlights.insert(loc.offset,HighlightToken(loc, tokenType, modifierType));
+    if (!out.contains(loc.offset))
+        out.insert(loc.offset, HighlightToken(loc, highlightKind, modifierKind));
 }
 
 HighlightsContainer Utils::visitTokens(const QQmlJS::Dom::DomItem &item,
-                                     const std::optional<HighlightsRange> &range,
-                                     HighlightingMode mode)
+                                     const std::optional<HighlightsRange> &range)
 {
     using namespace QQmlJS::Dom;
-    HighlightingVisitor highlightDomElements(item, range, mode);
+    HighlightingVisitor highlightDomElements(item, range);
     return highlightDomElements.highlights();
 }
 
@@ -1040,7 +1055,7 @@ QList<int> Utils::collectTokens(const QQmlJS::Dom::DomItem &item,
                                      const std::optional<HighlightsRange> &range,
                                      HighlightingMode mode)
 {
-    return Utils::encodeSemanticTokens(visitTokens(item, range, mode));
+    return Utils::encodeSemanticTokens(visitTokens(item, range), mode);
 }
 
 } // namespace QmlHighlighting
