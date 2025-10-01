@@ -121,10 +121,10 @@ Q_ENUM_NS(SemanticTokenProtocolTypes)
 
 // Represents a semantic highlighting token
 // startLine and startColumn are 0-based as in LSP spec.
-struct Token
+struct HighlightToken
 {
-    Token() = default;
-    Token(const QQmlJS::SourceLocation &loc, int tokenType, int tokenModifier = 0)
+    HighlightToken() = default;
+    HighlightToken(const QQmlJS::SourceLocation &loc, int tokenType, int tokenModifier = 0)
         : offset(loc.offset),
           length(loc.length),
           startLine(loc.startLine - 1),
@@ -134,12 +134,12 @@ struct Token
     {
     }
 
-    inline friend bool operator<(const Token &lhs, const Token &rhs)
+    inline friend bool operator<(const HighlightToken &lhs, const HighlightToken &rhs)
     {
         return lhs.offset < rhs.offset;
     }
 
-    inline friend bool operator==(const Token &lhs, const Token &rhs)
+    inline friend bool operator==(const HighlightToken &lhs, const HighlightToken &rhs)
     {
         return lhs.offset == rhs.offset && lhs.length == rhs.length
                 && lhs.startLine == rhs.startLine && lhs.startColumn == rhs.startColumn
@@ -154,7 +154,7 @@ struct Token
     int tokenModifier;
 };
 
-using HighlightsContainer = QMap<int, QT_PREPEND_NAMESPACE(Token)>;
+using HighlightsContainer = QMap<int, HighlightToken>;
 using QmlHighlightKindToLspKind = int (*)(HighlightingUtils::QmlHighlightKind);
 
 /*!

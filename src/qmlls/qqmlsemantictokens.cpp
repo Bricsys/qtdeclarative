@@ -1023,7 +1023,7 @@ void HighlightingVisitor::addHighlight(const QQmlJS::SourceLocation &loc, QmlHig
     int tokenType = m_mapToProtocol(highlightKind);
     int modifierType = fromQmlModifierKindToLspTokenType(modifierKind);
     if (!m_highlights.contains(loc.offset))
-        m_highlights.insert(loc.offset, QT_PREPEND_NAMESPACE(Token)(loc, tokenType, modifierType));
+        m_highlights.insert(loc.offset,HighlightToken(loc, tokenType, modifierType));
 }
 
 HighlightsContainer HighlightingUtils::visitTokens(const QQmlJS::Dom::DomItem &item,
