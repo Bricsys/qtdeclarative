@@ -767,6 +767,14 @@ void tst_qqmlecmascript::checkDateTimeParsing_data()
     QTest::newRow("rfc2822-with-timezone-name")
             << u"Sun, 25 Mar 2018 11:10:49 GMT"_s
             << QDateTime(QDate(2018, 3, 25), QTime(11, 10, 49), QTimeZone::utc());
+    QTest::newRow("rfc2822-with-2-digit-year")
+            << u"Mon, 07 Feb 22 11:48:12 -0500"_s
+            << QDateTime(QDate(2022, 2, 7), QTime(11, 48, 12),
+                         QTimeZone::fromSecondsAheadOfUtc(-5 * 60 * 60));
+    QTest::newRow("rfc2822-with-1-digit-hour")
+            << u"Mon, 07 Feb 22 1:48:12 -0500"_s
+            << QDateTime(QDate(2022, 2, 7), QTime(1, 48, 12),
+                         QTimeZone::fromSecondsAheadOfUtc(-5 * 60 * 60));
 }
 
 void tst_qqmlecmascript::checkDateTimeParsing()
