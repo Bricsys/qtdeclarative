@@ -15,6 +15,7 @@
 #include <qlist.h>
 
 using namespace QLspSpecification;
+using namespace QmlHighlighting;
 
 tst_qmlls_highlighting::tst_qmlls_highlighting()
     : QQmlDataTest(QT_QMLLS_HIGHLIGHTS_DATADIR) , m_highlightingDataDir(QT_QMLLS_HIGHLIGHTS_DATADIR + "/highlights"_L1)
@@ -73,7 +74,7 @@ void tst_qmlls_highlighting::encodeSemanticTokens()
 {
     QFETCH(HighlightsContainer, highlights);
     QFETCH(QList<int>, expectedMemoryLayout);
-    const auto encoded = HighlightingUtils::encodeSemanticTokens(highlights);
+    const auto encoded = Utils::encodeSemanticTokens(highlights);
     QCOMPARE(encoded, expectedMemoryLayout);
 }
 
@@ -116,7 +117,7 @@ void tst_qmlls_highlighting::sourceLocationsFromMultiLineToken()
 
     auto *literal = QQmlJS::AST::cast<QQmlJS::AST::StringLiteral *>(expression);
     const auto locs =
-            HighlightingUtils::sourceLocationsFromMultiLineToken(source, literal->literalToken);
+            Utils::sourceLocationsFromMultiLineToken(source, literal->literalToken);
 
     [&]() {
         QCOMPARE(locs.size(), expectedLines.size());
@@ -145,7 +146,7 @@ void tst_qmlls_highlighting::sourceLocationsFromMultiLineToken()
 void tst_qmlls_highlighting::highlights_data()
 {
     using namespace QQmlJS::Dom;
-    using namespace HighlightingUtils;
+    using namespace Utils;
     QTest::addColumn<DomItem>("fileItem");
     QTest::addColumn<HighlightToken>("expectedHighlightedToken");
 
@@ -788,7 +789,7 @@ void tst_qmlls_highlighting::highlights()
     QFETCH(DomItem, fileItem);
     QFETCH(HighlightToken, expectedHighlightedToken);
 
-    const auto highlights = HighlightingUtils::visitTokens(fileItem,std::nullopt);
+    const auto highlights = Utils::visitTokens(fileItem,std::nullopt);
 
     [&]() {
         QVERIFY(highlights.contains(expectedHighlightedToken.offset));
@@ -859,7 +860,7 @@ void tst_qmlls_highlighting::rangeOverlapsWithSourceLocation()
     QFETCH(QQmlJS::SourceLocation, sourceLocation);
     QFETCH(HighlightsRange, range);
     QFETCH(bool, overlaps);
-    QVERIFY(overlaps == HighlightingUtils::rangeOverlapsWithSourceLocation(sourceLocation, range));
+    QVERIFY(overlaps == Utils::rangeOverlapsWithSourceLocation(sourceLocation, range));
 }
 
 void tst_qmlls_highlighting::updateResultID_data()
@@ -878,7 +879,7 @@ void tst_qmlls_highlighting::updateResultID()
     QFETCH(QByteArray, currentId);
     QFETCH(QByteArray, expectedNextId);
 
-    HighlightingUtils::updateResultID(currentId);
+    Utils::updateResultID(currentId);
     QCOMPARE(currentId, expectedNextId);
 }
 
@@ -959,7 +960,7 @@ void tst_qmlls_highlighting::computeDiff()
     QFETCH(QList<int>, newData);
     QFETCH(QList<SemanticTokensEdit>, expected);
 
-    const auto edits = HighlightingUtils::computeDiff(oldData, newData);
+    const auto edits = Utils::computeDiff(oldData, newData);
     QCOMPARE(edits.size(), expected.size());
 
     qsizetype i = 0;

@@ -25,7 +25,7 @@ QT_BEGIN_NAMESPACE
 
 Q_DECLARE_LOGGING_CATEGORY(semanticTokens)
 
-namespace HighlightingUtils {
+namespace QmlHighlighting {
 Q_NAMESPACE
 
 // Protocol agnostic highlighting kinds
@@ -117,8 +117,6 @@ enum class SemanticTokenProtocolTypes {
 };
 Q_ENUM_NS(SemanticTokenProtocolTypes)
 
-} // namespace HighlightingUtils
-
 // Represents a semantic highlighting token
 // startLine and startColumn are 0-based as in LSP spec.
 struct HighlightToken
@@ -155,7 +153,7 @@ struct HighlightToken
 };
 
 using HighlightsContainer = QMap<int, HighlightToken>;
-using QmlHighlightKindToLspKind = int (*)(HighlightingUtils::QmlHighlightKind);
+using QmlHighlightKindToLspKind = int (*)(QmlHighlightKind);
 
 /*!
 \internal
@@ -167,7 +165,7 @@ struct HighlightsRange
     int endOffset;
 };
 
-namespace HighlightingUtils
+namespace Utils
 {
     QList<int> encodeSemanticTokens(const HighlightsContainer &highlights);
     QList<QQmlJS::SourceLocation>
@@ -183,15 +181,14 @@ namespace HighlightingUtils
     HighlightsContainer visitTokens(const QQmlJS::Dom::DomItem &item,
                                  const std::optional<HighlightsRange> &range,
                                  HighlightingMode mode = HighlightingMode::Default);
-} // namespace HighlightingUtils
+} // namespace Utils
 
 class HighlightingVisitor
 {
 public:
     HighlightingVisitor(const QQmlJS::Dom::DomItem &item,
                         const std::optional<HighlightsRange> &range,
-                        HighlightingUtils::HighlightingMode mode =
-                                HighlightingUtils::HighlightingMode::Default);
+                        HighlightingMode mode = HighlightingMode::Default);
     const HighlightsContainer &hightights() const { return m_highlights; }
     HighlightsContainer &highlights() { return m_highlights; }
 
@@ -213,14 +210,15 @@ private:
     void highlightScriptExpressions(const QQmlJS::Dom::DomItem &item);
     void highlightCallExpression(const QQmlJS::Dom::DomItem &item);
     void highlightFieldMemberAccess(const QQmlJS::Dom::DomItem &item, QQmlJS::SourceLocation loc);
-    void addHighlight(const QQmlJS::SourceLocation &loc, HighlightingUtils::QmlHighlightKind,
-                      HighlightingUtils::QmlHighlightModifiers =
-                              HighlightingUtils::QmlHighlightModifier::None);
+    void addHighlight(const QQmlJS::SourceLocation &loc, QmlHighlightKind,
+                      QmlHighlightModifiers = QmlHighlightModifier::None);
 private:
     HighlightsContainer m_highlights;
     std::optional<HighlightsRange> m_range;
     QmlHighlightKindToLspKind m_mapToProtocol;
 };
+
+} // namespace QmlHighlighting
 
 QT_END_NAMESPACE
 
