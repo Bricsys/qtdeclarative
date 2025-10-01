@@ -227,7 +227,9 @@ static FieldFilter highlightingFilter()
 HighlightingVisitor::HighlightingVisitor(const QQmlJS::Dom::DomItem &item,
                                          const std::optional<HighlightsRange> &range,
                                          HighlightingMode mode)
-    : m_highlights(mode), m_range(range)
+    : m_range(range), m_mapToProtocol(mode == HighlightingMode::Default
+                                                       ? mapToProtocolDefault
+                                                       : mapToProtocolForQtCreator)
 {
     item.visitTree(Path(),
                    [this](Path path, const DomItem &item, bool b) { return this->visitor(path, item, b); },
@@ -313,7 +315,7 @@ void HighlightingVisitor::highlightComment(const DomItem &item)
     const auto locs = HighlightingUtils::sourceLocationsFromMultiLineToken(
             comment->info().comment(), comment->info().sourceLocation());
     for (const auto &loc : locs)
-        m_highlights.addHighlight(loc, QmlHighlightKind::Comment);
+        addHighlight(loc, QmlHighlightKind::Comment);
 }
 
 void HighlightingVisitor::highlightImport(const DomItem &item)
@@ -324,16 +326,16 @@ void HighlightingVisitor::highlightImport(const DomItem &item)
     const auto regions = fLocs->info().regions;
     const auto import = item.as<Import>();
     Q_ASSERT(import);
-    m_highlights.addHighlight(regions[ImportTokenRegion], QmlHighlightKind::QmlKeyword);
+    addHighlight(regions[ImportTokenRegion], QmlHighlightKind::QmlKeyword);
     if (import->uri.isModule())
-        m_highlights.addHighlight(regions[ImportUriRegion], QmlHighlightKind::QmlImportId);
+        addHighlight(regions[ImportUriRegion], QmlHighlightKind::QmlImportId);
     else
-        m_highlights.addHighlight(regions[ImportUriRegion], QmlHighlightKind::String);
+        addHighlight(regions[ImportUriRegion], QmlHighlightKind::String);
     if (regions.contains(VersionRegion))
-        m_highlights.addHighlight(regions[VersionRegion], QmlHighlightKind::Number);
+        addHighlight(regions[VersionRegion], QmlHighlightKind::Number);
     if (regions.contains(AsTokenRegion)) {
-        m_highlights.addHighlight(regions[AsTokenRegion], QmlHighlightKind::QmlKeyword);
-        m_highlights.addHighlight(regions[IdNameRegion], QmlHighlightKind::QmlNamespace);
+        addHighlight(regions[AsTokenRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[IdNameRegion], QmlHighlightKind::QmlNamespace);
     }
 }
 
@@ -352,12 +354,12 @@ void HighlightingVisitor::highlightBinding(const DomItem &item)
         return;
 
     if (binding->bindingType() != BindingType::Normal) {
-        m_highlights.addHighlight(regions[OnTokenRegion], QmlHighlightKind::QmlKeyword);
-        m_highlights.addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlProperty);
+        addHighlight(regions[OnTokenRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlProperty);
         return;
     }
 
-    return m_highlights.addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlProperty);
+    return addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlProperty);
 }
 
 void HighlightingVisitor::highlightPragma(const DomItem &item)
@@ -366,13 +368,13 @@ void HighlightingVisitor::highlightPragma(const DomItem &item)
     if (!fLocs)
         return;
     const auto regions = fLocs->info().regions;
-    m_highlights.addHighlight(regions[PragmaKeywordRegion], QmlHighlightKind::QmlKeyword);
-    m_highlights.addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlPragmaName );
+    addHighlight(regions[PragmaKeywordRegion], QmlHighlightKind::QmlKeyword);
+    addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlPragmaName );
     const auto pragma = item.as<Pragma>();
     for (auto i = 0; i < pragma->values.size(); ++i) {
         DomItem value = item.field(Fields::values).index(i);
         const auto valueRegions = FileLocations::treeOf(value)->info().regions;
-        m_highlights.addHighlight(valueRegions[PragmaValuesRegion], QmlHighlightKind::QmlPragmaValue);
+        addHighlight(valueRegions[PragmaValuesRegion], QmlHighlightKind::QmlPragmaValue);
     }
     return;
 }
@@ -383,8 +385,8 @@ void HighlightingVisitor::highlightEnumDecl(const DomItem &item)
     if (!fLocs)
         return;
     const auto regions = fLocs->info().regions;
-    m_highlights.addHighlight(regions[EnumKeywordRegion], QmlHighlightKind::QmlKeyword);
-    m_highlights.addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlEnumName);
+    addHighlight(regions[EnumKeywordRegion], QmlHighlightKind::QmlKeyword);
+    addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlEnumName);
 }
 
 void HighlightingVisitor::highlightEnumItem(const DomItem &item)
@@ -393,9 +395,9 @@ void HighlightingVisitor::highlightEnumItem(const DomItem &item)
     if (!fLocs)
         return;
     const auto regions = fLocs->info().regions;
-    m_highlights.addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlEnumMember);
+    addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlEnumMember);
     if (regions.contains(EnumValueRegion))
-        m_highlights.addHighlight(regions[EnumValueRegion], QmlHighlightKind::Number);
+        addHighlight(regions[EnumValueRegion], QmlHighlightKind::Number);
 }
 
 void HighlightingVisitor::highlightQmlObject(const DomItem &item)
@@ -408,14 +410,14 @@ void HighlightingVisitor::highlightQmlObject(const DomItem &item)
     const auto regions = fLocs->info().regions;
     // Handle ids here
     if (!qmlObject->idStr().isEmpty()) {
-        m_highlights.addHighlight(regions[IdTokenRegion], QmlHighlightKind::QmlProperty);
-        m_highlights.addHighlight(regions[IdNameRegion], QmlHighlightKind::QmlLocalId);
+        addHighlight(regions[IdTokenRegion], QmlHighlightKind::QmlProperty);
+        addHighlight(regions[IdNameRegion], QmlHighlightKind::QmlLocalId);
     }
     // If dotted name, then defer it to be handled in ScriptIdentifierExpression
     if (qmlObject->name().contains("."_L1))
         return;
 
-    m_highlights.addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlType);
+    addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlType);
 }
 
 void HighlightingVisitor::highlightComponent(const DomItem &item)
@@ -427,8 +429,8 @@ void HighlightingVisitor::highlightComponent(const DomItem &item)
     const auto componentKeywordIt = regions.constFind(ComponentKeywordRegion);
     if (componentKeywordIt == regions.constEnd())
         return; // not an inline component, no need for highlighting
-    m_highlights.addHighlight(*componentKeywordIt, QmlHighlightKind::QmlKeyword);
-    m_highlights.addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlType);
+    addHighlight(*componentKeywordIt, QmlHighlightKind::QmlKeyword);
+    addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlType);
 }
 
 void HighlightingVisitor::highlightPropertyDefinition(const DomItem &item)
@@ -442,28 +444,28 @@ void HighlightingVisitor::highlightPropertyDefinition(const DomItem &item)
     QmlHighlightModifiers modifier = QmlHighlightModifier::QmlPropertyDefinition;
     if (propertyDef->isDefaultMember) {
         modifier |= QmlHighlightModifier::QmlDefaultProperty;
-        m_highlights.addHighlight(regions[DefaultKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[DefaultKeywordRegion], QmlHighlightKind::QmlKeyword);
     }
     if (propertyDef->isFinal) {
         modifier |= QmlHighlightModifier::QmlFinalProperty;
-        m_highlights.addHighlight(regions[FinalKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[FinalKeywordRegion], QmlHighlightKind::QmlKeyword);
     }
     if (propertyDef->isRequired) {
         modifier |= QmlHighlightModifier::QmlRequiredProperty;
-        m_highlights.addHighlight(regions[RequiredKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[RequiredKeywordRegion], QmlHighlightKind::QmlKeyword);
     }
     if (propertyDef->isReadonly) {
         modifier |= QmlHighlightModifier::QmlReadonlyProperty;
-        m_highlights.addHighlight(regions[ReadonlyKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[ReadonlyKeywordRegion], QmlHighlightKind::QmlKeyword);
     }
-    m_highlights.addHighlight(regions[PropertyKeywordRegion], QmlHighlightKind::QmlKeyword);
+    addHighlight(regions[PropertyKeywordRegion], QmlHighlightKind::QmlKeyword);
     if (propertyDef->isAlias())
-        m_highlights.addHighlight(regions[TypeIdentifierRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[TypeIdentifierRegion], QmlHighlightKind::QmlKeyword);
     else
-        m_highlights.addHighlight(regions[TypeIdentifierRegion], QmlHighlightKind::QmlType);
+        addHighlight(regions[TypeIdentifierRegion], QmlHighlightKind::QmlType);
 
-    m_highlights.addHighlight(regions[TypeModifierRegion], QmlHighlightKind::QmlTypeModifier);
-    m_highlights.addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlProperty,
+    addHighlight(regions[TypeModifierRegion], QmlHighlightKind::QmlTypeModifier);
+    addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlProperty,
                                 modifier);
 }
 
@@ -477,14 +479,14 @@ void HighlightingVisitor::highlightMethod(const DomItem &item)
     const auto regions = fLocs->info().regions;
     switch (method->methodType) {
     case MethodInfo::Signal: {
-        m_highlights.addHighlight(regions[SignalKeywordRegion], QmlHighlightKind::QmlKeyword);
-        m_highlights.addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlMethod);
+        addHighlight(regions[SignalKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlMethod);
         break;
     }
     case MethodInfo::Method: {
-        m_highlights.addHighlight(regions[FunctionKeywordRegion], QmlHighlightKind::QmlKeyword);
-        m_highlights.addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlMethod);
-        m_highlights.addHighlight(regions[TypeIdentifierRegion], QmlHighlightKind::QmlType);
+        addHighlight(regions[FunctionKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlMethod);
+        addHighlight(regions[TypeIdentifierRegion], QmlHighlightKind::QmlType);
         break;
     }
     default:
@@ -494,9 +496,9 @@ void HighlightingVisitor::highlightMethod(const DomItem &item)
     for (auto i = 0; i < method->parameters.size(); ++i) {
         DomItem parameter = item.field(Fields::parameters).index(i);
         const auto paramRegions = FileLocations::treeOf(parameter)->info().regions;
-        m_highlights.addHighlight(paramRegions[IdentifierRegion],
+        addHighlight(paramRegions[IdentifierRegion],
                                     QmlHighlightKind::QmlMethodParameter);
-        m_highlights.addHighlight(paramRegions[TypeIdentifierRegion], QmlHighlightKind::QmlType);
+        addHighlight(paramRegions[TypeIdentifierRegion], QmlHighlightKind::QmlType);
     }
     return;
 }
@@ -520,13 +522,13 @@ void HighlightingVisitor::highlightScriptLiteral(const DomItem &item)
         const auto &locs = HighlightingUtils::sourceLocationsFromMultiLineToken(
                 literalCode, regions[MainRegion]);
         for (const auto &loc : locs)
-            m_highlights.addHighlight(loc, QmlHighlightKind::String);
+            addHighlight(loc, QmlHighlightKind::String);
     } else if (std::holds_alternative<double>(literal->literalValue()))
-        m_highlights.addHighlight(regions[MainRegion], QmlHighlightKind::Number);
+        addHighlight(regions[MainRegion], QmlHighlightKind::Number);
     else if (std::holds_alternative<bool>(literal->literalValue()))
-        m_highlights.addHighlight(regions[MainRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[MainRegion], QmlHighlightKind::QmlKeyword);
     else if (std::holds_alternative<std::nullptr_t>(literal->literalValue()))
-        m_highlights.addHighlight(regions[MainRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[MainRegion], QmlHighlightKind::QmlKeyword);
     else
         qCWarning(semanticTokens) << "Invalid literal variant";
 }
@@ -540,7 +542,7 @@ void HighlightingVisitor::highlightIdentifier(const DomItem &item)
     // Many of the scriptIdentifiers expressions are already handled by
     // other cases. In those cases, if the location offset is already in the list
     // we don't need to perform expensive resolveExpressionType operation.
-    if (m_highlights.tokens().contains(loc.offset))
+    if (m_highlights.contains(loc.offset))
         return;
 
     // If the item is a field member base, we need to resolve the expression type
@@ -559,7 +561,7 @@ void HighlightingVisitor::highlightCallExpression(const DomItem &item)
             const auto id = item.as<ScriptElements::IdentifierExpression>();
             Q_ASSERT(id);
             const auto loc = id->mainRegionLocation();
-            m_highlights.addHighlight(loc, QmlHighlightKind::QmlMethod);
+            addHighlight(loc, QmlHighlightKind::QmlMethod);
         }
     };
 
@@ -595,16 +597,16 @@ void HighlightingVisitor::highlightFieldMemberAccess(const DomItem &item,
             QQmlLSUtils::resolveExpressionType(item, QQmlLSUtils::ResolveOptions::ResolveOwnerType);
 
     if (!expression) {
-        m_highlights.addHighlight(loc, QmlHighlightKind::Field);
+        addHighlight(loc, QmlHighlightKind::Field);
         return;
     }
 
     if (expression->type == QQmlLSUtils::MethodIdentifier
         || expression->type == QQmlLSUtils::LambdaMethodIdentifier) {
-        m_highlights.addHighlight(loc, QmlHighlightKind::QmlMethod);
+        addHighlight(loc, QmlHighlightKind::QmlMethod);
         return;
     } else {
-        return m_highlights.addHighlight(loc, QmlHighlightKind::Field);
+        return addHighlight(loc, QmlHighlightKind::Field);
     }
 }
 
@@ -614,12 +616,12 @@ void HighlightingVisitor::highlightBySemanticAnalysis(const DomItem &item, QQmlJ
             item, QQmlLSUtils::ResolveOptions::ResolveOwnerType);
 
     if (!expression) {
-        m_highlights.addHighlight(loc, QmlHighlightKind::Unknown);
+        addHighlight(loc, QmlHighlightKind::Unknown);
         return;
     }
     switch (expression->type) {
     case QQmlLSUtils::QmlComponentIdentifier:
-        m_highlights.addHighlight(loc, QmlHighlightKind::QmlType);
+        addHighlight(loc, QmlHighlightKind::QmlType);
         return;
     case QQmlLSUtils::JavaScriptIdentifier: {
         QmlHighlightKind tokenType = QmlHighlightKind::JsScopeVar;
@@ -631,13 +633,13 @@ void HighlightingVisitor::highlightBySemanticAnalysis(const DomItem &item, QQmlJ
                 if (jsIdentifier->isConst) {
                     modifier |= QmlHighlightModifier::QmlReadonlyProperty;
                 }
-                m_highlights.addHighlight(loc, tokenType, modifier);
+                addHighlight(loc, tokenType, modifier);
                 return;
             }
         }
         if (const auto name = expression->name) {
             if (const auto highlightKind = resolveJsGlobalObjectKind(item, *name))
-                return m_highlights.addHighlight(loc, *highlightKind);
+                return addHighlight(loc, *highlightKind);
         }
         return;
     }
@@ -655,34 +657,34 @@ void HighlightingVisitor::highlightBySemanticAnalysis(const DomItem &item, QQmlJ
             QmlHighlightModifiers modifier = QmlHighlightModifier::None;
             if (!property.isWritable())
                 modifier |= QmlHighlightModifier::QmlReadonlyProperty;
-            m_highlights.addHighlight(loc, tokenType, modifier);
+            addHighlight(loc, tokenType, modifier);
         }
         return;
     }
     case QQmlLSUtils::PropertyChangedSignalIdentifier:
-        m_highlights.addHighlight(loc, QmlHighlightKind::QmlSignal);
+        addHighlight(loc, QmlHighlightKind::QmlSignal);
         return;
     case QQmlLSUtils::PropertyChangedHandlerIdentifier:
-        m_highlights.addHighlight(loc, QmlHighlightKind::QmlSignalHandler);
+        addHighlight(loc, QmlHighlightKind::QmlSignalHandler);
         return;
     case QQmlLSUtils::SignalIdentifier:
-        m_highlights.addHighlight(loc, QmlHighlightKind::QmlSignal);
+        addHighlight(loc, QmlHighlightKind::QmlSignal);
         return;
     case QQmlLSUtils::SignalHandlerIdentifier:
-        m_highlights.addHighlight(loc, QmlHighlightKind::QmlSignalHandler);
+        addHighlight(loc, QmlHighlightKind::QmlSignalHandler);
         return;
     case QQmlLSUtils::MethodIdentifier:
-        m_highlights.addHighlight(loc, QmlHighlightKind::QmlMethod);
+        addHighlight(loc, QmlHighlightKind::QmlMethod);
         return;
     case QQmlLSUtils::QmlObjectIdIdentifier: {
         const auto qmlfile = item.fileObject().as<QmlFile>();
         if (!qmlfile) {
-            m_highlights.addHighlight(loc, QmlHighlightKind::Unknown);
+            addHighlight(loc, QmlHighlightKind::Unknown);
             return;
         }
         const auto resolver = qmlfile->typeResolver();
         if (!resolver) {
-            m_highlights.addHighlight(loc, QmlHighlightKind::Unknown);
+            addHighlight(loc, QmlHighlightKind::Unknown);
             return;
         }
         const auto objects = resolver->objectsById();
@@ -692,34 +694,34 @@ void HighlightingVisitor::highlightBySemanticAnalysis(const DomItem &item, QQmlJ
                     objects.id(expression->semanticScope, item.qmlObject().semanticScope());
             if (!boundName.isEmpty() && name == boundName) {
                 // If the name is the same as the bound name, then it is a local id.
-                m_highlights.addHighlight(loc, QmlHighlightKind::QmlLocalId);
+                addHighlight(loc, QmlHighlightKind::QmlLocalId);
                 return;
             } else {
-                m_highlights.addHighlight(loc, QmlHighlightKind::QmlExternalId);
+                addHighlight(loc, QmlHighlightKind::QmlExternalId);
                 return;
             }
         } else {
-            m_highlights.addHighlight(loc, QmlHighlightKind::QmlExternalId);
+            addHighlight(loc, QmlHighlightKind::QmlExternalId);
             return;
         }
     }
     case QQmlLSUtils::SingletonIdentifier:
-        m_highlights.addHighlight(loc, QmlHighlightKind::QmlType);
+        addHighlight(loc, QmlHighlightKind::QmlType);
         return;
     case QQmlLSUtils::EnumeratorIdentifier:
-        m_highlights.addHighlight(loc, QmlHighlightKind::QmlEnumName);
+        addHighlight(loc, QmlHighlightKind::QmlEnumName);
         return;
     case QQmlLSUtils::EnumeratorValueIdentifier:
-        m_highlights.addHighlight(loc, QmlHighlightKind::QmlEnumMember);
+        addHighlight(loc, QmlHighlightKind::QmlEnumMember);
         return;
     case QQmlLSUtils::AttachedTypeIdentifier:
-        m_highlights.addHighlight(loc, QmlHighlightKind::QmlType);
+        addHighlight(loc, QmlHighlightKind::QmlType);
         return;
     case QQmlLSUtils::GroupedPropertyIdentifier:
-        m_highlights.addHighlight(loc, QmlHighlightKind::QmlProperty);
+        addHighlight(loc, QmlHighlightKind::QmlProperty);
         return;
     case QQmlLSUtils::QualifiedModuleIdentifier:
-        m_highlights.addHighlight(loc, QmlHighlightKind::QmlNamespace);
+        addHighlight(loc, QmlHighlightKind::QmlNamespace);
         return;
     default:
         qCWarning(semanticTokens)
@@ -739,99 +741,99 @@ void HighlightingVisitor::highlightScriptExpressions(const DomItem &item)
         highlightScriptLiteral(item);
         return;
     case DomType::ScriptForStatement:
-        m_highlights.addHighlight(regions[ForKeywordRegion], QmlHighlightKind::QmlKeyword);
-        m_highlights.addHighlight(regions[TypeIdentifierRegion],
+        addHighlight(regions[ForKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[TypeIdentifierRegion],
                                     QmlHighlightKind::QmlKeyword);
         return;
 
     case DomType::ScriptVariableDeclaration: {
-        m_highlights.addHighlight(regions[TypeIdentifierRegion],
+        addHighlight(regions[TypeIdentifierRegion],
                                    QmlHighlightKind::QmlKeyword);
         return;
     }
     case DomType::ScriptReturnStatement:
-        m_highlights.addHighlight(regions[ReturnKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[ReturnKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptCaseClause:
-        m_highlights.addHighlight(regions[CaseKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[CaseKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptDefaultClause:
-        m_highlights.addHighlight(regions[DefaultKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[DefaultKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptSwitchStatement:
-        m_highlights.addHighlight(regions[SwitchKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[SwitchKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptWhileStatement:
-        m_highlights.addHighlight(regions[WhileKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[WhileKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptDoWhileStatement:
-        m_highlights.addHighlight(regions[DoKeywordRegion], QmlHighlightKind::QmlKeyword);
-        m_highlights.addHighlight(regions[WhileKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[DoKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[WhileKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptTryCatchStatement:
-        m_highlights.addHighlight(regions[TryKeywordRegion], QmlHighlightKind::QmlKeyword);
-        m_highlights.addHighlight(regions[CatchKeywordRegion], QmlHighlightKind::QmlKeyword);
-        m_highlights.addHighlight(regions[FinallyKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[TryKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[CatchKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[FinallyKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptForEachStatement:
-        m_highlights.addHighlight(regions[TypeIdentifierRegion], QmlHighlightKind::QmlKeyword);
-        m_highlights.addHighlight(regions[ForKeywordRegion], QmlHighlightKind::QmlKeyword);
-        m_highlights.addHighlight(regions[InOfTokenRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[TypeIdentifierRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[ForKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[InOfTokenRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptThrowStatement:
-        m_highlights.addHighlight(regions[ThrowKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[ThrowKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptBreakStatement:
-        m_highlights.addHighlight(regions[BreakKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[BreakKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptContinueStatement:
-        m_highlights.addHighlight(regions[ContinueKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[ContinueKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptIfStatement:
-        m_highlights.addHighlight(regions[IfKeywordRegion], QmlHighlightKind::QmlKeyword);
-        m_highlights.addHighlight(regions[ElseKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[IfKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[ElseKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptLabelledStatement:
-        m_highlights.addHighlight(regions[IdentifierRegion], QmlHighlightKind::JsLabel);
+        addHighlight(regions[IdentifierRegion], QmlHighlightKind::JsLabel);
         return;
     case DomType::ScriptConditionalExpression:
-        m_highlights.addHighlight(regions[QuestionMarkTokenRegion], QmlHighlightKind::Operator);
-        m_highlights.addHighlight(regions[ColonTokenRegion], QmlHighlightKind::Operator);
+        addHighlight(regions[QuestionMarkTokenRegion], QmlHighlightKind::Operator);
+        addHighlight(regions[ColonTokenRegion], QmlHighlightKind::Operator);
         return;
     case DomType::ScriptUnaryExpression:
     case DomType::ScriptPostExpression:
-        m_highlights.addHighlight(regions[OperatorTokenRegion], QmlHighlightKind::Operator);
+        addHighlight(regions[OperatorTokenRegion], QmlHighlightKind::Operator);
         return;
     case DomType::ScriptType:
-        m_highlights.addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlType);
-        m_highlights.addHighlight(regions[TypeIdentifierRegion], QmlHighlightKind::QmlType);
+        addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlType);
+        addHighlight(regions[TypeIdentifierRegion], QmlHighlightKind::QmlType);
         return;
     case DomType::ScriptFunctionExpression: {
-        m_highlights.addHighlight(regions[FunctionKeywordRegion], QmlHighlightKind::QmlKeyword);
-        m_highlights.addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlMethod);
+        addHighlight(regions[FunctionKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[IdentifierRegion], QmlHighlightKind::QmlMethod);
         return;
     }
     case DomType::ScriptYieldExpression:
-        m_highlights.addHighlight(regions[YieldKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[YieldKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptThisExpression:
-        m_highlights.addHighlight(regions[ThisKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[ThisKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptSuperLiteral:
-        m_highlights.addHighlight(regions[SuperKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[SuperKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptNewMemberExpression:
     case DomType::ScriptNewExpression:
-        m_highlights.addHighlight(regions[NewKeywordRegion], QmlHighlightKind::QmlKeyword);
+        addHighlight(regions[NewKeywordRegion], QmlHighlightKind::QmlKeyword);
         return;
     case DomType::ScriptTemplateExpressionPart:
-        m_highlights.addHighlight(regions[DollarLeftBraceTokenRegion], QmlHighlightKind::Operator);
+        addHighlight(regions[DollarLeftBraceTokenRegion], QmlHighlightKind::Operator);
         visitor(Path(), item.field(Fields::expression), false);
-        m_highlights.addHighlight(regions[RightBraceRegion], QmlHighlightKind::Operator);
+        addHighlight(regions[RightBraceRegion], QmlHighlightKind::Operator);
         return;
     case DomType::ScriptTemplateLiteral:
-        m_highlights.addHighlight(regions[LeftBacktickTokenRegion], QmlHighlightKind::String);
-        m_highlights.addHighlight(regions[RightBacktickTokenRegion], QmlHighlightKind::String);
+        addHighlight(regions[LeftBacktickTokenRegion], QmlHighlightKind::String);
+        addHighlight(regions[RightBacktickTokenRegion], QmlHighlightKind::String);
         return;
     case DomType::ScriptTemplateStringPart: {
         // handle multiline case
@@ -839,7 +841,7 @@ void HighlightingVisitor::highlightScriptExpressions(const DomItem &item)
         const auto &locs = HighlightingUtils::sourceLocationsFromMultiLineToken(
             code, regions[MainRegion]);
         for (const auto &loc : locs)
-            m_highlights.addHighlight(loc, QmlHighlightKind::String);
+            addHighlight(loc, QmlHighlightKind::String);
         return;
     }
     default:
@@ -906,17 +908,16 @@ HighlightingUtils::sourceLocationsFromMultiLineToken(QStringView stringLiteral,
     return result;
 }
 
-QList<int> HighlightingUtils::encodeSemanticTokens(Highlights &highlights)
+QList<int> HighlightingUtils::encodeSemanticTokens(const HighlightsContainer &highlights)
 {
     QList<int> result;
-    const auto highlightingTokens = highlights.tokens();
     constexpr auto tokenEncodingLength = 5;
-    result.reserve(tokenEncodingLength * highlightingTokens.size());
+    result.reserve(tokenEncodingLength * highlights.size());
 
     int prevLine = 0;
     int prevColumn = 0;
 
-    std::for_each(highlightingTokens.constBegin(), highlightingTokens.constEnd(), [&](const auto &token) {
+    std::for_each(highlights.constBegin(), highlights.constEnd(), [&](const auto &token) {
         Q_ASSERT(token.startLine >= prevLine);
         if (token.startLine != prevLine)
             prevColumn = 0;
@@ -1012,35 +1013,20 @@ QList<SemanticTokensEdit> HighlightingUtils::computeDiff(const QList<int> &oldDa
     return { std::move(edit) };
 }
 
-Highlights::Highlights(HighlightingMode mode)
-    : m_mapToProtocol(mode == HighlightingMode::QtCHighlighting ? mapToProtocolForQtCreator
-                                                                : mapToProtocolDefault)
-{
-}
-
-void Highlights::addHighlight(const QQmlJS::SourceLocation &loc, QmlHighlightKind highlightKind,
+void HighlightingVisitor::addHighlight(const QQmlJS::SourceLocation &loc, QmlHighlightKind highlightKind,
                               QmlHighlightModifiers modifierKind)
 {
-    int tokenType = m_mapToProtocol(highlightKind);
-    int modifierType = fromQmlModifierKindToLspTokenType(modifierKind);
-    return addHighlightImpl(loc, tokenType, modifierType);
-}
-
-void Highlights::addHighlightImpl(const QQmlJS::SourceLocation &loc, int tokenType, int tokenModifier)
-{
-    if (!loc.isValid()) {
+    if (!loc.isValid() || loc.length == 0) {
         qCDebug(semanticTokens) << "Invalid locations: Cannot add highlight to token";
         return;
     }
-
-    if (loc.length == 0)
-        return;
-
+    int tokenType = m_mapToProtocol(highlightKind);
+    int modifierType = fromQmlModifierKindToLspTokenType(modifierKind);
     if (!m_highlights.contains(loc.offset))
-        m_highlights.insert(loc.offset, QT_PREPEND_NAMESPACE(Token)(loc, tokenType, tokenModifier));
+        m_highlights.insert(loc.offset, QT_PREPEND_NAMESPACE(Token)(loc, tokenType, modifierType));
 }
 
-Highlights HighlightingUtils::visitTokens(const QQmlJS::Dom::DomItem &item,
+HighlightsContainer HighlightingUtils::visitTokens(const QQmlJS::Dom::DomItem &item,
                                      const std::optional<HighlightsRange> &range,
                                      HighlightingMode mode)
 {
@@ -1053,7 +1039,6 @@ QList<int> HighlightingUtils::collectTokens(const QQmlJS::Dom::DomItem &item,
                                      const std::optional<HighlightsRange> &range,
                                      HighlightingMode mode)
 {
-    Highlights highlights = visitTokens(item, range, mode);
-    return HighlightingUtils::encodeSemanticTokens(highlights);
+    return HighlightingUtils::encodeSemanticTokens(visitTokens(item, range, mode));
 }
 QT_END_NAMESPACE

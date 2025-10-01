@@ -1791,7 +1791,7 @@ void tst_qmlls_modules::semanticHighlightingFull()
 {
     QFETCH(QString, filePath);
     const auto item = fileObject(testFile(filePath));
-    Highlights highlights;
+    HighlightsContainer highlights;
     const auto expectedData = HighlightingUtils::collectTokens(item, std::nullopt);
 
     const auto uri = openFile(filePath);
@@ -1834,7 +1834,7 @@ void tst_qmlls_modules::semanticHighlightingRange()
     QFETCH(QLspSpecification::Range, range);
 
     const auto item = fileObject(testFile(filePath));
-    Highlights highlights;
+    HighlightsContainer highlights;
     const auto qmlFile = item.as<QQmlJS::Dom::QmlFile>();
     const auto code = qmlFile->code();
     const int startOffset = int(QQmlLSUtils::textOffsetFrom(code, range.start.line, range.end.character));

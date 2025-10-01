@@ -25,53 +25,53 @@ tst_qmlls_highlighting::tst_qmlls_highlighting()
 // https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/#textDocument_semanticTokens
 void tst_qmlls_highlighting::encodeSemanticTokens_data()
 {
-    QTest::addColumn<Highlights>("highlights");
+    QTest::addColumn<HighlightsContainer>("highlights");
     QTest::addColumn<QList<int>>("expectedMemoryLayout");
 
     {
-        Highlights c;
-        c.tokens().insert(0, Token());
+        HighlightsContainer c;
+        c.insert(0, Token());
         QTest::addRow("empty-token-single") << c << QList {0, 0, 0, 0, 0};
     }
     {
-        Highlights c;
+        HighlightsContainer c;
         QQmlJS::SourceLocation loc(0, 1, 1, 1);
-        c.tokens().insert(0, Token(loc, 0, 0));
+        c.insert(0, Token(loc, 0, 0));
         QTest::addRow("single-token") << c << QList {0, 0, 1, 0, 0};
     }
     {
-        Highlights c;
+        HighlightsContainer c;
         Token t1(QQmlJS::SourceLocation(0, 1, 1, 1), 0, 0);
         Token t2(QQmlJS::SourceLocation(1, 1, 3, 3), 0, 0);
-        c.tokens().insert(t1.offset, t1);
-        c.tokens().insert(t2.offset, t2);
+        c.insert(t1.offset, t1);
+        c.insert(t2.offset, t2);
         QTest::addRow("different-lines") << c << QList {0, 0, 1, 0, 0, 2, 2, 1, 0, 0};
     }
     {
-        Highlights c;
+        HighlightsContainer c;
         Token t1(QQmlJS::SourceLocation(0, 1, 1, 1), 0, 0);
         Token t2(QQmlJS::SourceLocation(1, 1, 1, 3), 0, 0);
-        c.tokens().insert(t1.offset, t1);
-        c.tokens().insert(t2.offset, t2);
+        c.insert(t1.offset, t1);
+        c.insert(t2.offset, t2);
         QTest::addRow("same-line-different-column") << c << QList {0, 0, 1, 0, 0, 0, 2, 1, 0, 0};
     }
     {
-        Highlights c;
+        HighlightsContainer c;
         Token t1(QQmlJS::SourceLocation(0, 1, 1, 1), 1, 0);
-        c.tokens().insert(t1.offset, t1);
+        c.insert(t1.offset, t1);
         QTest::addRow("token-type") << c << QList {0, 0, 1, 1, 0};
     }
     {
-        Highlights c;
+        HighlightsContainer c;
         Token t1(QQmlJS::SourceLocation(0, 1, 1, 1), 1, 1);
-        c.tokens().insert(t1.offset, t1);
+        c.insert(t1.offset, t1);
         QTest::addRow("token-modifier") << c << QList {0, 0, 1, 1, 1};
     }
 }
 
 void tst_qmlls_highlighting::encodeSemanticTokens()
 {
-    QFETCH(Highlights, highlights);
+    QFETCH(HighlightsContainer, highlights);
     QFETCH(QList<int>, expectedMemoryLayout);
     const auto encoded = HighlightingUtils::encodeSemanticTokens(highlights);
     QCOMPARE(encoded, expectedMemoryLayout);
@@ -788,7 +788,7 @@ void tst_qmlls_highlighting::highlights()
     QFETCH(DomItem, fileItem);
     QFETCH(Token, expectedHighlightedToken);
 
-    const auto highlights = HighlightingUtils::visitTokens(fileItem,std::nullopt).tokens();
+    const auto highlights = HighlightingUtils::visitTokens(fileItem,std::nullopt);
 
     [&]() {
         QVERIFY(highlights.contains(expectedHighlightedToken.offset));
@@ -997,7 +997,7 @@ void tst_qmlls_highlighting::enumCrash()
     const auto fileItem = fileObject(filePath);
 
     HighlightingVisitor hv(fileItem, std::nullopt);
-    const auto highlights = hv.highlights().tokens();
+    const auto highlights = hv.highlights();
     QVERIFY(!highlights.isEmpty());
 }
 
