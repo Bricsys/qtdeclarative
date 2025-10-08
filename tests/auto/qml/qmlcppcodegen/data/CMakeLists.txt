@@ -147,6 +147,7 @@ set(qml_files
     cycleHead.qml
     dateConstruction.qml
     dateConversions.qml
+    deadContext.qml
     deadShoeSize.qml
     deadStoreLoop.qml
     destroyAndToString.qml
