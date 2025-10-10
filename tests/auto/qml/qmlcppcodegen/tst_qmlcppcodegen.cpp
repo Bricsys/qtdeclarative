@@ -48,6 +48,7 @@ private slots:
     void accessModelMethodFromOutSide();
     void aliasLookup();
     void aliasToAliasResolutionSkipCorruption();
+    void aliasToLocalAlias();
     void ambiguousAs();
     void ambiguousSignals();
     void anchorsFill();
@@ -608,6 +609,27 @@ void tst_QmlCppCodegen::aliasToAliasResolutionSkipCorruption()
     QVERIFY2(!component.isError(), component.errorString().toUtf8());
     QScopedPointer<QObject> object(component.create());
     QVERIFY(!object.isNull());
+}
+
+void tst_QmlCppCodegen::aliasToLocalAlias()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, QUrl(u"qrc:/qt/qml/TestTypes/aliasToLocalAlias.qml"_s));
+    QVERIFY2(!component.isError(), component.errorString().toUtf8());
+    QScopedPointer<QObject> object(component.create());
+    QVERIFY(!object.isNull());
+
+    const QVariant label = object->property("label");
+    QCOMPARE(label.metaType(), QMetaType::fromType<QString>());
+    QVERIFY(label.toString().isEmpty());
+
+    const QVariant description = object->property("description");
+    QCOMPARE(description.metaType(), QMetaType::fromType<QString>());
+    QVERIFY(description.toString().isEmpty());
+
+    object->setObjectName(u"nnn");
+    QCOMPARE(object->property("label").toString(), u"nnn");
+    QCOMPARE(object->property("description").toString(), u"nnn");
 }
 
 void tst_QmlCppCodegen::ambiguousAs()
