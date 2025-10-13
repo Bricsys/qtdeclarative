@@ -150,21 +150,21 @@ struct HighlightsRange
 
 namespace Utils
 {
-    QList<int> encodeSemanticTokens(const HighlightsContainer &highlights, HighlightingMode mode = HighlightingMode::Default);
-    QList<QQmlJS::SourceLocation>
-    sourceLocationsFromMultiLineToken(QStringView code,
-                                      const QQmlJS::SourceLocation &tokenLocation);
-    void addModifier(QLspSpecification::SemanticTokenModifiers modifier, int *baseModifier);
-    bool rangeOverlapsWithSourceLocation(const QQmlJS::SourceLocation &loc, const HighlightsRange &r);
-    QList<QLspSpecification::SemanticTokensEdit> computeDiff(const QList<int> &, const QList<int> &);
-    void updateResultID(QByteArray &resultID);
-    QList<int> collectTokens(const QQmlJS::Dom::DomItem &item,
-                             const std::optional<HighlightsRange> &range,
-                             HighlightingMode mode = HighlightingMode::Default);
-    HighlightsContainer visitTokens(const QQmlJS::Dom::DomItem &item,
-                                 const std::optional<HighlightsRange> &range);
-    void addHighlight(HighlightsContainer &out, const QQmlJS::SourceLocation &loc, QmlHighlightKind,
-                      QmlHighlightModifiers = QmlHighlightModifier::None);
+QList<int> encodeSemanticTokens(const HighlightsContainer &highlights, HighlightingMode mode = HighlightingMode::Default);
+QList<QQmlJS::SourceLocation>
+sourceLocationsFromMultiLineToken(QStringView code,
+                                    const QQmlJS::SourceLocation &tokenLocation);
+void addModifier(QLspSpecification::SemanticTokenModifiers modifier, int *baseModifier);
+bool rangeOverlapsWithSourceLocation(const QQmlJS::SourceLocation &loc, const HighlightsRange &r);
+QList<QLspSpecification::SemanticTokensEdit> computeDiff(const QList<int> &, const QList<int> &);
+void updateResultID(QByteArray &resultID);
+QList<int> collectTokens(const QQmlJS::Dom::DomItem &item,
+                            const std::optional<HighlightsRange> &range,
+                            HighlightingMode mode = HighlightingMode::Default);
+HighlightsContainer visitTokens(const QQmlJS::Dom::DomItem &item,
+                                const std::optional<HighlightsRange> &range);
+void addHighlight(HighlightsContainer &out, const QQmlJS::SourceLocation &loc, QmlHighlightKind,
+                    QmlHighlightModifiers = QmlHighlightModifier::None);
 } // namespace Utils
 
 class HighlightingVisitor
