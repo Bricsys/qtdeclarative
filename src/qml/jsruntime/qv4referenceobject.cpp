@@ -550,6 +550,76 @@ void Heap::ReferenceObject::connectToBindable(QObject *obj, int property, QQmlEn
             QObject::connect(obj, &QObject::destroyed, [this]() { setDirty(true); }));
 }
 
+bool ReferenceObject::shouldConnect(Heap::ReferenceObject *ref)
+{
+    if (ref->isAlwaysDirty())
+        return false;
+
+    // We want to connect when we are reading the reference object from a statement that is not
+    // its creation statement. In other words, when first storing it in a variable and then
+    // reusing it, potentially multiple times. This ensures that the cost of the connection itself
+    // is only paid when the user separated the declaration from the usage in their code, in the
+    // hope that this catches more complex and frequent uses, like accesses in a loop, where
+    // unnecessary copies would impact performance more significantly, and not one time accesses.
+    if (CppStackFrame *frame = ref->internalClass->engine->currentStackFrame) {
+        const auto *refObject = static_cast<Heap::ReferenceObject *>(ref);
+        if (frame->v4Function && frame->v4Function == refObject->function()
+            && frame->statementNumber() == refObject->statementIndex()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void ReferenceObject::connect(Heap::ReferenceObject *ref)
+{
+    int property = ref->property();
+    Heap::Object *object = ref->object();
+
+    while (object
+           && object->internalClass->vtable->type != Managed::Type_V4QObjectWrapper
+           && object->internalClass->vtable->type != Managed::Type_QMLTypeWrapper)
+    {
+        const auto type = object->internalClass->vtable->type;
+        if (type != Managed::Type_V4ReferenceObject
+            && type != Managed::Type_V4Sequence
+            && type != Managed::Type_DateObject
+            && type != Managed::Type_QMLValueTypeWrapper) {
+            break;
+        }
+
+        property = static_cast<QV4::Heap::ReferenceObject *>(object)->property();
+        object = static_cast<QV4::Heap::ReferenceObject *>(object)->object();
+    }
+
+    const auto doConnect = [&](auto wrapper) {
+        // The object may be valid on the first read but not on the second, check for that.
+        if (QObject *obj = wrapper->object()) {
+            auto *refObject = static_cast<Heap::ReferenceObject *>(ref);
+
+            auto *qmlEngine = object->internalClass->engine->qmlEngine();
+            if (qmlEngine && obj->metaObject()->property(property).isBindable())
+                refObject->connectToBindable(obj, property, qmlEngine);
+            else if (qmlEngine && obj->metaObject()->property(property).hasNotifySignal())
+                refObject->connectToNotifySignal(obj, property, qmlEngine);
+        }
+    };
+
+    if (object && object->internalClass->vtable->type == Managed::Type_V4QObjectWrapper) {
+        doConnect(static_cast<QV4::Heap::QObjectWrapper *>(object));
+    } else if (object && object->internalClass->vtable->type == Managed::Type_QMLTypeWrapper) {
+        auto wrapper = static_cast<QV4::Heap::QQmlTypeWrapper *>(object);
+        Scope scope(object->internalClass->engine);
+        Scoped<QV4::QQmlTypeWrapper> scopedWrapper(scope, wrapper);
+        doConnect(scopedWrapper);
+    }
+
+    if (!ref->isConnected()) {
+        // Mark AlwaysDirty to prevent further connection failures on every read
+        ref->setAlwaysDirty(true);
+    }
+}
+
 } // namespace QV4
 
 QT_END_NAMESPACE
