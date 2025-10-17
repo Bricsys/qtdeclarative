@@ -90,6 +90,8 @@ public:
                                    const QQmlPropertyData &, const QQmlPropertyData &valueTypeData,
                                    const QQmlRefPointer<QQmlContextData> &,
                                    QQmlPropertyData::WriteFlags flags = {});
+
+    static QVariant convertToWriteTargetType(const QVariant &value, QMetaType targetMetaType);
     static bool write(QObject *, const QQmlPropertyData &, const QVariant &,
                       const QQmlRefPointer<QQmlContextData> &,
                       QQmlPropertyData::WriteFlags flags = {});
