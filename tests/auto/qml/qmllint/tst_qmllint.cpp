@@ -1606,7 +1606,7 @@ void TestQmllint::dirtyJsSnippet_data()
 
     QTest::newRow("assignmentInCondition")
             << u"let xxx = 3; if (xxx=3) return;"_s
-            << Result{ { { "Assignment in condition: did you meant to use \"===\" or \"==\" "
+            << Result{ { { "Assignment in condition: did you mean to use \"===\" or \"==\" "
                            "instead of \"=\"?"_L1,
                            1, 21 } } }
             << defaultOptions;
