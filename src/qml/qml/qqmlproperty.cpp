@@ -1540,7 +1540,7 @@ static QObject *extractObject(QObject *object)
     return object;
 }
 
-using AssignResult = QV4::SequencePrototype::RawCopyResult;
+using AssignResult = QQmlPropertyPrivate::ListCopyResult;
 
 template<typename L, typename DoAppend>
 AssignResult assignListToListProperty(
@@ -1615,71 +1615,99 @@ AssignResult assignMetaContainerToListProperty(
     return same ? AssignResult::WasEqual : AssignResult::Copied;
 }
 
+/*!
+  \internal
+  Attempts to convert \a value to a QQmlListProperty.
+  The existing \a listProperty will be modified (so use a temporary one if that
+  is not desired). \a listProperty is passed as a QQmlListProperty<QObject>,
+  but might actually be a list property of a more specific type. The actual
+  type of the list property is given by \a actualListType.
+*/
+QQmlPropertyPrivate::ListCopyResult  QQmlPropertyPrivate::convertToQQmlListProperty(QQmlListProperty<QObject> *listProperty, QMetaType actualListType, const QVariant &value) {
+    QQmlListProperty<QObject> &prop = *listProperty;
+    QMetaType listValueType = QQmlMetaType::listValueType(actualListType);
+    // elementMetaObject may be null. That means we haven't loaded the type, and the given value
+    // can't be of this type. That's what the warning in doAppend below is for.
+    QQmlMetaObject elementMetaObject = QQmlMetaType::rawMetaObjectForType(listValueType);
+
+    auto doAppend = [&](QQmlListProperty<QObject> *propPtr, QObject *o) {
+        if (Q_UNLIKELY(o && (elementMetaObject.isNull()
+                             || !QQmlMetaObject::canConvert(o, elementMetaObject)))) {
+            qCWarning(lcIncompatibleElement)
+                    << "Cannot append" << o << "to a QML list of" << listValueType.name();
+            o = nullptr;
+        }
+        propPtr->append(propPtr, o);
+        return true;
+    };
+
+    AssignResult result = AssignResult::TypeMismatch;
+    QMetaType variantMetaType = value.metaType();
+    if (variantMetaType == QMetaType::fromType<QQmlListReference>()) {
+        result = assignListToListProperty(
+                &prop, static_cast<const QQmlListReference *>(value.constData()),
+                std::move(doAppend));
+    } else if (variantMetaType == QMetaType::fromType<QObjectList>()) {
+        result = assignListToListProperty(
+                &prop, static_cast<const QObjectList *>(value.constData()),
+                std::move(doAppend));
+    } else if (variantMetaType == QMetaType::fromType<QVariantList>()) {
+        result = assignListToListProperty(
+                &prop, static_cast<const QVariantList *>(value.constData()),
+                std::move(doAppend));
+    } else {
+        result = assignMetaContainerToListProperty(
+                &prop, variantMetaType, value.data(), doAppend);
+        if (result == AssignResult::TypeMismatch) {
+            prop.clear(&prop);
+            doAppend(&prop, QQmlMetaType::toQObject(value));
+            result = AssignResult::Copied;
+        }
+    }
+
+    return result;
+}
+
+// handles only properties backed by QQmlListProperty
+static bool assignToQQmlListProperty(
+        QObject *object,
+        const QQmlPropertyData &property,
+        const QMetaType propertyMetaType, const QVariant &value)
+{
+    Q_ASSERT(propertyMetaType.flags() & QMetaType::IsQmlList);
+    QQmlListProperty<QObject> prop;
+    property.readProperty(object, &prop);
+
+    // clear and append are the minimum operations we need to perform an assignment.
+    if (!prop.clear || !prop.append)
+        return false;
+
+    const bool useNonsignalingListOps = prop.clear == &QQmlVMEMetaObject::list_clear
+            && prop.append == &QQmlVMEMetaObject::list_append;
+    if (useNonsignalingListOps) {
+        prop.clear = &QQmlVMEMetaObject::list_clear_nosignal;
+        prop.append = &QQmlVMEMetaObject::list_append_nosignal;
+    }
+
+    auto result = QQmlPropertyPrivate::convertToQQmlListProperty(&prop, propertyMetaType, value);
+
+    if (useNonsignalingListOps && result == QQmlPropertyPrivate::ListCopyResult::Copied) {
+        Q_ASSERT(QQmlVMEMetaObject::get(object));
+        QQmlVMEResolvedList(&prop).activateSignal();
+    }
+
+    return result != QQmlPropertyPrivate::ListCopyResult::TypeMismatch;
+}
+
+// handles only properties not backed by QQmlListProperty - both list of value types
+// and containers of object types
 static bool assignToListProperty(
         const QQmlPropertyData &property, QQmlPropertyData::WriteFlags flags,
         const QMetaType propertyMetaType, const QMetaType variantMetaType, const QVariant &value,
         QObject *object)
 {
-    if (propertyMetaType.flags() & QMetaType::IsQmlList) {
-        QMetaType listValueType = QQmlMetaType::listValueType(propertyMetaType);
-        QQmlMetaObject valueMetaObject = QQmlMetaType::rawMetaObjectForType(listValueType);
-        if (valueMetaObject.isNull())
-            return false;
-
-        QQmlListProperty<QObject> prop;
-        property.readProperty(object, &prop);
-
-        // clear and append are the minimum operations we need to perform an assignment.
-        if (!prop.clear || !prop.append)
-            return false;
-
-        const bool useNonsignalingListOps = prop.clear == &QQmlVMEMetaObject::list_clear
-                && prop.append == &QQmlVMEMetaObject::list_append;
-        if (useNonsignalingListOps) {
-            prop.clear = &QQmlVMEMetaObject::list_clear_nosignal;
-            prop.append = &QQmlVMEMetaObject::list_append_nosignal;
-        }
-
-        auto doAppend = [&](QQmlListProperty<QObject> *propPtr, QObject *o) {
-            if (Q_UNLIKELY(o && !QQmlMetaObject::canConvert(o, valueMetaObject))) {
-                qCWarning(lcIncompatibleElement)
-                << "Cannot append" << o << "to a QML list of" << listValueType.name();
-                o = nullptr;
-            }
-            propPtr->append(propPtr, o);
-            return true;
-        };
-
-        AssignResult result = AssignResult::TypeMismatch;
-        if (variantMetaType == QMetaType::fromType<QQmlListReference>()) {
-            result = assignListToListProperty(
-                    &prop, static_cast<const QQmlListReference *>(value.constData()),
-                    std::move(doAppend));
-        } else if (variantMetaType == QMetaType::fromType<QObjectList>()) {
-            result = assignListToListProperty(
-                    &prop, static_cast<const QObjectList *>(value.constData()),
-                    std::move(doAppend));
-        } else if (variantMetaType == QMetaType::fromType<QVariantList>()) {
-            result = assignListToListProperty(
-                    &prop, static_cast<const QVariantList *>(value.constData()),
-                    std::move(doAppend));
-        } else {
-            result = assignMetaContainerToListProperty(
-                    &prop, variantMetaType, value.data(), doAppend);
-            if (result == AssignResult::TypeMismatch) {
-                prop.clear(&prop);
-                doAppend(&prop, QQmlMetaType::toQObject(value));
-                result = AssignResult::Copied;
-            }
-        }
-
-        if (useNonsignalingListOps && result == AssignResult::Copied) {
-            Q_ASSERT(QQmlVMEMetaObject::get(object));
-            QQmlVMEResolvedList(&prop).activateSignal();
-        }
-
-        return result != AssignResult::TypeMismatch;
-    } else if (variantMetaType == propertyMetaType) {
+    Q_ASSERT(!(propertyMetaType.flags() & QMetaType::IsQmlList));
+    if (variantMetaType == propertyMetaType) {
         QVariant v = value;
         return property.writeProperty(object, v.data(), flags);
     } else {
@@ -1947,7 +1975,11 @@ bool QQmlPropertyPrivate::write(
                 : urlSequence(value);
         return property.writeProperty(object, &urlSeq, flags);
     } else if (property.isQList()) {
-        return assignToListProperty(property, flags, propertyMetaType, variantMetaType, value, object);
+        if (propertyMetaType.flags()  & QMetaType::IsQmlList) {
+            return assignToQQmlListProperty(object, property, propertyMetaType, value);
+        } else {
+            return assignToListProperty(property, flags, propertyMetaType, variantMetaType, value, object);
+        }
     } else if (enginePriv && propertyMetaType == QMetaType::fromType<QJSValue>()) {
         // We can convert everything into a QJSValue if we have an engine.
         QJSValue jsValue = QJSValuePrivate::fromReturnedValue(
