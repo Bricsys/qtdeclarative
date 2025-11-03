@@ -1164,6 +1164,13 @@ void tst_QmlCppCodegen::collectGarbageDuringAotCode()
     QCOMPARE(inner->objectName(), u"dynamic"_s);
 
     QCOMPARE(o->property("gcRun").toInt(), 1);
+
+    QQmlComponent c2(&engine, QUrl(u"qrc:/qt/qml/TestTypes/markRecursive.qml"_s));
+    QVERIFY2(c2.isReady(), qPrintable(c2.errorString()));
+    QScopedPointer<QObject> o2(c2.create());
+    QVERIFY(!o2.isNull());
+
+    QTRY_COMPARE_GT(o2->objectName().toInt(), 10);
 }
 
 void tst_QmlCppCodegen::colorAsVariant()
