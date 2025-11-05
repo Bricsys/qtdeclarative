@@ -5857,6 +5857,7 @@ void QQuickTableView::setEditTriggers(QQuickTableView::EditTriggers editTriggers
 
 /*!
     \qmlproperty enumeration QtQuick::TableView::delegateModelAccess
+    \since 6.10
 
     \include delegatemodelaccess.qdocinc
 */

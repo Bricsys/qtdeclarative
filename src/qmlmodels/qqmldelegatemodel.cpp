@@ -540,6 +540,7 @@ void QQmlDelegateModel::setRootIndex(const QVariant &root)
 
 /*!
     \qmlproperty enumeration QtQml.Models::DelegateModel::delegateModelAccess
+    \since 6.10
 
     \include delegatemodelaccess.qdocinc
 */
