@@ -911,7 +911,7 @@ void tst_QQuickPopup::activeFocusOnClosingSeveralPopups()
     QQuickPopup *popup2 = window->property("popup2").value<QQuickPopup *>();
     QVERIFY(popup2);
 
-    QCOMPARE(button->hasActiveFocus(), true);
+    QVERIFY_ACTIVE_FOCUS(button);
     popup1->open();
     QTRY_VERIFY(popup1->isOpened());
     QVERIFY_ACTIVE_FOCUS(popup1);
@@ -924,7 +924,7 @@ void tst_QQuickPopup::activeFocusOnClosingSeveralPopups()
     popup2->close();
     QTRY_VERIFY(!popup1->isVisible());
     QTRY_VERIFY(!popup2->isVisible());
-    QTRY_COMPARE(button->hasActiveFocus(), true);
+    QTRY_VERIFY_ACTIVE_FOCUS(button);
 
     popup1->open();
     QTRY_VERIFY(popup1->isOpened());
@@ -938,7 +938,7 @@ void tst_QQuickPopup::activeFocusOnClosingSeveralPopups()
     popup1->close();
     QTRY_VERIFY(!popup1->isVisible());
     QTRY_VERIFY(!popup2->isVisible());
-    QTRY_COMPARE(button->hasActiveFocus(), true);
+    QTRY_VERIFY_ACTIVE_FOCUS(button);
 }
 
 void tst_QQuickPopup::activeFocusAfterExit()
