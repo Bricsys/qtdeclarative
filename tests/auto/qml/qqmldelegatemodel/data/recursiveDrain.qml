@@ -4,10 +4,10 @@ ListView {
     id: view
 
     reuseItems: true
-    width: 100
-    height: 100
+    width: 10
+    height: 10
 
-    model: 200
+    model: 20
     clip: true
     cacheBuffer: 0
 
