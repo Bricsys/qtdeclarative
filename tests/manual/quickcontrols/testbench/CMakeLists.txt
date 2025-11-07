@@ -24,6 +24,8 @@ qt_add_qml_module(testbench
         clipboard.h
         directoryvalidator.cpp
         directoryvalidator.h
+        utils.cpp
+        utils.h
     QML_FILES
         "+Imagine/ContentPane.qml"
         "+Imagine/MainWindow.qml"

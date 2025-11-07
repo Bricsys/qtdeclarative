@@ -36,7 +36,6 @@ int main(int argc, char *argv[])
             &app,
             []() { QCoreApplication::exit(-1); },
             Qt::QueuedConnection);
-    engine.rootContext()->setContextProperty("availableStyles", QQuickStylePrivate::builtInStyles());
     engine.loadFromModule("Testbench", "Main");
 
     return app.exec();

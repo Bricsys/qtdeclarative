@@ -130,7 +130,7 @@ TestbenchDialog {
 
                     ComboBox {
                         id: styleComboBox
-                        model: availableStyles
+                        model: Utils.availableStyles
 
                         property int styleIndex: -1
 
