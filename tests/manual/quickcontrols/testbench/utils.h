@@ -6,11 +6,13 @@
 
 #include <QObject>
 #include <QtQmlIntegration/qqmlintegration.h>
+#include <QUrl>
 
 class Utils : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QStringList availableStyles READ availableStyles CONSTANT FINAL)
+    Q_PROPERTY(QUrl iconUrl READ iconUrl CONSTANT FINAL)
     QML_ELEMENT
     QML_SINGLETON
 
@@ -18,6 +20,10 @@ public:
     explicit Utils(QObject *parent = nullptr);
 
     QStringList availableStyles() const;
+    QUrl iconUrl() const;
+
+private:
+    QUrl mIconUrl;
 };
 
 #endif // UTILS_H

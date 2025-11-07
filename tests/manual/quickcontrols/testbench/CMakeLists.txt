@@ -15,6 +15,10 @@ qt_add_executable(testbench
     main.cpp
 )
 
+target_compile_definitions(testbench PRIVATE
+    APP_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
 qt_add_qml_module(testbench
     URI Testbench
     SOURCES
