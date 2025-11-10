@@ -160,6 +160,7 @@ set(qml_files
     dialog.qml
     dialogButtonBox.qml
     disappearingArrowFunction.qml
+    dynamicObjectProperty.qml
     dynamicscene.qml
     enforceSignature.qml
     enumConversion.qml

@@ -108,6 +108,7 @@ private slots:
     void detachedReferences();
     void dialogButtonBox();
     void disappearingArrowFunction();
+    void dynamicObjectProperty();
     void enumConversion();
     void enumFromBadSingleton();
     void enumLookup();
@@ -2001,6 +2002,18 @@ void tst_QmlCppCodegen::disappearingArrowFunction()
     QMetaObject::invokeMethod(o.data(), "swapNone");
     QTest::ignoreMessage(QtDebugMsg, "5");
     o->setObjectName("nonononononononono");
+}
+
+void tst_QmlCppCodegen::dynamicObjectProperty()
+{
+    QQmlEngine engine;
+    QQmlComponent c(&engine, QUrl(u"qrc:/qt/qml/TestTypes/dynamicObjectProperty.qml"_s));
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(o);
+
+    QCOMPARE(o->objectName(), u"6299"_s);
 }
 
 void tst_QmlCppCodegen::enumConversion()
@@ -6261,9 +6274,9 @@ void tst_QmlCppCodegen::variantMap()
     QCOMPARE(o->property("r"), QVariant::fromValue(QRectF(12, 13, 14, 15)));
 
     const QVariantMap expected = QVariantMap {
-        { u"1"_s, QVariant::fromValue<std::nullptr_t>(nullptr) },
-        { u"19"_s, QVariant::fromValue(u"19"_s) },
-        { u"25"_s, QVariant() }
+        { u"a1"_s, QVariant::fromValue<std::nullptr_t>(nullptr) },
+        { u"a19"_s, QVariant::fromValue(u"19"_s) },
+        { u"a25"_s, QVariant() }
     };
 
     QCOMPARE(o->property("v").toMap(), expected);
