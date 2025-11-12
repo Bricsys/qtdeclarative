@@ -7295,7 +7295,9 @@ void QQuickTableViewResizeHandler::updateDrag(QPointerEvent *event, QEventPoint 
         // pointer handlers to do flicking, so setting an exclusive grab (together
         // with grab permissions) doens't work ATM.
         tableView->setFiltersChildMouseEvents(false);
+#if QT_CONFIG(cursor)
         tableViewPrivate->setActivePointerHandler(this);
+#endif
         break;
     case DraggingStarted:
         setExclusiveGrab(event, point, true);
@@ -7317,8 +7319,8 @@ void QQuickTableViewResizeHandler::updateDrag(QPointerEvent *event, QEventPoint 
         break; }
     case DraggingFinished: {
         tableView->setFiltersChildMouseEvents(true);
-        tableViewPrivate->setActivePointerHandler(nullptr);
 #if QT_CONFIG(cursor)
+        tableViewPrivate->setActivePointerHandler(nullptr);
         tableViewPrivate->updateCursor();
 #endif
         break; }
