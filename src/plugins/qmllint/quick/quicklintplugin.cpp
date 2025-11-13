@@ -539,8 +539,9 @@ public:
                    const QQmlSA::Element &value) override;
 private:
     QQmlSA::Element m_colorType;
-
-    static inline const QRegularExpression s_hexPattern{ "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$"_L1 };
+    // we support both long and short hex codes for both RGB and ARGB,
+    // so 3, 4, 6 and 8 hex digits are allowed
+    static inline const QRegularExpression s_hexPattern{ "^#((([0-9A-Fa-f]{3}){1,2})|(([0-9A-Fa-f]{4}){1,2}))$"_L1 };
     // list taken from https://doc.qt.io/qt-6/qcolor.html#fromString
     QStringList m_colorNames = {
         u"aliceblue"_s,
