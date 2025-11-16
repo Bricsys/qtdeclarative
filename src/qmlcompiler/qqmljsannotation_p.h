@@ -22,6 +22,8 @@
 
 QT_BEGIN_NAMESPACE
 
+QT_ENABLE_P0846_SEMANTICS_FOR(get_if)
+
 struct QQQmlJSDeprecation
 {
     QString reason;
@@ -60,10 +62,10 @@ struct QQmlJSAnnotation
             if (var.index() == std::variant_npos)
                 continue;
 
-            if (std::holds_alternative<double>(var))
-                seed += combine(h, std::get<double>(var));
-            else if (std::holds_alternative<QString>(var))
-                seed += combine(h, std::get<QString>(var));
+            if (auto v = get_if<double>(&var))
+                seed += combine(h, *v);
+            else if (auto v = get_if<QString>(&var))
+                seed += combine(h, *v);
             else
                 Q_UNREACHABLE();
         }
