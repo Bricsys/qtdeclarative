@@ -39,16 +39,18 @@ struct QQmlJSAnnotation
     bool isDeprecation() const;
     QQQmlJSDeprecation deprecation() const;
 
-    friend bool operator==(const QQmlJSAnnotation &a, const QQmlJSAnnotation &b) {
+    friend bool operator==(const QQmlJSAnnotation &a, const QQmlJSAnnotation &b) noexcept
+    {
         return a.name == b.name &&
                a.bindings == b.bindings;
     }
 
-    friend bool operator!=(const QQmlJSAnnotation &a, const QQmlJSAnnotation &b) {
+    friend bool operator!=(const QQmlJSAnnotation &a, const QQmlJSAnnotation &b) noexcept
+    {
         return !(a == b);
     }
 
-    friend size_t qHash(const QQmlJSAnnotation &annotation, size_t seed = 0)
+    friend size_t qHash(const QQmlJSAnnotation &annotation, size_t seed = 0) noexcept
     {
         QtPrivate::QHashCombine combine(seed);
         seed = combine(seed, annotation.name);
