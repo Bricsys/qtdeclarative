@@ -59,7 +59,7 @@ struct QQmlJSAnnotation
 
             const auto &var = it.value();
 
-            if (var.index() == std::variant_npos)
+            if (var.valueless_by_exception())
                 continue;
 
             if (auto v = get_if<double>(&var))
