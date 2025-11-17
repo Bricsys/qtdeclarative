@@ -600,13 +600,27 @@ void TestQmllint::dirtyQmlCode_data()
     QTest::newRow("DoubleAssignToDefaultProperty")
             << QStringLiteral("defaultPropertyWithDoubleAssignment.qml")
             << Result{ { { "Cannot assign multiple objects to a default non-list property"_L1 } } };
-    QTest::newRow(("ImportFileSelector")) << QStringLiteral("FileSelector/main.qml")
-                                          << Result{
-                                                     {
-                                                    { "Type ToolBar is ambiguous due to file selector usage, ignoring %1"_L1.
-                                                     arg(testFile("FileSelector/+Material/ToolBar.qml")), 1, 1, QtMsgType::QtInfoMsg}
-                                                 }
-                                             }.withFlags(Result::Flags(Result::UseSettings) | Result::ExitsNormally) ;
+    QTest::newRow(("ImportFileSelector"))
+            << QStringLiteral("FileSelector/main.qml")
+            << Result{
+                   { { "Type ToolBar is ambiguous due to file selector usage, ignoring %1"_L1.arg(
+                               testFile("FileSelector/+Material/ToolBar.qml")),
+                       1, 1, QtMsgType::QtInfoMsg } }
+               }.withFlags(Result::Flags(Result::UseSettings | Result::ExitsNormally));
+    QTest::newRow(("ImportFileSelector2"))
+            << QStringLiteral("FileSelector2/main.qml")
+            << Result{
+                   {
+                           { "Type ToolBar is ambiguous due to file selector usage, ignoring %1"_L1
+                                     .arg(testFile("FileSelector2/+Material/ToolBar.qml")),
+                             1, 1, QtMsgType::QtInfoMsg },
+                           { "Ambiguous type detected. Broken 1.0 is defined multiple times."_L1, 1,
+                             1, QtMsgType::QtWarningMsg },
+                   },
+                   { { "Type ToolBar is ambiguous due to file selector usage, ignoring %1"_L1.arg(
+                               testFile("FileSelector2/+Material/ToolBar.qml")),
+                       1, 1, QtMsgType::QtWarningMsg } }
+               }.withFlags(Result::Flags(Result::UseSettings));
     QTest::newRow("InvalidImport")
             << QStringLiteral("invalidImport.qml")
             << Result{ { { "Failed to import FooBar. Are your import paths set up properly?"_L1,
