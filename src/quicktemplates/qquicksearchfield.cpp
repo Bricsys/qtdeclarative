@@ -34,6 +34,7 @@ QT_BEGIN_NAMESPACE
     displays suggestions or search results.
 
     \image qtquickcontrols-searchfield.gif
+           {Search field with search icon and clear button}
 
     \section1 SearchField Model Roles
 

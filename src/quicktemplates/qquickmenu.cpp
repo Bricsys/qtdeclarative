@@ -62,8 +62,10 @@ static const int SUBMENU_DELAY = 225;
     \table
         \row
           \li \image qtquickcontrols-menu-native.png
+                     {Menu with New, Open, Save in native style}
              \caption Native macOS menu.
           \li \image qtquickcontrols-menu.png
+                     {Menu with New, Open, Save in Material style}
              \caption Non-native \l {Material Style}{Material style} menu.
    \endtable
 

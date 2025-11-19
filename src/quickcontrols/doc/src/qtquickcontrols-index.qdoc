@@ -13,6 +13,7 @@
     in Qt 5.7.
 
     \image qtquickcontrols-styles.png
+           {Gallery of controls in Basic style}
 
     Qt Quick Controls comes with a selection of customizable styles.
     See \l {Styling Qt Quick Controls} for more details.

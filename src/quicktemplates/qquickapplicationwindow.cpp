@@ -46,6 +46,7 @@ using namespace Qt::StringLiterals;
     the window's properties, appearance and layout from QML.
 
     \image qtquickcontrols-applicationwindow-wireframe.png
+           {Window layout showing menu bar, header, content area, and footer}
 
     \qml
     import QtQuick.Controls 2.12
