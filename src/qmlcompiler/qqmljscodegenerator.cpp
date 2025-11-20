@@ -4000,7 +4000,9 @@ void QQmlJSCodeGenerator::generateJumpCodeWithTypeConversions(int relativeOffset
                     continue;
 
                 currentType = m_state.changedRegister();
-                currentVariable = u"std::move("_s + currentVariable + u')';
+
+                // TODO: We can std::move the changed register in some cases here but it needs be
+                // done carefully (QTBUG-141920).
             } else {
                 const auto it = m_state.registers.find(registerIndex);
                 if (it == m_state.registers.end()

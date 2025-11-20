@@ -203,6 +203,7 @@ private slots:
     void methodOnListLookup();
     void methods();
     void modulePrefix();
+    void moveAliasedRegister();
     void multiAdjust();
     void multiDirectory_data();
     void multiDirectory();
@@ -4144,6 +4145,22 @@ void tst_QmlCppCodegen::modulePrefix()
     QCOMPARE(rootObject->property("foo").toDateTime(), QDateTime(QDate(1911, 3, 4), QTime()));
     QCOMPARE(rootObject->property("bar").toDateTime(), QDateTime(QDate(1911, 3, 4), QTime()));
     QCOMPARE(rootObject->property("baz").toString(), QStringLiteral("ItIsTheSingleton"));
+}
+
+void tst_QmlCppCodegen::moveAliasedRegister()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, QUrl(u"qrc:/qt/qml/TestTypes/moveAliasedRegister.qml"_s));
+
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+    QScopedPointer<QObject> rootObject(component.create());
+    QVERIFY(rootObject);
+
+    const auto &hash = rootObject->property("layout").toHash();
+    QCOMPARE(hash["a"_L1].typeName(), "bool");
+    QCOMPARE(hash["a"_L1].toBool(), false);
+    QCOMPARE(hash["b"_L1].typeName(), "bool");
+    QCOMPARE(hash["b"_L1].toBool(), false);
 }
 
 void tst_QmlCppCodegen::multiAdjust()

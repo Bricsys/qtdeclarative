@@ -250,6 +250,7 @@ set(qml_files
     methodOnListLookup.qml
     methods.qml
     modulePrefix.qml
+    moveAliasedRegister.qml
     moveRegVoid.qml
     multiAdjust.qml
     multiRedirect.qml
