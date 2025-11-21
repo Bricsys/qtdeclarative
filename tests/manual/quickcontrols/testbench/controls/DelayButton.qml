@@ -12,6 +12,7 @@ QtObject {
         ["pressed"],
         ["checked"],
         ["icon"],
+        ["transparent-icon"],
         ["icon", "disabled"],
         ["icon", "pressed"],
         ["icon", "highlighted"],
@@ -25,7 +26,8 @@ QtObject {
             enabled: !is("disabled")
             // Only set it if it's pressed, or the non-pressed examples will have no press effects
             down: is("pressed") ? true : undefined
-            icon.source: is("icon") ? Utils.iconUrl : ""
+            icon.source: anyStateContains("icon") ? Utils.iconUrl : ""
+            icon.color: is("transparent-icon") ? "transparent" : undefined
 
             LayoutMirroring.enabled: is("mirrored")
         }
