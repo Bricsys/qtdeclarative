@@ -26,6 +26,7 @@ QtObject {
         }
         TabButton {
             text: qsTr("TabButton 2")
+            icon.source: Utils.iconUrl
         }
         TabButton {
             text: qsTr("TabButton 3")

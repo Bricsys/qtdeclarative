@@ -32,5 +32,10 @@ QtObject {
             enabled: false
             menu: Menu { Action { text: "action" } }
         }
+        MenuBarItem {
+            text: qsTr("Icon")
+            icon.source: Utils.iconUrl
+            menu: Menu { Action { text: "action" } }
+        }
     }
 }

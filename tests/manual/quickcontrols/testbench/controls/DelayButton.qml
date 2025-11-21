@@ -11,6 +11,12 @@ QtObject {
         ["disabled", "checked"],
         ["pressed"],
         ["checked"],
+        ["icon"],
+        ["icon", "disabled"],
+        ["icon", "pressed"],
+        ["icon", "highlighted"],
+        ["icon", "highlighted", "pressed"],
+        ["icon", "mirrored"]
     ]
 
     property Component component: Component {
@@ -19,6 +25,9 @@ QtObject {
             enabled: !is("disabled")
             // Only set it if it's pressed, or the non-pressed examples will have no press effects
             down: is("pressed") ? true : undefined
+            icon.source: is("icon") ? Utils.iconUrl : ""
+
+            LayoutMirroring.enabled: is("mirrored")
         }
     }
 }
