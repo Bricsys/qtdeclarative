@@ -316,6 +316,7 @@ set(qml_files
     signalsWithLists.qml
     signatureIgnored.qml
     specificParent.qml
+    splice.qml
     storeElementSideEffects.qml
     stringArg.qml
     stringLength.qml

@@ -180,6 +180,7 @@ private slots:
     void jsArrayMethods();
     void jsArrayMethodsWithParams();
     void jsArrayMethodsWithParams_data();
+    void jsArraySplice();
     void jsImport();
     void jsMathObject();
     void jsmoduleImport();
@@ -3439,6 +3440,16 @@ void tst_QmlCppCodegen::jsArrayMethodsWithParams_data()
             }
         }
     }
+}
+
+void tst_QmlCppCodegen::jsArraySplice()
+{
+    QQmlEngine engine;
+    QQmlComponent splice(&engine, QUrl(u"qrc:/qt/qml/TestTypes/splice.qml"_s));
+    QVERIFY2(splice.isReady(), qPrintable(splice.errorString()));
+    QScopedPointer<QObject> spliceObject(splice.create());
+    QCOMPARE(spliceObject->property("intList").value<QList<int>>(), QList<int>({0, 1}));
+    QCOMPARE(spliceObject->property("spliced").value<QList<int>>(), QList<int>({2, 3}));
 }
 
 void tst_QmlCppCodegen::jsImport()
