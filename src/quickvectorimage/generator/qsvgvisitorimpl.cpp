@@ -182,6 +182,9 @@ inline bool isPathContainer(const QSvgStructureNode *node)
         case QSvgNode::Polygon:
         case QSvgNode::Polyline:
         {
+            if (!child->style().opacity.isDefault())
+                return false;
+
             if (!child->style().transform.isDefault()) {
                 //qCDebug(lcQuickVectorGraphics) << "NOT path container because local transform";
                 return false;
