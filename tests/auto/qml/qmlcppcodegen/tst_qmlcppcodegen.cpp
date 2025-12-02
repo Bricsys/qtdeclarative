@@ -10,6 +10,7 @@
 #include <data/getOptionalLookup.h>
 #include <data/listprovider.h>
 #include <data/objectwithmethod.h>
+#include <data/propertymap.h>
 #include <data/qmlusing.h>
 #include <data/refuseWrite.h>
 #include <data/resettable.h>
@@ -237,6 +238,7 @@ private slots:
     void parentProperty();
     void popContextAfterRet();
     void prefixedType();
+    void propertyMap();
     void propertyOfParent();
     void qmlUsing();
     void qtfont();
@@ -4906,6 +4908,47 @@ void tst_QmlCppCodegen::prefixedType()
 
     QCOMPARE(o->property("countG").toInt(), 11);
     QCOMPARE(o->property("countH").toInt(), 11);
+}
+
+void tst_QmlCppCodegen::propertyMap()
+{
+    QQmlEngine engine;
+
+    const QUrl document(u"qrc:/qt/qml/TestTypes/propertyMap.qml"_s);
+    QQmlComponent c(&engine, document);
+    QVERIFY2(c.isReady(), qPrintable(c.errorString()));
+
+    QTest::ignoreMessage(
+            QtWarningMsg, qPrintable(
+                document.toString()
+                + u":5:5: QML WithPropertyMap: Unable to assign [undefined] to \"objectName\""));
+
+    QScopedPointer<QObject> o(c.create());
+    QVERIFY(o);
+
+    WithPropertyMap *w = qobject_cast<WithPropertyMap *>(o.data());
+    QVERIFY(w);
+
+    QVERIFY(w->objectName().isEmpty());
+
+    w->setProperties({
+        { u"foo"_s, u"aaa"_s },
+        { u"bar"_s, u"bbb"_s },
+    });
+
+    QCOMPARE(w->objectName(), u"aaa"_s);
+
+    w->setProperties({
+        { u"foo"_s, u"ccc"_s },
+    });
+
+    QCOMPARE(w->objectName(), u"ccc"_s);
+
+    w->setProperties({
+        { u"foo"_s, 24.25 },
+    });
+
+    QCOMPARE(w->objectName(), u"24.25"_s);
 }
 
 void tst_QmlCppCodegen::propertyOfParent()

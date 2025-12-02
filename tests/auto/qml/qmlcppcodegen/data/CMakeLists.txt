@@ -26,6 +26,7 @@ set(cpp_sources
     multiforeign.h
     objectwithmethod.h
     person.cpp person.h
+    propertymap.h
     qmlusing.h
     recursiveObject.h
     refuseWrite.h
@@ -282,6 +283,7 @@ set(qml_files
     popContextAfterRet.qml
     prefixedMetaType.qml
     pressAndHoldButton.qml
+    propertyMap.qml
     qmlUsing.qml
     qtbug113150.qml
     qtfont.qml
