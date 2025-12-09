@@ -198,7 +198,7 @@ All warnings can be set to three levels:
             );
     parser.addOption(maxWarnings);
     const QString maxWarningsSetting = QLatin1String("MaxWarnings");
-    settings.addOption(maxWarningsSetting, -1);
+    settings.addOption(maxWarningsSetting, 0);
 
     auto addCategory = [&](const QQmlJS::LoggerCategory &category) {
         categories.push_back(category);
@@ -433,7 +433,7 @@ All warnings can be set to three levels:
         {
             int value = parser.isSet(maxWarnings) ? parser.value(maxWarnings).toInt()
                                                   : settings.value(maxWarningsSetting).toInt();
-            if (value != -1 && value < linter.logger()->warnings().size())
+            if (value != -1 && linter.logger() && value < linter.logger()->warnings().size())
                 success = false;
         }
 
