@@ -201,7 +201,7 @@ All warnings can be set to three levels:
             );
     parser.addOption(maxWarnings);
     const QString maxWarningsSetting = QLatin1String("MaxWarnings");
-    defaultSettings.addOption(maxWarningsSetting, -1);
+    defaultSettings.addOption(maxWarningsSetting, 0);
 
     // QTBUG-135020: don't break existing user configs and still accept PropertyAliasCycles
     defaultSettings.addOption("PropertyAliasCycles"_L1);
@@ -456,7 +456,7 @@ All warnings can be set to three levels:
                     : (settings.isSet(maxWarningsSetting)
                                ? settings.value(maxWarningsSetting).toInt()
                                : defaultSettings.value(maxWarningsSetting).toInt());
-            if (value != -1 && value < linter.logger()->numWarnings())
+            if (value != -1 && linter.logger() && value < linter.logger()->numWarnings())
                 success = false;
         }
 
