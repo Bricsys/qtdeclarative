@@ -158,7 +158,28 @@ using namespace Qt::StringLiterals;
     X(qmlWith, "with", "WithStatement",                                                            \
       "Warn about with statements as they can cause false "                                        \
       "positives when checking for unqualified access",                                            \
-      QtWarningMsg, false, false)
+      QtWarningMsg, false, false)                                                                  \
+    X(quickLayoutPositioning, "Quick.layout-positioning", "Quick.LayoutsPositioning",              \
+      "Warn LayoutPositioning", QtWarningMsg, false, false)                                        \
+    X(quickAttachedPropertyType, "Quick.attached-property-type", "Quick.AttachedPropertyType",     \
+      "Warn AttachedPropertyType", QtWarningMsg, false, false)                                     \
+    X(quickControlsNativeCustomize, "Quick.controls-native-customize",                             \
+      "Quick.ControlsNativeCustomize", "Warn ControlsNativeCustomize", QtWarningMsg, false, false) \
+    X(quickAnchorCombinations, "Quick.anchor-combinations", "Quick.Anchors",                       \
+      "Warn AnchorCombinations", QtWarningMsg, false, false)                                       \
+    X(quickUnexpectedVarType, "Quick.unexpected-var-type", "Quick.UnexpectedVarType",              \
+      "Warn UnexpectedVarType", QtWarningMsg, false, false)                                        \
+    X(quickPropertyChangesParsed, "Quick.property-changes-parsed", "Quick.PropertyChangesParsed",  \
+      "Warn PropertyChangesParsed", QtWarningMsg, false, false)                                    \
+    X(quickControlsAttachedPropertyReuse, "Quick.controls-attached-property-reuse",                \
+      "Quick.ControlsAttachedPropertyReuse", "Warn ControlsAttachedPropertyReuse", QtWarningMsg,   \
+      false, false)                                                                                \
+    X(quickAttachedPropertyReuse, "Quick.attached-property-reuse", "Quick.AttachedPropertyReuse",  \
+      "Warn AttachedPropertyReuse", QtWarningMsg, false, false)                                    \
+    X(quickColor, "Quick.color", "Quick.Color", "Warn about invalid color values", QtWarningMsg,   \
+      false, false)                                                                                \
+    X(quickStateNoChildItem, "Quick.state-no-child-item", "Quick.StateNoChildItem",                \
+      "Warn about State Objects that have illegal child items", QtWarningMsg, false, false)
 
 #define X(category, name, setting, description, level, ignored, isDefault) \
     const QQmlSA::LoggerWarningId category{ name };
