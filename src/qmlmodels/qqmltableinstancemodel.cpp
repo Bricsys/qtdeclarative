@@ -326,6 +326,12 @@ void QQmlTableInstanceModel::restoreFromReleasedItemsCache(QQmlDelegateModelItem
     const int row = m_adaptorModel.rowAt(newFlatIndex);
     const int column = m_adaptorModel.columnAt(newFlatIndex);
     item->setModelIndex(newFlatIndex, row, column, alwaysEmit);
+
+    // Role bindings may have missed changes while the item's flat index was stale.
+    auto const itemAsList = QList<QQmlDelegateModelItem *>() << item;
+    auto const updateAllRoles = QList<int>();
+    m_adaptorModel.notify(itemAsList, newFlatIndex, 1, updateAllRoles);
+
     emit updateItemProperties(newFlatIndex, item->object(), init);
 }
 
