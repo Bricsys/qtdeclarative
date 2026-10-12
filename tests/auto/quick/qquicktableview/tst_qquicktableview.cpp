@@ -162,6 +162,7 @@ private slots:
     void checkIfDelegatesAreReused();
     void checkIfDelegatesAreReusedAsymmetricTableSize();
     void verifyThatOnlyRemovedRowsArePooled();
+    void dataChangedBeforeRowInsertionPolish();
     void checkContextProperties_data();
     void checkContextProperties();
     void checkContextPropertiesQQmlListProperyModel_data();
@@ -8898,6 +8899,36 @@ void tst_QQuickTableView::verifyThatOnlyRemovedRowsArePooled()
     QCOMPARE(getItems({{0,0}, {1,0}, {0,2}, {1,2}}), initialItems);
     verifyContextProperties({{0,0,0}, {3,0,1}, {2,2,0}, {5,2,1}});
     verifyInitialItemsNotPooled();
+}
+
+void tst_QQuickTableView::dataChangedBeforeRowInsertionPolish()
+{
+    LOAD_TABLEVIEW("plaintableview.qml");
+
+    TestModel model(3, 3);
+    model.setModelData(QPoint(0, 2), QSize(3, 1), QStringLiteral("selected"));
+    tableView->setModel(QVariant::fromValue(&model));
+    tableView->setReuseItems(true);
+    WAIT_UNTIL_POLISHED;
+
+    for (int insertion = 0; insertion < 3; ++insertion) {
+        const int newRow = model.rowCount();
+        QVERIFY(model.insertRow(newRow));
+
+        // Send role changes before TableView rebuilds its flat indexes.
+        model.setModelData(QPoint(0, newRow - 1), QSize(3, 1), QStringLiteral("unselected"));
+        model.setModelData(QPoint(0, newRow), QSize(3, 1), QStringLiteral("selected"));
+        WAIT_UNTIL_POLISHED;
+
+        for (int row = 0; row < model.rowCount(); ++row) {
+            for (int column = 0; column < model.columnCount(); ++column) {
+                const auto fxItem = tableViewPrivate->loadedTableItem(QPoint(column, row));
+                QVERIFY(fxItem);
+                QCOMPARE(fxItem->item->property(kModelDataBindingProp).toString(),
+                         model.data(model.index(row, column), Qt::DisplayRole).toString());
+            }
+        }
+    }
 }
 
 QTEST_MAIN(tst_QQuickTableView)
